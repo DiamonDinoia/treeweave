@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['t_20tt_0',['&lt;tt&gt;fit(f, a, b, tol; kwargs...) -\&gt; CanopyFn{T}&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#fitf-a-b-tol-kwargs---canopyfnt',1,'']]],
+  ['tensor_20product_20horner_1',['Phase 3 — leaf evaluation: tensor-product Horner',['../md_docs_2how-canopy-works.html#phase-3--leaf-evaluation-tensor-product-horner',1,'']]],
+  ['tests_2',['tests',['..//home/runner/work/canopy/canopy/bindings/python/README.md#running-tests',1,'Running tests'],['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#running-tests-1',1,'Running tests'],['..//home/runner/work/canopy/canopy/bindings/matlab/README.md#running-tests-2',1,'Running tests']]],
+  ['the_20handle_20is_20called_20directly_3',['Evaluation — the handle is called directly',['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#evaluation--the-handle-is-called-directly',1,'']]],
+  ['the_20name_4',['Why the name?',['../index.html#why-the-name',1,'']]],
+  ['the_20simd_20quantize_20fast_20path_5',['Driving the SIMD-quantize fast path',['../index.html#driving-the-simd-quantize-fast-path',1,'']]],
+  ['the_20top_20level_20cmake_6',['Building via the top-level CMake',['..//home/runner/work/canopy/canopy/bindings/README.md#building-via-the-top-level-cmake',1,'']]],
+  ['the_20tt_20context_20tt_20pattern_7',['The &lt;tt&gt;context&lt;/tt&gt; pattern',['..//home/runner/work/canopy/canopy/bindings/fortran/README.md#the-context-pattern',1,'']]],
+  ['thread_20safety_8',['Thread safety',['../index.html#thread-safety',1,'']]],
+  ['tl_20dr_9',['TL;DR',['../md_docs_2how-canopy-works.html#tldr',1,'']]],
+  ['tol_20dim_20none_20out_5fdim_20none_20dtype_20f64_20tt_10',['&lt;tt&gt;canopy.fit(f, a, b, tol, *, dim=None, out_dim=None, dtype=&quot;f64&quot;, ...)&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/python/README.md#canopyfitf-a-b-tol--dimnone-out_dimnone-dtypef64-',1,'']]],
+  ['tol_20kwargs_20canopyfn_20t_20tt_11',['&lt;tt&gt;fit(f, a, b, tol; kwargs...) -\&gt; CanopyFn{T}&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#fitf-a-b-tol-kwargs---canopyfnt',1,'']]],
+  ['tol_5fkind_12',['tol_kind',['../structcanopy_1_1options.html#af64a1baba723f93741877c93db991cb4',1,'canopy::options']]],
+  ['top_20level_20cmake_13',['Building via the top-level CMake',['..//home/runner/work/canopy/canopy/bindings/README.md#building-via-the-top-level-cmake',1,'']]],
+  ['trampoline_20design_14',['Trampoline design',['..//home/runner/work/canopy/canopy/bindings/matlab/README.md#trampoline-design',1,'']]],
+  ['treeinput_15',['TreeInput',['../structcanopy_1_1detail_1_1TreeInput.html',1,'canopy::detail']]],
+  ['tt_16',['tt',['..//home/runner/work/canopy/canopy/bindings/python/README.md#canopyfitf-a-b-tol--dimnone-out_dimnone-dtypef64-',1,'&lt;tt&gt;canopy.fit(f, a, b, tol, *, dim=None, out_dim=None, dtype=&quot;f64&quot;, ...)&lt;/tt&gt;'],['..//home/runner/work/canopy/canopy/bindings/python/README.md#canopyfunction',1,'&lt;tt&gt;CanopyFunction&lt;/tt&gt;'],['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#canopyoptions',1,'&lt;tt&gt;CanopyOptions&lt;/tt&gt;'],['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#fitf-a-b-tol-kwargs---canopyfnt',1,'&lt;tt&gt;fit(f, a, b, tol; kwargs...) -\&gt; CanopyFn{T}&lt;/tt&gt;']]],
+  ['tt_20canopy_20fit_20f_20a_20b_20tol_20dim_20none_20out_5fdim_20none_20dtype_20f64_20tt_17',['&lt;tt&gt;canopy.fit(f, a, b, tol, *, dim=None, out_dim=None, dtype=&quot;f64&quot;, ...)&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/python/README.md#canopyfitf-a-b-tol--dimnone-out_dimnone-dtypef64-',1,'']]],
+  ['tt_20canopyfunction_20tt_18',['&lt;tt&gt;CanopyFunction&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/python/README.md#canopyfunction',1,'']]],
+  ['tt_20canopyoptions_20tt_19',['&lt;tt&gt;CanopyOptions&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#canopyoptions',1,'']]],
+  ['tt_20context_20tt_20pattern_20',['The &lt;tt&gt;context&lt;/tt&gt; pattern',['..//home/runner/work/canopy/canopy/bindings/fortran/README.md#the-context-pattern',1,'']]],
+  ['tt_20fit_20f_20a_20b_20tol_20kwargs_20canopyfn_20t_20tt_21',['&lt;tt&gt;fit(f, a, b, tol; kwargs...) -\&gt; CanopyFn{T}&lt;/tt&gt;',['..//home/runner/work/canopy/canopy/bindings/julia/Canopy/README.md#fitf-a-b-tol-kwargs---canopyfnt',1,'']]],
+  ['tt_20pattern_22',['The &lt;tt&gt;context&lt;/tt&gt; pattern',['..//home/runner/work/canopy/canopy/bindings/fortran/README.md#the-context-pattern',1,'']]]
+];

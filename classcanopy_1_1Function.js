@@ -1,0 +1,25 @@
+var classcanopy_1_1Function =
+[
+    [ "Function", "classcanopy_1_1Function.html#a747d11da36e6e2ba74ea162a3ed2f506", null ],
+    [ "all_subtrees_have_leaf_table", "classcanopy_1_1Function.html#abfe2ac2e3c705d87a3b6193c3a80fa75", null ],
+    [ "dispatch_packed_leaves", "classcanopy_1_1Function.html#a17799c2d9545d726d0ddacd91567f61e", null ],
+    [ "eval_batch_tile", "classcanopy_1_1Function.html#a4bf7741f93a811a0570087ef4a3af738", null ],
+    [ "eval_batch_tile_soa", "classcanopy_1_1Function.html#a708e832fe8b8df864fc3cbd136b38061", null ],
+    [ "eval_pack", "classcanopy_1_1Function.html#a8330e61ac4354102ac78a051c1ff0063", null ],
+    [ "get_bins", "classcanopy_1_1Function.html#ad74c0875c1bcff11352251f3327771bb", null ],
+    [ "get_linear_bin", "classcanopy_1_1Function.html#a1e1182c274da024950002310a67e6be6", null ],
+    [ "get_subtrees", "classcanopy_1_1Function.html#a6836cb5f8ecd6c91ba0741bdd53b58da", null ],
+    [ "has_fast_quantize", "classcanopy_1_1Function.html#aba31f758ddf1e7b3e08a58f3615474b1", null ],
+    [ "leaf_id", "classcanopy_1_1Function.html#ac6a1d00e16ceed2955ff97b95a785856", null ],
+    [ "leaf_id_of", "classcanopy_1_1Function.html#a9fd52110b16d1dc8e20280ccf85edccc", null ],
+    [ "leaf_ids", "classcanopy_1_1Function.html#a78e67a23ab898bfdc353de920e3e2352", null ],
+    [ "memory_usage", "classcanopy_1_1Function.html#a6de317f8252a410c63976923a8c3e70f", null ],
+    [ "non_converged_panels", "classcanopy_1_1Function.html#a12c21eadcdf9a67d81dbc1f1d28c48d9", null ],
+    [ "num_leaves", "classcanopy_1_1Function.html#ad6a27a72630f176b7e65bbecdb06099d", null ],
+    [ "operator()", "classcanopy_1_1Function.html#a08e66f04193d15d061e36e8d852c7e96", null ],
+    [ "operator()", "classcanopy_1_1Function.html#ac9951016b48d2f7988ecb6d71eede455", null ],
+    [ "operator()", "classcanopy_1_1Function.html#a0081f6b5d03578a0ebe5b3ca690c95e1", null ],
+    [ "partition_into_leaves", "classcanopy_1_1Function.html#a508c71eb176001a390eef234de9990e5", null ],
+    [ "print_stats", "classcanopy_1_1Function.html#a90311dbe1ba9d57a52eb3ef51f5e69fb", null ],
+    [ "sorted", "classcanopy_1_1Function.html#a2b5ac71ae38ebf86e73e86dd17ca1891", null ]
+];
