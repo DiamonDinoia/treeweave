@@ -1,0 +1,56 @@
+window.BENCHMARK_DATA = {
+  "lastUpdate": 1780677220245,
+  "repoUrl": "https://github.com/DiamonDinoia/canopy",
+  "entries": {
+    "canopy batch eval": [
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": false,
+          "id": "ab1b3716c613424280baf320680076661386ef3e",
+          "message": "docs: unified callable + inferring fit; add the Fortran wrapper\n\nTop-level and bindings READMEs now show the called-object surface (point\nor batch, sorted=/transposed= flags) and that fit infers dim & out_dim, so\nthe common call is fit(f, a, b, tol). Add the Fortran wrapper to the\nbindings list, fix a stale Julia example (eval_multi -> b(...)), correct\nthe mechanism note (the opaque pointer is `context`, not `data`), and wire\nCANOPY_BUILD_FORTRAN / fortran_canopy into the CMake examples. Add\nbindings/fortran/README.md to the Doxyfile INPUT.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-05T11:07:39-04:00",
+          "tree_id": "a24f8591c75e1995680d05d31cb735ad392017e3",
+          "url": "https://github.com/DiamonDinoia/canopy/commit/ab1b3716c613424280baf320680076661386ef3e"
+        },
+        "date": 1780677219892,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000649947222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00418461399013149; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00108439825,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00294488583947772; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002069823,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0207140480674144; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001115416125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00947186360972252; batch=65536 pts/call"
+          }
+        ]
+      }
+    ]
+  }
+}
