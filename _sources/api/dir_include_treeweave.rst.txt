@@ -1,0 +1,26 @@
+.. _dir_include_treeweave:
+
+
+Directory treeweave
+===================
+
+
+|exhale_lsh| :ref:`Parent directory <dir_include>` (``include``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+
+*Directory path:* ``include/treeweave``
+
+Subdirectories
+--------------
+
+- :ref:`dir_include_treeweave_detail`
+
+
+Files
+-----
+
+- :ref:`file_include_treeweave_treeweave.hpp`
+
+

@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc:
+
+Function treeweave_transposed
+=============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_transposed(treeweave_t, const double *, double *const *, size_t)
+   :project: treeweave

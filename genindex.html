@@ -3,10 +3,9 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>treeweave &mdash; treeweave  documentation</title>
+  <title>Index &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
@@ -20,9 +19,8 @@
       <script src="_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
       <script src="_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Installation" href="install.html" /> 
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -33,7 +31,7 @@
 
           
           
-          <a href="#" class="icon icon-home">
+          <a href="index.html" class="icon icon-home">
             treeweave
           </a>
 <div role="search">
@@ -175,17 +173,17 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">treeweave</a>
+          <a href="index.html">treeweave</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">treeweave</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Index</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/genindex" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -193,154 +191,128 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="treeweave">
-<h1>treeweave<a class="headerlink" href="#treeweave" title="Link to this heading"></a></h1>
-<p><strong>Evaluate an expensive function millions of times, fast.</strong></p>
-<p>treeweave takes a function that is slow to compute — a special function, a
-kernel, the output of a costly model — and builds a drop-in replacement that
-returns the same answer to your chosen accuracy, far more cheaply. You pay the
-cost once, at fit time; every evaluation afterward is a quick polynomial lookup.</p>
-<p>Internally it fits your function piecewise with low-order polynomials (monomial basis, via polyfit)
-on an adaptive tree, refining only where the function is hard to approximate. It
-is conceptually like <code class="docutils literal notranslate"><span class="pre">chebfun</span></code>, but panelled — so it reaches the same
-tolerance at lower polynomial order, which is faster on modern SIMD hardware.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
 
-<span class="k">auto</span><span class="w"> </span><span class="n">runge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">25.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fast</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">runge</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span><span class="w">  </span><span class="c1">// fit once</span>
-<span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">fast</span><span class="p">(</span><span class="mf">0.3</span><span class="p">);</span><span class="w">                                        </span><span class="c1">// evaluate forever</span>
-</pre></div>
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#T"><strong>T</strong></a>
+ 
 </div>
-<p>Use it from <strong>C++</strong> (header-only), or from <strong>C</strong>, <strong>Fortran</strong>, <strong>Python</strong>,
-<strong>Julia</strong>, and <strong>MATLAB/Octave</strong> through a stable C ABI.</p>
-<section id="project-links">
-<h2>Project links<a class="headerlink" href="#project-links" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave">GitHub repository</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/issues">Issue tracker</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE">License (Apache-2.0)</a></p></li>
-<li><p><a class="reference external" href="https://diamondinoia.github.io/treeweave/dev/bench/">Benchmarks dashboard</a></p></li>
-</ul>
-</section>
-<section id="why-treeweave">
-<h2>Why treeweave<a class="headerlink" href="#why-treeweave" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><strong>Fit once, evaluate forever.</strong> Amortize an expensive function into a cheap
-polynomial lookup; trade a little memory for a lot of speed.</p></li>
-<li><p><strong>Adaptive paneling.</strong> Low-order polynomial panels on an adaptive tree reach
-the target tolerance at lower order than a single global fit — SIMD-friendly.</p></li>
-<li><p><strong>Six languages, one core.</strong> A stable C ABI (<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>) underpins
-Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.</p></li>
-<li><p><strong>Thread-safe by construction.</strong> A fitted object is immutable and its
-<code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe to call concurrently.</p></li>
-</ul>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#building-from-source">Building from source</a></li>
-</ul>
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html#_CPPv4I_NSt6size_tE_10EvalPolicy00EN9treeweave3fitEDa4Func6Domain6Domaind7options">treeweave::fit (C++ function)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quick start</a></li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guides/cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#d-fit">1-D fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7optionsE">treeweave::options (C++ struct)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#building">Building</a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7options22allow_max_depth_leavesE">treeweave::options::allow_max_depth_leaves (C++ member)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#build">Build</a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7options9max_depthE">treeweave::options::max_depth (C++ member)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/python.html">Python</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#build-from-source">Build from source</a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7options14max_memory_mibE">treeweave::options::max_memory_mib (C++ member)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/julia.html">Julia</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7options17min_uniform_depthE">treeweave::options::min_uniform_depth (C++ member)</a>
 </li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guides/options.html">Fit options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
-</ul>
+      <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7options8tol_kindE">treeweave::options::tol_kind (C++ member)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c-abi.html">C ABI reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
-</ul>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKindE">treeweave::TolKind (C++ enum)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="guides/performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#batch-over-scalar">Batch over scalar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
-</ul>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind10AbsoluteL2E">treeweave::TolKind::AbsoluteL2 (C++ enumerator)</a>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#what-costs-what">What costs what</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#tl-dr">TL;DR</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
-</ul>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind11AbsoluteMaxE">treeweave::TolKind::AbsoluteMax (C++ enumerator)</a>
 </li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/library_root.html">treeweave API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#file-hierarchy">File Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a></li>
-</ul>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind12AbsoluteTailE">treeweave::TolKind::AbsoluteTail (C++ enumerator)</a>
 </li>
-</ul>
-</div>
-</section>
-</section>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind10RelativeL2E">treeweave::TolKind::RelativeL2 (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind11RelativeMaxE">treeweave::TolKind::RelativeMax (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d.html#_CPPv4N9treeweave7TolKind12RelativeTailE">treeweave::TolKind::RelativeTail (C++ enumerator)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html#_CPPv415treeweave_batch11treeweave_tPKdPd6size_t">treeweave_batch (C++ function)</a>
+</li>
+      <li><a href="api/variable_treeweave_8h_1aeb7263890077f23fbd2f051f267e7138.html#_CPPv422treeweave_default_opts">treeweave_default_opts (C++ member)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html#_CPPv415treeweave_dtype11treeweave_t">treeweave_dtype (C++ function)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a1f639f41b2810d30f5d415f5af6a49d4.html#_CPPv417treeweave_dtype_t">treeweave_dtype_t (C++ enum)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a1f639f41b2810d30f5d415f5af6a49d4.html#_CPPv4N17treeweave_dtype_t13TREEWEAVE_F32E">treeweave_dtype_t::TREEWEAVE_F32 (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a1f639f41b2810d30f5d415f5af6a49d4.html#_CPPv4N17treeweave_dtype_t13TREEWEAVE_F64E">treeweave_dtype_t::TREEWEAVE_F64 (C++ enumerator)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html#_CPPv414treeweave_eval11treeweave_tPKdPd">treeweave_eval (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669.html#_CPPv413treeweave_fit16treeweave_func_tiiPKdPKddPvPK14treeweave_opts">treeweave_fit (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html#_CPPv414treeweave_free11treeweave_t">treeweave_free (C++ function)</a>
+</li>
+      <li><a href="api/typedef_treeweave_8h_1ad095928a162fe6d6917a1c96f51bf3cc.html#_CPPv416treeweave_func_t">treeweave_func_t (C++ type)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a95b15169a05e04ce66999163e109c141.html#_CPPv419treeweave_input_dim11treeweave_t">treeweave_input_dim (C++ function)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b.html#_CPPv420treeweave_last_errorv">treeweave_last_error (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a5dccb13cc6f838eda1f9380fec949649.html#_CPPv422treeweave_memory_usage11treeweave_t">treeweave_memory_usage (C++ function)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv414treeweave_opts">treeweave_opts (C++ struct)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv4N14treeweave_opts22allow_max_depth_leavesE">treeweave_opts::allow_max_depth_leaves (C++ member)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv4N14treeweave_opts9max_depthE">treeweave_opts::max_depth (C++ member)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv4N14treeweave_opts14max_memory_mibE">treeweave_opts::max_memory_mib (C++ member)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv4N14treeweave_opts17min_uniform_depthE">treeweave_opts::min_uniform_depth (C++ member)</a>
+</li>
+      <li><a href="api/structtreeweave__opts.html#_CPPv4N14treeweave_opts8tol_kindE">treeweave_opts::tol_kind (C++ member)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad.html#_CPPv420treeweave_output_dim11treeweave_t">treeweave_output_dim (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html#_CPPv421treeweave_print_stats11treeweave_t">treeweave_print_stats (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html#_CPPv416treeweave_sorted11treeweave_tPKdPd6size_t">treeweave_sorted (C++ function)</a>
+</li>
+      <li><a href="api/typedef_treeweave_8h_1abac62693503605964b20ccd8e187eab9.html#_CPPv411treeweave_t">treeweave_t (C++ type)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv420treeweave_tol_kind_t">treeweave_tol_kind_t (C++ enum)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t21TREEWEAVE_ABSOLUTE_L2E">treeweave_tol_kind_t::TREEWEAVE_ABSOLUTE_L2 (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t22TREEWEAVE_ABSOLUTE_MAXE">treeweave_tol_kind_t::TREEWEAVE_ABSOLUTE_MAX (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t23TREEWEAVE_ABSOLUTE_TAILE">treeweave_tol_kind_t::TREEWEAVE_ABSOLUTE_TAIL (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t21TREEWEAVE_RELATIVE_L2E">treeweave_tol_kind_t::TREEWEAVE_RELATIVE_L2 (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t22TREEWEAVE_RELATIVE_MAXE">treeweave_tol_kind_t::TREEWEAVE_RELATIVE_MAX (C++ enumerator)</a>
+</li>
+      <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t23TREEWEAVE_RELATIVE_TAILE">treeweave_tol_kind_t::TREEWEAVE_RELATIVE_TAIL (C++ enumerator)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html#_CPPv420treeweave_transposed11treeweave_tPKdPPCd6size_t">treeweave_transposed (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html#_CPPv416treeweavef_batch11treeweave_tPKfPf6size_t">treeweavef_batch (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html#_CPPv415treeweavef_eval11treeweave_tPKfPf">treeweavef_eval (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1aad5911412b8ba621b5fd197a30699833.html#_CPPv414treeweavef_fit17treeweavef_func_tiiPKfPKfdPvPK14treeweave_opts">treeweavef_fit (C++ function)</a>
+</li>
+      <li><a href="api/typedef_treeweave_8h_1a7bdbc48d165b8f6d7e5cebb858c7bea5.html#_CPPv417treeweavef_func_t">treeweavef_func_t (C++ type)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a4fe6e28cdf97f79437b3f4b82c78c1c7.html#_CPPv417treeweavef_sorted11treeweave_tPKfPf6size_t">treeweavef_sorted (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1a6eb917e13d058193f365f4fb235c568a.html#_CPPv421treeweavef_transposed11treeweave_tPKfPPCf6size_t">treeweavef_transposed (C++ function)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

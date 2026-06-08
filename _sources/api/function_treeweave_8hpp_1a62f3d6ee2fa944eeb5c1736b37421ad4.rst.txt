@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4:
+
+Template Function treeweave::fit
+================================
+
+- Defined in :ref:`file_include_treeweave_treeweave.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::fit(Func, Domain, Domain, double, options)
+   :project: treeweave

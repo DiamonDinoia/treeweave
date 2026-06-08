@@ -1,0 +1,78 @@
+treeweave
+=========
+
+**Evaluate an expensive function millions of times, fast.**
+
+treeweave takes a function that is slow to compute — a special function, a
+kernel, the output of a costly model — and builds a drop-in replacement that
+returns the same answer to your chosen accuracy, far more cheaply. You pay the
+cost once, at fit time; every evaluation afterward is a quick polynomial lookup.
+
+Internally it fits your function piecewise with low-order polynomials (monomial basis, via polyfit)
+on an adaptive tree, refining only where the function is hard to approximate. It
+is conceptually like ``chebfun``, but panelled — so it reaches the same
+tolerance at lower polynomial order, which is faster on modern SIMD hardware.
+
+.. code-block:: cpp
+
+   #include <treeweave/treeweave.hpp>
+
+   auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
+   auto fast  = treeweave::fit(runge, -1.0, 1.0, /*tol=*/1e-10);  // fit once
+   double y   = fast(0.3);                                        // evaluate forever
+
+Use it from **C++** (header-only), or from **C**, **Fortran**, **Python**,
+**Julia**, and **MATLAB/Octave** through a stable C ABI.
+
+Project links
+-------------
+
+- `GitHub repository <https://github.com/DiamonDinoia/treeweave>`_
+- `Issue tracker <https://github.com/DiamonDinoia/treeweave/issues>`_
+- `Releases <https://github.com/DiamonDinoia/treeweave/releases>`_
+- `License (Apache-2.0) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_
+- `Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_
+
+Why treeweave
+-------------
+
+- **Fit once, evaluate forever.** Amortize an expensive function into a cheap
+  polynomial lookup; trade a little memory for a lot of speed.
+- **Adaptive paneling.** Low-order polynomial panels on an adaptive tree reach
+  the target tolerance at lower order than a single global fit — SIMD-friendly.
+- **Six languages, one core.** A stable C ABI (``libtreeweave_c``) underpins
+  Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.
+- **Thread-safe by construction.** A fitted object is immutable and its
+  ``operator()`` is safe to call concurrently.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Getting Started
+
+   install
+   guides/quickstart
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Language guides
+
+   guides/cpp
+   guides/c
+   guides/fortran
+   guides/python
+   guides/julia
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   guides/options
+   guides/c-abi
+   guides/performance
+   how-treeweave-works
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/library_root

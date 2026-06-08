@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669:
+
+Function treeweave_fit
+======================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_fit(treeweave_func_t, int, int, const double *, const double *, double, void *, const treeweave_opts *)
+   :project: treeweave

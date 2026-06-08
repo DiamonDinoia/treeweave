@@ -3,15 +3,15 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>treeweave &mdash; treeweave  documentation</title>
+  <title>Search &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
 
   
+    
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
@@ -20,9 +20,10 @@
       <script src="_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
       <script src="_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
     <script src="_static/js/theme.js"></script>
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Installation" href="install.html" /> 
+    <link rel="search" title="Search" href="#" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -33,11 +34,11 @@
 
           
           
-          <a href="#" class="icon icon-home">
+          <a href="index.html" class="icon icon-home">
             treeweave
           </a>
 <div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+  <form id="rtd-search-form" class="wy-form" action="#" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
@@ -175,17 +176,16 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">treeweave</a>
+          <a href="index.html">treeweave</a>
       </nav>
 
       <div class="wy-nav-content">
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">treeweave</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Search</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/index.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -193,154 +193,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="treeweave">
-<h1>treeweave<a class="headerlink" href="#treeweave" title="Link to this heading"></a></h1>
-<p><strong>Evaluate an expensive function millions of times, fast.</strong></p>
-<p>treeweave takes a function that is slow to compute — a special function, a
-kernel, the output of a costly model — and builds a drop-in replacement that
-returns the same answer to your chosen accuracy, far more cheaply. You pay the
-cost once, at fit time; every evaluation afterward is a quick polynomial lookup.</p>
-<p>Internally it fits your function piecewise with low-order polynomials (monomial basis, via polyfit)
-on an adaptive tree, refining only where the function is hard to approximate. It
-is conceptually like <code class="docutils literal notranslate"><span class="pre">chebfun</span></code>, but panelled — so it reaches the same
-tolerance at lower polynomial order, which is faster on modern SIMD hardware.</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
+  <noscript>
+  <div id="fallback" class="admonition warning">
+    <p class="last">
+      Please activate JavaScript to enable the search functionality.
+    </p>
+  </div>
+  </noscript>
 
-<span class="k">auto</span><span class="w"> </span><span class="n">runge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">25.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fast</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">runge</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span><span class="w">  </span><span class="c1">// fit once</span>
-<span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">fast</span><span class="p">(</span><span class="mf">0.3</span><span class="p">);</span><span class="w">                                        </span><span class="c1">// evaluate forever</span>
-</pre></div>
-</div>
-<p>Use it from <strong>C++</strong> (header-only), or from <strong>C</strong>, <strong>Fortran</strong>, <strong>Python</strong>,
-<strong>Julia</strong>, and <strong>MATLAB/Octave</strong> through a stable C ABI.</p>
-<section id="project-links">
-<h2>Project links<a class="headerlink" href="#project-links" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave">GitHub repository</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/issues">Issue tracker</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases</a></p></li>
-<li><p><a class="reference external" href="https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE">License (Apache-2.0)</a></p></li>
-<li><p><a class="reference external" href="https://diamondinoia.github.io/treeweave/dev/bench/">Benchmarks dashboard</a></p></li>
-</ul>
-</section>
-<section id="why-treeweave">
-<h2>Why treeweave<a class="headerlink" href="#why-treeweave" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><strong>Fit once, evaluate forever.</strong> Amortize an expensive function into a cheap
-polynomial lookup; trade a little memory for a lot of speed.</p></li>
-<li><p><strong>Adaptive paneling.</strong> Low-order polynomial panels on an adaptive tree reach
-the target tolerance at lower order than a single global fit — SIMD-friendly.</p></li>
-<li><p><strong>Six languages, one core.</strong> A stable C ABI (<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>) underpins
-Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.</p></li>
-<li><p><strong>Thread-safe by construction.</strong> A fitted object is immutable and its
-<code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe to call concurrently.</p></li>
-</ul>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#building-from-source">Building from source</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quick start</a></li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guides/cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#d-fit">1-D fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#building">Building</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#build">Build</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/python.html">Python</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/python.html#build-from-source">Build from source</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/julia.html">Julia</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guides/options.html">Fit options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c-abi.html">C ABI reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#batch-over-scalar">Batch over scalar</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#what-costs-what">What costs what</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#tl-dr">TL;DR</a></li>
-<li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api/library_root.html">treeweave API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#file-hierarchy">File Hierarchy</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-</section>
-
+  
+  <div id="search-results">
+  
+  </div>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 
@@ -362,7 +230,14 @@ Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.</p></li>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+  <script>
+    jQuery(function() { Search.loadIndex("searchindex.js"); });
+  </script>
+  
+  <script id="searchindexloader"></script>
+   
+
 
 </body>
 </html>

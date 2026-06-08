@@ -1,0 +1,17 @@
+.. _exhale_struct_structtreeweave_1_1options:
+
+Struct options
+==============
+
+- Defined in :ref:`file_include_treeweave_treeweave.hpp`
+
+
+Struct Documentation
+--------------------
+
+
+.. doxygenstruct:: treeweave::options
+   :project: treeweave
+   :members:
+   :protected-members:
+   :undoc-members:

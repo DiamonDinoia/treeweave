@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497:
+
+Function treeweave_free
+=======================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_free(treeweave_t)
+   :project: treeweave

@@ -1,0 +1,64 @@
+C
+=
+
+The C ABI (``libtreeweave_c``, header ``treeweave.h``) is the stable, installable
+surface that every non-C++ binding sits on. Precision lives in the prefix,
+FINUFFT/FFTW style: ``treeweave_*`` operates on ``double``, ``treeweavef_*`` on
+``float``.
+
+Minimal example
+---------------
+
+.. code-block:: c
+
+   #include <treeweave.h>
+   #include <math.h>
+   #include <stdio.h>
+
+   /* f(x) = exp(x) on [0, 1). input_dim == output_dim == 1. */
+   static void kernel(const double *x, double *y, void *context) {
+       (void)context;
+       y[0] = exp(x[0]);
+   }
+
+   int main(void) {
+       double a = 0.0, b = 1.0;
+       treeweave_t fn = treeweave_fit(kernel, /*input_dim=*/1, /*output_dim=*/1,
+                                      &a, &b, /*tol=*/1e-10,
+                                      /*context=*/NULL, /*opts=*/NULL);
+       if (!fn) { fprintf(stderr, "fit failed: %s\n", treeweave_last_error()); return 1; }
+
+       double x = 0.5, y;
+       treeweave_eval(fn, &x, &y);          /* scalar eval */
+       printf("exp(0.5) ~= %.12f\n", y);
+
+       fn = treeweave_free(fn);
+       return 0;
+   }
+
+Evaluation entry points
+-----------------------
+
+- ``treeweave_eval(fn, x, y)`` — one point.
+- ``treeweave_batch(fn, x, res, n)`` — ``n`` points, array-of-structs layout.
+- ``treeweave_sorted(fn, x, res, n)`` — 1-D fast path for ascending inputs.
+- ``treeweave_transposed(fn, x, soa, n)`` — struct-of-arrays output for
+  multi-output fits.
+
+``context`` carries optional callback state (the C analogue of a C++ lambda
+capture); ``opts`` is ``NULL`` for ``treeweave_default_opts``. Errors return
+``NULL`` / write nothing and set the thread-local ``treeweave_last_error()``.
+
+Building
+--------
+
+Link the shared or static C library:
+
+.. code-block:: cmake
+
+   find_package(treeweave REQUIRED)
+   target_link_libraries(my_app PRIVATE treeweave::treeweave_c)
+
+See :doc:`c-abi` for the full entry-point list, the float twins, and multi-arch
+dispatch. Runnable C sources:
+`examples/C/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/C>`_.

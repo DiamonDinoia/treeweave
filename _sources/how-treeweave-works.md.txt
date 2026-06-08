@@ -1,0 +1,254 @@
+# How treeweave works
+
+Treeweave turns an expensive function `f(x)` into a cheap lookup by precomputing
+a **piecewise polynomial approximation** on an **adaptive tree**. Cost: memory
+plus a one-time fit. Payoff: every later call is a tree descent followed by
+a degree-8 polynomial evaluation.
+
+```
+   user calls fn(x), fn(x), fn(x)... a million times.
+              │
+              ▼
+   ┌──────────────────────────────────────┐
+   │  fit once:  treeweave::fit(f, a, b)     │  ◄── slow: runs f(x) on Chebyshev
+   └──────────────────────────────────────┘      nodes, splits panels until
+              │                                  tolerance is met.
+              ▼
+   ┌──────────────────────────────────────┐
+   │  Function fn   (immutable)           │  ◄── tree + per-leaf polynomials.
+   └──────────────────────────────────────┘
+              │
+              ▼
+   fn(x) ──► descend tree ──► Horner on leaf coeffs ──► y
+   (cheap, no f() calls anymore)
+```
+
+## Phase 1 — fit: adaptive paneling
+
+Start with the whole domain as one box. Try to fit a degree-D polynomial
+(monomial basis, via polyfit, sampled at Chebyshev nodes). If error too large,
+split into `2^Dim` children and recurse.
+Stop when each leaf passes the tolerance check.
+
+```
+   1D example, fitting f on [a, b]:
+
+                           root [a, b]
+                         deg-8 fit FAILS
+                      split into 2 children
+                                │
+                  ┌─────────────┴─────────────┐
+                  │                           │
+                  L                           R
+              [a, mid]                    [mid, b]
+              fit OK ✓                    fit FAILS
+             ── leaf ──                  split again
+                                              │
+                                    ┌─────────┴─────────┐
+                                    │                   │
+                                    RL                  RR
+                                [mid, q]             [q, b]
+                                fit OK ✓            fit OK ✓
+                               ── leaf ──          ── leaf ──
+```
+
+Each leaf is one box from the original bracket-view paneling: root → split into
+`L` (fits) and `R` (fails) → `R` splits into `RL` and `RR` (both fit). Internal
+nodes (`root`, `R`) carry a `first_child_idx` pointing at the first of their two
+children in the flat `nodes_[]` array; leaves (`L`, `RL`, `RR`) carry a
+`poly_eval_id` that indexes into `polyfits_[]`. A descent for a query `x` walks
+one path from root to leaf, picking the child with `x` on the correct side of
+`center` at each level. In ND, swap binary splits for `2^Dim` children per
+internal node — quadtree (4) in 2D, octree (8) in 3D.
+
+In 2D / 3D the same idea applies, but each split is into 4 / 8 children
+(quadtree / octree).
+
+```
+   uniform quadtree         adaptive: more leaves
+                            where f varies fast
+   ┌───────┬───────┐        ┌───┬───┬───────────┐
+   │       │       │        │   │   │           │
+   │   .   │   .   │        │ . │ . │     .     │
+   │       │       │        ├───┼───┤           │
+   ├───────┼───────┤        │ . │ . │           │
+   │       │       │        ├───┴───┼───────────┤
+   │   .   │   .   │        │       │           │
+   │       │       │        │   .   │     .     │
+   └───────┴───────┘        └───────┴───────────┘
+```
+
+The result is stored in two flat arrays (Struct-of-Arrays for cache
+locality):
+
+```
+   nodes_[]   — the tree (24/32/40 B per node for 1D/2D/3D)
+   ┌────┬────┬────┬─────────┬────┬────┬─────────────────────────┐
+   │ N0 │ N1 │ N2 │   ...   │ Ni │... │ each Node carries:      │
+   └────┴────┴────┴─────────┴────┴────┴─────────────────────────┘
+                                        • center (split point)
+                                        • first_child_idx
+                                            (or 0xFFFFFFFF if leaf)
+                                        • poly_eval_id
+                                            → polyfits_[id]
+
+   polyfits_[]   — per-leaf monomial coefficients (packed)
+   ┌──────────┬──────────┬──────────┬──────────┐
+   │   P0     │   P1     │   ...    │   Pk     │
+   └──────────┴──────────┴──────────┴──────────┘
+```
+
+Why flat arrays of indices instead of pointers + children? Because the
+descent's bottleneck is L1 load latency (Phase 7 closed at 17.1 cycles per
+iteration, IPC 0.88, scheduler-queue full 89%). Packing nodes contiguously
+and reading only `first_child_idx` per level minimises the dependent-load
+chain.
+
+## Phase 2 — eval: descent
+
+Given a query point `x`, walk down the tree:
+
+```
+   x = 0.37 (1D)
+
+   ┌──────────────────────────────────┐
+   │ Node 0:  center = 0.5            │   x < 0.5  → child 0
+   │          first_child = 1         │
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   ┌──────────────────────────────────┐
+   │ Node 1:  center = 0.25           │   x > 0.25 → child 1
+   │          first_child = 5         │
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   ┌──────────────────────────────────┐
+   │ Node 6:  first_child = MAX       │   ◄── leaf!  poly_eval_id = 17
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   polyfits_[17].eval(x) → y
+```
+
+In ND, the child index is built one bit per axis — one comparison per axis,
+4 children per 2D node, 8 per 3D node:
+
+```
+   2D quadtree at one level:
+
+   ┌───────┬───────┐         child_idx = (x > cx) << 0
+   │  10   │  11   │                   | (y > cy) << 1
+   │ (NW)  │ (NE)  │
+   ├───────●───────┤         the bullet is (cx, cy), the
+   │  00   │  01   │         node's split point.
+   │ (SW)  │ (SE)  │
+   └───────┴───────┘
+```
+
+## Phase 3 — leaf evaluation: tensor-product Horner
+
+The leaf carries monomial coefficients `c[k_0, k_1, ..., k_{n-1}]`.
+Evaluation collapses one axis at a time using Horner's rule. Total cost:
+**`K^n − 1` FMAs** where `K = degree + 1`.
+
+```
+   1D Horner (K = 9):              2D Horner (K = 9):
+
+   y = c[8]                        for j in 0..8:
+   for k in 7..0:                      y_j = (1D Horner over axis 1)
+       y = y * x + c[k]
+                                   y = y_8
+   8 FMAs total, single chain.     for j in 7..0:
+                                       y = y * x_0 + y_j
+
+                                   80 FMAs total, two nested chains.
+```
+
+For 3D the cost is `9^3 − 1 = 728` FMAs per evaluation. The shipped kernel
+batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
+when the leaf is hot in L1.
+
+## Phase 4 — batched eval: counting sort by leaf
+
+This is what makes treeweave fast on million-point batches. Naive batch:
+1M points × independent descents × independent polyfits → terrible cache
+behaviour. Optimised path:
+
+```
+   xp[N] — caller's points, mixed across leaves:
+
+   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+   │ L3 │ L0 │ L3 │ L1 │ L0 │ L3 │ L0 │ L1 │ L3 │   each cell tagged with
+   └────┴────┴────┴────┴────┴────┴────┴────┴────┘   its leaf id
+
+   step 1: descend each x → leaf_ids[i]
+   step 2: counting sort → permute into packed buffer:
+
+   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+   │ L0 │ L0 │ L0 │ L1 │ L1 │ L3 │ L3 │ L3 │ L3 │   one contiguous run per
+   └────┴────┴────┴────┴────┴────┴────┴────┴────┘   leaf
+   └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
+          │            │              │
+          ▼            ▼              ▼
+       polyfit      polyfit        polyfit             ◄── one SIMD batch call
+     kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
+                                                       in L1.
+
+   step 3: permute outputs back to caller order.
+```
+
+Leaf coefficients stay loaded across all points in that leaf's run, so the
+AVX2 FMA kernel runs at peak. Per-call scratch (`leaf_ids`, `counts`,
+`offsets`, `perm`, `xp_packed`, `out_packed`) is `thread_local` so threaded
+callers don't contend.
+
+## What costs what
+
+Phase-7 attribution at 3D deg=8, N = 10^6:
+
+```
+                          % of runtime
+   tree descent        │█████████████████████  55 %   ◄── L1 load-use bound,
+                       │                                  at silicon floor
+   polyfit FMA kernel  │████████               20 %
+   input scatter       │███                     8 %
+   stl_vector indexing │███                     8 %
+   output permute      │██                    6.5 %
+                       └────────────────────────────────►
+                       0              50               100 %
+```
+
+End-to-end ceiling on one P-core: ~7 % of FMA peak (76.8 GFLOPS DP). The
+55 % descent is at the load-use latency floor; closing the rest needs
+parallel hardware — which is why Phase 8 locks down `operator()`
+thread-safety so callers can chunk and thread externally.
+
+## TL;DR
+
+```
+   treeweave  =  k-d tree of monomial polynomials
+              + flat-array descent (load-use bound)
+              + counting-sort batched leaf evaluation
+              + thread-safe immutable Function
+```
+
+One fit, immutable `Function`, cheap evaluations forever — the "baobab tree
+of life" naming.
+
+## Degree selection: C ABI vs C++ header API
+
+The **C++ header API** (`treeweave::fit<Degree>(...)`) requires the leaf degree
+as a compile-time template parameter, letting you tune or override it per
+call site. Supported values are any positive integer; 8 is the default
+(matches one AVX2 / AVX-512 register lane).
+
+The **C ABI** (`treeweave_fit` for double / `treeweavef_fit` for float in
+`treeweave.h` — precision lives in the prefix, FINUFFT/FFTW style) takes no
+degree argument. Instead it picks a register-optimal, spill-free degree at
+runtime based on the detected CPU vector width. On x86 the multi-arch
+dispatch path — enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON` — selects
+among compiled-in ISA variants (SSE4.2, AVX2, AVX-512) so the best leaf size
+for the host CPU is used automatically. Accuracy is driven entirely by the
+`tol` parameter; the adaptive tree refines until every leaf meets tolerance
+regardless of which degree is chosen.

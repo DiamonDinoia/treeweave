@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e:
+
+Function treeweavef_batch
+=========================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweavef_batch(treeweave_t, const float *, float *, size_t)
+   :project: treeweave

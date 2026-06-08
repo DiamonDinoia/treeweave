@@ -1,0 +1,41 @@
+
+.. _file_include_treeweave_detail_tol_kind.hpp:
+
+File tol_kind.hpp
+=================
+
+|exhale_lsh| :ref:`Parent directory <dir_include_treeweave_detail>` (``include/treeweave/detail``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+
+.. contents:: Contents
+   :local:
+   :backlinks: none
+
+Definition (``include/treeweave/detail/tol_kind.hpp``)
+------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+Namespaces
+----------
+
+
+- :ref:`namespace_treeweave`
+
+
+Enums
+-----
+
+
+- :ref:`exhale_enum_tol__kind_8hpp_1a5efdbf55dda356ce7e334870a61a2d4d`
+

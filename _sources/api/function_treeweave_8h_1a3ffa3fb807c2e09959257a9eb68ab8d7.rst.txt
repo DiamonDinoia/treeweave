@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7:
+
+Function treeweave_print_stats
+==============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_print_stats(treeweave_t)
+   :project: treeweave

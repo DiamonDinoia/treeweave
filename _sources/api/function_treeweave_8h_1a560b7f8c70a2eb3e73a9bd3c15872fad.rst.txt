@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad:
+
+Function treeweave_output_dim
+=============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_output_dim(treeweave_t)
+   :project: treeweave

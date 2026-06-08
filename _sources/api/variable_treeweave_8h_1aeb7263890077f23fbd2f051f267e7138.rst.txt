@@ -1,0 +1,14 @@
+.. _exhale_variable_treeweave_8h_1aeb7263890077f23fbd2f051f267e7138:
+
+Variable treeweave_default_opts
+===============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Variable Documentation
+----------------------
+
+
+.. doxygenvariable:: treeweave_default_opts
+   :project: treeweave

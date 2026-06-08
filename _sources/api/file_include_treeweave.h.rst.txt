@@ -1,0 +1,106 @@
+
+.. _file_include_treeweave.h:
+
+File treeweave.h
+================
+
+|exhale_lsh| :ref:`Parent directory <dir_include>` (``include``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+
+.. contents:: Contents
+   :local:
+   :backlinks: none
+
+Definition (``include/treeweave.h``)
+------------------------------------
+
+
+
+
+
+
+Includes
+--------
+
+
+- ``stddef.h``
+
+
+
+
+
+
+Classes
+-------
+
+
+- :ref:`exhale_struct_structtreeweave__opts`
+
+
+Enums
+-----
+
+
+- :ref:`exhale_enum_treeweave_8h_1a1f639f41b2810d30f5d415f5af6a49d4`
+
+- :ref:`exhale_enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3`
+
+
+Functions
+---------
+
+
+- :ref:`exhale_function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad`
+
+- :ref:`exhale_function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8`
+
+- :ref:`exhale_function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4`
+
+- :ref:`exhale_function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669`
+
+- :ref:`exhale_function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497`
+
+- :ref:`exhale_function_treeweave_8h_1a95b15169a05e04ce66999163e109c141`
+
+- :ref:`exhale_function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b`
+
+- :ref:`exhale_function_treeweave_8h_1a5dccb13cc6f838eda1f9380fec949649`
+
+- :ref:`exhale_function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad`
+
+- :ref:`exhale_function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7`
+
+- :ref:`exhale_function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd`
+
+- :ref:`exhale_function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc`
+
+- :ref:`exhale_function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e`
+
+- :ref:`exhale_function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87`
+
+- :ref:`exhale_function_treeweave_8h_1aad5911412b8ba621b5fd197a30699833`
+
+- :ref:`exhale_function_treeweave_8h_1a4fe6e28cdf97f79437b3f4b82c78c1c7`
+
+- :ref:`exhale_function_treeweave_8h_1a6eb917e13d058193f365f4fb235c568a`
+
+
+Typedefs
+--------
+
+
+- :ref:`exhale_typedef_treeweave_8h_1ad095928a162fe6d6917a1c96f51bf3cc`
+
+- :ref:`exhale_typedef_treeweave_8h_1abac62693503605964b20ccd8e187eab9`
+
+- :ref:`exhale_typedef_treeweave_8h_1a7bdbc48d165b8f6d7e5cebb858c7bea5`
+
+
+Variables
+---------
+
+
+- :ref:`exhale_variable_treeweave_8h_1aeb7263890077f23fbd2f051f267e7138`
+

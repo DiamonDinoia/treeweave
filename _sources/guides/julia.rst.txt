@@ -1,0 +1,47 @@
+Julia
+=====
+
+Install
+-------
+
+.. code-block:: julia
+
+   using Pkg
+   Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")
+
+On first build the package downloads the matching ``libtreeweave_c`` from the
+GitHub Release and caches it. Override with the ``TREEWEAVE_REPO`` environment
+variable, or point ``LIBTREEWEAVE_C`` at a local build.
+
+Minimal example
+---------------
+
+.. code-block:: julia
+
+   using Treeweave
+
+   f = x -> exp(0.5x) + sin(3x)
+   approx = fit(f, 0.0, 2.0, 1e-10)
+   println(approx, "  memory: ", memory_usage(approx), " bytes")
+
+   y = approx(1.0)                     # single point
+
+   # Batch eval — the handle is called directly. Sample [a, b) (b exclusive).
+   xs = collect(range(0.0, 2.0; length = 1001))[1:end-1]
+   ys = approx(xs)
+
+``fit`` infers the dimensions from the callable, so the common case is
+``fit(f, a, b, tol)``. The fitted object is called directly for a point or a
+batch; tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
+
+Build / test against a local library
+------------------------------------
+
+.. code-block:: bash
+
+   cmake --preset bindings-julia
+   cmake --build build/bindings-julia -j --target treeweave_c
+   ctest --test-dir build/bindings-julia -R julia_treeweave
+
+Examples:
+`bindings/julia/Treeweave/examples/ <https://github.com/DiamonDinoia/treeweave/tree/main/bindings/julia/Treeweave/examples>`_.

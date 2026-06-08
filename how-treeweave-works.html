@@ -1,0 +1,465 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How treeweave works &mdash; treeweave  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
+      <script src="_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="treeweave API Reference" href="api/library_root.html" />
+    <link rel="prev" title="Performance" href="guides/performance.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            treeweave
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#building-from-source">Building from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quick start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#building">Building</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#build">Build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/python.html">Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/python.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/python.html#build-from-source">Build from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/julia.html">Julia</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="guides/options.html">Fit options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/c-abi.html">C ABI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#fit">Fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#batch-over-scalar">Batch over scalar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How treeweave works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-costs-what">What costs what</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tl-dr">TL;DR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/library_root.html">treeweave API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#file-hierarchy">File Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/library_root.html#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669.html">Function treeweave_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html">Function treeweave_free</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a95b15169a05e04ce66999163e109c141.html">Function treeweave_input_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b.html">Function treeweave_last_error</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a5dccb13cc6f838eda1f9380fec949649.html">Function treeweave_memory_usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad.html">Function treeweave_output_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1aad5911412b8ba621b5fd197a30699833.html">Function treeweavef_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a4fe6e28cdf97f79437b3f4b82c78c1c7.html">Function treeweavef_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a6eb917e13d058193f365f4fb235c568a.html">Function treeweavef_transposed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/library_root.html#directories">Directories</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/dir_include.html">Directory include</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/dir_include_treeweave.html">Directory treeweave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/dir_include_treeweave_detail.html">Directory detail</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave.h.html">File treeweave.h</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">treeweave</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How treeweave works</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/how-treeweave-works.md" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-treeweave-works">
+<h1>How treeweave works<a class="headerlink" href="#how-treeweave-works" title="Link to this heading"></a></h1>
+<p>Treeweave turns an expensive function <code class="docutils literal notranslate"><span class="pre">f(x)</span></code> into a cheap lookup by precomputing
+a <strong>piecewise polynomial approximation</strong> on an <strong>adaptive tree</strong>. Cost: memory
+plus a one-time fit. Payoff: every later call is a tree descent followed by
+a degree-8 polynomial evaluation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   user calls fn(x), fn(x), fn(x)... a million times.
+              │
+              ▼
+   ┌──────────────────────────────────────┐
+   │  fit once:  treeweave::fit(f, a, b)     │  ◄── slow: runs f(x) on Chebyshev
+   └──────────────────────────────────────┘      nodes, splits panels until
+              │                                  tolerance is met.
+              ▼
+   ┌──────────────────────────────────────┐
+   │  Function fn   (immutable)           │  ◄── tree + per-leaf polynomials.
+   └──────────────────────────────────────┘
+              │
+              ▼
+   fn(x) ──► descend tree ──► Horner on leaf coeffs ──► y
+   (cheap, no f() calls anymore)
+</pre></div>
+</div>
+<section id="phase-1-fit-adaptive-paneling">
+<h2>Phase 1 — fit: adaptive paneling<a class="headerlink" href="#phase-1-fit-adaptive-paneling" title="Link to this heading"></a></h2>
+<p>Start with the whole domain as one box. Try to fit a degree-D polynomial
+(monomial basis, via polyfit, sampled at Chebyshev nodes). If error too large,
+split into <code class="docutils literal notranslate"><span class="pre">2^Dim</span></code> children and recurse.
+Stop when each leaf passes the tolerance check.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   1D example, fitting f on [a, b]:
+
+                           root [a, b]
+                         deg-8 fit FAILS
+                      split into 2 children
+                                │
+                  ┌─────────────┴─────────────┐
+                  │                           │
+                  L                           R
+              [a, mid]                    [mid, b]
+              fit OK ✓                    fit FAILS
+             ── leaf ──                  split again
+                                              │
+                                    ┌─────────┴─────────┐
+                                    │                   │
+                                    RL                  RR
+                                [mid, q]             [q, b]
+                                fit OK ✓            fit OK ✓
+                               ── leaf ──          ── leaf ──
+</pre></div>
+</div>
+<p>Each leaf is one box from the original bracket-view paneling: root → split into
+<code class="docutils literal notranslate"><span class="pre">L</span></code> (fits) and <code class="docutils literal notranslate"><span class="pre">R</span></code> (fails) → <code class="docutils literal notranslate"><span class="pre">R</span></code> splits into <code class="docutils literal notranslate"><span class="pre">RL</span></code> and <code class="docutils literal notranslate"><span class="pre">RR</span></code> (both fit). Internal
+nodes (<code class="docutils literal notranslate"><span class="pre">root</span></code>, <code class="docutils literal notranslate"><span class="pre">R</span></code>) carry a <code class="docutils literal notranslate"><span class="pre">first_child_idx</span></code> pointing at the first of their two
+children in the flat <code class="docutils literal notranslate"><span class="pre">nodes_[]</span></code> array; leaves (<code class="docutils literal notranslate"><span class="pre">L</span></code>, <code class="docutils literal notranslate"><span class="pre">RL</span></code>, <code class="docutils literal notranslate"><span class="pre">RR</span></code>) carry a
+<code class="docutils literal notranslate"><span class="pre">poly_eval_id</span></code> that indexes into <code class="docutils literal notranslate"><span class="pre">polyfits_[]</span></code>. A descent for a query <code class="docutils literal notranslate"><span class="pre">x</span></code> walks
+one path from root to leaf, picking the child with <code class="docutils literal notranslate"><span class="pre">x</span></code> on the correct side of
+<code class="docutils literal notranslate"><span class="pre">center</span></code> at each level. In ND, swap binary splits for <code class="docutils literal notranslate"><span class="pre">2^Dim</span></code> children per
+internal node — quadtree (4) in 2D, octree (8) in 3D.</p>
+<p>In 2D / 3D the same idea applies, but each split is into 4 / 8 children
+(quadtree / octree).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   uniform quadtree         adaptive: more leaves
+                            where f varies fast
+   ┌───────┬───────┐        ┌───┬───┬───────────┐
+   │       │       │        │   │   │           │
+   │   .   │   .   │        │ . │ . │     .     │
+   │       │       │        ├───┼───┤           │
+   ├───────┼───────┤        │ . │ . │           │
+   │       │       │        ├───┴───┼───────────┤
+   │   .   │   .   │        │       │           │
+   │       │       │        │   .   │     .     │
+   └───────┴───────┘        └───────┴───────────┘
+</pre></div>
+</div>
+<p>The result is stored in two flat arrays (Struct-of-Arrays for cache
+locality):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   nodes_[]   — the tree (24/32/40 B per node for 1D/2D/3D)
+   ┌────┬────┬────┬─────────┬────┬────┬─────────────────────────┐
+   │ N0 │ N1 │ N2 │   ...   │ Ni │... │ each Node carries:      │
+   └────┴────┴────┴─────────┴────┴────┴─────────────────────────┘
+                                        • center (split point)
+                                        • first_child_idx
+                                            (or 0xFFFFFFFF if leaf)
+                                        • poly_eval_id
+                                            → polyfits_[id]
+
+   polyfits_[]   — per-leaf monomial coefficients (packed)
+   ┌──────────┬──────────┬──────────┬──────────┐
+   │   P0     │   P1     │   ...    │   Pk     │
+   └──────────┴──────────┴──────────┴──────────┘
+</pre></div>
+</div>
+<p>Why flat arrays of indices instead of pointers + children? Because the
+descent’s bottleneck is L1 load latency (Phase 7 closed at 17.1 cycles per
+iteration, IPC 0.88, scheduler-queue full 89%). Packing nodes contiguously
+and reading only <code class="docutils literal notranslate"><span class="pre">first_child_idx</span></code> per level minimises the dependent-load
+chain.</p>
+</section>
+<section id="phase-2-eval-descent">
+<h2>Phase 2 — eval: descent<a class="headerlink" href="#phase-2-eval-descent" title="Link to this heading"></a></h2>
+<p>Given a query point <code class="docutils literal notranslate"><span class="pre">x</span></code>, walk down the tree:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   x = 0.37 (1D)
+
+   ┌──────────────────────────────────┐
+   │ Node 0:  center = 0.5            │   x &lt; 0.5  → child 0
+   │          first_child = 1         │
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   ┌──────────────────────────────────┐
+   │ Node 1:  center = 0.25           │   x &gt; 0.25 → child 1
+   │          first_child = 5         │
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   ┌──────────────────────────────────┐
+   │ Node 6:  first_child = MAX       │   ◄── leaf!  poly_eval_id = 17
+   └─────────┬────────────────────────┘
+             │
+             ▼
+   polyfits_[17].eval(x) → y
+</pre></div>
+</div>
+<p>In ND, the child index is built one bit per axis — one comparison per axis,
+4 children per 2D node, 8 per 3D node:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   2D quadtree at one level:
+
+   ┌───────┬───────┐         child_idx = (x &gt; cx) &lt;&lt; 0
+   │  10   │  11   │                   | (y &gt; cy) &lt;&lt; 1
+   │ (NW)  │ (NE)  │
+   ├───────●───────┤         the bullet is (cx, cy), the
+   │  00   │  01   │         node&#39;s split point.
+   │ (SW)  │ (SE)  │
+   └───────┴───────┘
+</pre></div>
+</div>
+</section>
+<section id="phase-3-leaf-evaluation-tensor-product-horner">
+<h2>Phase 3 — leaf evaluation: tensor-product Horner<a class="headerlink" href="#phase-3-leaf-evaluation-tensor-product-horner" title="Link to this heading"></a></h2>
+<p>The leaf carries monomial coefficients <code class="docutils literal notranslate"><span class="pre">c[k_0,</span> <span class="pre">k_1,</span> <span class="pre">...,</span> <span class="pre">k_{n-1}]</span></code>.
+Evaluation collapses one axis at a time using Horner’s rule. Total cost:
+<strong><code class="docutils literal notranslate"><span class="pre">K^n</span> <span class="pre">−</span> <span class="pre">1</span></code> FMAs</strong> where <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>              <span class="mi">2</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>
+
+   <span class="n">y</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">0..8</span><span class="p">:</span>
+   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="mf">7..0</span><span class="p">:</span>                      <span class="n">y_j</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="n">over</span> <span class="n">axis</span> <span class="mi">1</span><span class="p">)</span>
+       <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                                   <span class="n">y</span> <span class="o">=</span> <span class="n">y_8</span>
+   <span class="mi">8</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">single</span> <span class="n">chain</span><span class="o">.</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">7..0</span><span class="p">:</span>
+                                       <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x_0</span> <span class="o">+</span> <span class="n">y_j</span>
+
+                                   <span class="mi">80</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">two</span> <span class="n">nested</span> <span class="n">chains</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>For 3D the cost is <code class="docutils literal notranslate"><span class="pre">9^3</span> <span class="pre">−</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">728</span></code> FMAs per evaluation. The shipped kernel
+batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
+when the leaf is hot in L1.</p>
+</section>
+<section id="phase-4-batched-eval-counting-sort-by-leaf">
+<h2>Phase 4 — batched eval: counting sort by leaf<a class="headerlink" href="#phase-4-batched-eval-counting-sort-by-leaf" title="Link to this heading"></a></h2>
+<p>This is what makes treeweave fast on million-point batches. Naive batch:
+1M points × independent descents × independent polyfits → terrible cache
+behaviour. Optimised path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   xp[N] — caller&#39;s points, mixed across leaves:
+
+   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+   │ L3 │ L0 │ L3 │ L1 │ L0 │ L3 │ L0 │ L1 │ L3 │   each cell tagged with
+   └────┴────┴────┴────┴────┴────┴────┴────┴────┘   its leaf id
+
+   step 1: descend each x → leaf_ids[i]
+   step 2: counting sort → permute into packed buffer:
+
+   ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+   │ L0 │ L0 │ L0 │ L1 │ L1 │ L3 │ L3 │ L3 │ L3 │   one contiguous run per
+   └────┴────┴────┴────┴────┴────┴────┴────┴────┘   leaf
+   └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
+          │            │              │
+          ▼            ▼              ▼
+       polyfit      polyfit        polyfit             ◄── one SIMD batch call
+     kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
+                                                       in L1.
+
+   step 3: permute outputs back to caller order.
+</pre></div>
+</div>
+<p>Leaf coefficients stay loaded across all points in that leaf’s run, so the
+AVX2 FMA kernel runs at peak. Per-call scratch (<code class="docutils literal notranslate"><span class="pre">leaf_ids</span></code>, <code class="docutils literal notranslate"><span class="pre">counts</span></code>,
+<code class="docutils literal notranslate"><span class="pre">offsets</span></code>, <code class="docutils literal notranslate"><span class="pre">perm</span></code>, <code class="docutils literal notranslate"><span class="pre">xp_packed</span></code>, <code class="docutils literal notranslate"><span class="pre">out_packed</span></code>) is <code class="docutils literal notranslate"><span class="pre">thread_local</span></code> so threaded
+callers don’t contend.</p>
+</section>
+<section id="what-costs-what">
+<h2>What costs what<a class="headerlink" href="#what-costs-what" title="Link to this heading"></a></h2>
+<p>Phase-7 attribution at 3D deg=8, N = 10^6:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                          % of runtime
+   tree descent        │█████████████████████  55 %   ◄── L1 load-use bound,
+                       │                                  at silicon floor
+   polyfit FMA kernel  │████████               20 %
+   input scatter       │███                     8 %
+   stl_vector indexing │███                     8 %
+   output permute      │██                    6.5 %
+                       └────────────────────────────────►
+                       0              50               100 %
+</pre></div>
+</div>
+<p>End-to-end ceiling on one P-core: ~7 % of FMA peak (76.8 GFLOPS DP). The
+55 % descent is at the load-use latency floor; closing the rest needs
+parallel hardware — which is why Phase 8 locks down <code class="docutils literal notranslate"><span class="pre">operator()</span></code>
+thread-safety so callers can chunk and thread externally.</p>
+</section>
+<section id="tl-dr">
+<h2>TL;DR<a class="headerlink" href="#tl-dr" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="n">treeweave</span>  <span class="o">=</span>  <span class="n">k</span><span class="o">-</span><span class="n">d</span> <span class="n">tree</span> <span class="n">of</span> <span class="n">monomial</span> <span class="n">polynomials</span>
+              <span class="o">+</span> <span class="n">flat</span><span class="o">-</span><span class="n">array</span> <span class="n">descent</span> <span class="p">(</span><span class="n">load</span><span class="o">-</span><span class="n">use</span> <span class="n">bound</span><span class="p">)</span>
+              <span class="o">+</span> <span class="n">counting</span><span class="o">-</span><span class="n">sort</span> <span class="n">batched</span> <span class="n">leaf</span> <span class="n">evaluation</span>
+              <span class="o">+</span> <span class="n">thread</span><span class="o">-</span><span class="n">safe</span> <span class="n">immutable</span> <span class="n">Function</span>
+</pre></div>
+</div>
+<p>One fit, immutable <code class="docutils literal notranslate"><span class="pre">Function</span></code>, cheap evaluations forever — the “baobab tree
+of life” naming.</p>
+</section>
+<section id="degree-selection-c-abi-vs-c-header-api">
+<h2>Degree selection: C ABI vs C++ header API<a class="headerlink" href="#degree-selection-c-abi-vs-c-header-api" title="Link to this heading"></a></h2>
+<p>The <strong>C++ header API</strong> (<code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;Degree&gt;(...)</span></code>) requires the leaf degree
+as a compile-time template parameter, letting you tune or override it per
+call site. Supported values are any positive integer; 8 is the default
+(matches one AVX2 / AVX-512 register lane).</p>
+<p>The <strong>C ABI</strong> (<code class="docutils literal notranslate"><span class="pre">treeweave_fit</span></code> for double / <code class="docutils literal notranslate"><span class="pre">treeweavef_fit</span></code> for float in
+<code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code> — precision lives in the prefix, FINUFFT/FFTW style) takes no
+degree argument. Instead it picks a register-optimal, spill-free degree at
+runtime based on the detected CPU vector width. On x86 the multi-arch
+dispatch path — enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code> — selects
+among compiled-in ISA variants (SSE4.2, AVX2, AVX-512) so the best leaf size
+for the host CPU is used automatically. Accuracy is driven entirely by the
+<code class="docutils literal notranslate"><span class="pre">tol</span></code> parameter; the adaptive tree refines until every leaf meets tolerance
+regardless of which degree is chosen.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="guides/performance.html" class="btn btn-neutral float-left" title="Performance" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/library_root.html" class="btn btn-neutral float-right" title="treeweave API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, treeweave authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

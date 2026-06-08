@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87:
+
+Function treeweavef_eval
+========================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweavef_eval(treeweave_t, const float *, float *)
+   :project: treeweave
