@@ -1,0 +1,96 @@
+name: Julia prebuilt smoke test
+
+# The Julia equivalent of the TestPyPI dry run. bindings.yml already tests the
+# in-repo (sibling-build) path; this instead exercises the DISTRIBUTION path a
+# real `Pkg.add` user hits: deps/build.jl downloads the prebuilt libtreeweave_c
+# for `tag` from the GitHub Release (see release.yml), dlopens it, and runs the
+# package test suite — on every OS/arch the release ships an asset for.
+#
+# Run it after a Release job finishes to confirm the uploaded binaries actually
+# load and pass on each platform. There is no central "TestPyPI for Julia"; the
+# staging knob is the repo the assets are pulled from (TREEWEAVE_REPO), so this
+# can also smoke-test a fork's pre-release.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to pull prebuilt binaries from (e.g. v0.1.2). Blank = latest release.'
+        required: false
+        default: ''
+      repo:
+        description: 'owner/repo to pull release assets from'
+        required: false
+        default: 'DiamonDinoia/treeweave'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,  runs-on: ubuntu-24.04 }
+          - { name: linux-aarch64, runs-on: ubuntu-24.04-arm }
+          - { name: macos-arm64,   runs-on: macos-14 }
+          - { name: macos-x86_64,  runs-on: macos-15-intel }
+          - { name: windows-x64,   runs-on: windows-2022 }
+    env:
+      TREEWEAVE_REPO: ${{ inputs.repo }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      # deps/build.jl unpacks the Windows .zip asset with `unzip`, which isn't on
+      # the runner PATH by default.
+      - name: Install unzip (Windows)
+        if: matrix.name == 'windows-x64'
+        run: choco install --no-progress -y unzip
+
+      # download_prebuilt() builds the asset URL from the package's Project.toml
+      # version, so pin it to the tag under test (default: the repo's latest).
+      - name: Pin package version to the tag under test
+        shell: bash
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_REPO: ${{ inputs.repo }}
+        run: |
+          tag="$INPUT_TAG"
+          if [ -z "$tag" ]; then
+            tag=$(gh release view --repo "$INPUT_REPO" --json tagName -q .tagName)
+          fi
+          ver="${tag#v}"
+          echo "Smoke-testing prebuilt for $ver from $INPUT_REPO"
+          python -c "import re,pathlib; p=pathlib.Path('bindings/julia/Treeweave/Project.toml'); \
+            p.write_text(re.sub(r'^version = .*', 'version = \"$ver\"', p.read_text(), count=1, flags=re.M))"
+
+      # Fresh checkout has no sibling build/ dir and LIBTREEWEAVE_C is unset, so
+      # locate() falls through to download_prebuilt() — the path we want to test.
+      - name: Pkg.build (downloads prebuilt) + Pkg.test
+        shell: bash
+        run: |
+          julia -e '
+            using Pkg
+            Pkg.activate(; temp=true)
+            Pkg.develop(path="bindings/julia/Treeweave")
+            Pkg.build("Treeweave"; verbose=true)
+            p = include(joinpath(pwd(), "bindings/julia/Treeweave/deps/deps.jl"))
+            isempty(p) && error("deps.jl is empty — prebuilt binary was not resolved")
+            isfile(p)  || error("resolved libtreeweave_c path does not exist: $p")
+            @info "resolved prebuilt libtreeweave_c" path=p
+            Pkg.test("Treeweave")
+          '

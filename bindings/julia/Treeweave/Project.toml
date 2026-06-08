@@ -1,0 +1,12 @@
+name = "Treeweave"
+uuid = "b4e1b0a2-3c7f-4d9e-8a5f-2f6e1c3d7b89"
+version = "0.0.0"
+
+[deps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+julia = "1.9"

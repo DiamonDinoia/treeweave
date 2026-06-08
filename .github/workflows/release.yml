@@ -1,0 +1,194 @@
+name: Release
+
+# Tag-triggered: pushing a `v*` tag builds relocatable C-ABI tarballs for every
+# supported OS/arch and attaches them to a GitHub Release. Each Linux build runs
+# inside a manylinux_2_28 container so the glibc floor is 2.28 (RHEL 8 / Ubuntu
+# 20.04+), not the runner's. x86 builds enable TREEWEAVE_C_MULTIARCH so one binary
+# dispatches SSE4.2 / AVX2 / AVX-512 at runtime; Linux aarch64 likewise enables it
+# at the armv8-a baseline (single mandatory neon64 variant). Apple silicon and
+# MSVC build at a single portable baseline. macOS binaries are shipped UNSIGNED
+# (see the release notes for the `xattr` workaround).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Build a dry-run release from this ref (no Release created)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  tarball:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 90
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runs-on: ubuntu-24.04
+            container: quay.io/pypa/manylinux_2_28_x86_64
+            multiarch: 'ON'
+            arch: x86-64
+          - name: linux-aarch64
+            runs-on: ubuntu-24.04-arm
+            container: quay.io/pypa/manylinux_2_28_aarch64
+            multiarch: 'ON'
+            arch: armv8-a
+          - name: macos-arm64
+            runs-on: macos-14
+            container: ''
+            multiarch: 'OFF'
+            arch: apple-m1
+          - name: macos-x86_64
+            runs-on: macos-15-intel
+            container: ''
+            multiarch: 'ON'
+            arch: x86-64
+          - name: windows-x64
+            runs-on: windows-2022
+            container: ''
+            multiarch: 'OFF'
+            arch: x86-64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          persist-credentials: false
+
+      # manylinux images ship a toolchain but not CMake/Ninja; everything else
+      # (compiler, git) is present. pipx is preinstalled on manylinux.
+      - name: Install CMake/Ninja (manylinux)
+        if: startsWith(matrix.name, 'linux')
+        run: pipx install cmake ninja
+
+      # macOS/Windows: provision CMake + Ninja via setup-cpp (no hand-rolled
+      # brew/choco), with the MSVC environment on Windows so the shipped binary
+      # builds with Ninja like every other platform, not the slow VS generator.
+      # (manylinux runs in a container where the host action can't provision, so
+      # that path keeps the in-container pipx install above.)
+      - name: Setup CMake + Ninja (macOS/Windows)
+        if: ${{ !startsWith(matrix.name, 'linux') }}
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          cmake: true
+          ninja: true
+          vcvarsall: ${{ matrix.name == 'windows-x64' }}
+
+      - name: Derive version
+        id: ver
+        shell: bash
+        run: |
+          REF="${{ github.ref_name }}"
+          VER="${REF#v}"
+          [ -z "$VER" ] && VER="0.0.0-dev"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "pkg=treeweave-${VER}-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+
+      # Single-config generators (Ninja) on Linux/macOS.
+      - name: Configure + build + install (Ninja)
+        if: matrix.name != 'windows-x64'
+        shell: bash
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTREEWEAVE_BUILD_TESTS=OFF \
+            -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} \
+            -DTREEWEAVE_ARCH=${{ matrix.arch }}
+          cmake --build build -j
+          cmake --install build --prefix dist
+
+      # MSVC via Ninja (single-config): /MD dynamic CRT is the Release default.
+      # Produces treeweave_c.dll (RUNTIME -> bin/) and treeweave_c.lib import lib.
+      - name: Configure + build + install (Windows, Ninja)
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DTREEWEAVE_BUILD_TESTS=OFF `
+            -DTREEWEAVE_BUILD_EXAMPLES=OFF `
+            -DTREEWEAVE_C_MULTIARCH=OFF
+          cmake --build build
+          cmake --install build --prefix dist
+
+      - name: Smoke test (find_package + link, Linux/macOS)
+        if: matrix.name != 'windows-x64'
+        shell: bash
+        run: bash .github/scripts/smoke_find_package.sh "$PWD/dist"
+
+      - name: Package (tar.gz)
+        if: matrix.name != 'windows-x64'
+        shell: bash
+        run: tar -C dist -czf "${{ steps.ver.outputs.pkg }}.tar.gz" .
+
+      - name: Package (zip)
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: Compress-Archive -Path dist/* -DestinationPath "${{ steps.ver.outputs.pkg }}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.ver.outputs.pkg }}
+          path: |
+            ${{ steps.ver.outputs.pkg }}.tar.gz
+            ${{ steps.ver.outputs.pkg }}.zip
+          if-no-files-found: ignore
+
+  release:
+    name: Publish GitHub Release
+    needs: tarball
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/*
+          fail_on_unmatched_files: true
+          body: |
+            ## treeweave ${{ github.ref_name }} — prebuilt C ABI (`libtreeweave_c`)
+
+            Relocatable `find_package(treeweave)` tarballs. x86 builds dispatch
+            SSE4.2 / AVX2 / AVX-512 at runtime, so one binary per OS/arch covers
+            all CPUs. Linux builds target glibc ≥ 2.28 (RHEL 8 / Ubuntu 20.04+).
+
+            **macOS binaries are unsigned.** After extracting, clear the
+            quarantine attribute before linking:
+
+            ```sh
+            xattr -dr com.apple.quarantine treeweave-*-macos-*/
+            ```
+
+            Consume with:
+
+            ```cmake
+            find_package(treeweave REQUIRED)         # point CMAKE_PREFIX_PATH at the extracted dir
+            target_link_libraries(your_target PRIVATE treeweave::treeweave_c)
+            ```
+
+            ### Julia
+
+            `Pkg.add` runs `deps/build.jl`, which downloads the matching
+            prebuilt `libtreeweave_c` from this release — no `Artifacts.toml` is
+            committed and cutting a release adds no commits to the repo.

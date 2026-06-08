@@ -1,0 +1,350 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.os }} (${{ matrix.toolchain }} ${{ matrix.build_type }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu Debug — gcc-11/12 on 22.04 (native there; noble drops them),
+          # newer toolchains on 24.04. C++20 needs gcc >= 11 / clang >= 16.
+          - {os: ubuntu-22.04, toolchain: gcc-11,  build_type: Debug, preset: ci-linux-debug}
+          - {os: ubuntu-24.04, toolchain: gcc-12,  build_type: Debug, preset: ci-linux-debug}
+          - {os: ubuntu-24.04, toolchain: gcc,     build_type: Debug, preset: ci-linux-debug}
+          - {os: ubuntu-24.04, toolchain: gcc-13,  build_type: Debug, preset: ci-linux-debug}
+          - {os: ubuntu-24.04, toolchain: gcc-14,  build_type: Debug, preset: ci-linux-debug}
+          - {os: ubuntu-24.04, toolchain: llvm-16, build_type: Debug, preset: ci-linux-debug-asan}
+          - {os: ubuntu-24.04, toolchain: llvm-17, build_type: Debug, preset: ci-linux-debug-asan}
+          - {os: ubuntu-24.04, toolchain: llvm,    build_type: Debug, preset: ci-linux-debug-asan}
+          - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Debug, preset: ci-linux-debug-asan}
+          - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Debug, preset: ci-linux-debug-asan}
+          # Ubuntu Release
+          - {os: ubuntu-22.04, toolchain: gcc-11,  build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: gcc-12,  build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: gcc,     build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: gcc-13,  build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: gcc-14,  build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: llvm-16, build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: llvm-17, build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: llvm,    build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Release, preset: ci-linux-release}
+          - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Release, preset: ci-linux-release}
+          # macOS — apple-clang on both arm64 images (14 + 15); gcc-14 on 14 for
+          # GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
+          - {os: macos-14,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
+          - {os: macos-14,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
+          - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
+          - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
+          - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release}
+          # Windows (Ninja, Release only — Debug MSVC builds are very slow)
+          - {os: windows-2022, toolchain: msvc, build_type: Release, preset: ci-windows}
+          - {os: windows-2022, toolchain: llvm, build_type: Release, preset: ci-windows-clang}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: ${{ matrix.toolchain }}
+          cmake: true
+          ninja: true
+          cache-tools: true
+          vcvarsall: ${{ runner.os == 'Windows' }}
+
+      # All build settings (portable -march baseline, sanitizers on the Linux
+      # Debug rows, -Og for the Debug test matrix) live in CMakePresets.json.
+      # Every platform builds single-config via Ninja (Windows uses the MSVC
+      # environment set up by setup-cpp's vcvarsall above).
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build build/${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --output-on-failure --test-dir build/${{ matrix.preset }}
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-logs
+          path: |
+            build/**/Testing/**/*.log
+            build/**/Testing/**/*.xml
+          if-no-files-found: ignore
+
+  analysis:
+    name: Static Analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # clang-tidy comes from pip (pinned 22.*), not apt: the apt clang-tidy
+      # 18 misattributes libstdc++'s own `namespace std` to user code under
+      # CI's forced PCH and fires a false cert-dcl58-cpp. The analysis preset
+      # also disables the PCH, so clang-tidy sees every header per-TU. cppcheck
+      # is not on PyPI, so it stays from apt; clang is the compiler.
+      - name: Install tooling
+        run: |
+          pip install 'clang-tidy==22.*'
+          sudo apt-get update
+          sudo apt-get install -y clang cppcheck ninja-build cmake
+
+      # Pin the clang-tidy CMake finds to the pip shim explicitly: find_program
+      # otherwise prefers a clang-tidy sitting next to the chosen clang++.
+      - name: Configure analysis
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake --preset analysis -DTREEWEAVE_CLANG_TIDY_EXE="$(command -v clang-tidy)"
+
+      - name: Build (analysis)
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake --build build/analysis
+
+      - name: Test (analysis)
+        run: ctest --output-on-failure --test-dir build/analysis
+
+      - name: Upload analysis logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: analysis-logs
+          path: |
+            build/analysis/**/Testing/**/*.log
+            build/analysis/**/*.txt
+          if-no-files-found: ignore
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc-13
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install coverage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+
+      - name: Configure (coverage)
+        run: cmake --preset coverage
+
+      - name: Build coverage target
+        run: cmake --build build/coverage --target coverage
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          files: build/coverage/coverage.filtered.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: |
+            build/coverage/coverage.info
+            build/coverage/coverage.filtered.info
+            build/coverage/coverage/**
+            build/coverage/coverage-report.html
+          if-no-files-found: warn
+
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # All the file-hygiene / spelling / shell / pyproject hooks. The C++ and
+      # CMake hooks are staged-hunk based (built for the commit flow, not
+      # `--all-files`), so we SKIP them here and enforce formatting on whole
+      # files in the explicit pass below.
+      - uses: pre-commit/action@v3.0.1
+        env:
+          SKIP: clang-format-staged,gersemi-staged
+
+      # Enforce formatting on whole files (committed code, not just changed
+      # hunks), with the same pinned tool versions the hooks use.
+      - name: clang-format + gersemi (full files)
+        run: |
+          pip install 'clang-format==22.*' gersemi==0.27.1
+          git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp' ':!:bindings/matlab/**' \
+            | xargs clang-format --dry-run --Werror
+          # *.cmake.in is included: gersemi 0.27.1 parses the @PACKAGE_INIT@
+          # placeholder in treeweaveConfig.cmake.in cleanly.
+          git ls-files '*.cmake' '*.cmake.in' 'CMakeLists.txt' '**/CMakeLists.txt' \
+            | xargs gersemi --check
+
+  valgrind:
+    name: Valgrind (C ABI)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # valgrind must be present at configure time so the test_c_abi_valgrind
+      # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
+      - name: Install valgrind + toolchain
+        run: sudo apt-get update && sudo apt-get install -y valgrind ninja-build cmake g++
+
+      # Single-arch AVX2 baseline (no multiarch): valgrind handles AVX2 but not
+      # the AVX-512 variant the dispatcher would otherwise build + run.
+      - name: Configure
+        run: cmake --preset valgrind
+
+      - name: Build
+        run: cmake --build build/valgrind
+
+      - name: Run leak check under valgrind
+        run: ctest --test-dir build/valgrind -R valgrind --output-on-failure
+
+  multiarch:
+    name: Multiarch dispatch smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
+      # pick one at runtime; the rest of CI pins a single -march, leaving the
+      # dispatcher and its AVX-512 variant otherwise unbuilt/untested.
+      - name: Configure (multiarch dispatch)
+        run: cmake --preset multiarch
+
+      - name: Build
+        run: cmake --build build/multiarch
+
+      # Diagnostic + fallback coverage: dump the runner's actual ISA (incl. the
+      # avx512 subfeatures the dispatcher does NOT individually probe, e.g. VL),
+      # then exercise each fallback variant via TREEWEAVE_FORCE_ARCH. force_dispatch
+      # only honours a level the host CPU reports as available, so this surfaces
+      # any "reported-available but actually faults" gap without masking the
+      # real native run below.
+      - name: Diagnose ISA dispatch (cpu flags + per-arch forced run)
+        continue-on-error: true
+        # set +e: the forced runs may exit non-zero (parity diffs) or crash
+        # (SIGILL) — keep going so every arch's result is reported.
+        run: |
+          set +e
+          echo "== CPU model =="; lscpu | grep -i "model name"
+          echo "== ISA features =="
+          grep -o -m1 -E 'avx512[a-z]+|avx2|fma|sse4_2' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
+          bin=build/multiarch/test_c_abi
+          echo "-- default dispatch --"
+          "$bin" >/tmp/fa.out 2>&1; ec=$?
+          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
+          for arch in sse2 sse4.2 avx2 fma3+avx2 avx512bw; do
+            TREEWEAVE_FORCE_ARCH="$arch" "$bin" >/tmp/fa.out 2>&1; ec=$?
+            echo "FORCE_ARCH=$arch exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
+          done
+
+      # Exact match: the dispatched binary runs natively here. (Avoid the
+      # valgrind variant, which can't execute an AVX-512 dispatch target.)
+      - name: Run C-ABI test (exercises runtime ISA dispatch)
+        run: ctest --test-dir build/multiarch -R '^test_c_abi$' --output-on-failure
+
+  multiarch-arm:
+    name: Multiarch dispatch smoke (aarch64)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
+      # armv8-a baseline with the runtime dispatcher, which selects the single
+      # mandatory neon64 variant (SVE excluded by design — see dispatch_arch.hpp).
+      - name: Configure (multiarch dispatch)
+        run: cmake --preset multiarch-arm
+
+      - name: Build
+        run: cmake --build build/multiarch-arm
+
+      # neon64 is mandatory on ARMv8-A, so forcing it must always select and run.
+      - name: Diagnose ISA dispatch (forced neon64 run)
+        continue-on-error: true
+        run: |
+          set +e
+          echo "== CPU model =="; lscpu | grep -i "model name"
+          bin=build/multiarch-arm/test_c_abi
+          echo "-- default dispatch --"
+          "$bin" >/tmp/fa.out 2>&1; ec=$?
+          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
+          TREEWEAVE_FORCE_ARCH=arm64+neon "$bin" >/tmp/fa.out 2>&1; ec=$?
+          echo "FORCE_ARCH=arm64+neon exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
+
+      - name: Run C-ABI test (exercises runtime ISA dispatch)
+        run: ctest --test-dir build/multiarch-arm -R '^test_c_abi$' --output-on-failure

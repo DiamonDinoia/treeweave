@@ -1,0 +1,81 @@
+Runtime ISA dispatch
+====================
+
+``libtreeweave_c`` can ship a single binary that picks the widest SIMD
+instruction set the host CPU supports at load time, rather than being pinned to
+the ``-march`` it was compiled with. This is the ``TREEWEAVE_C_MULTIARCH``
+build mode: the eval kernels are compiled once per ISA level, and a tiny
+dispatcher selects one the first time a fit is built.
+
+Enable it at configure time:
+
+.. code-block:: bash
+
+   cmake -B build -DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64   # x86
+   cmake -B build -DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=armv8-a  # aarch64
+
+``TREEWEAVE_ARCH`` is the **baseline** the dispatcher itself and the C shim are
+compiled at, so the library loads on any CPU of the family — keep it at the
+lowest level (``x86-64``, ``armv8-a``), not a tuned one.
+
+How the family is chosen
+------------------------
+
+The set of variants is selected at compile time from ``xsimd::best_arch`` by CPU
+family (see ``include/treeweave/detail/dispatch_arch.hpp``):
+
+- **x86-64** — a four-level ladder. The dispatcher walks it widest-first and
+  selects the first level the host reports as available:
+
+  ====================  ============  ===========================
+  ``-march`` level      arch          ``TREEWEAVE_FORCE_ARCH`` name
+  ====================  ============  ===========================
+  ``x86-64-v4``         AVX-512BW     ``avx512bw``
+  ``x86-64-v3``         FMA3 + AVX2   ``fma3+avx2``
+  ``x86-64-v2``         SSE4.2        ``sse4.2``
+  ``x86-64``            SSE2          ``sse2``
+  ====================  ============  ===========================
+
+- **aarch64** (non-Apple) — a single ``neon64`` variant
+  (``TREEWEAVE_FORCE_ARCH`` name ``arm64+neon``). NEON64 is mandatory on
+  ARMv8-A, so it always dispatches. The win here is a uniform, portable dispatch
+  path — not a new performance tier.
+
+- **riscv64** — a single ``rvv`` variant (fixed 128-bit RVV). **Best-effort and
+  untested**: there is no RISC-V CI runner, so this branch compiles but is not
+  verified.
+
+Apple silicon, MSVC, and unknown targets fall back to a single-arch build at
+``TREEWEAVE_ARCH`` (no runtime dispatch).
+
+Why no SVE on ARM
+-----------------
+
+ARM SVE is deliberately **excluded** from the runtime ladder. xsimd models SVE
+as ``sve<N>`` with the vector width ``N`` baked in at compile time, but the
+runtime probe (``available_architectures().has(sve<N>)``) only checks the SVE
+*presence* HWCAP bit — it does not check the width. A fixed-width SVE variant
+would therefore falsely match SVE hardware of a *different* width and mis-run.
+NEON64 is mandatory on every ARMv8-A core, so dropping SVE costs no coverage.
+
+The dispatch mechanism itself is unchanged across families: ``xsimd::dispatch``
+over the family arch-list, with selection driven by
+``available_architectures().has(Arch)`` — *not* ``Arch::available()`` (which is
+a constexpr ``true`` and would blindly pick the widest *compiled* arch on every
+CPU, faulting on hosts that lack it).
+
+Forcing an ISA for testing
+---------------------------
+
+Set ``TREEWEAVE_FORCE_ARCH`` to one of the names above to pin the dispatcher to
+a specific level (capped at what the host actually supports), so one capable
+machine can exercise every fallback path:
+
+.. code-block:: bash
+
+   TREEWEAVE_FORCE_ARCH=sse2       ./test_c_abi   # force the x86 baseline
+   TREEWEAVE_FORCE_ARCH=fma3+avx2  ./test_c_abi   # force AVX2
+   TREEWEAVE_FORCE_ARCH=arm64+neon ./test_c_abi   # force NEON64 on aarch64
+
+An unset, unknown, or unsupported value falls through to the normal
+widest-supported selection.

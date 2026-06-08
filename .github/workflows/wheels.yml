@@ -1,0 +1,97 @@
+name: Wheels
+
+# Tag-triggered (v*): build prebuilt Python wheels for every supported
+# OS/arch with cibuildwheel and attach them to the GitHub Release. The C ABI
+# (libtreeweave_c) is linked STATICALLY into the _treeweave nanobind extension
+# (see bindings/python/treeweave_python.cmake), so there is no external shared
+# library to vendor — wheels carry only the system C/C++ runtimes.
+#
+# x86 wheels enable TREEWEAVE_C_MULTIARCH and build at the x86-64 baseline, so a
+# single wheel dispatches SSE4.2 / AVX2 / AVX-512 at runtime and runs on any
+# x86-64 CPU. Linux aarch64 wheels likewise enable TREEWEAVE_C_MULTIARCH at the
+# armv8-a baseline (the runtime ladder is the single mandatory neon64 variant).
+# Apple-silicon wheels build single-arch at their apple-m1 baseline.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  wheels:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runs-on: ubuntu-24.04
+            cibw-arch: x86_64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+          - name: linux-aarch64
+            runs-on: ubuntu-24.04-arm
+            cibw-arch: aarch64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=armv8-a"
+          - name: macos-arm64
+            runs-on: macos-14
+            cibw-arch: arm64
+            cmake-args: "-DTREEWEAVE_ARCH=apple-m1"
+          - name: macos-x86_64
+            runs-on: macos-15-intel
+            cibw-arch: x86_64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+          - name: windows-x64
+            runs-on: windows-2022
+            cibw-arch: AMD64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.4.1
+        with:
+          package-dir: bindings/python
+        env:
+          CIBW_ARCHS: ${{ matrix.cibw-arch }}
+          # scikit-build-core forwards CMAKE_ARGS to the core build; this is how
+          # each runner pins its portable baseline / multiarch dispatch.
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="${{ matrix.cmake-args }}"
+            MACOSX_DEPLOYMENT_TARGET=11.0
+
+      # The cibuildwheel action runs from the repo root, so wheelhouse/ lands there.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.name }}
+          path: wheelhouse/*.whl
+
+  release:
+    name: Attach wheels to Release
+    needs: wheels
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*.whl
+          fail_on_unmatched_files: true

@@ -1,0 +1,176 @@
+name: Bindings
+
+# Exercises the language wrappers' existing test suites, which the main CI
+# never builds. Python runs the nanobind extension's pytest suite; Julia
+# dlopens the freshly built libtreeweave_c and runs runtests.jl. Both reuse the
+# CTest targets registered by cmake/treeweave_bindings.cmake (python_treeweave /
+# julia_treeweave), so this is purely a CI wiring layer.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: Python (nanobind) bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python build/test deps
+        run: python -m pip install --upgrade pip pytest numpy "nanobind>=2.0"
+
+      - name: Configure + build
+        run: |
+          cmake --preset bindings-python
+          cmake --build build/bindings-python -j
+
+      - name: Run pytest suite (python_treeweave)
+        run: ctest --test-dir build/bindings-python -R python_treeweave --output-on-failure
+
+  julia:
+    name: Julia bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Configure + build libtreeweave_c
+        run: |
+          cmake --preset bindings-julia
+          cmake --build build/bindings-julia -j --target treeweave_c
+
+      - name: Run Julia suite (julia_treeweave)
+        run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure
+
+  octave:
+    name: Octave bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Octave ships no stable MEX ABI across versions, so we don't distribute
+      # prebuilt Octave binaries — this builds from source with mkoctfile.
+      - name: Install Octave + toolchain
+        # octave-dev (renamed from liboctave-dev on 24.04) pulls octave and
+        # provides mkoctfile + headers. cmake/ninja/g++ are preinstalled on the
+        # runner image.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev
+
+      # Builds libtreeweave_c, fetches the mwrap generator via CPM, generates the
+      # gateway + bz_*.m from treeweave.mw, and compiles the Octave MEX with
+      # mkoctfile — all from CMake (no Makefile). bindings-octave sets
+      # TREEWEAVE_BUILD_MATLAB=ON; with only mkoctfile present, the Octave
+      # backend is selected.
+      - name: Configure + build the Octave MEX
+        run: |
+          cmake --preset bindings-octave
+          cmake --build build/bindings-octave -j
+
+      # test_treeweave.m calls error() on any failure -> octave exits non-zero.
+      - name: Run Octave suite (matlab_treeweave)
+        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
+
+  # Real MATLAB (not Octave): MathWorks' hosted runner licensing covers public
+  # repos, so no license secret is needed. With MATLAB on PATH the bindings-matlab
+  # preset's FindMatlab picks it up and registers matlab_treeweave as `matlab -batch`.
+  matlab:
+    name: MATLAB bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+
+      # bindings-matlab sets TREEWEAVE_BUILD_MATLAB=ON; with MATLAB (and no
+      # mkoctfile) present, the MATLAB MEX backend is selected. mwrap is fetched
+      # via CPM and the gateway + bz_*.m are generated from treeweave.mw.
+      - name: Configure + build the MATLAB MEX
+        run: |
+          cmake --preset bindings-matlab
+          cmake --build build/bindings-matlab -j
+
+      # test_treeweave.m calls error() on any failure -> matlab -batch exits non-zero.
+      - name: Run MATLAB suite (matlab_treeweave)
+        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
+
+  fortran:
+    name: Fortran bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install gfortran
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - name: Configure + build
+        run: |
+          cmake --preset bindings-fortran
+          cmake --build build/bindings-fortran -j
+
+      # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
+      - name: Run Fortran test (fortran_treeweave)
+        run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure

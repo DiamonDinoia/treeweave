@@ -1,0 +1,178 @@
+name: Install smoke
+
+# Validates the install recipes in README.md / docs end to end, from a
+# consumer's point of view — the paths the existing workflows do NOT cover:
+#
+#   * find_package   — build + install the C ABI to a prefix, then a separate
+#                      consumer project does find_package(treeweave) and links
+#                      treeweave::treeweave_c (README "Installed package").
+#   * FetchContent   — a consumer project pulls treeweave in and links the
+#                      header-only treeweave::treeweave (README "FetchContent").
+#   * pip / TestPyPI — install the published wheel from TestPyPI and import +
+#                      evaluate it (README "Install -> Python"). Runs after the
+#                      TestPyPI workflow succeeds, since it needs the upload.
+#
+# The Julia Pkg.add -> GitHub Release path is already covered by julia-smoke.yml.
+on:
+  push:
+  pull_request:
+  workflow_run:
+    workflows: ["TestPyPI"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # README: find_package(treeweave) against an installed C ABI prefix.
+  find-package:
+    name: CMake find_package (installed C ABI)
+    # Skip on the workflow_run trigger — that event is only for the pip job.
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Build + install the C ABI to a prefix
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTREEWEAVE_BUILD_TESTS=OFF \
+            -DTREEWEAVE_BUILD_EXAMPLES=OFF
+          cmake --build build -j
+          cmake --install build --prefix "$PWD/_prefix"
+
+      - name: Consumer project — find_package + treeweave::treeweave_c
+        run: |
+          mkdir -p consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.20)
+          project(consumer C)
+          find_package(treeweave REQUIRED)
+          add_executable(app main.c)
+          target_link_libraries(app PRIVATE treeweave::treeweave_c)
+          EOF
+          cat > consumer/main.c <<'EOF'
+          #include <treeweave.h>
+          #include <math.h>
+          #include <stdio.h>
+          static void kernel(const double *x, double *y, void *ctx) { (void)ctx; y[0] = exp(x[0]); }
+          int main(void) {
+            double a = 0.0, b = 1.0;
+            treeweave_t fn = treeweave_fit(kernel, 1, 1, &a, &b, 1e-10, NULL, NULL);
+            double y = treeweave_eval_1d(fn, 0.5);
+            fn = treeweave_free(fn);
+            if (fabs(y - exp(0.5)) > 1e-8) { printf("FAIL: %g vs %g\n", y, exp(0.5)); return 1; }
+            printf("OK: treeweave_eval_1d(0.5) = %g\n", y);
+            return 0;
+          }
+          EOF
+          cmake -S consumer -B consumer/build -G Ninja \
+            -DCMAKE_PREFIX_PATH="$PWD/_prefix"
+          cmake --build consumer/build -j
+          ./consumer/build/app
+
+  # README: FetchContent -> header-only treeweave::treeweave (C++).
+  fetchcontent:
+    name: CMake FetchContent (header-only C++)
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Consumer project — FetchContent + treeweave::treeweave
+        run: |
+          # SOURCE_DIR pins treeweave to *this* checkout so the smoke tests the
+          # tree under review; the README documents the GIT_REPOSITORY form.
+          mkdir -p consumer
+          cat > consumer/CMakeLists.txt <<EOF
+          cmake_minimum_required(VERSION 3.20)
+          project(consumer CXX)
+          include(FetchContent)
+          FetchContent_Declare(treeweave SOURCE_DIR "${GITHUB_WORKSPACE}")
+          FetchContent_MakeAvailable(treeweave)
+          add_executable(app main.cpp)
+          target_link_libraries(app PRIVATE treeweave::treeweave)
+          EOF
+          cat > consumer/main.cpp <<'EOF'
+          #include <treeweave/treeweave.hpp>
+          #include <cmath>
+          #include <cstdio>
+          int main() {
+            auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
+            auto fn    = treeweave::fit(runge, -1.0, 1.0, 1e-10);
+            double y   = fn(0.3);
+            if (std::abs(y - runge(0.3)) > 1e-8) { std::printf("FAIL: %g\n", y); return 1; }
+            std::printf("OK: fn(0.3) = %g\n", y);
+            return 0;
+          }
+          EOF
+          # No -DTREEWEAVE_BUILD_TESTS/EXAMPLES=OFF here on purpose: as a
+          # non-top-level (FetchContent) consumer those default OFF, so this also
+          # asserts the consumer build stays baggage-free.
+          cmake -S consumer -B consumer/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build consumer/build -j
+          ./consumer/build/app
+
+  # README: pip install from TestPyPI. Only meaningful once a wheel is published,
+  # so gate on the TestPyPI workflow having succeeded (or a manual dispatch).
+  pip-testpypi:
+    name: pip install (TestPyPI)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install from TestPyPI (deps from PyPI) and evaluate
+        run: |
+          # TestPyPI's index can lag the publish by a minute; retry a few times.
+          for i in 1 2 3 4 5; do
+            if pip install --index-url https://test.pypi.org/simple/ \
+                           --extra-index-url https://pypi.org/simple/ treeweave; then
+              break
+            fi
+            echo "treeweave not on the TestPyPI index yet; retry $i"
+            sleep 30
+          done
+          python - <<'EOF'
+          import math, numpy as np, treeweave
+          import importlib.metadata
+          print("treeweave", importlib.metadata.version('treeweave'))
+          approx = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-10)
+          xs = np.linspace(0.0, 1.0, 11, endpoint=False)
+          err = float(np.max(np.abs(approx(xs) - np.exp(xs))))
+          assert err < 1e-8, err
+          print(f"OK: max abs error {err:.2e}")
+          EOF

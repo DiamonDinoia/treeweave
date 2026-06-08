@@ -1,0 +1,103 @@
+Performance
+===========
+
+treeweave is built so the eval path is cheap: a fitted approximant is a tree of
+low-order polynomial panels, and a point evaluation is a leaf lookup plus a small
+fixed-degree polynomial. A few things are worth knowing to get the most out of
+it.
+
+Batch over scalar
+-----------------
+
+The batch entry points (``treeweave_batch`` / ``treeweave_sorted`` /
+``treeweave_transposed`` in C; calling the fitted object with an array in the
+bindings) amortize leaf lookup and vectorize the polynomial evaluation across
+points. Prefer them to a scalar loop whenever you have more than a handful of
+points.
+
+The sorted fast path
+~~~~~~~~~~~~~~~~~~~~~~
+
+The general batch path first counting-sorts the inputs by leaf so each leaf's
+points are contiguous, runs one vectorized Horner stream per leaf, then permutes
+the results back to the caller's order. When the inputs are *already* ascending,
+that sort and permute-back are pure overhead. The ``sorted`` path skips them and
+streams straight through the leaves — ~3–4× faster on a presorted 1-D batch.
+
+What the fast path really needs is that the *leaf-id* sequence be monotone — the
+points already grouped by leaf. It is exposed only for ``input_dim == 1`` for two
+reasons:
+
+- **Cheap precondition.** In 1-D ascending ``x`` guarantees monotone leaf ids, so
+  the caller has a trivially checkable promise. In 2-D/3-D no single-axis sort
+  makes leaf ids monotone (you'd need a space-filling / per-tree bin order
+  treeweave doesn't expose), so there is no caller-side guarantee to offer.
+- **Diminishing payoff.** Per-point eval is a tensor-product Horner sweep of
+  ``K**n - 1`` FMAs, so the work grows as ``K**n``. In 1-D the polynomial work
+  (~``K`` FMAs) is comparable to the O(1) sort + scatter per point, so dropping
+  the sort wins ~3–4×. In 2-D/3-D the ``K**2`` / ``K**3`` FMAs dominate and the
+  sort is a small fraction of the cost — skipping it would barely move the
+  needle. So an ND fast path would be both hard to guarantee and low-value; the
+  plain ``batch`` path is the right tool there.
+
+This is worth reaching for because many workloads hand you ascending ``x`` for
+free:
+
+- **Regular grids / linspace** — plotting, lookup tables, and resampling sweep a
+  domain left to right.
+- **Quadrature** — Gauss/Chebyshev/Clenshaw–Curtis abscissae come out in
+  ascending order.
+- **Time marching** — ODE/PDE integrators and signal processing advance
+  monotonically in ``t``.
+- **Parameter sweeps** — continuation methods and line searches step one
+  coordinate monotonically.
+
+The caller promises ``x[i] <= x[i+1]``; treeweave does not verify it, so unsorted
+input on this path yields wrong values (not an error). When in doubt, use the
+plain batch path — it sorts internally and is always correct. Both NaN-fill
+out-of-domain points.
+
+The leaf-table fast path
+------------------------
+
+``PolyTree::find_leaf_id`` has a SIMD-quantize + table-lookup fast path: one
+``vcvttpd2qq`` (or scalar ``vcvttsd2si``) per point plus one ``uint32_t`` load
+from a ``2^(input_dim * D)``-entry table, in place of recursive tree descent.
+The table is built automatically when ``input_dim * D <= 16`` bits of leaf index
+*and* the tree refined uniformly to depth ``D``.
+
+For smooth functions, tolerance-based refinement usually stops early and the
+tree never reaches uniform depth, so the fast path stays off. To drive it on:
+tighten ``tol`` until refinement is uniform, or set ``min_uniform_depth``
+explicitly. ``Function::print_stats()`` reports ``Leaf table: live (N entries,
+K KiB)`` or ``Leaf table: descent-only``. Table memory grows as
+``2^(input_dim * D) * 4 B`` (capped ~256 KiB; past that the table is skipped).
+
+Memory and degree
+-----------------
+
+- Tightening ``tol``, raising ``max_depth`` / ``max_memory_mib``, or enabling
+  ``allow_max_depth_leaves`` all increase the leaf count and therefore memory.
+- The default leaf degree (7) was chosen by a SIMD tuning campaign as the best
+  across architectures and dimensions — the only spill-free degree in the
+  register-pressured wide cells. Override it (C++ ``fit<N>``) only with
+  measurements in hand.
+- Oscillatory or rapidly-varying functions can use a *lot* of memory. If your
+  function is periodic, fit one period.
+
+Multi-threading
+---------------
+
+A fitted object is immutable; chunk your inputs and call the eval path from
+multiple threads (disjoint output slices). treeweave does not parallelize
+internally, which is what makes that contract safe.
+
+Benchmarks dashboard
+--------------------
+
+A small, stable set of batch-eval benchmarks runs on every push to ``main`` and
+is tracked at
+`diamondinoia.github.io/treeweave/dev/bench <https://diamondinoia.github.io/treeweave/dev/bench/>`_,
+which charts each series over time and flags regressions. The exhaustive
+exploratory history lives under
+`bench/ <https://github.com/DiamonDinoia/treeweave/tree/main/bench>`_.

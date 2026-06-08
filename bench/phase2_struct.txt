@@ -1,0 +1,74 @@
+# baobzi microbench  (TSC ~3.00 GHz, xsimd batch<double>::size = 4)
+# Note: traversal/leaf throughput scales with SIMD width. AVX2 hosts
+#       have W=4, AVX-512 hosts W=8 — normalise cyc/pt by W when
+#       comparing across machines. Phase-3 SIMD descent (gather)
+#       gives proportionally larger gains at W=8.
+# label                  deg dim N            MEvals/s    cyc/pt
+1d_runge               deg= 6 dim=1 N=1             41.11 MEvals/s    72.85 cyc/pt
+1d_runge               deg= 6 dim=1 N=32            39.77 MEvals/s    75.32 cyc/pt
+1d_runge               deg= 6 dim=1 N=1024          47.91 MEvals/s    62.52 cyc/pt
+1d_runge               deg= 6 dim=1 N=1000000       33.00 MEvals/s    90.78 cyc/pt
+1d_runge               deg= 8 dim=1 N=1             70.89 MEvals/s    42.25 cyc/pt
+1d_runge               deg= 8 dim=1 N=32            64.76 MEvals/s    46.25 cyc/pt
+1d_runge               deg= 8 dim=1 N=1024          95.16 MEvals/s    31.48 cyc/pt
+1d_runge               deg= 8 dim=1 N=1000000       33.58 MEvals/s    89.20 cyc/pt
+1d_runge               deg=10 dim=1 N=1             72.45 MEvals/s    41.34 cyc/pt
+1d_runge               deg=10 dim=1 N=32            82.15 MEvals/s    36.46 cyc/pt
+1d_runge               deg=10 dim=1 N=1024         109.72 MEvals/s    27.30 cyc/pt
+1d_runge               deg=10 dim=1 N=1000000       39.14 MEvals/s    76.52 cyc/pt
+1d_erf                 deg= 8 dim=1 N=1             69.20 MEvals/s    43.29 cyc/pt
+1d_erf                 deg= 8 dim=1 N=32            72.29 MEvals/s    41.43 cyc/pt
+1d_erf                 deg= 8 dim=1 N=1024          89.26 MEvals/s    33.56 cyc/pt
+1d_erf                 deg= 8 dim=1 N=1000000       48.24 MEvals/s    62.10 cyc/pt
+1d_bessel_j0           deg= 8 dim=1 N=1             42.58 MEvals/s    70.35 cyc/pt
+1d_bessel_j0           deg= 8 dim=1 N=32            35.10 MEvals/s    85.34 cyc/pt
+1d_bessel_j0           deg= 8 dim=1 N=1024          63.76 MEvals/s    46.98 cyc/pt
+1d_bessel_j0           deg= 8 dim=1 N=1000000       49.13 MEvals/s    60.97 cyc/pt
+1d_tanh_sharp          deg=10 dim=1 N=1            128.26 MEvals/s    23.35 cyc/pt
+1d_tanh_sharp          deg=10 dim=1 N=32            79.05 MEvals/s    37.89 cyc/pt
+1d_tanh_sharp          deg=10 dim=1 N=1024          96.16 MEvals/s    31.15 cyc/pt
+1d_tanh_sharp          deg=10 dim=1 N=1000000       30.57 MEvals/s    97.99 cyc/pt
+1d_log1p               deg= 8 dim=1 N=1             48.99 MEvals/s    61.13 cyc/pt
+1d_log1p               deg= 8 dim=1 N=32            81.21 MEvals/s    36.88 cyc/pt
+1d_log1p               deg= 8 dim=1 N=1024         103.13 MEvals/s    29.04 cyc/pt
+1d_log1p               deg= 8 dim=1 N=1000000       27.88 MEvals/s   107.44 cyc/pt
+2d_bump                deg= 6 dim=2 N=1             26.05 MEvals/s   114.97 cyc/pt
+2d_bump                deg= 6 dim=2 N=32             0.26 MEvals/s  11604.56 cyc/pt
+2d_bump                deg= 6 dim=2 N=1024           4.79 MEvals/s   624.81 cyc/pt
+2d_bump                deg= 6 dim=2 N=1000000       12.10 MEvals/s   247.58 cyc/pt
+2d_bump                deg= 8 dim=2 N=1             20.55 MEvals/s   145.79 cyc/pt
+2d_bump                deg= 8 dim=2 N=32             2.94 MEvals/s  1018.74 cyc/pt
+2d_bump                deg= 8 dim=2 N=1024          12.41 MEvals/s   241.34 cyc/pt
+2d_bump                deg= 8 dim=2 N=1000000       16.12 MEvals/s   185.82 cyc/pt
+2d_bump                deg=10 dim=2 N=1             18.11 MEvals/s   165.42 cyc/pt
+2d_bump                deg=10 dim=2 N=32             6.56 MEvals/s   456.33 cyc/pt
+2d_bump                deg=10 dim=2 N=1024          18.12 MEvals/s   165.33 cyc/pt
+2d_bump                deg=10 dim=2 N=1000000       21.50 MEvals/s   139.32 cyc/pt
+2d_osc                 deg= 8 dim=2 N=1             18.20 MEvals/s   164.57 cyc/pt
+2d_osc                 deg= 8 dim=2 N=32             9.94 MEvals/s   301.18 cyc/pt
+2d_osc                 deg= 8 dim=2 N=1024          19.31 MEvals/s   155.13 cyc/pt
+2d_osc                 deg= 8 dim=2 N=1000000       29.88 MEvals/s   100.26 cyc/pt
+2d_mq                  deg= 8 dim=2 N=1             24.45 MEvals/s   122.51 cyc/pt
+2d_mq                  deg= 8 dim=2 N=32            21.57 MEvals/s   138.88 cyc/pt
+2d_mq                  deg= 8 dim=2 N=1024          52.86 MEvals/s    56.66 cyc/pt
+2d_mq                  deg= 8 dim=2 N=1000000       48.11 MEvals/s    62.26 cyc/pt
+3d_gauss               deg= 6 dim=3 N=1             11.33 MEvals/s   264.29 cyc/pt
+3d_gauss               deg= 6 dim=3 N=32             0.70 MEvals/s  4258.86 cyc/pt
+3d_gauss               deg= 6 dim=3 N=1024           4.30 MEvals/s   696.35 cyc/pt
+3d_gauss               deg= 6 dim=3 N=1000000       16.79 MEvals/s   178.41 cyc/pt
+3d_gauss               deg= 8 dim=3 N=1              7.85 MEvals/s   381.68 cyc/pt
+3d_gauss               deg= 8 dim=3 N=32             3.78 MEvals/s   792.70 cyc/pt
+3d_gauss               deg= 8 dim=3 N=1024           5.95 MEvals/s   503.81 cyc/pt
+3d_gauss               deg= 8 dim=3 N=1000000       23.35 MEvals/s   128.26 cyc/pt
+3d_gauss               deg=10 dim=3 N=1              5.17 MEvals/s   578.83 cyc/pt
+3d_gauss               deg=10 dim=3 N=32             2.65 MEvals/s  1130.74 cyc/pt
+3d_gauss               deg=10 dim=3 N=1024          10.35 MEvals/s   289.53 cyc/pt
+3d_gauss               deg=10 dim=3 N=1000000       13.04 MEvals/s   229.62 cyc/pt
+3d_yukawa              deg= 8 dim=3 N=1              7.81 MEvals/s   383.70 cyc/pt
+3d_yukawa              deg= 8 dim=3 N=32             4.00 MEvals/s   749.07 cyc/pt
+3d_yukawa              deg= 8 dim=3 N=1024           6.76 MEvals/s   443.00 cyc/pt
+3d_yukawa              deg= 8 dim=3 N=1000000       20.61 MEvals/s   145.37 cyc/pt
+3d_imq                 deg= 8 dim=3 N=1              8.77 MEvals/s   341.66 cyc/pt
+3d_imq                 deg= 8 dim=3 N=32             3.75 MEvals/s   797.76 cyc/pt
+3d_imq                 deg= 8 dim=3 N=1024           5.39 MEvals/s   555.52 cyc/pt
+3d_imq                 deg= 8 dim=3 N=1000000       19.37 MEvals/s   154.61 cyc/pt

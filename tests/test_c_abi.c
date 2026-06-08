@@ -1,0 +1,598 @@
+/* test_c_abi.c — pure-C conformance test for the treeweave C ABI (treeweave.h).
+ *
+ * Unlike tests/test_c.cpp (a C++ TU that checks the C API against a direct
+ * treeweave::fit reference), this is compiled by the *C* compiler as C11 and
+ * cannot call into C++ at all — so it exercises every entry point exactly as a
+ * downstream C / Fortran consumer would, catching ABI and language-linkage
+ * problems the C++ parity test cannot.
+ *
+ * Because C cannot reach treeweave::fit, correctness is checked two ways:
+ *   - closed-form: eval(x) is within a generous margin of the exact kernel;
+ *   - self-consistency: two paths on the same handle agree (often bit-exact).
+ *
+ * A tiny CHECK macro counts failures, prints each, and main() returns that
+ * count — so 0 means pass and the process exit code is the failure count. */
+
+#include <float.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <treeweave.h>
+
+/* ---- failure-counting harness --------------------------------------- */
+
+static int g_failures = 0;
+
+static void check_impl(int cond, const char *expr, const char *file, int line) {
+    if (!cond) {
+        fprintf(stderr, "FAIL %s:%d: %s\n", file, line, expr);
+        ++g_failures;
+    }
+}
+#define CHECK(cond) check_impl((cond) ? 1 : 0, #cond, __FILE__, __LINE__)
+
+/* ---- kernels and their closed forms (smooth, O(1) on the unit box) --- */
+
+static void k_1d_1(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(0.5 * x[0]) + sin(3.0 * x[0]);
+}
+static double exact_1d_1(double x) { return exp(0.5 * x) + sin(3.0 * x); }
+
+static void k_1d_2(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(0.5 * x[0]);
+    y[1] = sin(3.0 * x[0]) + 2.0;
+}
+
+static void k_2d_1(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(0.3 * x[0]) + sin(2.0 * x[1]);
+}
+static double exact_2d_1(double x0, double x1) { return exp(0.3 * x0) + sin(2.0 * x1); }
+
+static void k_2d_3(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(0.3 * x[0]);
+    y[1] = sin(2.0 * x[1]) + 2.0;
+    y[2] = cos(x[0] * x[1]) + 2.0;
+}
+
+static void k_3d_1(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(0.2 * x[0]) + sin(x[1]) + cos(x[2]);
+}
+static double exact_3d_1(double x0, double x1, double x2) { return exp(0.2 * x0) + sin(x1) + cos(x2); }
+
+static void k_1d_1f(const float *x, float *y, void *d) {
+    (void)d;
+    y[0] = expf(0.5F * x[0]) + sinf(3.0F * x[0]);
+}
+static float exact_1d_1f(float x) { return expf(0.5F * x) + sinf(3.0F * x); }
+
+/* A deterministic LCG scatter in [0, 1); no <stdlib.h> rand() dependence. */
+static double next_unit(unsigned int *state) {
+    *state = *state * 1103515245U + 12345U;
+    return (double)(*state >> 8) / (double)(1U << 24);
+}
+
+/* ---- 1D scalar: auto-degree fit, eval parity, multi parity, tol check -- */
+
+static void test_1d_scalar_auto_degree(void) {
+    /* The C ABI auto-selects a register-optimal leaf degree per detected CPU.
+     * We verify the result meets the requested tol, and that scalar eval and
+     * multi eval are consistent. */
+    const double tol = 1e-9;
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, tol, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+    CHECK(treeweave_dtype(h) == TREEWEAVE_F64);
+    CHECK(treeweave_input_dim(h) == 1);
+    CHECK(treeweave_output_dim(h) == 1);
+    CHECK(treeweave_memory_usage(h) > 0);
+
+    enum { N = 256 };
+    double       xs[N], multi[N];
+    unsigned int seed = 42U;
+    for (int i = 0; i < N; ++i)
+        xs[i] = next_unit(&seed);
+    treeweave_batch(h, xs, multi, N);
+
+    double max_err = 0.0, max_parity = 0.0, max_mag = 1.0;
+    for (int i = 0; i < N; ++i) {
+        double y = 0.0;
+        treeweave_eval(h, &xs[i], &y);
+        const double exact   = exact_1d_1(xs[i]);
+        const double rel_err = fabs(y - exact) / (fabs(exact) + 1e-30);
+        if (rel_err > max_err)
+            max_err = rel_err;
+        if (fabs(multi[i]) > max_mag)
+            max_mag = fabs(multi[i]);
+        const double pe = fabs(y - multi[i]);
+        if (pe > max_parity)
+            max_parity = pe;
+    }
+    /* auto-degree should meet tol; allow a small factor for sampling bias */
+    CHECK(max_err < tol * 100.0);
+    /* Single-point (treeweave_eval) and batch (treeweave_batch) evaluate the same
+     * polynomial but through different code paths (scalar Horner vs SIMD). With
+     * hardware FMA the two are bit-identical; without it (e.g. an SSE2 baseline
+     * build, as on MSVC x64) they differ by at most a few ULP. Accuracy is
+     * checked above; here we only require agreement to rounding. */
+    CHECK(max_parity <= 16.0 * DBL_EPSILON * max_mag);
+    treeweave_free(h);
+}
+
+/* ---- accuracy check: (dtype, input_dim) combinations meet tol ---------- */
+
+static void test_auto_degree_meets_tol(void) {
+    /* 1D f64 */
+    {
+        const double tol = 1e-9;
+        const double a = 0.0, b = 1.0;
+        treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, tol, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            double       max_err = 0.0;
+            unsigned int seed    = 1U;
+            for (int i = 0; i < 500; ++i) {
+                const double x = next_unit(&seed);
+                double       y = 0.0;
+                treeweave_eval(h, &x, &y);
+                const double exact = exact_1d_1(x);
+                const double re    = fabs(y - exact) / (fabs(exact) + 1e-30);
+                if (re > max_err)
+                    max_err = re;
+            }
+            CHECK(max_err < tol * 100.0);
+            treeweave_free(h);
+        }
+    }
+    /* 2D f64 */
+    {
+        const double tol  = 1e-8;
+        const double a[2] = {0.0, 0.0}, b[2] = {1.0, 1.0};
+        treeweave_t  h = treeweave_fit(k_2d_1, 2, 1, a, b, tol, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            double       max_err = 0.0;
+            unsigned int seed    = 2U;
+            for (int i = 0; i < 400; ++i) {
+                const double p[2] = {next_unit(&seed), next_unit(&seed)};
+                double       y    = 0.0;
+                treeweave_eval(h, p, &y);
+                const double exact = exact_2d_1(p[0], p[1]);
+                const double re    = fabs(y - exact) / (fabs(exact) + 1e-30);
+                if (re > max_err)
+                    max_err = re;
+            }
+            CHECK(max_err < tol * 100.0);
+            treeweave_free(h);
+        }
+    }
+    /* 3D f64 */
+    {
+        const double tol  = 1e-7;
+        const double a[3] = {0.0, 0.0, 0.0}, b[3] = {1.0, 1.0, 1.0};
+        treeweave_t  h = treeweave_fit(k_3d_1, 3, 1, a, b, tol, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            double       max_err = 0.0;
+            unsigned int seed    = 3U;
+            for (int i = 0; i < 400; ++i) {
+                const double p[3] = {next_unit(&seed), next_unit(&seed), next_unit(&seed)};
+                double       y    = 0.0;
+                treeweave_eval(h, p, &y);
+                const double exact = exact_3d_1(p[0], p[1], p[2]);
+                const double re    = fabs(y - exact) / (fabs(exact) + 1e-30);
+                if (re > max_err)
+                    max_err = re;
+            }
+            CHECK(max_err < tol * 100.0);
+            treeweave_free(h);
+        }
+    }
+    /* 1D f32 */
+    {
+        const float tol_f = 1e-5F;
+        const float a = 0.0F, b = 1.0F;
+        treeweave_t h = treeweavef_fit(k_1d_1f, 1, 1, &a, &b, (double)tol_f, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            float max_err = 0.0F;
+            for (int i = 0; i <= 200; ++i) {
+                const float x = (float)i / 200.0F;
+                float       y = 0.0F;
+                treeweavef_eval(h, &x, &y);
+                const float exact = exact_1d_1f(x);
+                const float re    = fabsf(y - exact) / (fabsf(exact) + 1e-10F);
+                if (re > max_err)
+                    max_err = re;
+            }
+            CHECK(max_err < tol_f * 100.0F);
+            treeweave_free(h);
+        }
+    }
+}
+
+/* ---- sorted fast path == general multi on sorted input -------------- */
+
+static int cmp_double(const void *pa, const void *pb) {
+    const double a = *(const double *)pa, b = *(const double *)pb;
+    return (a > b) - (a < b);
+}
+
+static void test_sorted_matches_multi(void) {
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-10, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+
+    enum { N = 300 };
+    double       xs[N], multi[N], sorted[N];
+    unsigned int seed = 99U;
+    for (int i = 0; i < N; ++i)
+        xs[i] = next_unit(&seed);
+    qsort(xs, N, sizeof(double), cmp_double);
+    treeweave_batch(h, xs, multi, N);
+    treeweave_sorted(h, xs, sorted, N);
+    for (int i = 0; i < N; ++i)
+        CHECK(sorted[i] == multi[i]);
+    treeweave_free(h);
+}
+
+/* ---- SoA == AoS, component by component ----------------------------- */
+
+static void test_soa_matches_aos(void) {
+    const double a[2] = {0.0, 0.0}, b[2] = {1.0, 1.0};
+    treeweave_t  h = treeweave_fit(k_2d_3, 2, 3, a, b, 1e-8, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+    CHECK(treeweave_output_dim(h) == 3);
+
+    enum { N = 128 };
+    double       xs[N * 2], aos[N * 3];
+    double       c0[N], c1[N], c2[N];
+    double      *soa[3] = {c0, c1, c2};
+    unsigned int seed   = 7U;
+    for (int i = 0; i < N * 2; ++i)
+        xs[i] = next_unit(&seed);
+    treeweave_batch(h, xs, aos, N);
+    treeweave_transposed(h, xs, soa, N);
+
+    double max_err = 0.0;
+    for (int i = 0; i < N; ++i) {
+        CHECK(c0[i] == aos[3 * i + 0]);
+        CHECK(c1[i] == aos[3 * i + 1]);
+        CHECK(c2[i] == aos[3 * i + 2]);
+        double exact[3] = {0};
+        k_2d_3(&xs[2 * i], exact, NULL);
+        for (int k = 0; k < 3; ++k) {
+            const double e = fabs(aos[3 * i + k] - exact[k]);
+            if (e > max_err)
+                max_err = e;
+        }
+    }
+    CHECK(max_err < 1e-5);
+    treeweave_free(h);
+}
+
+/* ---- 2D / 3D scalar + 1D vector closed-form parity ------------------ */
+
+static void test_higher_dim_fits(void) {
+    /* 2D -> 1D */
+    {
+        const double a[2] = {0.0, 0.0}, b[2] = {1.0, 1.0};
+        treeweave_t  h = treeweave_fit(k_2d_1, 2, 1, a, b, 1e-8, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            CHECK(treeweave_input_dim(h) == 2);
+            double       max_err = 0.0;
+            unsigned int seed    = 3U;
+            for (int i = 0; i < 200; ++i) {
+                const double p[2] = {next_unit(&seed), next_unit(&seed)};
+                double       y    = 0.0;
+                treeweave_eval(h, p, &y);
+                const double e = fabs(y - exact_2d_1(p[0], p[1]));
+                if (e > max_err)
+                    max_err = e;
+            }
+            CHECK(max_err < 1e-5);
+            treeweave_free(h);
+        }
+    }
+    /* 3D -> 1D */
+    {
+        const double a[3] = {0.0, 0.0, 0.0}, b[3] = {1.0, 1.0, 1.0};
+        treeweave_t  h = treeweave_fit(k_3d_1, 3, 1, a, b, 1e-7, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            CHECK(treeweave_input_dim(h) == 3);
+            double       max_err = 0.0;
+            unsigned int seed    = 5U;
+            for (int i = 0; i < 200; ++i) {
+                const double p[3] = {next_unit(&seed), next_unit(&seed), next_unit(&seed)};
+                double       y    = 0.0;
+                treeweave_eval(h, p, &y);
+                const double e = fabs(y - exact_3d_1(p[0], p[1], p[2]));
+                if (e > max_err)
+                    max_err = e;
+            }
+            CHECK(max_err < 1e-5);
+            treeweave_free(h);
+        }
+    }
+    /* 1D -> 2 vector (input spelled as 1D, output_dim == 2) */
+    {
+        const double a = 0.0, b = 1.0;
+        treeweave_t  h = treeweave_fit(k_1d_2, 1, 2, &a, &b, 1e-9, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            CHECK(treeweave_output_dim(h) == 2);
+            double       max_err = 0.0;
+            unsigned int seed    = 11U;
+            for (int i = 0; i < 200; ++i) {
+                const double x    = next_unit(&seed);
+                double       y[2] = {0};
+                treeweave_eval(h, &x, y);
+                double exact[2] = {0};
+                k_1d_2(&x, exact, NULL);
+                if (fabs(y[0] - exact[0]) > max_err)
+                    max_err = fabs(y[0] - exact[0]);
+                if (fabs(y[1] - exact[1]) > max_err)
+                    max_err = fabs(y[1] - exact[1]);
+            }
+            CHECK(max_err < 1e-5);
+            treeweave_free(h);
+        }
+    }
+}
+
+/* ---- f32 path ------------------------------------------------------- */
+
+static void test_f32_path(void) {
+    const float a = 0.0F, b = 1.0F;
+    treeweave_t h = treeweavef_fit(k_1d_1f, 1, 1, &a, &b, 1e-5, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+    CHECK(treeweave_dtype(h) == TREEWEAVE_F32);
+
+    enum { N = 128 };
+    float xs[N], multi[N];
+    for (int i = 0; i < N; ++i)
+        xs[i] = (float)i / (float)N;
+    treeweavef_batch(h, xs, multi, N);
+
+    float max_err = 0.0F, max_parity = 0.0F, max_mag = 1.0F;
+    for (int i = 0; i < N; ++i) {
+        float y = 0.0F;
+        treeweavef_eval(h, &xs[i], &y);
+        const float ce = fabsf(y - exact_1d_1f(xs[i]));
+        if (ce > max_err)
+            max_err = ce;
+        if (fabsf(multi[i]) > max_mag)
+            max_mag = fabsf(multi[i]);
+        const float pe = fabsf(y - multi[i]);
+        if (pe > max_parity)
+            max_parity = pe;
+    }
+    CHECK(max_err < 1e-3F);
+    /* See the f64 case above: scalar vs batch agree to a few ULP, bit-exactly
+     * only where hardware FMA is present. */
+    CHECK(max_parity <= 16.0F * FLT_EPSILON * max_mag);
+    treeweave_free(h);
+}
+
+/* ---- domain edges: closed upper endpoint, OOD-low -> NaN ------------- *
+ * The eval domain is closed at the upper corner `b` and open below `a`:
+ *   x == b   -> the last leaf's polynomial (boundary value), not NaN
+ *   x <  a   -> NaN (unchanged)
+ * The far-high x > b region is no longer asserted NaN: the branchless
+ * index clamp routes it to the last leaf (accepted extrapolation). */
+
+static void test_out_of_domain_nan(void) {
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+
+    /* OOD-low scalar -> NaN. */
+    double xlo = a - 1.0, ylo = 0.0;
+    treeweave_eval(h, &xlo, &ylo);
+    CHECK(isnan(ylo));
+
+    /* Closed upper endpoint: x == b returns a finite boundary value. */
+    double xb = b, yb = 0.0;
+    treeweave_eval(h, &xb, &yb);
+    CHECK(!isnan(yb));
+    CHECK(fabs(yb - exact_1d_1(b)) < 1e-6);
+
+    /* Batch: x < a -> NaN; interior -> finite; x == b -> finite (clamped). */
+    double xs[3] = {a - 2.0, 0.25, b};
+    double ys[3] = {0};
+    treeweave_batch(h, xs, ys, 3);
+    CHECK(isnan(ys[0]));
+    CHECK(!isnan(ys[1]));
+    CHECK(!isnan(ys[2]));
+    CHECK(fabs(ys[2] - exact_1d_1(b)) < 1e-6);
+    treeweave_free(h);
+
+    /* f32 path: same closed-upper-endpoint behavior at x == b. */
+    const float af = 0.0F, bf = 1.0F;
+    treeweave_t hf = treeweavef_fit(k_1d_1f, 1, 1, &af, &bf, 1e-5, NULL, NULL);
+    CHECK(hf != NULL);
+    if (hf == NULL)
+        return;
+    float xbf = bf, ybf = 0.0F;
+    treeweavef_eval(hf, &xbf, &ybf);
+    CHECK(!isnan(ybf));
+    CHECK(fabsf(ybf - exact_1d_1f(bf)) < 1e-3F);
+    float xlof = af - 1.0F, ylof = 0.0F;
+    treeweavef_eval(hf, &xlof, &ylof);
+    CHECK(isnan(ylof));
+    treeweave_free(hf);
+}
+
+/* ---- introspection / defaults --------------------------------------- */
+
+static void test_introspection_and_defaults(void) {
+    /* treeweave_default_opts must match treeweave::options{} (verified in the
+     * C++ surface; mirrored here as concrete values). */
+    CHECK(treeweave_default_opts.tol_kind == TREEWEAVE_RELATIVE_MAX);
+    CHECK(treeweave_default_opts.max_depth == 50);
+    /* <0 = auto: a dimension-scaled budget resolved at fit time. */
+    CHECK(treeweave_default_opts.max_memory_mib < 0);
+    CHECK(treeweave_default_opts.allow_max_depth_leaves == 0);
+    CHECK(treeweave_default_opts.min_uniform_depth == 0);
+
+    /* NULL opts path must succeed (it selects the defaults). */
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, NULL);
+    CHECK(h != NULL);
+    if (h == NULL)
+        return;
+    CHECK(treeweave_memory_usage(h) > 0);
+    treeweave_print_stats(h); /* must run without crashing */
+    treeweave_free(h);
+}
+
+/* ---- error paths ---------------------------------------------------- */
+
+static void test_error_paths(void) {
+    const double a = 0.0, b = 1.0;
+
+    /* unsupported input_dim (4) -> NULL + error mentioning input_dim */
+    {
+        const double a4[4] = {0, 0, 0, 0}, b4[4] = {1, 1, 1, 1};
+        treeweave_t  h = treeweave_fit(k_1d_1, 4, 1, a4, b4, 1e-9, NULL, NULL);
+        CHECK(h == NULL);
+        CHECK(strstr(treeweave_last_error(), "input_dim") != NULL);
+    }
+    /* tol <= 0 -> NULL + nonempty error */
+    {
+        treeweave_t h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 0.0, NULL, NULL);
+        CHECK(h == NULL);
+        CHECK(strlen(treeweave_last_error()) > 0);
+    }
+    /* dtype mismatch: _f32 eval on an f64 handle leaves output untouched */
+    {
+        treeweave_t h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            float x = 0.5F, y = 42.0F;
+            treeweavef_eval(h, &x, &y);
+            CHECK(y == 42.0F);
+            CHECK(strlen(treeweave_last_error()) > 0);
+            treeweave_free(h);
+        }
+    }
+    /* sorted on a 2D handle -> no write + error mentioning input_dim */
+    {
+        const double a2[2] = {0.0, 0.0}, b2[2] = {1.0, 1.0};
+        treeweave_t  h = treeweave_fit(k_2d_1, 2, 1, a2, b2, 1e-8, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            double y = 123.0;
+            treeweave_sorted(h, a2, &y, 1);
+            CHECK(y == 123.0);
+            CHECK(strstr(treeweave_last_error(), "input_dim") != NULL);
+            treeweave_free(h);
+        }
+    }
+    /* SoA on an output_dim == 1 handle -> no write + error mentioning output_dim */
+    {
+        treeweave_t h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, NULL);
+        CHECK(h != NULL);
+        if (h != NULL) {
+            double  x = 0.5, c0 = 7.0;
+            double *soa[1] = {&c0};
+            treeweave_transposed(h, &x, soa, 1);
+            CHECK(c0 == 7.0);
+            CHECK(strstr(treeweave_last_error(), "output_dim") != NULL);
+            treeweave_free(h);
+        }
+    }
+    /* null-handle eval -> no crash + nonempty error */
+    {
+        double x = 0.0, y = 0.0;
+        treeweave_eval(NULL, &x, &y);
+        CHECK(strlen(treeweave_last_error()) > 0);
+    }
+    /* free(NULL) is a no-op returning NULL */
+    CHECK(treeweave_free(NULL) == NULL);
+}
+
+/* ---- by-value scalar eval matches the pointer API ------------------- */
+
+static void test_by_value_eval(void) {
+    const double a1 = 0.0, b1 = 1.0;
+    treeweave_t  h1    = treeweave_fit(k_1d_1, 1, 1, &a1, &b1, 1e-9, NULL, NULL);
+    const double a2[2] = {0.0, 0.0}, b2[2] = {1.0, 1.0};
+    treeweave_t  h2    = treeweave_fit(k_2d_1, 2, 1, a2, b2, 1e-9, NULL, NULL);
+    const double a3[3] = {0.0, 0.0, 0.0}, b3[3] = {1.0, 1.0, 1.0};
+    treeweave_t  h3  = treeweave_fit(k_3d_1, 3, 1, a3, b3, 1e-9, NULL, NULL);
+    const float  a1f = 0.0F, b1f = 1.0F;
+    treeweave_t  h1f = treeweavef_fit(k_1d_1f, 1, 1, &a1f, &b1f, 1e-5, NULL, NULL);
+    CHECK(h1 != NULL && h2 != NULL && h3 != NULL && h1f != NULL);
+    if (h1 == NULL || h2 == NULL || h3 == NULL || h1f == NULL)
+        return;
+
+    /* By-value result must equal the pointer-API result exactly (same path). */
+    for (int i = 0; i <= 8; ++i) {
+        const double t = (double)i / 8.0;
+
+        double x1 = t, y1 = 0.0;
+        treeweave_eval(h1, &x1, &y1);
+        CHECK(treeweave_eval_1d(h1, t) == y1 || (isnan(treeweave_eval_1d(h1, t)) && isnan(y1)));
+
+        double x2[2] = {t, 1.0 - t}, y2 = 0.0;
+        treeweave_eval(h2, x2, &y2);
+        CHECK(treeweave_eval_2d(h2, x2[0], x2[1]) == y2);
+
+        double x3[3] = {t, 1.0 - t, 0.5 * t}, y3 = 0.0;
+        treeweave_eval(h3, x3, &y3);
+        CHECK(treeweave_eval_3d(h3, x3[0], x3[1], x3[2]) == y3);
+
+        float xf = (float)t, yf = 0.0F;
+        treeweavef_eval(h1f, &xf, &yf);
+        CHECK(treeweavef_eval_1d(h1f, xf) == yf || (isnan(treeweavef_eval_1d(h1f, xf)) && isnan(yf)));
+    }
+
+    /* Closed upper endpoint via the by-value API. */
+    CHECK(!isnan(treeweave_eval_1d(h1, b1)));
+    CHECK(fabs(treeweave_eval_1d(h1, b1) - exact_1d_1(b1)) < 1e-6);
+
+    /* Arity / scalar-output mismatch -> NaN + last_error set. */
+    CHECK(isnan(treeweave_eval_2d(h1, 0.5, 0.5))); /* 1-D handle, 2-D call */
+    CHECK(treeweave_last_error()[0] != '\0');
+    CHECK(isnan(treeweave_eval_1d(NULL, 0.5))); /* null handle */
+
+    treeweave_free(h1);
+    treeweave_free(h2);
+    treeweave_free(h3);
+    treeweave_free(h1f);
+}
+
+int main(void) {
+    test_1d_scalar_auto_degree();
+    test_auto_degree_meets_tol();
+    test_sorted_matches_multi();
+    test_soa_matches_aos();
+    test_higher_dim_fits();
+    test_f32_path();
+    test_out_of_domain_nan();
+    test_by_value_eval();
+    test_introspection_and_defaults();
+    test_error_paths();
+
+    printf("%d failures\n", g_failures);
+    return g_failures;
+}

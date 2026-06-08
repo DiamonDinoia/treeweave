@@ -1,0 +1,227 @@
+% treeweave.mw — mwrap source of truth for the treeweave MATLAB binding.
+%
+% This is the ONLY hand-edited MEX source. mwrap turns it into:
+%   * treeweave_mex_gen.cpp  — the MEX gateway (generated into the build tree);
+%   * bz_*.m              — thin per-function stubs (generated into the build tree).
+% Neither is committed: the CMake build (bindings/matlab/CMakeLists.txt) fetches
+% mwrap via CPM and regenerates both from this file on every build. The
+% user-facing classdef treeweave.m wraps those bz_*.m stubs, storing the opaque
+% treeweave_t handle in its `mwptr` property (mwrap's R2008OO convention).
+%
+% Equivalent manual regeneration (the build does this for you, then compiles the
+% mex with -DR2008OO):
+%   mwrap -mex treeweave_mex -c treeweave_mex_gen.cpp -mb treeweave.mw
+%
+% Design notes:
+%   * The handle is an mwrap *object pointer* (treeweave_function*, == treeweave_t).
+%     mwrap stores it losslessly as a string and, under -DR2008OO, reads it
+%     back from a wrapper class's `mwptr` property — no lossy double round-trip.
+%   * The user's function_handle is handed to C via the mxArray pass-through:
+%     an `mxArray` argument maps to `const mxArray*`, so the C trampoline can
+%     feval it during the fit.
+
+$[
+#include "treeweave.h"
+
+#include <mex.h>
+#include <matrix.h>
+
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+
+/* ------------------------------------------------------------------ */
+/* Fit trampoline state (file-static — safe because MEX is             */
+/* single-threaded and treeweave_fit is synchronous / blocking).      */
+/* ------------------------------------------------------------------ */
+struct TrampState {
+    const mxArray *fhandle;   /* borrowed function_handle                 */
+    int      input_dim;
+    int      output_dim;
+    int      errored;         /* set after the first MATLAB error          */
+    mxArray *exception;       /* stashed mxArray* from mexCallMATLABWithTrap */
+};
+
+/*
+ * C callback invoked by treeweave_fit for every Chebyshev sample. Builds a
+ * 1×input_dim row vector and calls the handle via mexCallMATLABWithTrap (NOT
+ * mexCallMATLAB) — the Trap variant returns a non-NULL mxArray* exception
+ * instead of longjmping, preserving the C++ call stack of treeweave_fit. On
+ * any error it stashes the exception, flags errored, and fills y with NaN.
+ */
+static void matlab_trampoline(const double *x, double *y, void *data)
+{
+    TrampState *s = (TrampState *)data;
+
+    if (s->errored) {
+        for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+        return;
+    }
+
+    mxArray *xarr = mxCreateDoubleMatrix(1, s->input_dim, mxREAL);
+    if (!xarr) {
+        s->errored = 1;
+        for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+        return;
+    }
+    double *xptr = mxGetPr(xarr);
+    for (int i = 0; i < s->input_dim; ++i) xptr[i] = x[i];
+
+    mxArray *lhs[1] = {NULL};
+    mxArray *rhs[2] = {(mxArray *)s->fhandle, xarr};
+    mxArray *ex = mexCallMATLABWithTrap(1, lhs, 2, rhs, "feval");
+
+    mxDestroyArray(xarr);
+
+    if (ex) {
+        s->errored   = 1;
+        s->exception = ex;
+        for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+        return;
+    }
+    if (!lhs[0]) {
+        s->errored = 1;
+        for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+        return;
+    }
+
+    double *yptr  = mxGetPr(lhs[0]);
+    mwSize  numel = mxGetNumberOfElements(lhs[0]);
+    mwSize  ncopy = (numel < (mwSize)s->output_dim) ? numel : (mwSize)s->output_dim;
+    for (mwSize i = 0; i < ncopy; ++i)                     y[i] = yptr[i];
+    for (mwSize i = ncopy; i < (mwSize)s->output_dim; ++i) y[i] = (double)NAN;
+
+    mxDestroyArray(lhs[0]);
+}
+
+/* ------------------------------------------------------------------ */
+/* Wrappers over the C ABI, all keyed on treeweave_function* (== treeweave_t). */
+/* ------------------------------------------------------------------ */
+
+static treeweave_function *bz_fit_w(const mxArray *fh,
+                                 const double *a, const double *b, double tol,
+                                 int input_dim, int output_dim, int tol_kind,
+                                 int max_depth, int max_memory_mib,
+                                 int allow_max_depth_leaves, int min_uniform_depth)
+{
+    if (!mxIsClass(fh, "function_handle"))
+        mexErrMsgIdAndTxt("treeweave:badarg",
+                          "First argument to fit must be a function_handle");
+
+    treeweave_opts opts            = treeweave_default_opts;
+    opts.tol_kind               = (treeweave_tol_kind_t)tol_kind;
+    opts.max_depth              = max_depth;
+    opts.max_memory_mib         = max_memory_mib;
+    opts.allow_max_depth_leaves = allow_max_depth_leaves;
+    opts.min_uniform_depth      = min_uniform_depth;
+
+    struct TrampState state;
+    state.fhandle    = fh;
+    state.input_dim  = input_dim;
+    state.output_dim = output_dim;
+    state.errored    = 0;
+    state.exception  = NULL;
+
+    /* treeweave_fit(f, input_dim, output_dim, a, b, tol, context, opts); the
+       MATLAB callback recovers its function_handle from the &state context. */
+    treeweave_t f = treeweave_fit(matlab_trampoline,
+                            input_dim, output_dim,
+                            a, b, tol,
+                            &state, &opts);
+
+    /* Surface a MATLAB callback error in preference to a fit error. */
+    if (state.errored) {
+        const char *msg = "MATLAB callback raised an error";
+        char errbuf[1024] = {0};
+        if (state.exception) {
+            mxArray *mf = mxGetProperty(state.exception, 0, "message");
+            if (mf && mxIsChar(mf)) {
+                mxGetString(mf, errbuf, sizeof(errbuf));
+                msg = errbuf;
+            }
+            mxDestroyArray(state.exception);
+        }
+        if (f) treeweave_free(f);
+        mexErrMsgIdAndTxt("treeweave:callback", "%s", msg);
+    }
+    if (!f)
+        mexErrMsgIdAndTxt("treeweave:fit", "%s", treeweave_last_error());
+
+    return (treeweave_function *)f;
+}
+
+static void bz_eval1_w(treeweave_function *h, const double *x, double *y, int outdim) {
+    (void)outdim;
+    treeweave_eval((treeweave_t)h, x, y);
+}
+static void bz_eval_multi_w(treeweave_function *h, const double *x, double *y,
+                            int outdim, int64_t n) {
+    (void)outdim;
+    treeweave_batch((treeweave_t)h, x, y, (size_t)n);
+}
+static void bz_eval_sorted_w(treeweave_function *h, const double *x, double *y,
+                             int outdim, int64_t n) {
+    (void)outdim;
+    treeweave_sorted((treeweave_t)h, x, y, (size_t)n);
+}
+static void bz_eval_soa_w(treeweave_function *h, const double *x, double *y,
+                          int outdim, int64_t n) {
+    /* SoA output: y is outdim contiguous planes of n. The C ABI wants an
+       array of plane pointers, so point each into the flat result buffer. */
+    if (outdim <= 0) return;
+    double **planes = (double **)mxMalloc((size_t)outdim * sizeof(double *));
+    for (int j = 0; j < outdim; ++j) planes[j] = y + (size_t)j * (size_t)n;
+    treeweave_transposed((treeweave_t)h, x, planes, (size_t)n);
+    mxFree(planes);
+}
+static int    bz_input_dim_w (treeweave_function *h) { return treeweave_input_dim((treeweave_t)h); }
+static int    bz_output_dim_w(treeweave_function *h) { return treeweave_output_dim((treeweave_t)h); }
+static double bz_memory_w    (treeweave_function *h) { return (double)treeweave_memory_usage((treeweave_t)h); }
+static void   bz_stats_w     (treeweave_function *h) { treeweave_print_stats((treeweave_t)h); }
+static void   bz_free_w      (treeweave_function *h) { treeweave_free((treeweave_t)h); }
+$]
+
+% -----------------------------------------------------------------------
+% fit: hand the function_handle to C as an mxArray; return an object pointer.
+@function [h] = bz_fit(fh, a, b, tol, input_dim, output_dim, tol_kind, max_depth, max_memory_mib, allow_max_depth_leaves, min_uniform_depth)
+# treeweave_function* h = bz_fit_w(mxArray fh, double[] a, double[] b, double tol, int input_dim, int output_dim, int tol_kind, int max_depth, int max_memory_mib, int allow_max_depth_leaves, int min_uniform_depth);
+
+% -----------------------------------------------------------------------
+% Single-point eval. `self` is a treeweave (its mwptr holds the handle).
+% NOTE: the generated gateway reads every scalar via mxWrapGetScalar, which
+% requires mxDOUBLE_CLASS — so the .m stubs must pass plain doubles (no
+% int32/int64 casts) and the C side casts them.
+@function [y] = bz_eval1(self, x, output_dim)
+# bz_eval1_w(treeweave_function* self, double[] x, output double[output_dim] y, int output_dim);
+
+% -----------------------------------------------------------------------
+% Batch AoS eval. Xflat = (input_dim*n) doubles, point-major.
+@function [Yflat] = bz_eval_multi(self, Xflat, output_dim, n)
+# bz_eval_multi_w(treeweave_function* self, double[] Xflat, output double[output_dim, n] Yflat, int output_dim, int64_t n);
+
+% -----------------------------------------------------------------------
+% Sorted 1-D batch eval (dim == 1; caller guarantees ascending x).
+@function [Yflat] = bz_eval_sorted(self, x, output_dim, n)
+# bz_eval_sorted_w(treeweave_function* self, double[] x, output double[output_dim, n] Yflat, int output_dim, int64_t n);
+
+% -----------------------------------------------------------------------
+% Batch SoA eval. Xflat = dim contiguous coordinate planes (n each).
+@function [Yflat] = bz_eval_soa(self, Xflat, output_dim, n)
+# bz_eval_soa_w(treeweave_function* self, double[] Xflat, output double[n, output_dim] Yflat, int output_dim, int64_t n);
+
+% -----------------------------------------------------------------------
+% Introspection + free.
+@function [d] = bz_input_dim(self)
+# int d = bz_input_dim_w(treeweave_function* self);
+
+@function [d] = bz_output_dim(self)
+# int d = bz_output_dim_w(treeweave_function* self);
+
+@function [bytes] = bz_memory(self)
+# double bytes = bz_memory_w(treeweave_function* self);
+
+@function bz_stats(self)
+# bz_stats_w(treeweave_function* self);
+
+@function bz_free(self)
+# bz_free_w(treeweave_function* self);

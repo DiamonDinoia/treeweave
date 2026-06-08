@@ -1,0 +1,90 @@
+Python
+======
+
+Install
+-------
+
+treeweave is not on PyPI yet. Every push to ``main`` publishes a staging wheel to
+`TestPyPI <https://test.pypi.org/project/treeweave/>`_; install it with TestPyPI
+as the primary index and real PyPI for the dependencies:
+
+.. code-block:: bash
+
+   pip install --index-url https://test.pypi.org/simple/ \
+               --extra-index-url https://pypi.org/simple/ treeweave
+
+The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
+AVX2 / AVX-512 at runtime. NumPy is the only dependency. Plain
+``pip install treeweave`` will work once the first release is published to PyPI.
+
+Minimal example
+---------------
+
+.. code-block:: python
+
+   import math
+   import numpy as np
+   import treeweave
+
+   def f(x):
+       return math.exp(x[0])          # x is a length-`dim` sequence
+
+   approx = treeweave.fit(f, 0.0, 1.0, tol=1e-10)
+   print(approx)   # dtype, dim, out_dim, memory_usage
+
+   # The fit domain is [a, b); evaluating exactly at the upper corner b is
+   # allowed as a convenience and returns the boundary value (not NaN).
+   xs = np.linspace(0.0, 1.0, 11)    # includes the endpoint b = 1.0
+   ys = approx(xs)                    # batch eval; returns an ndarray
+   assert np.max(np.abs(ys - np.exp(xs))) < 1e-8
+
+``fit`` infers the input/output dimensions by probing the callable, so the
+common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
+directly for a single point or a batch. A C++ fit failure surfaces as a native
+Python exception.
+
+Evaluation routes
+-----------------
+
+Calling the fitted object dispatches on the shape of its argument, and two
+keyword flags select the fast paths:
+
+.. code-block:: python
+
+   approx(0.5)                       # single point  -> scalar (or (out_dim,))
+   approx(xs)                        # batch (N,)     -> (N,) / (N, out_dim)
+   approx(xs, sorted=True)           # 1-D ascending fast path (requires dim == 1)
+   approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)
+
+``sorted=True`` skips treeweave's internal counting-sort and is ~3–4× faster when
+you can promise ``xs`` is ascending — common for ``linspace`` grids, quadrature
+nodes, and time series. The promise is unchecked: unsorted input gives wrong
+values, so use the plain batch path when unsure. ``transposed=True`` returns each
+output component in its own contiguous row. Out-of-domain points are NaN-filled
+on every route.
+
+Multi-dimensional fits
+----------------------
+
+Pass sequence corners; the callback receives a length-``dim`` row and returns a
+scalar or a length-``out_dim`` sequence:
+
+.. code-block:: python
+
+   def bump(x):
+       return math.exp(-100 * (x[0] - 0.5) ** 2 - (x[1] - 0.5) ** 2)
+
+   approx = treeweave.fit(bump, [0.0, 0.0], [1.0, 1.0], tol=1e-8)
+   y = approx(np.array([[0.4, 0.6]]))   # shape (N, dim) -> (N, out_dim)
+
+Build from source
+-----------------
+
+.. code-block:: bash
+
+   cmake --preset bindings-python
+   cmake --build build/bindings-python -j
+   ctest --test-dir build/bindings-python -R python_treeweave
+
+Examples:
+`bindings/python/examples/ <https://github.com/DiamonDinoia/treeweave/tree/main/bindings/python/examples>`_.
