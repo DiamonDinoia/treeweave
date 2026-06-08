@@ -1,6 +1,6 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780953755942,
-  "repoUrl": "https://github.com/DiamonDinoia/canopy",
+  "lastUpdate": 1780955674958,
+  "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
       {
@@ -98,6 +98,54 @@ window.BENCHMARK_DATA = {
             "value": 0.0016560854,
             "unit": "s/batch",
             "extra": "MdAPE=0.0128049906810706; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "eab944140e13c9e3e00b63e4a81834ff24fb522f",
+          "message": "treeweave: fast N-D function approximation\n\ntreeweave builds piecewise low-order-polynomial surrogates of expensive\nsmooth functions and evaluates them with runtime-dispatched SIMD. It ships\na header-only C++ core plus a C ABI and Python / Julia / Fortran / MATLAB\nbindings.\n\nThis project began as a clean-break rewrite of baobzi by Robert Blackwell\n(https://github.com/flatironinstitute/baobzi); the approximation approach\nand several design ideas originate there. See NOTICE for attribution.\n\nCo-Authored-By: Robert Blackwell <rblackwell@flatironinstitute.org>\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-08T17:53:49-04:00",
+          "tree_id": "5e5900b6511d64f87ac7f64a60055b1267d9a6fe",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/eab944140e13c9e3e00b63e4a81834ff24fb522f"
+        },
+        "date": 1780955674402,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000650762,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00415679901958186; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00108068533333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0056608673071928; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.0020292182,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00493453244771734; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0010160432,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00189834269123009; batch=65536 pts/call"
           }
         ]
       }
