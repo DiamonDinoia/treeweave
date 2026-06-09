@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781037721997,
+  "lastUpdate": 1781038002581,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -386,6 +386,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00148927955555556,
             "unit": "s/batch",
             "extra": "MdAPE=0.00315012662399097; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "fda39ee89fdec884009b35af1689eae31eb9d438",
+          "message": "ci: pin cibuildwheel to v3.4.1 (no bare @v3 tag exists)\n\npypa/cibuildwheel publishes v3.4.1 / v3.4 etc. but no moving @v3 major tag,\nso @v3 fails to resolve. Fixes the just-broken TestPyPI run and the same\nlatent bug in wheels.yml (tag-only, so never previously exercised).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T16:43:26-04:00",
+          "tree_id": "c8a9941837916c56b9a04084c0ccfeec0f1b6b80",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/fda39ee89fdec884009b35af1689eae31eb9d438"
+        },
+        "date": 1781038000100,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000659387111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00944310245727987; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001643080375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00411849573608322; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00263143355555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00107141249381009; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00149765575,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00357015969902413; batch=65536 pts/call"
           }
         ]
       }
