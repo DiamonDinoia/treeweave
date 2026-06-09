@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781040242396,
+  "lastUpdate": 1781040757053,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -626,6 +626,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001029819375,
             "unit": "s/batch",
             "extra": "MdAPE=0.00522410993592663; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "cbc7e1e8cc59dfbcd79eee063c581d399961cf91",
+          "message": "fix: build the C ABI single-arch on MSVC even when MULTIARCH=ON\n\nThe new family-driven fan-out fired on any x86 target, including MSVC\n(AMD64 matches the x86 regex). But the per-variant flags are GCC/Clang\n`-march=`/`-mtune=` spellings cl.exe does not accept, so the flag probe\nfailed and configure aborted with FATAL_ERROR — breaking the Windows\nwheel (cmake-args carry TREEWEAVE_C_MULTIARCH=ON). The code comment\nalready claimed MSVC falls through to single-arch; enforce it with a\n`NOT MSVC` guard on the multi-arch family gate, matching the documented\nintent. No effect on the GCC/Clang x86 ladder or the aarch64/riscv paths.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T17:30:31-04:00",
+          "tree_id": "abf9c9a99d8016d97661ae967a02b66971962e1a",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/cbc7e1e8cc59dfbcd79eee063c581d399961cf91"
+        },
+        "date": 1781040752721,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000666867,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0131938989612312; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00170207488888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0330741488750267; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00263716725,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00278810267564313; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00150485375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00517091458468628; batch=65536 pts/call"
           }
         ]
       }
