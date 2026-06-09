@@ -100,7 +100,10 @@
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
@@ -223,10 +226,15 @@ immutable and safe to call from many threads at once.</p>
 </div>
 <p>Common rules across every binding:</p>
 <ul class="simple">
-<li><p>The domain is the <strong>semi-open</strong> interval <code class="docutils literal notranslate"><span class="pre">[lo,</span> <span class="pre">hi)</span></code>. Evaluating exactly at
-the upper corner returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code> (the out-of-domain sentinel).</p></li>
+<li><p>The fit domain is the <strong>semi-open</strong> interval <code class="docutils literal notranslate"><span class="pre">[lo,</span> <span class="pre">hi)</span></code> — the target only
+needs to be defined there. As a convenience, evaluating exactly at the upper
+corner <code class="docutils literal notranslate"><span class="pre">hi</span></code> returns the boundary value (the last cell’s polynomial), not
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tol</span></code> is positional with no default, so every call states its accuracy.</p></li>
-<li><p>There is no input bounds checking — out-of-domain points return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p></li>
+<li><p>There is no input bounds checking. The domain is guarded asymmetrically:
+points below <code class="docutils literal notranslate"><span class="pre">lo</span></code> (and <code class="docutils literal notranslate"><span class="pre">NaN</span></code> inputs) return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>; points above <code class="docutils literal notranslate"><span class="pre">hi</span></code>
+extrapolate from the last cell (the result may be non-finite). This keeps the
+hot path branchless.</p></li>
 <li><p>See <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> for the fit knobs (error metric, depth, memory budget).</p></li>
 </ul>
 </section>

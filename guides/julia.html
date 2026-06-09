@@ -100,7 +100,10 @@
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
@@ -218,12 +221,14 @@ variable, or point <code class="docutils literal notranslate"><span class="pre">
 
 <span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span><span class="n">x</span><span class="p">)</span>
 <span class="n">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">)</span>
-<span class="n">println</span><span class="p">(</span><span class="n">approx</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;  memory: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">memory_usage</span><span class="p">(</span><span class="n">approx</span><span class="p">),</span><span class="w"> </span><span class="s">&quot; bytes&quot;</span><span class="p">)</span>
+<span class="n">println</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span><span class="w">   </span><span class="c"># show() prints dtype, dim, out_dim and bytes</span>
 
 <span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="w">                     </span><span class="c"># single point</span>
 
-<span class="c"># Batch eval — the handle is called directly. Sample [a, b) (b exclusive).</span>
-<span class="n">xs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collect</span><span class="p">(</span><span class="n">range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span><span class="w"> </span><span class="n">length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1001</span><span class="p">))[</span><span class="mi">1</span><span class="o">:</span><span class="k">end</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="c"># Batch eval — the handle is called directly. The fit domain is [a, b);</span>
+<span class="c"># evaluating exactly at the upper corner b is allowed (returns the boundary</span>
+<span class="c"># value), so the endpoint can be kept.</span>
+<span class="n">xs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collect</span><span class="p">(</span><span class="n">range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span><span class="w"> </span><span class="n">length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1001</span><span class="p">))</span>
 <span class="n">ys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
 </pre></div>
 </div>

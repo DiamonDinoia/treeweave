@@ -100,7 +100,10 @@
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
@@ -220,10 +223,11 @@ AVX2 / AVX-512 at runtime. NumPy is the only dependency.</p>
     <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>          <span class="c1"># x is a length-`dim` sequence</span>
 
 <span class="n">approx</span> <span class="o">=</span> <span class="n">treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">approx</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">approx</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">approx</span><span class="o">.</span><span class="n">out_dim</span><span class="p">,</span> <span class="n">approx</span><span class="o">.</span><span class="n">memory_usage</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span>   <span class="c1"># dtype, dim, out_dim, memory_usage</span>
 
-<span class="c1"># The upper corner is exclusive, so sample [a, b).</span>
-<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># The fit domain is [a, b); evaluating exactly at the upper corner b is</span>
+<span class="c1"># allowed as a convenience and returns the boundary value (not NaN).</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>    <span class="c1"># includes the endpoint b = 1.0</span>
 <span class="n">ys</span> <span class="o">=</span> <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>                    <span class="c1"># batch eval; returns an ndarray</span>
 <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
 </pre></div>

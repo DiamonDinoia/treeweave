@@ -29,8 +29,9 @@ Minimal example
        if (!fn) { fprintf(stderr, "fit failed: %s\n", treeweave_last_error()); return 1; }
 
        double x = 0.5, y;
-       treeweave_eval(fn, &x, &y);          /* scalar eval */
-       printf("exp(0.5) ~= %.12f\n", y);
+       treeweave_eval(fn, &x, &y);             /* pointer scalar eval    */
+       double y2 = treeweave_eval_1d(fn, 0.5); /* by-value:  y2 = f(0.5) */
+       printf("exp(0.5) ~= %.12f (%.12f)\n", y, y2);
 
        fn = treeweave_free(fn);
        return 0;
@@ -44,10 +45,17 @@ Evaluation entry points
 - ``treeweave_sorted(fn, x, res, n)`` — 1-D fast path for ascending inputs.
 - ``treeweave_transposed(fn, x, soa, n)`` — struct-of-arrays output for
   multi-output fits.
+- ``treeweave_eval_1d/2d/3d(fn, x0, ...)`` — by-value convenience for a
+  scalar-output (``output_dim == 1``) handle: pass coordinates by value, get the
+  result back directly. Each has a ``treeweavef_*`` ``float`` twin.
 
 ``context`` carries optional callback state (the C analogue of a C++ lambda
 capture); ``opts`` is ``NULL`` for ``treeweave_default_opts``. Errors return
 ``NULL`` / write nothing and set the thread-local ``treeweave_last_error()``.
+
+Evaluating exactly at the upper corner ``b`` returns the boundary value (a
+convenience over the half-open fit domain ``[a, b)``); inputs below ``a`` yield
+``NaN``.
 
 Building
 --------

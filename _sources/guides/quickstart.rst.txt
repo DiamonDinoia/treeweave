@@ -25,8 +25,13 @@ A 60-second taste, in C++:
 
 Common rules across every binding:
 
-- The domain is the **semi-open** interval ``[lo, hi)``. Evaluating exactly at
-  the upper corner returns ``NaN`` (the out-of-domain sentinel).
+- The fit domain is the **semi-open** interval ``[lo, hi)`` — the target only
+  needs to be defined there. As a convenience, evaluating exactly at the upper
+  corner ``hi`` returns the boundary value (the last cell's polynomial), not
+  ``NaN``.
 - ``tol`` is positional with no default, so every call states its accuracy.
-- There is no input bounds checking — out-of-domain points return ``NaN``.
+- There is no input bounds checking. The domain is guarded asymmetrically:
+  points below ``lo`` (and ``NaN`` inputs) return ``NaN``; points above ``hi``
+  extrapolate from the last cell (the result may be non-finite). This keeps the
+  hot path branchless.
 - See :doc:`options` for the fit knobs (error metric, depth, memory budget).

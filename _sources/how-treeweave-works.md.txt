@@ -10,7 +10,7 @@ a degree-8 polynomial evaluation.
               │
               ▼
    ┌──────────────────────────────────────┐
-   │  fit once:  treeweave::fit(f, a, b)     │  ◄── slow: runs f(x) on Chebyshev
+   │  fit once:  treeweave::fit(f, a, b)  │  ◄── slow: runs f(x) on Chebyshev
    └──────────────────────────────────────┘      nodes, splits panels until
               │                                  tolerance is met.
               ▼
@@ -188,11 +188,11 @@ behaviour. Optimised path:
    ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
    │ L0 │ L0 │ L0 │ L1 │ L1 │ L3 │ L3 │ L3 │ L3 │   one contiguous run per
    └────┴────┴────┴────┴────┴────┴────┴────┴────┘   leaf
-   └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
-          │            │              │
-          ▼            ▼              ▼
-       polyfit      polyfit        polyfit             ◄── one SIMD batch call
-     kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
+    └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
+           │            │              │
+           ▼            ▼              ▼
+        polyfit      polyfit        polyfit             ◄── one SIMD batch call
+      kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
                                                        in L1.
 
    step 3: permute outputs back to caller order.

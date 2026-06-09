@@ -100,7 +100,10 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
@@ -244,7 +247,30 @@ returns <code class="docutils literal notranslate"><span class="pre">NULL</span>
 <li><p><code class="docutils literal notranslate"><span class="pre">sorted</span></code> — 1-D fast path for ascending inputs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">transposed</span></code> — struct-of-arrays output for multi-output fits.</p></li>
 </ul>
-<p>Each has a <code class="docutils literal notranslate"><span class="pre">treeweavef_*</span></code> <code class="docutils literal notranslate"><span class="pre">float</span></code> twin. Out-of-domain inputs write <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+<p>Each has a <code class="docutils literal notranslate"><span class="pre">treeweavef_*</span></code> <code class="docutils literal notranslate"><span class="pre">float</span></code> twin.</p>
+<p>Out-of-domain handling is asymmetric (the cost of a branchless hot path):
+evaluating exactly at the upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value, points
+below <code class="docutils literal notranslate"><span class="pre">a</span></code> (and <code class="docutils literal notranslate"><span class="pre">NaN</span></code> inputs) yield <code class="docutils literal notranslate"><span class="pre">NaN</span></code>, and points above <code class="docutils literal notranslate"><span class="pre">b</span></code>
+extrapolate from the last cell (the result may be non-finite).</p>
+<section id="by-value-scalar-eval-c-convenience">
+<h3>By-value scalar eval (C convenience)<a class="headerlink" href="#by-value-scalar-eval-c-convenience" title="Link to this heading"></a></h3>
+<p>For the common <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">f(x)</span></code> case on a <strong>scalar-output</strong> handle
+(<code class="docutils literal notranslate"><span class="pre">output_dim</span> <span class="pre">==</span> <span class="pre">1</span></code>), thin by-value wrappers take the coordinates by value and
+return the result — no output pointer. The <code class="docutils literal notranslate"><span class="pre">_1d</span></code>/<code class="docutils literal notranslate"><span class="pre">_2d</span></code>/<code class="docutils literal notranslate"><span class="pre">_3d</span></code> suffix is the
+call arity and must match the handle’s <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">double</span><span class="w"> </span><span class="nf">treeweave_eval_1d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x0</span><span class="p">);</span>
+<span class="kt">double</span><span class="w"> </span><span class="nf">treeweave_eval_2d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x0</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x1</span><span class="p">);</span>
+<span class="kt">double</span><span class="w"> </span><span class="nf">treeweave_eval_3d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x0</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x1</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x2</span><span class="p">);</span>
+<span class="kt">float</span><span class="w">  </span><span class="nf">treeweavef_eval_1d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x0</span><span class="p">);</span>
+<span class="kt">float</span><span class="w">  </span><span class="nf">treeweavef_eval_2d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x0</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x1</span><span class="p">);</span>
+<span class="kt">float</span><span class="w">  </span><span class="nf">treeweavef_eval_3d</span><span class="p">(</span><span class="n">treeweave_t</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x0</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x1</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">x2</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>On a dimension mismatch (the handle’s <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>/<code class="docutils literal notranslate"><span class="pre">output_dim</span></code> does not match
+the call arity / scalar output) they set <code class="docutils literal notranslate"><span class="pre">treeweave_last_error()</span></code> and return
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code>. Vector-output handles keep the pointer API (<code class="docutils literal notranslate"><span class="pre">treeweave_eval</span></code> /
+<code class="docutils literal notranslate"><span class="pre">treeweave_transposed</span></code>).</p>
+</section>
 </section>
 <section id="introspection-and-teardown">
 <h2>Introspection and teardown<a class="headerlink" href="#introspection-and-teardown" title="Link to this heading"></a></h2>

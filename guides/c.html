@@ -100,7 +100,10 @@
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
@@ -226,8 +229,9 @@ FINUFFT/FFTW style: <code class="docutils literal notranslate"><span class="pre"
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">fn</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;fit failed: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">treeweave_last_error</span><span class="p">());</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 
 <span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
-<span class="w">    </span><span class="n">treeweave_eval</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">y</span><span class="p">);</span><span class="w">          </span><span class="cm">/* scalar eval */</span>
-<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;exp(0.5) ~= %.12f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">);</span>
+<span class="w">    </span><span class="n">treeweave_eval</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">y</span><span class="p">);</span><span class="w">             </span><span class="cm">/* pointer scalar eval    */</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">y2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_eval_1d</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">);</span><span class="w"> </span><span class="cm">/* by-value:  y2 = f(0.5) */</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;exp(0.5) ~= %.12f (%.12f)</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">y2</span><span class="p">);</span>
 
 <span class="w">    </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_free</span><span class="p">(</span><span class="n">fn</span><span class="p">);</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
@@ -243,10 +247,16 @@ FINUFFT/FFTW style: <code class="docutils literal notranslate"><span class="pre"
 <li><p><code class="docutils literal notranslate"><span class="pre">treeweave_sorted(fn,</span> <span class="pre">x,</span> <span class="pre">res,</span> <span class="pre">n)</span></code> — 1-D fast path for ascending inputs.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">treeweave_transposed(fn,</span> <span class="pre">x,</span> <span class="pre">soa,</span> <span class="pre">n)</span></code> — struct-of-arrays output for
 multi-output fits.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">treeweave_eval_1d/2d/3d(fn,</span> <span class="pre">x0,</span> <span class="pre">...)</span></code> — by-value convenience for a
+scalar-output (<code class="docutils literal notranslate"><span class="pre">output_dim</span> <span class="pre">==</span> <span class="pre">1</span></code>) handle: pass coordinates by value, get the
+result back directly. Each has a <code class="docutils literal notranslate"><span class="pre">treeweavef_*</span></code> <code class="docutils literal notranslate"><span class="pre">float</span></code> twin.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">context</span></code> carries optional callback state (the C analogue of a C++ lambda
 capture); <code class="docutils literal notranslate"><span class="pre">opts</span></code> is <code class="docutils literal notranslate"><span class="pre">NULL</span></code> for <code class="docutils literal notranslate"><span class="pre">treeweave_default_opts</span></code>. Errors return
 <code class="docutils literal notranslate"><span class="pre">NULL</span></code> / write nothing and set the thread-local <code class="docutils literal notranslate"><span class="pre">treeweave_last_error()</span></code>.</p>
+<p>Evaluating exactly at the upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value (a
+convenience over the half-open fit domain <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b)</span></code>); inputs below <code class="docutils literal notranslate"><span class="pre">a</span></code> yield
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
 </section>
 <section id="building">
 <h2>Building<a class="headerlink" href="#building" title="Link to this heading"></a></h2>

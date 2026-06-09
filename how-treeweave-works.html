@@ -100,7 +100,10 @@
 <li class="toctree-l1"><a class="reference internal" href="guides/c-abi.html">C ABI reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guides/c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
@@ -210,7 +213,7 @@ a degree-8 polynomial evaluation.</p>
               │
               ▼
    ┌──────────────────────────────────────┐
-   │  fit once:  treeweave::fit(f, a, b)     │  ◄── slow: runs f(x) on Chebyshev
+   │  fit once:  treeweave::fit(f, a, b)  │  ◄── slow: runs f(x) on Chebyshev
    └──────────────────────────────────────┘      nodes, splits panels until
               │                                  tolerance is met.
               ▼
@@ -374,11 +377,11 @@ behaviour. Optimised path:</p>
    ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
    │ L0 │ L0 │ L0 │ L1 │ L1 │ L3 │ L3 │ L3 │ L3 │   one contiguous run per
    └────┴────┴────┴────┴────┴────┴────┴────┴────┘   leaf
-   └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
-          │            │              │
-          ▼            ▼              ▼
-       polyfit      polyfit        polyfit             ◄── one SIMD batch call
-     kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
+    └── L0 run ───┘ └─ L1 ──┘ └──── L3 run ─────┘
+           │            │              │
+           ▼            ▼              ▼
+        polyfit      polyfit        polyfit             ◄── one SIMD batch call
+      kernel(L0)   kernel(L1)     kernel(L3)            per leaf, coeffs hot
                                                        in L1.
 
    step 3: permute outputs back to caller order.
