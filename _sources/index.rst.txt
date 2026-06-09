@@ -68,6 +68,7 @@ Why treeweave
 
    guides/options
    guides/c-abi
+   guides/dispatch
    guides/performance
    how-treeweave-works
 

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python &mdash; treeweave  documentation</title>
+  <title>Runtime ISA dispatch &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Julia" href="julia.html" />
-    <link rel="prev" title="Fortran" href="fortran.html" /> 
+    <link rel="next" title="Performance" href="performance.html" />
+    <link rel="prev" title="C ABI reference" href="c-abi.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -57,7 +57,7 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
@@ -77,11 +77,11 @@
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Python</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-from-source">Build from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python.html">Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="python.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
@@ -92,7 +92,7 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
@@ -110,10 +110,10 @@
 <li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Runtime ISA dispatch</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-no-sve-on-arm">Why no SVE on ARM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
@@ -200,9 +200,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Python</li>
+      <li class="breadcrumb-item active">Runtime ISA dispatch</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/python.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/dispatch.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -210,61 +210,92 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="python">
-<h1>Python<a class="headerlink" href="#python" title="Link to this heading"></a></h1>
-<section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>treeweave
+  <section id="runtime-isa-dispatch">
+<h1>Runtime ISA dispatch<a class="headerlink" href="#runtime-isa-dispatch" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> can ship a single binary that picks the widest SIMD
+instruction set the host CPU supports at load time, rather than being pinned to
+the <code class="docutils literal notranslate"><span class="pre">-march</span></code> it was compiled with. This is the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_C_MULTIARCH</span></code>
+build mode: the eval kernels are compiled once per ISA level, and a tiny
+dispatcher selects one the first time a fit is built.</p>
+<p>Enable it at configure time:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_C_MULTIARCH<span class="o">=</span>ON<span class="w"> </span>-DTREEWEAVE_ARCH<span class="o">=</span>x86-64<span class="w">   </span><span class="c1"># x86</span>
+cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_C_MULTIARCH<span class="o">=</span>ON<span class="w"> </span>-DTREEWEAVE_ARCH<span class="o">=</span>armv8-a<span class="w">  </span><span class="c1"># aarch64</span>
 </pre></div>
 </div>
-<p>The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
-AVX2 / AVX-512 at runtime. NumPy is the only dependency.</p>
+<p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH</span></code> is the <strong>baseline</strong> the dispatcher itself and the C shim are
+compiled at, so the library loads on any CPU of the family — keep it at the
+lowest level (<code class="docutils literal notranslate"><span class="pre">x86-64</span></code>, <code class="docutils literal notranslate"><span class="pre">armv8-a</span></code>), not a tuned one.</p>
+<section id="how-the-family-is-chosen">
+<h2>How the family is chosen<a class="headerlink" href="#how-the-family-is-chosen" title="Link to this heading"></a></h2>
+<p>The set of variants is selected at compile time from <code class="docutils literal notranslate"><span class="pre">xsimd::best_arch</span></code> by CPU
+family (see <code class="docutils literal notranslate"><span class="pre">include/treeweave/detail/dispatch_arch.hpp</span></code>):</p>
+<ul>
+<li><p><strong>x86-64</strong> — a four-level ladder. The dispatcher walks it widest-first and
+selects the first level the host reports as available:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">-march</span></code> level</p></th>
+<th class="head"><p>arch</p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> name</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x86-64-v4</span></code></p></td>
+<td><p>AVX-512BW</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">avx512bw</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">x86-64-v3</span></code></p></td>
+<td><p>FMA3 + AVX2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fma3+avx2</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x86-64-v2</span></code></p></td>
+<td><p>SSE4.2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sse4.2</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">x86-64</span></code></p></td>
+<td><p>SSE2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sse2</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p><strong>aarch64</strong> (non-Apple) — a single <code class="docutils literal notranslate"><span class="pre">neon64</span></code> variant
+(<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> name <code class="docutils literal notranslate"><span class="pre">arm64+neon</span></code>). NEON64 is mandatory on
+ARMv8-A, so it always dispatches. The win here is a uniform, portable dispatch
+path — not a new performance tier.</p></li>
+<li><p><strong>riscv64</strong> — a single <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (fixed 128-bit RVV). <strong>Best-effort and
+untested</strong>: there is no RISC-V CI runner, so this branch compiles but is not
+verified.</p></li>
+</ul>
+<p>Apple silicon, MSVC, and unknown targets fall back to a single-arch build at
+<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH</span></code> (no runtime dispatch).</p>
 </section>
-<section id="minimal-example">
-<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">treeweave</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>          <span class="c1"># x is a length-`dim` sequence</span>
-
-<span class="n">approx</span> <span class="o">=</span> <span class="n">treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span>   <span class="c1"># dtype, dim, out_dim, memory_usage</span>
-
-<span class="c1"># The fit domain is [a, b); evaluating exactly at the upper corner b is</span>
-<span class="c1"># allowed as a convenience and returns the boundary value (not NaN).</span>
-<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>    <span class="c1"># includes the endpoint b = 1.0</span>
-<span class="n">ys</span> <span class="o">=</span> <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>                    <span class="c1"># batch eval; returns an ndarray</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">fit</span></code> infers the input/output dimensions by probing the callable, so the
-common case is just <code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">tol=...)</span></code>. The fitted object is called
-directly for a single point or a batch. A C++ fit failure surfaces as a native
-Python exception.</p>
+<section id="why-no-sve-on-arm">
+<h2>Why no SVE on ARM<a class="headerlink" href="#why-no-sve-on-arm" title="Link to this heading"></a></h2>
+<p>ARM SVE is deliberately <strong>excluded</strong> from the runtime ladder. xsimd models SVE
+as <code class="docutils literal notranslate"><span class="pre">sve&lt;N&gt;</span></code> with the vector width <code class="docutils literal notranslate"><span class="pre">N</span></code> baked in at compile time, but the
+runtime probe (<code class="docutils literal notranslate"><span class="pre">available_architectures().has(sve&lt;N&gt;)</span></code>) only checks the SVE
+<em>presence</em> HWCAP bit — it does not check the width. A fixed-width SVE variant
+would therefore falsely match SVE hardware of a <em>different</em> width and mis-run.
+NEON64 is mandatory on every ARMv8-A core, so dropping SVE costs no coverage.</p>
+<p>The dispatch mechanism itself is unchanged across families: <code class="docutils literal notranslate"><span class="pre">xsimd::dispatch</span></code>
+over the family arch-list, with selection driven by
+<code class="docutils literal notranslate"><span class="pre">available_architectures().has(Arch)</span></code> — <em>not</em> <code class="docutils literal notranslate"><span class="pre">Arch::available()</span></code> (which is
+a constexpr <code class="docutils literal notranslate"><span class="pre">true</span></code> and would blindly pick the widest <em>compiled</em> arch on every
+CPU, faulting on hosts that lack it).</p>
 </section>
-<section id="multi-dimensional-fits">
-<h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>
-<p>Pass sequence corners; the callback receives a length-<code class="docutils literal notranslate"><span class="pre">dim</span></code> row and returns a
-scalar or a length-<code class="docutils literal notranslate"><span class="pre">out_dim</span></code> sequence:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">bump</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-
-<span class="n">approx</span> <span class="o">=</span> <span class="n">treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">bump</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">approx</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">]]))</span>   <span class="c1"># shape (N, dim) -&gt; (N, out_dim)</span>
+<section id="forcing-an-isa-for-testing">
+<h2>Forcing an ISA for testing<a class="headerlink" href="#forcing-an-isa-for-testing" title="Link to this heading"></a></h2>
+<p>Set <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> to one of the names above to pin the dispatcher to
+a specific level (capped at what the host actually supports), so one capable
+machine can exercise every fallback path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>sse2<span class="w">       </span>./test_c_abi<span class="w">   </span><span class="c1"># force the x86 baseline</span>
+<span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>fma3+avx2<span class="w">  </span>./test_c_abi<span class="w">   </span><span class="c1"># force AVX2</span>
+<span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>arm64+neon<span class="w"> </span>./test_c_abi<span class="w">   </span><span class="c1"># force NEON64 on aarch64</span>
 </pre></div>
 </div>
-</section>
-<section id="build-from-source">
-<h2>Build from source<a class="headerlink" href="#build-from-source" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-python
-cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-python<span class="w"> </span>-j
-ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-python<span class="w"> </span>-R<span class="w"> </span>python_treeweave
-</pre></div>
-</div>
-<p>Examples:
-<a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/bindings/python/examples">bindings/python/examples/</a>.</p>
+<p>An unset, unknown, or unsupported value falls through to the normal
+widest-supported selection.</p>
 </section>
 </section>
 
@@ -272,8 +303,8 @@ ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-py
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="fortran.html" class="btn btn-neutral float-left" title="Fortran" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="julia.html" class="btn btn-neutral float-right" title="Julia" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="c-abi.html" class="btn btn-neutral float-left" title="C ABI reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="performance.html" class="btn btn-neutral float-right" title="Performance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

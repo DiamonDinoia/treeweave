@@ -110,6 +110,12 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="guides/dispatch.html">Runtime ISA dispatch</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="guides/performance.html">Performance</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="guides/performance.html#batch-over-scalar">Batch over scalar</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
@@ -432,10 +438,13 @@ call site. Supported values are any positive integer; 8 is the default
 <p>The <strong>C ABI</strong> (<code class="docutils literal notranslate"><span class="pre">treeweave_fit</span></code> for double / <code class="docutils literal notranslate"><span class="pre">treeweavef_fit</span></code> for float in
 <code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code> — precision lives in the prefix, FINUFFT/FFTW style) takes no
 degree argument. Instead it picks a register-optimal, spill-free degree at
-runtime based on the detected CPU vector width. On x86 the multi-arch
-dispatch path — enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code> — selects
-among compiled-in ISA variants (SSE4.2, AVX2, AVX-512) so the best leaf size
-for the host CPU is used automatically. Accuracy is driven entirely by the
+runtime based on the detected CPU vector width. The multi-arch dispatch path —
+enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code> — selects among
+compiled-in ISA variants so the best leaf size for the host CPU is used
+automatically: on x86 a SSE2/SSE4.2/AVX2/AVX-512 ladder, on aarch64 the single
+mandatory NEON64 variant, and on RISC-V an <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (best-effort,
+untested). See the <a class="reference internal" href="guides/dispatch.html"><span class="std std-doc">Runtime ISA dispatch</span></a> guide for the
+full family selection and the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> override. Accuracy is driven entirely by the
 <code class="docutils literal notranslate"><span class="pre">tol</span></code> parameter; the adaptive tree refines until every leaf meets tolerance
 regardless of which degree is chosen.</p>
 </section>
