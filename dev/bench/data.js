@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781039069644,
+  "lastUpdate": 1781039949902,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -482,6 +482,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001033656875,
             "unit": "s/batch",
             "extra": "MdAPE=0.00438323289225915; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "94fc442859550cf45c6a8bca7242a339e4ba44bb",
+          "message": "treeweave: generalize C-ABI runtime SIMD dispatch to ARM and RISC-V\n\nThe C-ABI runtime ISA dispatcher (TREEWEAVE_C_MULTIARCH) was x86-only:\ncmake gated the multi-variant fan-out behind an x86 regex and\narch_dispatch.cpp hardcoded an x86 xsimd::arch_list. On ARM/RISC-V the\nbuild silently fell back to a single compile-time variant.\n\nMake the dispatch path family-portable, mirroring DiamonDinoia/simdrng:\n\n- New include/treeweave/detail/dispatch_arch.hpp selects the dispatch\n  arch_list at compile time from xsimd::best_arch's inheritance:\n  x86 -> {avx512bw, fma3<avx2>, sse4_2, sse2}; aarch64 -> {neon64};\n  riscv64 -> {rvv128}. arch_dispatch.cpp now includes it instead of a\n  hardcoded list; the xsimd::dispatch / available_architectures().has /\n  TREEWEAVE_FORCE_ARCH machinery is unchanged and generic over the list.\n\n- treeweave_c_dispatch.cmake drives the per-variant OBJECT-library fan-out\n  for any multi-arch family, not just x86: x86 keeps its 4-level ladder,\n  non-Apple aarch64 builds a single neon64 variant (-march=armv8-a),\n  riscv64 a single rvv variant (-march=rv64gcv, best-effort/untested).\n  Apple aarch64 / MSVC / unknown stay single-arch.\n\n- SVE deliberately excluded: xsimd's sve<N> bakes width at compile time\n  but the runtime has(sve<N>) probe only checks the presence bit, so a\n  fixed-width SVE variant would mis-run on mismatched-width hardware.\n\nCI/build wiring: new multiarch-arm preset; ubuntu-24.04-arm multiarch\nsmoke job; TREEWEAVE_C_MULTIARCH=ON on the linux-aarch64 wheels/release\nrows. Docs: new guides/dispatch.rst + how-treeweave-works update.\n\nVerified on x86: all five FORCE_ARCH variants + test_c_abi pass.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T17:17:09-04:00",
+          "tree_id": "c1ae01f7973302ef70b13bcb983a6373fb01bd61",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/94fc442859550cf45c6a8bca7242a339e4ba44bb"
+        },
+        "date": 1781039947186,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000664544111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00245629145523468; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00163574722222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00487724733028858; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00263694433333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.002088758202491; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001501324,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00252802251501363; batch=65536 pts/call"
           }
         ]
       }
