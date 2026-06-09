@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781038002581,
+  "lastUpdate": 1781039069644,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -434,6 +434,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00149765575,
             "unit": "s/batch",
             "extra": "MdAPE=0.00357015969902413; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "bfbfe471a032ba6912a810e2cdc02e64a935c18a",
+          "message": "cmake: map armv* arch names to -mtune=generic\n\ngcc rejects -mtune=armv8-a (an -march= arch name, not a CPU name), so\naarch64 builds fail at the nanobind step with \"unknown value 'armv8-a'\nfor '-mtune'\". Extend the x86-64-v* tune fallback to also cover armv*\nbaselines, deriving -mtune=generic for them.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T17:02:41-04:00",
+          "tree_id": "f1e6e1ccbed1a5b9f7c7c6e0f6d0e7f3f93a522f",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/bfbfe471a032ba6912a810e2cdc02e64a935c18a"
+        },
+        "date": 1781039069122,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000668546333333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00326506839001317; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00111672355555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00903438524808362; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00203896725,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00633203930038972; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001033656875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00438323289225915; batch=65536 pts/call"
           }
         ]
       }
