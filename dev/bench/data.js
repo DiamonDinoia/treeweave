@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781039949902,
+  "lastUpdate": 1781040198328,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -530,6 +530,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001501324,
             "unit": "s/batch",
             "extra": "MdAPE=0.00252802251501363; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "d3d456366536bac292867c32109b4b01ff95a34b",
+          "message": "style: clang-format + gersemi the dispatch sources\n\nApply the pinned clang-format (18.1.8) and gersemi (0.27.1) formatting\nthe CI Lint & format job enforces on whole files. No semantic change.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T17:21:14-04:00",
+          "tree_id": "4a37c3249303395a6bb5d3b92dcf51db98fb6549",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/d3d456366536bac292867c32109b4b01ff95a34b"
+        },
+        "date": 1781040197592,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000666082666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00884537873230285; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001117429875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0049443566474733; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00201518825,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00152344627062207; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0010295961,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00130216834778519; batch=65536 pts/call"
           }
         ]
       }
