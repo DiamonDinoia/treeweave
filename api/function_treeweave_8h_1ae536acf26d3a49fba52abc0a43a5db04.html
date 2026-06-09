@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Function treeweave_eval_2d &mdash; treeweave  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
+      <script src="../_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Function treeweave_eval_3d" href="function_treeweave_8h_1a880504eff15c60717e73f7a0adb779c6.html" />
+    <link rel="prev" title="Function treeweave_eval_1d" href="function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            treeweave
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">Quick start</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#build-the-examples">Build the examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c.html#building">Building</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#build">Build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/python.html">Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/python.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/python.html#build-from-source">Build from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/julia.html">Julia</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/options.html">Fit options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/c-abi.html">C ABI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#fit">Fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#evaluate">Evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/c-abi.html#thread-safety">Thread safety</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#batch-over-scalar">Batch over scalar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="library_root.html">treeweave API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="library_root.html#class-hierarchy">Class Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="library_root.html#file-hierarchy">File Hierarchy</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="library_root.html#functions">Functions</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Function treeweave_eval_2d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a880504eff15c60717e73f7a0adb779c6.html">Function treeweave_eval_3d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669.html">Function treeweave_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html">Function treeweave_free</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a95b15169a05e04ce66999163e109c141.html">Function treeweave_input_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b.html">Function treeweave_last_error</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a5dccb13cc6f838eda1f9380fec949649.html">Function treeweave_memory_usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad.html">Function treeweave_output_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a1e6967002857dc83037a5aa27b6fdd74.html">Function treeweavef_eval_2d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a3094b50df96798cc0695dd9891547cb9.html">Function treeweavef_eval_3d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1aad5911412b8ba621b5fd197a30699833.html">Function treeweavef_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a4fe6e28cdf97f79437b3f4b82c78c1c7.html">Function treeweavef_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a6eb917e13d058193f365f4fb235c568a.html">Function treeweavef_transposed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="library_root.html#directories">Directories</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dir_include.html">Directory include</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dir_include_treeweave.html">Directory treeweave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dir_include_treeweave_detail.html">Directory detail</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave.h.html">File treeweave.h</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">treeweave</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="library_root.html">treeweave API Reference</a></li>
+      <li class="breadcrumb-item active">Function treeweave_eval_2d</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/api/function_treeweave_8h_1ae536acf26d3a49fba52abc0a43a5db04.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="function-treeweave-eval-2d">
+<span id="exhale-function-treeweave-8h-1ae536acf26d3a49fba52abc0a43a5db04"></span><h1>Function treeweave_eval_2d<a class="headerlink" href="#function-treeweave-eval-2d" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p>Defined in <a class="reference internal" href="file_include_treeweave.h.html#file-include-treeweave-h"><span class="std std-ref">File treeweave.h</span></a></p></li>
+</ul>
+<section id="function-documentation">
+<h2>Function Documentation<a class="headerlink" href="#function-documentation" title="Link to this heading"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv417treeweave_eval_2d11treeweave_tdd">
+<span id="_CPPv317treeweave_eval_2d11treeweave_tdd"></span><span id="_CPPv217treeweave_eval_2d11treeweave_tdd"></span><span id="treeweave_eval_2d__treeweave_t.double.double"></span><span class="target" id="treeweave_8h_1ae536acf26d3a49fba52abc0a43a5db04"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">treeweave_eval_2d</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="typedef_treeweave_8h_1abac62693503605964b20ccd8e187eab9.html#_CPPv411treeweave_t" title="treeweave_t"><span class="n"><span class="pre">treeweave_t</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">f</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">x0</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">x1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv417treeweave_eval_2d11treeweave_tdd" title="Link to this definition"></a><br /></dt>
+<dd><p>Evaluate a 2-D, scalar-output handle at (<code class="docutils literal notranslate"><span class="pre">x0</span></code>, <code class="docutils literal notranslate"><span class="pre">x1</span></code>). </p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html" class="btn btn-neutral float-left" title="Function treeweave_eval_1d" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="function_treeweave_8h_1a880504eff15c60717e73f7a0adb779c6.html" class="btn btn-neutral float-right" title="Function treeweave_eval_3d" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, treeweave authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
