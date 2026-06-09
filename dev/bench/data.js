@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781040198328,
+  "lastUpdate": 1781040242396,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -578,6 +578,54 @@ window.BENCHMARK_DATA = {
             "value": 0.0010295961,
             "unit": "s/batch",
             "extra": "MdAPE=0.00130216834778519; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "870148f0a0ee05066181cd9c433a0d74b2828241",
+          "message": "style: gersemi the -mtune if() condition\n\ngersemi 0.27.1 reflows the multi-clause if() onto separate lines once\nthe OR makes it exceed the line budget. Latent since the -mtune commit\n(its CI lint was cancelled by concurrency). No semantic change.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T17:22:58-04:00",
+          "tree_id": "6e8fe8d1fc5886b6aacc7273392ee3eb4e5ad87b",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/870148f0a0ee05066181cd9c433a0d74b2828241"
+        },
+        "date": 1781040241762,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000661064666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00195299648390177; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00110158977777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00826540690076879; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002030495,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00794381313703233; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001029819375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00522410993592663; batch=65536 pts/call"
           }
         ]
       }
