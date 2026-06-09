@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781024655015,
+  "lastUpdate": 1781037721997,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -338,6 +338,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001020998875,
             "unit": "s/batch",
             "extra": "MdAPE=0.00170306288136908; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": false,
+          "id": "873530a1038947a0a9cf9191197477f44b75cc07",
+          "message": "ci: TestPyPI dev publishing, Julia prebuilt smoke test, docs box-art font\n\n- testpypi.yml: every push to the default branch builds the full wheel\n  matrix + sdist and publishes to TestPyPI via OIDC trusted publishing.\n  Versioned X.Y.Z.devN (N = commits since last v* tag) so each commit is a\n  unique, non-colliding upload. set_dev_version.py pins the wheel version\n  since CMake's numeric project(VERSION) can't carry a .devN suffix.\n\n- julia-smoke.yml: workflow_dispatch job exercising the Julia distribution\n  path (deps/build.jl downloads the prebuilt libtreeweave_c from a Release,\n  dlopens it, runs Pkg.test) across all five shipped platforms — the path\n  bindings.yml never covers (it only tests the in-repo sibling build).\n\n- docs: force JetBrains Mono (full cell-width box-drawing glyphs) on code\n  blocks via _static/custom.css so the ASCII-art diagrams stay aligned in\n  the browser instead of drifting under per-glyph font fallback.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-09T16:37:45-04:00",
+          "tree_id": "7cb2a898429e826660a4b09debb43b76651cddff",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/873530a1038947a0a9cf9191197477f44b75cc07"
+        },
+        "date": 1781037719851,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000663313625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00614162799563558; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001775850875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00618751996065562; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002637635,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00189344476364592; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00148927955555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00315012662399097; batch=65536 pts/call"
           }
         ]
       }
