@@ -242,9 +242,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> – Handle from treeweave_fit(). </p></li>
-<li><p><strong>x</strong> – Input coordinates, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> elements. </p></li>
-<li><p><strong>y</strong> – Output buffer, <code class="docutils literal notranslate"><span class="pre">output_dim</span></code> elements. Out-of-domain inputs yield NaN. </p></li>
+<li><p><strong>f</strong> – Handle from treeweave_fit() (NULL-safe: no-op). </p></li>
+<li><p><strong>x</strong> – Input coordinates, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> elements (must not be NULL). </p></li>
+<li><p><strong>y</strong> – Output buffer, <code class="docutils literal notranslate"><span class="pre">output_dim</span></code> elements (must not be NULL). Out-of-domain inputs yield NaN. </p></li>
 </ul>
 </dd>
 </dl>

@@ -54,6 +54,8 @@ Includes
 
 - ``treeweave/detail/function_impl.hpp``
 
+- ``treeweave/detail/tol_kind.hpp`` (:ref:`file_include_treeweave_detail_tol_kind.hpp`)
+
 - ``type_traits``
 
 - ``utility``
@@ -82,4 +84,15 @@ Functions
 
 
 - :ref:`exhale_function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4`
+
+
+Variables
+---------
+
+
+- :ref:`exhale_variable_treeweave_8hpp_1a31035e7dcd81562082a784f5cc055000`
+
+- :ref:`exhale_variable_treeweave_8hpp_1a111fd1bfdba3ec31f3ab27a4d9e009fd`
+
+- :ref:`exhale_variable_treeweave_8hpp_1a595ec4c456efc7c38360e8e959182c1c`
 
