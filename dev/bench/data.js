@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781111307991,
+  "lastUpdate": 1781116159848,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -914,6 +914,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00102981011111111,
             "unit": "s/batch",
             "extra": "MdAPE=0.00260443964144065; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "3d354d6eb4d553e7b967ed20fe623ee7cc2204e0",
+          "message": "ci: restore CodSpeed perf gating now that the repo is connected\n\nThe treeweave repo is now connected at app.codspeed.io, so the upload\nsucceeds (OIDC auth). Drop the temporary continue-on-error so a failed\nrun / regression once again fails the job.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T14:28:22-04:00",
+          "tree_id": "307c5d7568c0aec4a9df8fd491ec63f957b5feaa",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/3d354d6eb4d553e7b967ed20fe623ee7cc2204e0"
+        },
+        "date": 1781116158913,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000662080555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0049131542271374; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00107860744444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00533592334431226; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00204362275,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0144128115154793; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001031050625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00408407171916857; batch=65536 pts/call"
           }
         ]
       }
