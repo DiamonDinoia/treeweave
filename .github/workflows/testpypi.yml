@@ -85,7 +85,7 @@ jobs:
         run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.4.1
+        uses: pypa/cibuildwheel@v4.0.0
         with:
           package-dir: bindings/python
         env:
