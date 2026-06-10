@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781117484198,
+  "lastUpdate": 1781119185509,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1010,6 +1010,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00148062855555556,
             "unit": "s/batch",
             "extra": "MdAPE=0.00243819782370832; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "9c5719e719eff57054a96d0e8f376941a131603c",
+          "message": "ci+build: expand compiler matrix, NaN/Inf-safe fast-math, doc + macOS fixes\n\n- ci.yml: broaden to finufft-level coverage — gcc-11/12, clang-16/17,\n  macos-15, gcc-on-macOS, and a Windows clang-cl row.\n- treeweave_toolchain.cmake: GCC-on-Apple-Silicon uses -mcpu=native\n  (GCC rejects apple-m1); add NaN/Inf-preserving fast-math (finufft's\n  curated subset, probed, no -ffinite-math-only) behind TREEWEAVE_FAST_MATH.\n- CMakePresets.json: ci-windows-clang (ClangCL toolset).\n- README: correct the domain limitation (best-effort outside [x0, x1),\n  no OOB access, no accuracy guarantee).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T15:18:33-04:00",
+          "tree_id": "591a73e3b4d5841a444701cb26b8e275875e29f9",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/9c5719e719eff57054a96d0e8f376941a131603c"
+        },
+        "date": 1781119183487,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000656488666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00422978656285571; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00165253425,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00502399784210588; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002725585,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00914188127541105; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00154751644444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00210038620567255; batch=65536 pts/call"
           }
         ]
       }
