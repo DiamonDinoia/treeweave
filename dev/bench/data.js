@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781040757053,
+  "lastUpdate": 1781104259791,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -674,6 +674,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00150485375,
             "unit": "s/batch",
             "extra": "MdAPE=0.00517091458468628; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "16e5232f8bb09505c529577e131e5f87996f7957",
+          "message": "analysis: scope static analysis to the library, fix all warnings, enforce -Werror\n\nStatic analysis should target treeweave's own code, not the test suite or\nfetched third-party sources. Clear CMAKE_CXX_CLANG_TIDY / CMAKE_CXX_CPPCHECK for\nthe tests/ subdirectory (deterministic RNG seeds, C arrays driving the C ABI,\nand mutable instrumentation globals are legitimate test idioms) and around the\ndependency fetch in treeweave_deps.cmake (Catch2/poet/polyfit are not ours to\nlint).\n\nWith the noise gone, fix every remaining library warning:\n  - treeweave.cpp: trailing return types; <cstddef>/<treeweave/treeweave.hpp>\n    direct includes; NOLINT the deliberate noexcept-boundary empty catch.\n  - arch_single.cpp: direct includes for treeweave_func_t / options.\n  - dispatch_variant.cpp.in: NOLINT the c_binding/arch_degree_table includes\n    used only in the explicit-instantiation declaration.\n  - c_binding_detail.hpp: value-initialize the callback output buffer.\n  - function.hpp: rule-of-5 on Buf (delete moves); [[nodiscard]] leaf_id_of;\n    std::ranges::all_of in has_fast_quantize.\n  - polytree.hpp: default-member-init for max_depth_; auto for the cast;\n    NOLINT the const-correctness FP on a value mutated only in the ND branch.\n  - tol_kind.hpp: TolKind base type std::uint8_t.\n  - .clang-tidy: ignore the xsimd umbrella for include-cleaner;\n    AllowSoleDefaultDtor so a virtual-dtor-only interface (IEval) is fine.\n\nThen enforce it: WarningsAsErrors '*' for clang-tidy and --error-exitcode=1 for\ncppcheck, so the Static Analysis CI job fails on any future regression instead\nof silently accumulating warnings.\n\nVerified: clean clang analysis build with PCH disabled (the superset that\nanalyzes every header) is warning-free under -Werror, and all 62 tests pass.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T11:08:37-04:00",
+          "tree_id": "115b66928e15c669239d3052a518f01dd6c71f39",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/16e5232f8bb09505c529577e131e5f87996f7957"
+        },
+        "date": 1781104257886,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.0006661803,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00511637435263059; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001276386375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00808663682548839; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00201792044444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00231107846103874; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00103551044444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0026577199454579; batch=65536 pts/call"
           }
         ]
       }
