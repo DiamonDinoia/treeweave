@@ -20,6 +20,8 @@
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
       <script src="_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
+      <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -132,6 +134,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#background-and-further-reading">Background and further reading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-math-briefly">The math, briefly</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -210,7 +216,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="how-treeweave-works">
+  <section class="tex2jax_ignore mathjax_ignore" id="how-treeweave-works">
 <h1>How treeweave works<a class="headerlink" href="#how-treeweave-works" title="Link to this heading"></a></h1>
 <p>Treeweave turns an expensive function <code class="docutils literal notranslate"><span class="pre">f(x)</span></code> into a cheap lookup by precomputing
 a <strong>piecewise polynomial approximation</strong> on an <strong>adaptive tree</strong>. Cost: memory
@@ -239,6 +245,24 @@ a degree-8 polynomial evaluation.</p>
 (monomial basis, via polyfit, sampled at Chebyshev nodes). If error too large,
 split into <code class="docutils literal notranslate"><span class="pre">2^Dim</span></code> children and recurse.
 Stop when each leaf passes the tolerance check.</p>
+<p>Three classical choices make this work, each one a deliberate piece of
+numerical-analysis folklore (see <a class="reference internal" href="#background-and-further-reading"><span class="xref myst">Background</span></a>):</p>
+<ul class="simple">
+<li><p><strong>Chebyshev nodes, not equispaced.</strong> Sampling <code class="docutils literal notranslate"><span class="pre">f</span></code> at the Chebyshev points
+(end-clustered) avoids the Runge phenomenon — the edge oscillations that make
+a high-degree fit on equispaced nodes diverge. On each panel the error then
+converges <em>exponentially</em> in the degree for an analytic <code class="docutils literal notranslate"><span class="pre">f</span></code>.</p></li>
+<li><p><strong>Monomial basis at low degree.</strong> Treeweave keeps the polynomial in the plain
+monomial basis <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">cₖ</span> <span class="pre">xᵏ</span></code>. That is famously a bad idea at high degree, but it
+is “easy, fast, accurate” at the low degrees treeweave actually uses
+(degree ≈ 8, well under the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≲</span> <span class="pre">30</span></code> regime where the monomial Vandermonde
+solve stays well-behaved). Horner evaluation of a monomial is a tight FMA
+chain that maps directly onto a SIMD register lane (Phase 3).</p></li>
+<li><p><strong>Adaptive panels, not one global fit.</strong> A small enough panel near a rapid
+change or near-singularity is locally accurate, so refining only where <code class="docutils literal notranslate"><span class="pre">f</span></code> is
+hard is far cheaper than one global high-degree interpolant. The split-until-
+<code class="docutils literal notranslate"><span class="pre">max</span> <span class="pre">err</span> <span class="pre">≤</span> <span class="pre">tol</span></code> test is exactly the adaptive-paneling idea.</p></li>
+</ul>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   1D example, fitting f on [a, b]:
 
                            root [a, b]
@@ -448,6 +472,81 @@ full family selection and the <code class="docutils literal notranslate"><span c
 <code class="docutils literal notranslate"><span class="pre">tol</span></code> parameter; the adaptive tree refines until every leaf meets tolerance
 regardless of which degree is chosen.</p>
 </section>
+<section id="background-and-further-reading">
+<h2>Background and further reading<a class="headerlink" href="#background-and-further-reading" title="Link to this heading"></a></h2>
+<p>The design above is a software realization of standard function-approximation
+practice. For an accessible, modern tour of the underlying numerical analysis —
+why Chebyshev nodes, why the monomial basis is fine at low degree, and how
+adaptive paneling extends to several dimensions — see:</p>
+<blockquote>
+<div><p><strong>Alex Barnett</strong>, <em>What everyone should know about function approximation in
+one and more dimensions</em>, FWAM7, Flatiron Institute Center for Computational
+Mathematics, October 2025.
+<a class="reference external" href="https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf">slides (PDF)</a> ·
+<a class="reference external" href="https://gist.github.com/ahbarnett">code demos</a></p>
+</div></blockquote>
+<p>That talk surveys the exact recipe treeweave automates — “break the domain into
+panels, use a fixed-degree interpolant on each, and recursively split panels
+until the local error meets the user’s tolerance” — and lists
+<a class="reference external" href="https://github.com/flatironinstitute/baobzi">baobzi</a> (treeweave’s predecessor)
+alongside <code class="docutils literal notranslate"><span class="pre">HChebInterp.jl</span></code> and <code class="docutils literal notranslate"><span class="pre">Chebfun</span></code> as adaptive-interpolation codes. A few
+specific points it makes that justify treeweave’s choices:</p>
+<ul class="simple">
+<li><p><strong>Chebyshev nodes defeat the Runge phenomenon</strong> and give exponential
+convergence for analytic functions; the convergence rate is governed by the
+size of the Bernstein ellipse in which <code class="docutils literal notranslate"><span class="pre">f</span></code> is analytic (Runge 1901;
+Trefethen, <em>Approximation Theory and Approximation Practice</em>).</p></li>
+<li><p><strong>The monomial basis is “easy, fast, accurate” for degree <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≲</span> <span class="pre">30</span></code></strong> even
+though it is ill-advised at higher degree — exactly the low-degree, many-panel
+regime treeweave operates in (Helsing 2008; Shen &amp; Serkh, <em>SINUM</em> 2025).</p></li>
+<li><p><strong>Piecewise high-order interpolation on adaptive boxes</strong> (a quadtree in 2D, an
+octree in 3D) is the standard way to beat the <code class="docutils literal notranslate"><span class="pre">nᵈ</span></code> curse of dimensionality in
+low dimensions, at the cost of memory — the trade treeweave makes explicit.</p></li>
+</ul>
+<section id="the-math-briefly">
+<h3>The math, briefly<a class="headerlink" href="#the-math-briefly" title="Link to this heading"></a></h3>
+<p>On each panel treeweave fits an order-<code class="docutils literal notranslate"><span class="pre">n</span></code> polynomial (degree <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">−</span> <span class="pre">1</span></code>). Working on
+the standard interval <code class="docutils literal notranslate"><span class="pre">[−1,</span> <span class="pre">1]</span></code>, it samples <code class="docutils literal notranslate"><span class="pre">f</span></code> at the <code class="docutils literal notranslate"><span class="pre">n</span></code> <strong>Chebyshev points</strong></p>
+<div class="math notranslate nohighlight">
+\[
+t_j = \cos\!\frac{\pi j}{n - 1}, \qquad j = 0, 1, \dots, n - 1,
+\]</div>
+<p>which cluster toward the endpoints — the clustering that defeats the Runge
+phenomenon. A panel <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b]</span></code> is reached by the affine map (exactly treeweave’s
+<code class="docutils literal notranslate"><span class="pre">midpoint</span></code> ± <code class="docutils literal notranslate"><span class="pre">half_length</span></code>)</p>
+<div class="math notranslate nohighlight">
+\[
+x = \frac{a + b}{2} + \frac{b - a}{2}\, t, \qquad t \in [-1, 1].
+\]</div>
+<p>The interpolant is stored in the <strong>monomial basis</strong>, with coefficients <code class="docutils literal notranslate"><span class="pre">cₖ</span></code>
+solving the Vandermonde system <code class="docutils literal notranslate"><span class="pre">V</span> <span class="pre">c</span> <span class="pre">=</span> <span class="pre">f</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[
+\tilde f(x) = \sum_{k=0}^{n-1} c_k\, x^k,
+\qquad
+V_{jk} = x_j^{\,k}, \quad f_j = f(x_j).
+\]</div>
+<p>Rescaling each panel to <code class="docutils literal notranslate"><span class="pre">[−1,</span> <span class="pre">1]</span></code> keeps that Vandermonde solve well-conditioned —
+which, with the low degrees treeweave uses, is why the monomial form stays
+accurate. The approximation error on a panel obeys the classical Chebyshev
+bounds:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\lVert f - \tilde f \rVert_\infty =
+\begin{cases}
+\mathcal{O}(\rho^{-n}) &amp; f \text{ analytic inside the Bernstein ellipse } E_\rho
+                          \text{ (exponential)},\\[4pt]
+\mathcal{O}(n^{-p})    &amp; f \text{ has } p \text{ continuous derivatives (algebraic)}.
+\end{cases}
+\end{split}\]</div>
+<p>The adaptive fit (Phase 1) simply subdivides any panel until its measured
+<span class="math notranslate nohighlight">\(\lVert f - \tilde f \rVert_\infty \le \varepsilon\)</span> (<code class="docutils literal notranslate"><span class="pre">tol</span></code>), so a near-singularity
+gets many small panels while smooth regions stay coarse. Evaluation (Phase 3) is
+then a tensor-product Horner sweep costing <code class="docutils literal notranslate"><span class="pre">Kⁿ</span> <span class="pre">−</span> <span class="pre">1</span></code> FMAs per point, with
+<code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">n</span> <span class="pre">=</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1</span></code> values per axis.</p>
+<p>With thanks to Alex Barnett for the talk and for the framing of this material.</p>
+</section>
+</section>
 </section>
 
 
@@ -461,7 +560,7 @@ regardless of which degree is chosen.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, treeweave authors.</p>
+    <p>&#169; Copyright 2025-2026, Marco Barbone and the treeweave authors.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

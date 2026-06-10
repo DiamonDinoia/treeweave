@@ -30,8 +30,9 @@ Project links
 - `GitHub repository <https://github.com/DiamonDinoia/treeweave>`_
 - `Issue tracker <https://github.com/DiamonDinoia/treeweave/issues>`_
 - `Releases <https://github.com/DiamonDinoia/treeweave/releases>`_
-- `License (Apache-2.0) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_
+- `License (BSD-3-Clause) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_
 - `Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_
+- `Background talk: A. Barnett, "What everyone should know about function approximation" (FWAM7, 2025) <https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf>`_
 
 Why treeweave
 -------------
