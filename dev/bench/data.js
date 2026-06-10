@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781132774268,
+  "lastUpdate": 1781134193802,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1394,6 +1394,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00151762822222222,
             "unit": "s/batch",
             "extra": "MdAPE=0.00540610857466723; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "959407058b9451523a3cc53c74972ca3f7a87ad6",
+          "message": "ci: fix pre-existing CI failures (shfmt, MATLAB link, module scan, install-smoke libm)\n\nFour failures inherited from 4671fa6, all now green locally:\n\n- Lint & format (shfmt): reformat .github/scripts/smoke_find_package.sh and\n  bindings/parity/run_parity.sh to spaces per the pinned shfmt hook + .editorconfig.\n- MATLAB bindings: bindings/matlab/CMakeLists.txt mixed keyword/plain\n  target_link_libraries on treeweave_mex_matlab (matlab_add_mex links the MATLAB\n  libs with the plain signature; our line used PRIVATE). Use the plain form, as\n  the adjacent comment already prescribes. Verified: configure + MEX build pass.\n- llvm-16 Debug/Release: clang-scan-deps-16 (system) rejected the PCH produced by\n  setup-cpp's clang (\"PCH file built from a different branch\"). treeweave uses no\n  C++20 modules, so disable the module dependency scan\n  (CMAKE_CXX_SCAN_FOR_MODULES OFF) in the toolchain — removes the scan and the clash.\n- install-smoke find_package consumer: main.c uses libm (exp) but linked only\n  treeweave::treeweave_c; modern ld --as-needed needs explicit libm. Add\n  find_library(MATH_LIBRARY m) linkage. (Latent: the job is skipped on the\n  workflow_run trigger, so it first surfaced on a push.)\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T19:29:06-04:00",
+          "tree_id": "205710693bac8292d1726e8ba1ab3885c0da22bc",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/959407058b9451523a3cc53c74972ca3f7a87ad6"
+        },
+        "date": 1781134191595,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000535915555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00120830593850779; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001059591,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00360561355220056; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00184179166666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00255457155630911; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00100489211111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00632977899162297; batch=65536 pts/call"
           }
         ]
       }
