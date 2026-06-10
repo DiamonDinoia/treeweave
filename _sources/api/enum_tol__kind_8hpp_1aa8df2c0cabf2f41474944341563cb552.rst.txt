@@ -1,0 +1,14 @@
+.. _exhale_enum_tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552:
+
+Enum TolKind
+============
+
+- Defined in :ref:`file_include_treeweave_detail_tol_kind.hpp`
+
+
+Enum Documentation
+------------------
+
+
+.. doxygenenum:: treeweave::TolKind
+   :project: treeweave
