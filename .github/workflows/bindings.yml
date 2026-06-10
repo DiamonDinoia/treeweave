@@ -132,7 +132,7 @@ jobs:
           cache-tools: true
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@v3
 
       # bindings-matlab sets TREEWEAVE_BUILD_MATLAB=ON; with MATLAB (and no
       # mkoctfile) present, the MATLAB MEX backend is selected. mwrap is fetched
