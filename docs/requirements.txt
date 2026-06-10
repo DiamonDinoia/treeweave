@@ -1,4 +1,4 @@
-sphinx>=4.0.0
+sphinx>=9.1.0
 breathe>=4.30.0
 exhale>=0.3.0
 myst-parser>=0.15.0
