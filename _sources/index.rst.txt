@@ -62,6 +62,7 @@ Why treeweave
    guides/fortran
    guides/python
    guides/julia
+   guides/matlab
 
 .. toctree::
    :maxdepth: 2

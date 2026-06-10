@@ -23,7 +23,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Fit options" href="options.html" />
+    <link rel="next" title="MATLAB / Octave" href="matlab.html" />
     <link rel="prev" title="Python" href="python.html" /> 
 </head>
 
@@ -80,6 +80,7 @@
 <li class="toctree-l1"><a class="reference internal" href="python.html">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="python.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
 </ul>
@@ -87,7 +88,16 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Julia</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#build-test-against-a-local-library">Build / test against a local library</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 </ul>
 </li>
 </ul>
@@ -117,7 +127,10 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
@@ -247,6 +260,37 @@ variable, or point <code class="docutils literal notranslate"><span class="pre">
 <code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">tol)</span></code>. The fitted object is called directly for a point or a
 batch; tune the fit with <code class="docutils literal notranslate"><span class="pre">TreeweaveOptions</span></code> (see <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a>).</p>
 </section>
+<section id="evaluation-routes">
+<h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
+<p>Calling the handle dispatches on its argument, and two keyword flags select the
+fast paths:</p>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="w">                       </span><span class="c"># single point  -&gt; scalar (or Vector)</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="w">                        </span><span class="c"># batch (Vector) -&gt; Vector / n×out_dim</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">sorted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">         </span><span class="c"># 1-D ascending fast path (requires dim == 1)</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">transposed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">     </span><span class="c"># batch -&gt; out_dim×n  (requires out_dim &gt; 1)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">sorted</span> <span class="pre">=</span> <span class="pre">true</span></code> skips treeweave’s internal counting-sort and is ~3–4× faster
+when you can promise <code class="docutils literal notranslate"><span class="pre">xs</span></code> is ascending — common for <code class="docutils literal notranslate"><span class="pre">range</span></code> grids, quadrature
+nodes, and time series. The promise is unchecked: unsorted input gives wrong
+values, so use the plain batch path when unsure. <code class="docutils literal notranslate"><span class="pre">transposed</span> <span class="pre">=</span> <span class="pre">true</span></code> returns
+each output component in its own contiguous row. Out-of-domain points are
+NaN-filled on every route. <code class="docutils literal notranslate"><span class="pre">sorted</span></code> is 1-D only.</p>
+</section>
+<section id="multi-dimensional-fits">
+<h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>
+<p>Pass vector corners; the callback takes <code class="docutils literal notranslate"><span class="pre">dim</span></code> scalar arguments and returns a
+scalar or a length-<code class="docutils literal notranslate"><span class="pre">out_dim</span></code> tuple:</p>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="c"># 2-D input -&gt; 3-D vector output (out_dim inferred by probing the midpoint)</span>
+<span class="n">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fit</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">y</span><span class="p">),</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">)</span>
+
+<span class="n">approx</span><span class="p">([</span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.7</span><span class="p">])</span><span class="w">                </span><span class="c"># single point -&gt; length-3 Vector</span>
+<span class="n">X</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="w">                         </span><span class="c"># batch -&gt; 100×3 Matrix</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">X</span><span class="p">;</span><span class="w"> </span><span class="n">transposed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">      </span><span class="c"># batch -&gt; 3×100 Matrix</span>
+</pre></div>
+</div>
+</section>
 <section id="build-test-against-a-local-library">
 <h2>Build / test against a local library<a class="headerlink" href="#build-test-against-a-local-library" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-julia
@@ -264,7 +308,7 @@ ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-ju
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="python.html" class="btn btn-neutral float-left" title="Python" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="options.html" class="btn btn-neutral float-right" title="Fit options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="matlab.html" class="btn btn-neutral float-right" title="MATLAB / Octave" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

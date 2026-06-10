@@ -80,6 +80,7 @@
 <li class="toctree-l1"><a class="reference internal" href="python.html">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="python.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
 </ul>
@@ -87,7 +88,16 @@
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 </ul>
 </li>
 </ul>
@@ -117,7 +127,10 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#batch-over-scalar">Batch over scalar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-threading">Multi-threading</a></li>
@@ -226,7 +239,47 @@ it.</p>
 <code class="docutils literal notranslate"><span class="pre">treeweave_transposed</span></code> in C; calling the fitted object with an array in the
 bindings) amortize leaf lookup and vectorize the polynomial evaluation across
 points. Prefer them to a scalar loop whenever you have more than a handful of
-points. For ascending 1-D inputs, the <code class="docutils literal notranslate"><span class="pre">sorted</span></code> path is fastest.</p>
+points.</p>
+<section id="the-sorted-fast-path">
+<h3>The sorted fast path<a class="headerlink" href="#the-sorted-fast-path" title="Link to this heading"></a></h3>
+<p>The general batch path first counting-sorts the inputs by leaf so each leaf’s
+points are contiguous, runs one vectorized Horner stream per leaf, then permutes
+the results back to the caller’s order. When the inputs are <em>already</em> ascending,
+that sort and permute-back are pure overhead. The <code class="docutils literal notranslate"><span class="pre">sorted</span></code> path skips them and
+streams straight through the leaves — ~3–4× faster on a presorted 1-D batch.</p>
+<p>What the fast path really needs is that the <em>leaf-id</em> sequence be monotone — the
+points already grouped by leaf. It is exposed only for <code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">==</span> <span class="pre">1</span></code> for two
+reasons:</p>
+<ul class="simple">
+<li><p><strong>Cheap precondition.</strong> In 1-D ascending <code class="docutils literal notranslate"><span class="pre">x</span></code> guarantees monotone leaf ids, so
+the caller has a trivially checkable promise. In 2-D/3-D no single-axis sort
+makes leaf ids monotone (you’d need a space-filling / per-tree bin order
+treeweave doesn’t expose), so there is no caller-side guarantee to offer.</p></li>
+<li><p><strong>Diminishing payoff.</strong> Per-point eval is a tensor-product Horner sweep of
+<code class="docutils literal notranslate"><span class="pre">K**n</span> <span class="pre">-</span> <span class="pre">1</span></code> FMAs, so the work grows as <code class="docutils literal notranslate"><span class="pre">K**n</span></code>. In 1-D the polynomial work
+(~``K`` FMAs) is comparable to the O(1) sort + scatter per point, so dropping
+the sort wins ~3–4×. In 2-D/3-D the <code class="docutils literal notranslate"><span class="pre">K**2</span></code> / <code class="docutils literal notranslate"><span class="pre">K**3</span></code> FMAs dominate and the
+sort is a small fraction of the cost — skipping it would barely move the
+needle. So an ND fast path would be both hard to guarantee and low-value; the
+plain <code class="docutils literal notranslate"><span class="pre">batch</span></code> path is the right tool there.</p></li>
+</ul>
+<p>This is worth reaching for because many workloads hand you ascending <code class="docutils literal notranslate"><span class="pre">x</span></code> for
+free:</p>
+<ul class="simple">
+<li><p><strong>Regular grids / linspace</strong> — plotting, lookup tables, and resampling sweep a
+domain left to right.</p></li>
+<li><p><strong>Quadrature</strong> — Gauss/Chebyshev/Clenshaw–Curtis abscissae come out in
+ascending order.</p></li>
+<li><p><strong>Time marching</strong> — ODE/PDE integrators and signal processing advance
+monotonically in <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p></li>
+<li><p><strong>Parameter sweeps</strong> — continuation methods and line searches step one
+coordinate monotonically.</p></li>
+</ul>
+<p>The caller promises <code class="docutils literal notranslate"><span class="pre">x[i]</span> <span class="pre">&lt;=</span> <span class="pre">x[i+1]</span></code>; treeweave does not verify it, so unsorted
+input on this path yields wrong values (not an error). When in doubt, use the
+plain batch path — it sorts internally and is always correct. Both NaN-fill
+out-of-domain points.</p>
+</section>
 </section>
 <section id="the-leaf-table-fast-path">
 <h2>The leaf-table fast path<a class="headerlink" href="#the-leaf-table-fast-path" title="Link to this heading"></a></h2>

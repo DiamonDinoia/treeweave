@@ -4,12 +4,18 @@ Python
 Install
 -------
 
+treeweave is not on PyPI yet. Every push to ``main`` publishes a staging wheel to
+`TestPyPI <https://test.pypi.org/project/treeweave/>`_; install it with TestPyPI
+as the primary index and real PyPI for the dependencies:
+
 .. code-block:: bash
 
-   pip install treeweave
+   pip install --index-url https://test.pypi.org/simple/ \
+               --extra-index-url https://pypi.org/simple/ treeweave
 
 The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
-AVX2 / AVX-512 at runtime. NumPy is the only dependency.
+AVX2 / AVX-512 at runtime. NumPy is the only dependency. Plain
+``pip install treeweave`` will work once the first release is published to PyPI.
 
 Minimal example
 ---------------
@@ -36,6 +42,26 @@ Minimal example
 common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
 directly for a single point or a batch. A C++ fit failure surfaces as a native
 Python exception.
+
+Evaluation routes
+-----------------
+
+Calling the fitted object dispatches on the shape of its argument, and two
+keyword flags select the fast paths:
+
+.. code-block:: python
+
+   approx(0.5)                       # single point  -> scalar (or (out_dim,))
+   approx(xs)                        # batch (N,)     -> (N,) / (N, out_dim)
+   approx(xs, sorted=True)           # 1-D ascending fast path (requires dim == 1)
+   approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)
+
+``sorted=True`` skips treeweave's internal counting-sort and is ~3–4× faster when
+you can promise ``xs`` is ascending — common for ``linspace`` grids, quadrature
+nodes, and time series. The promise is unchecked: unsorted input gives wrong
+values, so use the plain batch path when unsure. ``transposed=True`` returns each
+output component in its own contiguous row. Out-of-domain points are NaN-filled
+on every route.
 
 Multi-dimensional fits
 ----------------------

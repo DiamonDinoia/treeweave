@@ -36,6 +36,42 @@ Minimal example
 ``fit(f, a, b, tol)``. The fitted object is called directly for a point or a
 batch; tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
 
+Evaluation routes
+-----------------
+
+Calling the handle dispatches on its argument, and two keyword flags select the
+fast paths:
+
+.. code-block:: julia
+
+   approx(1.0)                       # single point  -> scalar (or Vector)
+   approx(xs)                        # batch (Vector) -> Vector / n×out_dim
+   approx(xs; sorted = true)         # 1-D ascending fast path (requires dim == 1)
+   approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)
+
+``sorted = true`` skips treeweave's internal counting-sort and is ~3–4× faster
+when you can promise ``xs`` is ascending — common for ``range`` grids, quadrature
+nodes, and time series. The promise is unchecked: unsorted input gives wrong
+values, so use the plain batch path when unsure. ``transposed = true`` returns
+each output component in its own contiguous row. Out-of-domain points are
+NaN-filled on every route. ``sorted`` is 1-D only.
+
+Multi-dimensional fits
+----------------------
+
+Pass vector corners; the callback takes ``dim`` scalar arguments and returns a
+scalar or a length-``out_dim`` tuple:
+
+.. code-block:: julia
+
+   # 2-D input -> 3-D vector output (out_dim inferred by probing the midpoint)
+   approx = fit((x, y) -> (sin(x) * cos(y), x + y, x * y), [0.0, 0.0], [1.0, 1.0], 1e-8)
+
+   approx([0.3, 0.7])                # single point -> length-3 Vector
+   X = rand(100, 2)
+   approx(X)                         # batch -> 100×3 Matrix
+   approx(X; transposed = true)      # batch -> 3×100 Matrix
+
 Build / test against a local library
 ------------------------------------
 

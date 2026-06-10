@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick start &mdash; treeweave  documentation</title>
+  <title>MATLAB / Octave &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="C++" href="cpp.html" />
-    <link rel="prev" title="Installation" href="../install.html" /> 
+    <link rel="next" title="Fit options" href="options.html" />
+    <link rel="prev" title="Julia" href="julia.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,17 +47,17 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
@@ -93,11 +93,11 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#build">Build</a></li>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MATLAB / Octave</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
 </ul>
 </li>
 </ul>
@@ -217,9 +217,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Quick start</li>
+      <li class="breadcrumb-item active">MATLAB / Octave</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/quickstart.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/matlab.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -227,48 +227,91 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="quick-start">
-<h1>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
-<p>The everyday API is one call: <code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">lo,</span> <span class="pre">hi,</span> <span class="pre">tol)</span></code> builds the approximant,
-then you call the result like the original function. The fitted object is
-immutable and safe to call from many threads at once.</p>
-<p>Pick your language:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="cpp.html"><span class="doc">C++</span></a> — header-only, the reference API</p></li>
-<li><p><a class="reference internal" href="c.html"><span class="doc">C</span></a> — the stable C ABI (<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>)</p></li>
-<li><p><a class="reference internal" href="fortran.html"><span class="doc">Fortran</span></a> — thin <code class="docutils literal notranslate"><span class="pre">iso_c_binding</span></code> module</p></li>
-<li><p><a class="reference internal" href="python.html"><span class="doc">Python</span></a> — NumPy-friendly, <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">treeweave</span></code></p></li>
-<li><p><a class="reference internal" href="julia.html"><span class="doc">Julia</span></a> — auto-downloads the prebuilt C library</p></li>
-</ul>
-<p>A 60-second taste, in C++:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
-
-<span class="k">auto</span><span class="w"> </span><span class="n">runge</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">25.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="p">);</span><span class="w"> </span><span class="p">};</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">runge</span><span class="p">,</span><span class="w"> </span><span class="mf">-1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span>
-<span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">fn</span><span class="p">(</span><span class="mf">0.3</span><span class="p">);</span>
+  <section id="matlab-octave">
+<h1>MATLAB / Octave<a class="headerlink" href="#matlab-octave" title="Link to this heading"></a></h1>
+<p>One source builds for both <strong>MATLAB</strong> (R2019b+) and <strong>GNU Octave</strong> (&gt;= 6). The
+binding is generated by <a class="reference external" href="https://github.com/zgimbutas/mwrap">mwrap</a> from a
+single <code class="docutils literal notranslate"><span class="pre">treeweave.mw</span></code> source; the user-facing <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> is a thin
+<code class="docutils literal notranslate"><span class="pre">classdef</span></code> holding the opaque C handle.</p>
+<section id="build">
+<h2>Build<a class="headerlink" href="#build" title="Link to this heading"></a></h2>
+<p>There is no prebuilt MEX — Octave has no stable MEX ABI across versions, so the
+binding is built from source. It is an opt-in CMake option,
+<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_MATLAB</span></code>. With MATLAB or <code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code> on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, CMake
+fetches the mwrap generator, generates the gateway + <code class="docutils literal notranslate"><span class="pre">bz_*.m</span></code> stubs, and
+compiles the MEX:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-matlab<span class="w">      </span><span class="c1"># or bindings-octave for the license-free path</span>
+cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-matlab<span class="w"> </span>-j
+ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-matlab<span class="w"> </span>-R<span class="w"> </span>matlab_treeweave<span class="w"> </span>--output-on-failure
 </pre></div>
 </div>
-<p>Common rules across every binding:</p>
-<ul class="simple">
-<li><p>The fit domain is the <strong>semi-open</strong> interval <code class="docutils literal notranslate"><span class="pre">[lo,</span> <span class="pre">hi)</span></code> — the target only
-needs to be defined there. As a convenience, evaluating exactly at the upper
-corner <code class="docutils literal notranslate"><span class="pre">hi</span></code> returns the boundary value (the last cell’s polynomial), not
-<code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">tol</span></code> is positional with no default, so every call states its accuracy.</p></li>
-<li><p>There is no input bounds checking. The domain is guarded asymmetrically:
-points below <code class="docutils literal notranslate"><span class="pre">lo</span></code> (and <code class="docutils literal notranslate"><span class="pre">NaN</span></code> inputs) return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>; points above <code class="docutils literal notranslate"><span class="pre">hi</span></code>
-extrapolate from the last cell (the result may be non-finite). This keeps the
-hot path branchless.</p></li>
-<li><p>See <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> for the fit knobs (error metric, depth, memory budget).</p></li>
-</ul>
+<p>Requirements: MATLAB R2019b+ (tested on R2025a) <strong>or</strong> GNU Octave with
+<code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code>, plus a C++20 toolchain and CMake &gt;= 3.25.</p>
+</section>
+<section id="minimal-example">
+<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
+<p>Add the <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> class directory and the generated MEX directory to the
+path, then fit and evaluate:</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;/path/to/treeweave/bindings/matlab&#39;</span><span class="p">);</span><span class="w">           </span><span class="c">% treeweave.m class</span>
+<span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;/path/to/build/bindings/matlab/treeweave_mw&#39;</span><span class="p">);</span><span class="w">  </span><span class="c">% generated bz_*.m + MEX</span>
+
+<span class="c">% 1-D scalar fit (dim &amp; out_dim inferred from the handle)</span>
+<span class="n">f</span><span class="w">   </span><span class="p">=</span><span class="w"> </span><span class="p">@(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sin</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="n">obj</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">treeweave</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">);</span>
+
+<span class="n">y</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">obj</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]);</span><span class="w">             </span><span class="c">% single point: 1 x dim -&gt; 1 x out_dim</span>
+<span class="nb">delete</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span><span class="w">                </span><span class="c">% free the C handle (or let the object go out of scope)</span>
+</pre></div>
+</div>
+<p>The callback receives a <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">x</span> <span class="pre">dim</span></code> row and returns a scalar or a
+<code class="docutils literal notranslate"><span class="pre">out_dim</span> <span class="pre">x</span> <span class="pre">1</span></code> column. The fit domain is <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b)</span></code>; evaluating exactly at the
+upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value, points below <code class="docutils literal notranslate"><span class="pre">a</span></code> (or above <code class="docutils literal notranslate"><span class="pre">b</span></code>)
+return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+</section>
+<section id="evaluation-routes">
+<h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
+<p>The object is callable directly (or via <code class="docutils literal notranslate"><span class="pre">obj.eval</span></code>), and two name/value flags
+select the fast paths:</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">X</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="o">&#39;</span><span class="p">;</span><span class="w">            </span><span class="c">% N x dim</span>
+
+<span class="n">obj</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="w">                                </span><span class="c">% batch:  N x dim -&gt; N x out_dim</span>
+<span class="n">obj</span><span class="p">.</span><span class="n">eval</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="w">                           </span><span class="c">% identical to obj(X)</span>
+<span class="n">obj</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;sorted&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">                </span><span class="c">% 1-D ascending fast path (dim == 1)</span>
+<span class="n">obj</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;transposed&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">            </span><span class="c">% batch -&gt; out_dim x N (out_dim &gt; 1)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">'sorted',</span> <span class="pre">true</span></code> skips treeweave’s internal counting-sort and is ~3-4x faster
+when you can promise the column is ascending — common for <code class="docutils literal notranslate"><span class="pre">linspace</span></code> grids,
+quadrature nodes, and time series. The promise is unchecked: unsorted input
+gives wrong values, so use the plain batch call when unsure.</p>
+</section>
+<section id="multi-dimensional-fits">
+<h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>
+<p>Pass row-vector corners; the callback takes a <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">x</span> <span class="pre">dim</span></code> row and returns an
+<code class="docutils literal notranslate"><span class="pre">out_dim</span> <span class="pre">x</span> <span class="pre">1</span></code> column:</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="c">% 2-D input -&gt; 3-D vector output (out_dim inferred by probing the midpoint)</span>
+<span class="n">g</span><span class="w">    </span><span class="p">=</span><span class="w"> </span><span class="p">@(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="p">[</span><span class="nb">sin</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">x</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span><span class="w"> </span><span class="nb">cos</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">x</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">2</span><span class="p">)];</span>
+<span class="n">obj2</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">treeweave</span><span class="p">(</span><span class="n">g</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="w"> </span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="mf">1e-6</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;max_memory_mib&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">64</span><span class="p">);</span>
+
+<span class="p">[</span><span class="n">gx</span><span class="p">,</span><span class="w"> </span><span class="n">gy</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">meshgrid</span><span class="p">(</span><span class="nb">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">50</span><span class="p">));</span>
+<span class="n">Y</span><span class="w">  </span><span class="p">=</span><span class="w"> </span><span class="n">obj2</span><span class="p">([</span><span class="n">gx</span><span class="p">(:),</span><span class="w"> </span><span class="n">gy</span><span class="p">(:)]);</span><span class="w">                    </span><span class="c">% 2500 x 3</span>
+<span class="n">Yt</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">obj2</span><span class="p">([</span><span class="n">gx</span><span class="p">(:),</span><span class="w"> </span><span class="n">gy</span><span class="p">(:)],</span><span class="w"> </span><span class="s">&#39;transposed&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w"> </span><span class="c">% 3 x 2500 (struct-of-arrays)</span>
+
+<span class="nb">fprintf</span><span class="p">(</span><span class="s">&#39;Memory: %.1f KiB\n&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">obj2</span><span class="p">.</span><span class="n">memory_usage</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="p">);</span>
+<span class="nb">delete</span><span class="p">(</span><span class="n">obj2</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Examples: <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/bindings/matlab/examples">bindings/matlab/examples/</a>
+(<code class="docutils literal notranslate"><span class="pre">example_1d.m</span></code>, <code class="docutils literal notranslate"><span class="pre">example_2d.m</span></code>, <code class="docutils literal notranslate"><span class="pre">example_vector.m</span></code>).</p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../install.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="cpp.html" class="btn btn-neutral float-right" title="C++" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="julia.html" class="btn btn-neutral float-left" title="Julia" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="options.html" class="btn btn-neutral float-right" title="Fit options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
