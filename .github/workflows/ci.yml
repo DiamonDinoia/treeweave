@@ -176,7 +176,7 @@ jobs:
         run: cmake --build build/coverage --target coverage
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: build/coverage/coverage.filtered.info
           fail_ci_if_error: false
