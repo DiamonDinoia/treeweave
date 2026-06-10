@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781104259791,
+  "lastUpdate": 1781108509422,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -722,6 +722,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00103551044444444,
             "unit": "s/batch",
             "extra": "MdAPE=0.0026577199454579; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "de03a69e1292c99835e0d4ebe3933869929e7bc1",
+          "message": "bench: add CodSpeed (Google Benchmark, simulation mode) CI\n\nAdds deterministic, instruction-count perf gating via CodSpeed.io's\n`simulation` mode (free for OSS, OIDC — no token), complementing the\nexisting nanobench → gh-pages wall-time dashboard (bench.yml stays as-is).\n\nCodSpeed C++ supports only Google Benchmark, so the new bench\n(examples/c++/treeweave_codspeed_bench.cpp) is the Google Benchmark twin\nof treeweave_ci_bench: same four batch-eval cases, names, seeds, and\nN = 1<<16, so the two dashboards line up. Google Benchmark is fetched\nfrom CodSpeedHQ/codspeed-cpp (v2.4.0, SOURCE_SUBDIR google_benchmark)\nbehind the new TREEWEAVE_BUILD_CODSPEED option; their compat layer swaps\nin the instrumented runtime when CODSPEED_MODE is set.\n\nThe `codspeed` preset builds RelWithDebInfo at the x86-64-v3 (AVX2)\nbaseline — simulation runs under Valgrind/Cachegrind, which handles AVX2\nbut not AVX-512 (same constraint as the valgrind preset). codspeed.yml\nbuilds + runs the bench under CodSpeedHQ/action@v4 on push/PR; uploading\na report needs the repo connected at app.codspeed.io (one-time\nGitHub-App install), until then it is still a build+run smoke test.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T12:20:23-04:00",
+          "tree_id": "d0060698b63b2b5bff4a793a157d8d1dc618f173",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/de03a69e1292c99835e0d4ebe3933869929e7bc1"
+        },
+        "date": 1781108508699,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00066355825,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00180469215767273; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001084565125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00363170660611257; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002016042875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000272637958931536; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001029631375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00390468607423289; batch=65536 pts/call"
           }
         ]
       }
