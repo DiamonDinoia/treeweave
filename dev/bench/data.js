@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781124257637,
+  "lastUpdate": 1781132774268,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1346,6 +1346,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00102598175,
             "unit": "s/batch",
             "extra": "MdAPE=0.00249862080704342; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "284bd8a343f05ea12d42eb7a4d820ba6b6ed8b05",
+          "message": "treeweave: public-header hygiene (version macros, noexcept, MSVC inline, NULL docs)\n\n- Version surface: TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}/_VERSION/_STRING\n  C macros in treeweave.h and inline constexpr version_{major,minor,patch}\n  in treeweave.hpp (all 0, mirroring project(VERSION 0.0.0)).\n- Legacy shim include/treeweave.hpp now pulls the public\n  <treeweave/treeweave.hpp> (a superset) instead of the detail impl header.\n- noexcept on the two allocation-free members: Function::memory_usage() and\n  the scalar operator()(const input_type&). The batch operator() allocates\n  and stays potentially-throwing.\n- compiler_macros.hpp: add an _MSC_VER branch mapping ALWAYS_INLINE to\n  __forceinline (FLATTEN stays empty); purely additive.\n- IWYU: treeweave.hpp directly includes detail/tol_kind.hpp (TolKind is used\n  in options).\n- treeweave.h: document C-ABI NULL-handle behavior per the actual code in\n  src/capi/treeweave.cpp -- eval/batch/sorted/transposed/eval_Nd and\n  memory_usage/print_stats/free are NULL-safe; dtype/input_dim/output_dim\n  dereference the handle unguarded and are documented \"must not be NULL\".\n- AUDIT.md: record applied items and the deferred follow-ups (iostream/\n  sstream removal, explicit Value conversions, c_binding_detail .inc rename).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T19:05:23-04:00",
+          "tree_id": "54a91f1f660f8961285a485a5bc8813fd1bb0bbd",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/284bd8a343f05ea12d42eb7a4d820ba6b6ed8b05"
+        },
+        "date": 1781132773216,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000666980666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0107986669127363; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00181038,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0135254865676912; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00266369366666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0047874558463615; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00151762822222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00540610857466723; batch=65536 pts/call"
           }
         ]
       }
