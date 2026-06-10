@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781109678566,
+  "lastUpdate": 1781110449532,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -818,6 +818,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001029628625,
             "unit": "s/batch",
             "extra": "MdAPE=0.00130277091362452; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "f69b9e5836fae9280d75ac92c22507af94747a47",
+          "message": "analysis: suppress opinionated cppcheck style checks (noExplicitConstructor, useStlAlgorithm)\n\nCI's cppcheck (Ubuntu 24.04) is newer than the version used for the\nlocal -Werror analysis verification and enables two `style` checks the\nolder one did not, both of which conflict with this library's design:\n\n  - noExplicitConstructor on detail::Value's single-arg constructors,\n    which are intentionally implicit (scalar/array/pointer construction\n    is ergonomic and used throughout the eval pipeline; making them\n    explicit would be an API/behaviour change).\n  - useStlAlgorithm on six hot-path raw loops (value/function/polytree).\n    Rewriting them as std::accumulate/all_of/copy in a SIMD library\n    obscures intent for no measured gain and risks codegen regressions.\n\nSuppress both at the cppcheck invocation, matching the existing NOLINT\npattern for clang-tidy checks the project rejects. shadowFunction stays\nenabled (a real smell — fixed by renaming in the previous commit). No\ncodepath changes, so no asm/perf impact.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T12:53:16-04:00",
+          "tree_id": "c2f369f097727405c11e0b3bf5e00fccdeae01c1",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/f69b9e5836fae9280d75ac92c22507af94747a47"
+        },
+        "date": 1781110448313,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00066242625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00172614319969394; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001102894875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00961076644460974; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002013699,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00182180716962894; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00102908044444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00673998799837607; batch=65536 pts/call"
           }
         ]
       }
