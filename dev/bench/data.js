@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781116159848,
+  "lastUpdate": 1781117484198,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -962,6 +962,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001031050625,
             "unit": "s/batch",
             "extra": "MdAPE=0.00408407171916857; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "83511e2c056a659b6d193e95cc1c8e27566f6dcc",
+          "message": "chore: -Werror static analysis, clang-format 22, BSD relicense, docs, CodSpeed, macOS runner modernization\n\nConsolidates the post-rename hardening effort into a single commit:\n\n- Static analysis: finish the -Werror clang-tidy 22 pass (library-only\n  scope, WarningsAsErrors='*'), plus cppcheck-version-skew fixes\n  (shadowFunction renames, constVariable const-qualification, and\n  suppression of opinionated style checks noExplicitConstructor /\n  useStlAlgorithm).\n- clang-format: bump to clang-format 22 in pre-commit and CI; reformat.\n- License: relicense Apache-2.0 -> BSD-3-Clause.\n- Docs: add function-approximation background from Barnett's FWAM7 talk.\n- CI: add CodSpeed (Google Benchmark, simulation mode) with perf gating.\n- CI: modernize macOS runners (macos-13 -> macos-15-intel) across\n  release, wheels, testpypi, and julia-smoke; free GitHub-hosted\n  runners only (arm64 stays macos-14).\n- Julia release prep: align the Julia README repo URL with\n  DiamonDinoia/treeweave so Pkg.add(url=...) and the build.jl default\n  download repo agree; deps.jl stays untracked/gitignored.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T14:49:17-04:00",
+          "tree_id": "9d063b6003ac914f1112e93d71198349f42dfb2c",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/83511e2c056a659b6d193e95cc1c8e27566f6dcc"
+        },
+        "date": 1781117482118,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000657131,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00363252893078259; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001722436,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0297377336902127; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00268155025,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0136347989318634; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00148062855555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00243819782370832; batch=65536 pts/call"
           }
         ]
       }
