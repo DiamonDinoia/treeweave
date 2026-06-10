@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781108509422,
+  "lastUpdate": 1781109678566,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -770,6 +770,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001029631375,
             "unit": "s/batch",
             "extra": "MdAPE=0.00390468607423289; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "77d7edd8276c7d40766366f15baccd4048733e52",
+          "message": "ci: make CodSpeed upload non-blocking until repo is connected\n\nThe CodSpeed action builds + runs the bench under Valgrind simulation\n(measuring all four cases) and then uploads. Until the repo is connected\nat app.codspeed.io (a one-time GitHub-App install the maintainer must\nauthorize), the upload 401s (\"Repository not found\") and the action\nexits 1, turning the job red on every push/PR.\n\nMark the run step continue-on-error so the build+run smoke test reports\ngreen in the meantime. Remove this once the app is connected to restore\ninstruction-count perf gating.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T12:39:07-04:00",
+          "tree_id": "e8ba3afe1fd6c44b7d159189ee1e60b1cfcc998a",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/77d7edd8276c7d40766366f15baccd4048733e52"
+        },
+        "date": 1781109677870,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00066041875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00267948007291839; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00110513188888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00532978512970755; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002026479125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00362017673727824; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001029628625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00130277091362452; batch=65536 pts/call"
           }
         ]
       }
