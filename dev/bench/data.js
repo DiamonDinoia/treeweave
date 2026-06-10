@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781110449532,
+  "lastUpdate": 1781111307991,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -866,6 +866,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00102908044444444,
             "unit": "s/batch",
             "extra": "MdAPE=0.00673998799837607; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "a9ba2049003c6c08a8196dbe8d06c66b77132887",
+          "message": "analysis: const-qualify C-ABI eval locals (cppcheck constVariable*)\n\nCI's cppcheck (2.13.0) flags two more checks in the C-ABI eval shims\nthat the local-verification version did not:\n\n  - constVariablePointer: the `impl` pointer in the eval/batch/sorted/\n    transposed shims is only dereferenced for const IEval methods →\n    `const auto *impl`.\n  - constVariable: the small `x[]` input arrays in the by-value scalar\n    eval_{1,2,3}d entry points are passed to a `const`-pointer parameter\n    and never mutated → `const`.\n\nBoth are pure const-correctness on locals (compile-time qualifiers, no\ncodegen/asm change). Verified the whole C-ABI library is now cppcheck-\nclean by running cppcheck 2.13.0 (same version CI installs on Ubuntu\n24.04) in a container over the analysis compile DB.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T13:05:29-04:00",
+          "tree_id": "319b35a66bf41f7324b32d51ab3cdae6fc346b43",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/a9ba2049003c6c08a8196dbe8d06c66b77132887"
+        },
+        "date": 1781111307315,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000660229777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00286032501816969; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001096705875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00911378900093026; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00202788811111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00190104264220985; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00102981011111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00260443964144065; batch=65536 pts/call"
           }
         ]
       }
