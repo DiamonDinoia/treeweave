@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781123540136,
+  "lastUpdate": 1781124257637,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1298,6 +1298,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001031018125,
             "unit": "s/batch",
             "extra": "MdAPE=0.00122964084844121; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "1db5b6800107e94fb30c82c4fb928409a89e449f",
+          "message": "treeweave: fast N-dimensional function approximation\n\ntreeweave fits a scalar function of 1-N real variables once, then evaluates the\napproximation many times, very fast. It adaptively partitions the domain into a\nk-d tree of axis-aligned panels and fits a low-order polynomial on each\n(Chebyshev-sampled, stored in the monomial basis, evaluated by tensor-product\nHorner), refining only where the local error exceeds the requested tolerance.\nThe fit is the slow phase; evaluation is a branch-light descent plus an FMA-bound\nHorner kernel, batched via a counting sort by leaf.\n\nHighlights:\n- Header-only C++20 core (include/treeweave) plus a stable C ABI (libtreeweave_c)\n  with runtime SIMD dispatch (SSE->AVX-512, NEON) via xsimd, so one binary runs\n  across a whole CPU family.\n- Bindings for Python (nanobind), Julia, Fortran, and MATLAB/Octave, all layered\n  on the C ABI.\n- Built on polyfit (the per-panel fit) and POET (compile-time unrolling); the\n  fit/eval pipeline is original. Inspired by Robert Blackwell's baobzi; shares no\n  code with it.\n- CMake build with presets; broad compiler/OS CI matrix, static analysis\n  (clang-tidy + cppcheck under -Werror), sanitizers, Valgrind, coverage, CodSpeed\n  perf gating, and Sphinx/Doxygen docs.\n\nBSD-3-Clause. See docs/how-treeweave-works.md for the design and the math.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-10T16:42:23-04:00",
+          "tree_id": "17c8fd5e597a00c77e020c5181c07521dbb00460",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/1db5b6800107e94fb30c82c4fb928409a89e449f"
+        },
+        "date": 1781124255710,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.0006648782,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00105105358804116; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00109812677777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0143755377535171; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00201581588888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00159969684248693; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00102598175,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00249862080704342; batch=65536 pts/call"
           }
         ]
       }
