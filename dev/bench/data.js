@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781136739761,
+  "lastUpdate": 1781187521454,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1490,6 +1490,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001027934,
             "unit": "s/batch",
             "extra": "MdAPE=0.00359819345065628; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "6f40b7926a5ef4388da0bd905d397d3525ec6679",
+          "message": "ci+docs: green up Lint (clang-format, gersemi), MATLAB licensing fallback, MyST xref\n\nSurfaced once the earlier lint hooks / build steps went green:\n\n- clang-format (pinned clang-format==22): the new TREEWEAVE_VERSION macro's\n  line-continuation was unformatted. Make it a single line (117 < 120 col limit).\n- gersemi==0.27.1 (full-files): two pre-existing files were not gersemi-formatted\n  (treeweave_c_api.cmake, treeweave_install.cmake) -- masked until now because\n  bash -e stopped the lint step at shfmt/clang-format. Reformat (cosmetic only).\n- MATLAB: the CMake link fix made configure + MEX build pass; the test then hit\n  \"MathWorks Licensing Error 1\". setup-matlab@v3 hosted licensing isn't reliably\n  granted to bare `matlab -batch`. Keep the build as the hard gate; mark the\n  license-gated suite continue-on-error and rely on the Octave job (identical\n  matlab_treeweave test) as the blocking runtime gate.\n- docs: set myst_heading_anchors=3 so in-page `[text](#slug)` links resolve\n  (fixes the \"background-and-further-reading\" xref). `sphinx -W` now builds clean.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-11T10:16:41-04:00",
+          "tree_id": "49954a138a8b03ca36afafe5c49e08ef27818a84",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/6f40b7926a5ef4388da0bd905d397d3525ec6679"
+        },
+        "date": 1781187520330,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00065987425,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0027468723246678; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00108875133333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00622968240688305; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00201759722222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00314422151583362; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001030117,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00114980779650744; batch=65536 pts/call"
           }
         ]
       }
