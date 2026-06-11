@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781199549734,
+  "lastUpdate": 1781204095868,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1778,6 +1778,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00200497355555556,
             "unit": "s/batch",
             "extra": "MdAPE=0.00988574495955539; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "f9e738eea77c21b27f279b708e76d689f9755478",
+          "message": "treeweave 0.0.0 — adaptive N-dimensional polynomial-tree function approximation\n\nHeader-only C++ API (treeweave::treeweave), a relocatable C ABI\n(libtreeweave_c, find_package(treeweave)), and Python, Julia, Fortran,\nMATLAB, and Octave bindings. x86-64 builds dispatch SSE4.2 / AVX2 / AVX-512\nat runtime; aarch64 uses the NEON baseline.\n\nCI covers Linux/macOS/Windows on x86-64 + aarch64, the language-wrapper test\nsuites, install-recipe smoke tests (find_package, FetchContent, pip), and a\nTestPyPI dry-run on every push to main.\n\nRelease is a gated, human-dispatched one-click workflow (mirrors\nDiamonDinoia/simdref): scripts/bump_version.py + check_version_sync.py keep\nthe four hand-synced version files in lockstep, and release.yml builds the\nC-ABI tarballs + wheels + sdist, smoke-tests them against the real artifacts,\nthen publishes to PyPI and pushes the v<version> tag only after every gate is\ngreen (with tag rollback on publish failure). Relocatable tarballs install to\nlib/ so find_package works on Debian/Ubuntu as well as RHEL.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-11T14:51:01-04:00",
+          "tree_id": "2d0a07269386c983fe0c84e4d4959a9bb21af5c5",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/f9e738eea77c21b27f279b708e76d689f9755478"
+        },
+        "date": 1781204094942,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000660475,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00305007865812482; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.0016490481,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0031324478681552; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00266181411111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00332581676400903; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00149097077777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00341596104549278; batch=65536 pts/call"
           }
         ]
       }
