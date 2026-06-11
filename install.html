@@ -49,7 +49,7 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#building-from-source">Building from source</a></li>
 </ul>
@@ -229,10 +229,19 @@
              
   <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
-<p>The fastest way to get treeweave depends on the language. Prebuilt binaries are
-the easy path for Python and Julia; C/C++ projects integrate via CMake.</p>
-<section id="prebuilt-binaries-recommended">
-<h2>Prebuilt binaries (recommended)<a class="headerlink" href="#prebuilt-binaries-recommended" title="Link to this heading"></a></h2>
+<p>The fastest way to get treeweave depends on the language. Every language offers
+two paths: <strong>from a binary release</strong> (prebuilt, least effort) and <strong>from source</strong>
+(works today, no release required).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>No tagged release is published yet.</strong> The release paths below — PyPI, the
+Julia <code class="docutils literal notranslate"><span class="pre">Pkg.add</span></code> prebuilt download, and the C/Fortran release archives — only
+work once the first <code class="docutils literal notranslate"><span class="pre">v*</span></code> release exists. Until then, use the <strong>from-source</strong>
+instructions; they are what CI exercises on every push. The one live prebuilt
+is the TestPyPI staging wheel (republished on every push to <code class="docutils literal notranslate"><span class="pre">main</span></code>).</p>
+</div>
+<section id="prebuilt-release-binaries">
+<h2>Prebuilt / release binaries<a class="headerlink" href="#prebuilt-release-binaries" title="Link to this heading"></a></h2>
 <p><strong>Python</strong> — treeweave is not on PyPI yet. Every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> publishes a
 staging wheel to <a class="reference external" href="https://test.pypi.org/project/treeweave/">TestPyPI</a>; install
 it with TestPyPI as the primary index and real PyPI for the dependencies:</p>
@@ -244,14 +253,16 @@ it with TestPyPI as the primary index and real PyPI for the dependencies:</p>
 one wheel runs on any x86-64 CPU. The C ABI is linked statically into the
 extension — there is no shared library to vendor. Plain <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">treeweave</span></code>
 will work once the first release is published to PyPI.</p>
-<p><strong>Julia</strong> — add the package; on first build it downloads the matching
-<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from the GitHub Release and caches it:</p>
+<p><strong>Julia (from a release)</strong> — add the package; on first build it downloads the
+matching <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from the GitHub Release and caches it. <em>Requires a
+published release</em> (see the from-source path below until then):</p>
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">Pkg</span>
 <span class="n">Pkg</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&quot;https://github.com/DiamonDinoia/treeweave&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">subdir</span><span class="o">=</span><span class="s">&quot;bindings/julia/Treeweave&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Override the source repo with the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_REPO</span></code> environment variable, or
-point <code class="docutils literal notranslate"><span class="pre">LIBTREEWEAVE_C</span></code> at a local build.</p>
+<p>Override the release’s source repo with the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_REPO</span></code> environment
+variable. (See <a class="reference internal" href="#julia-from-source"><span class="std std-ref">Julia from source</span></a> to build without a
+release.)</p>
 <p><strong>C / Fortran</strong> — download a relocatable C-ABI archive
 (<code class="docutils literal notranslate"><span class="pre">treeweave-&lt;version&gt;-&lt;platform&gt;</span></code>) from the
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases page</a>. Each
@@ -316,6 +327,26 @@ ctest<span class="w"> </span>--test-dir<span class="w"> </span>build
 </div>
 <p>Non-CMake C++ builds: add <code class="docutils literal notranslate"><span class="pre">include/</span></code> to your compiler include path and
 <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;treeweave/treeweave.hpp&gt;</span></code>.</p>
+<p id="julia-from-source"><strong>Julia (from source).</strong> Build the C ABI in a checkout, then <code class="docutils literal notranslate"><span class="pre">develop</span></code> the
+package against it — no release needed. <code class="docutils literal notranslate"><span class="pre">Pkg.build</span></code> resolves
+<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from a sibling <code class="docutils literal notranslate"><span class="pre">build*/</span></code> directory automatically (or from
+the <code class="docutils literal notranslate"><span class="pre">LIBTREEWEAVE_C</span></code> environment variable if you point it at any local build):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
+cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-julia
+cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-julia<span class="w"> </span>--target<span class="w"> </span>treeweave_c
+</pre></div>
+</div>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">Pkg</span>
+<span class="n">Pkg</span><span class="o">.</span><span class="n">develop</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">&quot;treeweave/bindings/julia/Treeweave&quot;</span><span class="p">)</span>
+<span class="n">Pkg</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s">&quot;Treeweave&quot;</span><span class="p">)</span><span class="w">   </span><span class="c"># finds the sibling build/bindings-julia/libtreeweave_c</span>
+</pre></div>
+</div>
+<p><strong>Python (from source).</strong> <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> the binding directory; scikit-build-core
+builds and statically links the C ABI into the extension:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
+pip<span class="w"> </span>install<span class="w"> </span>./treeweave/bindings/python
+</pre></div>
+</div>
 </section>
 </section>
 

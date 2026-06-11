@@ -49,7 +49,7 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
@@ -231,12 +231,29 @@
 <h1>Julia<a class="headerlink" href="#julia" title="Link to this heading"></a></h1>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
+<p>The package resolves <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> in this order: the <code class="docutils literal notranslate"><span class="pre">LIBTREEWEAVE_C</span></code>
+environment variable, then a sibling <code class="docutils literal notranslate"><span class="pre">build*/</span></code> directory, then a prebuilt
+download from the GitHub Release. That gives two install paths.</p>
+<p><strong>From source (works today — no release needed).</strong> Build the C ABI in a
+checkout, then <code class="docutils literal notranslate"><span class="pre">develop</span></code> the package against the sibling build:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
+cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-julia
+cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-julia<span class="w"> </span>--target<span class="w"> </span>treeweave_c
+</pre></div>
+</div>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">Pkg</span>
+<span class="n">Pkg</span><span class="o">.</span><span class="n">develop</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">&quot;treeweave/bindings/julia/Treeweave&quot;</span><span class="p">)</span>
+<span class="n">Pkg</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s">&quot;Treeweave&quot;</span><span class="p">)</span><span class="w">   </span><span class="c"># finds the sibling build/bindings-julia/libtreeweave_c</span>
+</pre></div>
+</div>
+<p><strong>From a release (prebuilt).</strong> Once a <code class="docutils literal notranslate"><span class="pre">v*</span></code> release is published, add the
+package directly; on first build it downloads the matching <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>
+from the GitHub Release and caches it:</p>
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">Pkg</span>
 <span class="n">Pkg</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&quot;https://github.com/DiamonDinoia/treeweave&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">subdir</span><span class="o">=</span><span class="s">&quot;bindings/julia/Treeweave&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>On first build the package downloads the matching <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from the
-GitHub Release and caches it. Override with the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_REPO</span></code> environment
+<p>Override the release’s source repo with the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_REPO</span></code> environment
 variable, or point <code class="docutils literal notranslate"><span class="pre">LIBTREEWEAVE_C</span></code> at a local build.</p>
 </section>
 <section id="minimal-example">
@@ -266,7 +283,7 @@ batch; tune the fit with <code class="docutils literal notranslate"><span class=
 fast paths:</p>
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="w">                       </span><span class="c"># single point  -&gt; scalar (or Vector)</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="w">                        </span><span class="c"># batch (Vector) -&gt; Vector / n×out_dim</span>
-<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">sorted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">         </span><span class="c"># 1-D ascending fast path (requires dim == 1)</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">sorted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">         </span><span class="c"># promise xs is non-decreasing, xs[i] &lt;= xs[i+1] (dim == 1)</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">transposed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">     </span><span class="c"># batch -&gt; out_dim×n  (requires out_dim &gt; 1)</span>
 </pre></div>
 </div>

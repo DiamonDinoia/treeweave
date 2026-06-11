@@ -59,7 +59,7 @@ select the fast paths:
 
    obj(X)                                % batch:  N x dim -> N x out_dim
    obj.eval(X)                           % identical to obj(X)
-   obj(X, 'sorted', true)                % 1-D ascending fast path (dim == 1)
+   obj(X, 'sorted', true)                % promise X is non-decreasing, X(i) <= X(i+1) (dim == 1)
    obj(X, 'transposed', true)            % batch -> out_dim x N (out_dim > 1)
 
 ``'sorted', true`` skips treeweave's internal counting-sort and is ~3-4x faster

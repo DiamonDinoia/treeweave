@@ -4,13 +4,35 @@ Julia
 Install
 -------
 
+The package resolves ``libtreeweave_c`` in this order: the ``LIBTREEWEAVE_C``
+environment variable, then a sibling ``build*/`` directory, then a prebuilt
+download from the GitHub Release. That gives two install paths.
+
+**From source (works today — no release needed).** Build the C ABI in a
+checkout, then ``develop`` the package against the sibling build:
+
+.. code-block:: bash
+
+   git clone https://github.com/DiamonDinoia/treeweave.git
+   cmake --preset bindings-julia
+   cmake --build build/bindings-julia --target treeweave_c
+
+.. code-block:: julia
+
+   using Pkg
+   Pkg.develop(path="treeweave/bindings/julia/Treeweave")
+   Pkg.build("Treeweave")   # finds the sibling build/bindings-julia/libtreeweave_c
+
+**From a release (prebuilt).** Once a ``v*`` release is published, add the
+package directly; on first build it downloads the matching ``libtreeweave_c``
+from the GitHub Release and caches it:
+
 .. code-block:: julia
 
    using Pkg
    Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")
 
-On first build the package downloads the matching ``libtreeweave_c`` from the
-GitHub Release and caches it. Override with the ``TREEWEAVE_REPO`` environment
+Override the release's source repo with the ``TREEWEAVE_REPO`` environment
 variable, or point ``LIBTREEWEAVE_C`` at a local build.
 
 Minimal example
@@ -46,7 +68,7 @@ fast paths:
 
    approx(1.0)                       # single point  -> scalar (or Vector)
    approx(xs)                        # batch (Vector) -> Vector / n×out_dim
-   approx(xs; sorted = true)         # 1-D ascending fast path (requires dim == 1)
+   approx(xs; sorted = true)         # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)
 
 ``sorted = true`` skips treeweave's internal counting-sort and is ~3–4× faster

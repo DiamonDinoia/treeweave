@@ -49,7 +49,7 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries-recommended">Prebuilt binaries (recommended)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
@@ -272,7 +272,7 @@ Python exception.</p>
 keyword flags select the fast paths:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>                       <span class="c1"># single point  -&gt; scalar (or (out_dim,))</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>                        <span class="c1"># batch (N,)     -&gt; (N,) / (N, out_dim)</span>
-<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>           <span class="c1"># 1-D ascending fast path (requires dim == 1)</span>
+<span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>           <span class="c1"># promise xs is non-decreasing, xs[i] &lt;= xs[i+1] (dim == 1)</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">transposed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>       <span class="c1"># batch -&gt; (out_dim, N)  (requires out_dim &gt; 1)</span>
 </pre></div>
 </div>

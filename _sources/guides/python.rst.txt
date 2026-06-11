@@ -53,7 +53,7 @@ keyword flags select the fast paths:
 
    approx(0.5)                       # single point  -> scalar (or (out_dim,))
    approx(xs)                        # batch (N,)     -> (N,) / (N, out_dim)
-   approx(xs, sorted=True)           # 1-D ascending fast path (requires dim == 1)
+   approx(xs, sorted=True)           # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)
 
 ``sorted=True`` skips treeweave's internal counting-sort and is ~3–4× faster when
