@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781191880863,
+  "lastUpdate": 1781195492734,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1634,6 +1634,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001017781,
             "unit": "s/batch",
             "extra": "MdAPE=0.00278688481518332; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "977b8dde8b58c02e7829a09ee5cc1d62d4f744e5",
+          "message": "ci: gated one-click release automation (mirror simdref)\n\nReplace the three tag-triggered release workflows with a manual, fully\ngated release button modeled on DiamonDinoia/simdref:\n\n- scripts/bump_version.py + check_version_sync.py keep the 4 hand-synced\n  version files (CMakeLists, treeweave.h, treeweave.hpp, Julia Project.toml)\n  in lockstep; the wheel version follows CMakeLists via scikit-build-core.\n- bump-version.yml: dispatchable version bump + commit to main.\n- release.yml: orchestrator. preflight (version sync + tag/PyPI guards +\n  green ci/bindings/install-smoke/testpypi on HEAD) -> reusable C-ABI +\n  wheel/sdist builders -> smoke against real artifacts (Python/C/C++/\n  Fortran/Julia/Octave; MATLAB best-effort) -> atomic publish-and-tag with\n  rollback -> GitHub Release from CHANGELOG slice -> post-publish Julia\n  prebuilt-download verify. v<version> tag is created only after publish.\n- _build-c-abi.yml + wheels.yml: reusable workflow_call builders.\n- pypi.yml: deleted (draft publisher; publishing now lives in release.yml).\n- CHANGELOG.md: Keep a Changelog format with [0.0.0] section.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-11T12:29:36-04:00",
+          "tree_id": "edc857f9b3cbd6fc704f2a41b0ed13da9c2b6a4c",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/977b8dde8b58c02e7829a09ee5cc1d62d4f744e5"
+        },
+        "date": 1781195491744,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000664590875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00403475615750553; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00108967977777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00488665984181249; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002023712875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00306561408005072; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00102565555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000964147330755774; batch=65536 pts/call"
           }
         ]
       }
