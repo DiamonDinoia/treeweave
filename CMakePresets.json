@@ -1,0 +1,214 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "arch-x86-64-v3",
+      "hidden": true,
+      "cacheVariables": { "TREEWEAVE_ARCH": "x86-64-v3" }
+    },
+    {
+      "name": "arch-apple-m1",
+      "hidden": true,
+      "cacheVariables": { "TREEWEAVE_ARCH": "apple-m1" }
+    },
+    {
+      "name": "debug-og",
+      "hidden": true,
+      "description": "Debug at -Og instead of CMake's default Debug (-g, i.e. -O0): keeps -g and asserts but drops the -O0 slowdown on compute-heavy tests. Coverage deliberately does NOT use this — it needs -O0 for accurate line data.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS_DEBUG": "-Og -g",
+        "CMAKE_C_FLAGS_DEBUG": "-Og -g"
+      }
+    },
+    {
+      "name": "lib-release",
+      "hidden": true,
+      "description": "Library-only build (no tests/examples) at the x86-64-v3 baseline — shared by the binding jobs. Build type defaults to Release.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" }
+      }
+    },
+
+    {
+      "name": "ci-linux-debug",
+      "displayName": "CI Linux Debug (-Og, no sanitizers)",
+      "description": "Plain -Og Debug: full build + test suite, no runtime sanitizers. Used by the GCC Debug rows (compiler-portability coverage); GCC+ASan instrumentation of the template-heavy eval TUs exhausts the hosted runner's memory.",
+      "inherits": ["debug-og", "arch-x86-64-v3", "base"]
+    },
+    {
+      "name": "ci-linux-debug-asan",
+      "displayName": "CI Linux Debug (-Og, ASan/UBSan)",
+      "description": "ci-linux-debug + ASan/UBSan. Used by the clang Debug rows only — clang's sanitizer instrumentation compiles the same TUs in a fraction of GCC's time/memory.",
+      "inherits": "ci-linux-debug",
+      "cacheVariables": {
+        "TREEWEAVE_ENABLE_SANITIZERS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "ci-linux-release",
+      "displayName": "CI Linux Release",
+      "inherits": ["arch-x86-64-v3", "base"]
+    },
+    {
+      "name": "ci-macos-debug",
+      "displayName": "CI macOS Debug (-Og)",
+      "inherits": ["debug-og", "arch-apple-m1", "base"]
+    },
+    {
+      "name": "ci-macos-release",
+      "displayName": "CI macOS Release",
+      "inherits": ["arch-apple-m1", "base"]
+    },
+    {
+      "name": "ci-windows",
+      "displayName": "CI Windows (MSVC, Ninja)",
+      "description": "MSVC (cl.exe) via Ninja, not the Visual Studio generator: Ninja is much faster and matches every other platform's single-config flow. Needs the MSVC environment (setup-cpp vcvarsall) on PATH so CMake finds cl.exe.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "ci-windows-clang",
+      "displayName": "CI Windows (clang-cl, Ninja)",
+      "description": "clang-cl via Ninja for compile + test coverage of the Windows clang path. Warnings-as-errors is OFF here: clang-cl turns on a broad set of -Weverything-family warnings by default (unsafe-buffer-usage, exit-time-destructors, ...) that the plain clang driver does not, so -Werror would gate on clang-cl quirks rather than real issues. Warning hygiene for our chosen flag set is already enforced under -Werror by the five Linux clang rows; this row verifies the code compiles and the tests pass under clang-cl. Needs the MSVC environment (setup-cpp vcvarsall) on PATH.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "TREEWEAVE_WARNINGS_AS_ERRORS": { "type": "BOOL", "value": "OFF" }
+      }
+    },
+
+    {
+      "name": "analysis",
+      "displayName": "Static analysis (clang-tidy + cppcheck)",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_ENABLE_CLANG_TIDY": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_ENABLE_CPPCHECK": { "type": "BOOL", "value": "ON" },
+        "CMAKE_DISABLE_PRECOMPILE_HEADERS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Coverage (Debug -O0 + --coverage)",
+      "description": "Plain Debug (-O0), NOT debug-og: -O0 is what makes gcov line coverage accurate.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_ENABLE_COVERAGE": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "valgrind",
+      "displayName": "Valgrind (C ABI, single-arch AVX2)",
+      "description": "Single-arch (multiarch off by default) so valgrind never has to execute the AVX-512 dispatch variant it can't handle.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" }
+      }
+    },
+    {
+      "name": "multiarch",
+      "displayName": "Multiarch dispatch (x86-64 baseline + runtime ISA select)",
+      "description": "TREEWEAVE_ARCH=x86-64 (not v3): the dispatcher builds every ISA variant and picks one at runtime, so the compile baseline must be the lowest.",
+      "inherits": "base",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_C_MULTIARCH": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_ARCH": "x86-64"
+      }
+    },
+    {
+      "name": "multiarch-arm",
+      "displayName": "Multiarch dispatch (aarch64 armv8-a baseline + runtime ISA select)",
+      "description": "aarch64 counterpart of multiarch: TREEWEAVE_ARCH=armv8-a so the compile baseline is the portable ARMv8-A level; the dispatcher selects the single mandatory neon64 variant at runtime (SVE excluded by design).",
+      "inherits": "base",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_C_MULTIARCH": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_ARCH": "armv8-a"
+      }
+    },
+    {
+      "name": "bench",
+      "displayName": "Benchmarks (Release, examples only)",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_BUILD_BENCHMARKS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+
+    {
+      "name": "codspeed",
+      "displayName": "CodSpeed benchmark (RelWithDebInfo, Google Benchmark)",
+      "description": "Instruction-count perf bench for CodSpeed CI. x86-64-v3 (AVX2) baseline is deliberate: CodSpeed `simulation` runs the binary under Valgrind/Cachegrind, which handles AVX2 but not AVX-512 — same constraint as the `valgrind` preset. RelWithDebInfo keeps the debug symbols CodSpeed needs for meaningful reports.",
+      "inherits": ["arch-x86-64-v3", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
+        "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_BUILD_CODSPEED": { "type": "BOOL", "value": "ON" }
+      }
+    },
+
+    {
+      "name": "bindings-python",
+      "displayName": "Python (nanobind) bindings",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_PYTHON": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "bindings-julia",
+      "displayName": "Julia bindings",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "bindings-fortran",
+      "displayName": "Fortran bindings",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_FORTRAN": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "bindings-matlab",
+      "displayName": "MATLAB/Octave (MEX) bindings",
+      "description": "Builds the MEX entirely from CMake: fetches the mwrap generator via CPM, generates the gateway + bz_*.m from treeweave.mw, and compiles/links treeweave_c_static via matlab_add_mex (MATLAB) and/or mkoctfile (Octave).",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_MATLAB": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "bindings-octave",
+      "displayName": "Octave (MEX) bindings",
+      "description": "License-free CI path. Inherits bindings-matlab (same TREEWEAVE_BUILD_MATLAB=ON flag — there is no separate Octave flag). Backend selection is automatic inside bindings/matlab/CMakeLists.txt: if mkoctfile is found it builds treeweave_mex.mex via mkoctfile; if MATLAB is also found it builds treeweave_mex.mexa64 in addition. Use this preset when only Octave/mkoctfile is present (no MATLAB license needed).",
+      "inherits": "bindings-matlab"
+    }
+  ]
+}

@@ -1,0 +1,141 @@
+name: TestPyPI
+
+# Every push to the default branch publishes a staging build to
+# https://test.pypi.org/. The version is X.Y.Z.devN, where X.Y.Z is the root
+# CMakeLists project version and N is the number of commits since the last v*
+# release tag — so each commit gets a unique, monotonically increasing dev
+# version and TestPyPI never rejects a re-upload. This is the dry run for the
+# real PyPI publish: it exercises the full wheel matrix + sdist + metadata.
+#
+# Publishing uses PyPI Trusted Publishing (OIDC) — no API token to store.
+# One-time setup on test.pypi.org -> the `treeweave` project -> Publishing:
+#   Owner: DiamonDinoia | Repo: treeweave
+#   Workflow: testpypi.yml | Environment: testpypi
+# (Create a "pending publisher" before the project's first upload.)
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Compute the shared X.Y.Z.devN version once so every builder pins the same one.
+  version:
+    name: Derive dev version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0   # need tags + full history for the commit count
+      - id: v
+        shell: bash
+        run: |
+          base=$(grep -oE 'project\(treeweave VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt \
+                 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          last=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          if [ -n "$last" ]; then
+            n=$(git rev-list "${last}..HEAD" --count)
+          else
+            n=$(git rev-list HEAD --count)   # no release yet: count from root
+          fi
+          echo "version=${base}.dev${n}" >> "$GITHUB_OUTPUT"
+          echo "Derived dev version: ${base}.dev${n}"
+
+  wheels:
+    name: ${{ matrix.name }}
+    needs: version
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runs-on: ubuntu-24.04
+            cibw-arch: x86_64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+          - name: linux-aarch64
+            runs-on: ubuntu-24.04-arm
+            cibw-arch: aarch64
+            cmake-args: "-DTREEWEAVE_ARCH=armv8-a"
+          - name: macos-arm64
+            runs-on: macos-14
+            cibw-arch: arm64
+            cmake-args: "-DTREEWEAVE_ARCH=apple-m1"
+          - name: macos-x86_64
+            runs-on: macos-15-intel
+            cibw-arch: x86_64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+          - name: windows-x64
+            runs-on: windows-2022
+            cibw-arch: AMD64
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+    steps:
+      - uses: actions/checkout@v6
+
+      # Pin the wheel to the shared dev version (CMake's numeric project version
+      # cannot carry a .devN suffix, so we statically override pyproject here).
+      # cibuildwheel copies this dir into the build container, so the edit sticks.
+      - name: Pin dev version
+        shell: bash
+        run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d  # v4.0.0
+        with:
+          package-dir: bindings/python
+        env:
+          CIBW_ARCHS: ${{ matrix.cibw-arch }}
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="${{ matrix.cmake-args }}"
+            MACOSX_DEPLOYMENT_TARGET=11.0
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.name }}
+          path: wheelhouse/*.whl
+
+  sdist:
+    name: sdist
+    needs: version
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Pin dev version
+        run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
+      - name: Build sdist
+        run: pipx run build --sdist --outdir dist bindings/python
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  publish:
+    name: Publish to TestPyPI
+    needs: [wheels, sdist]
+    runs-on: ubuntu-24.04
+    environment: testpypi
+    permissions:
+      id-token: write   # OIDC token for Trusted Publishing — no API token needed
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: "wheels-*"
+          merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true   # tolerate a re-run of the same commit's version

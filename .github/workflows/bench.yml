@@ -1,0 +1,63 @@
+name: Benchmarks
+
+# On every push to the default branch, build and run the stable CI benchmark
+# (examples/c++/treeweave_ci_bench), then feed its results to
+# benchmark-action/github-action-benchmark. History accumulates under
+# dev/bench/ on the gh-pages branch (served alongside the Doxygen site, see
+# docs.yml) and a regression past the alert threshold posts a commit comment.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Share the gh-pages writer group with docs.yml so the two pushes serialise.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Configure + build the CI benchmark
+        run: |
+          cmake --preset bench
+          cmake --build build/bench -j --target treeweave_ci_bench
+
+      - name: Run benchmark
+        run: ./build/bench/treeweave_ci_bench bench.json
+
+      # Tracks each named series over time, auto-pushes the updated history to
+      # gh-pages, and comments on a commit if it regresses past the threshold.
+      # fail-on-alert stays off: shared CI runners are too noisy to gate merges
+      # on absolute timings (the chart + comment are the signal).
+      - name: Store + publish benchmark result
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba  # v1
+        with:
+          name: treeweave batch eval
+          tool: customSmallerIsBetter
+          output-file-path: bench.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          auto-push: true
+          alert-threshold: "200%"
+          comment-on-alert: true
+          fail-on-alert: false
+          summary-always: true

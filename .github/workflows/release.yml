@@ -1,0 +1,492 @@
+name: Release
+
+# Atomic, human-dispatched release — the "release button".
+#
+# The tag `v<version>` is created ONLY after every step that can plausibly fail
+# has succeeded: preflight -> build -> smoke -> PyPI publish -> tag push ->
+# GitHub Release. If anything upstream fails the tag is never pushed, so
+# v<version> is a reliable marker for "this release is complete and on PyPI".
+#
+# Dispatch with dry_run=true (the default) to prove every gate without side
+# effects — no PyPI publish, no tag, no GitHub Release.
+#
+# Preconditions enforced by the `preflight` job:
+#   - all four hand-synced version files match the `version` input
+#     (run scripts/bump_version.py / the Bump Version workflow first)
+#   - v<version> tag does not already exist
+#   - <version> is not already on PyPI
+#   - every test + wrapper workflow has a GREEN run on HEAD: ci.yml, bindings.yml
+#     (Python/Julia/Octave/MATLAB/Fortran), install-smoke.yml (C find_package,
+#     C++ FetchContent, pip), and testpypi.yml (the TestPyPI dry-run gate)
+#
+# IMPORTANT: real publishing requires the `treeweave` project on PyPI configured
+# with Trusted Publishing bound to THIS workflow file + environment. See
+# https://docs.pypi.org/trusted-publishers/:
+#   - Owner:            DiamonDinoia
+#   - Repository:       treeweave
+#   - Workflow name:    release.yml
+#   - Environment name: pypi
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: "Version to release (e.g. 0.0.0). Must match the version files on HEAD."
+      dry_run:
+        type: boolean
+        default: true
+        description: "If true, run every check + build + smoke but skip PyPI publish, tag, and GitHub Release."
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Preflight gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      sha: ${{ steps.capture.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify all four version files match the input
+        run: |
+          if ! python scripts/check_version_sync.py "${{ inputs.version }}"; then
+            echo "::error::version files do not all equal ${{ inputs.version }}. Dispatch the Bump Version workflow with version=${{ inputs.version }} (or run scripts/bump_version.py ${{ inputs.version }} locally), land it on main, wait for CI, then retry."
+            exit 1
+          fi
+
+      - name: Refuse if tag already exists
+        run: |
+          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "::error::tag v${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Refuse if version is already on PyPI
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/treeweave/${{ inputs.version }}/json")
+          echo "pypi-status=$status"
+          if [ "$status" = "200" ]; then
+            echo "::error::version ${{ inputs.version }} is already published on PyPI"
+            exit 1
+          fi
+
+      - name: Require green test + wrapper workflows on this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha="${{ github.sha }}"
+          fail=0
+          # Every gate the audit calls out: core tests, all language wrappers,
+          # the install recipes, and the TestPyPI dry-run.
+          for wf in ci.yml bindings.yml install-smoke.yml testpypi.yml; do
+            run_json=$(gh api \
+              "repos/${{ github.repository }}/actions/workflows/$wf/runs?head_sha=$sha&per_page=10" \
+              --jq '[.workflow_runs[] | select(.event=="push" or .event=="workflow_dispatch" or .event=="schedule")][0] // empty')
+            if [ -z "$run_json" ]; then
+              echo "::error::no run of $wf found for $sha — push first and wait for it before cutting a release"
+              fail=1
+              continue
+            fi
+            status=$(echo "$run_json" | jq -r .status)
+            conclusion=$(echo "$run_json" | jq -r .conclusion)
+            echo "$wf: status=$status conclusion=$conclusion"
+            if [ "$status" != "completed" ] || [ "$conclusion" != "success" ]; then
+              echo "::error::$wf for $sha is not green (status=$status conclusion=$conclusion)"
+              fail=1
+            fi
+          done
+          [ "$fail" = "0" ] || exit 1
+
+      - id: capture
+        run: echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+  # Build the actual release artifacts at the static X.Y.Z, on the preflight SHA.
+  build-c-abi:
+    name: Build C-ABI
+    needs: preflight
+    uses: ./.github/workflows/_build-c-abi.yml
+    with:
+      ref: ${{ needs.preflight.outputs.sha }}
+      version: ${{ inputs.version }}
+
+  build-wheels:
+    name: Build wheels
+    needs: preflight
+    uses: ./.github/workflows/wheels.yml
+    with:
+      ref: ${{ needs.preflight.outputs.sha }}
+
+  # ---- Smoke: re-verify each wrapper against the ACTUAL release artifacts ----
+
+  smoke-python:
+    name: Smoke — Python (twine + pip install built wheel)
+    needs: build-wheels
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: "wheels-*"
+          merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: twine check (wheels + sdist)
+        run: |
+          python -m pip install --upgrade pip twine
+          twine check dist/*
+
+      - name: Install the built wheel into a fresh interpreter and evaluate
+        run: |
+          python -m pip install numpy
+          # Prefer the locally built wheel; deps still resolve from PyPI.
+          python -m pip install --find-links dist "treeweave==${{ inputs.version }}"
+          python - <<'EOF'
+          import math, importlib.metadata
+          import numpy as np, treeweave
+          print("treeweave", importlib.metadata.version("treeweave"))
+          approx = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-10)
+          xs = np.linspace(0.0, 1.0, 11, endpoint=False)
+          err = float(np.max(np.abs(approx(xs) - np.exp(xs))))
+          assert err < 1e-8, err
+          print(f"OK: max abs error {err:.2e}")
+          EOF
+
+  smoke-cxx:
+    name: Smoke — C/C++/Fortran (against C-ABI tarball)
+    needs: [preflight, build-c-abi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install gfortran
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - name: Download + extract the linux-x86_64 C-ABI tarball
+        uses: actions/download-artifact@v8
+        with:
+          name: treeweave-${{ inputs.version }}-linux-x86_64
+          path: pkg
+
+      - name: Extract to a prefix
+        run: |
+          mkdir -p _prefix
+          tar -C _prefix -xzf pkg/treeweave-${{ inputs.version }}-linux-x86_64.tar.gz
+          ls -R _prefix | head -40
+
+      - name: C — find_package(treeweave) + link treeweave_c
+        run: bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
+
+      - name: C++ — FetchContent header-only consumer
+        run: |
+          mkdir -p fc_consumer
+          cat > fc_consumer/CMakeLists.txt <<EOF
+          cmake_minimum_required(VERSION 3.20)
+          project(consumer CXX)
+          include(FetchContent)
+          FetchContent_Declare(treeweave SOURCE_DIR "${GITHUB_WORKSPACE}")
+          FetchContent_MakeAvailable(treeweave)
+          add_executable(app main.cpp)
+          target_link_libraries(app PRIVATE treeweave::treeweave)
+          EOF
+          cat > fc_consumer/main.cpp <<'EOF'
+          #include <treeweave/treeweave.hpp>
+          #include <cmath>
+          #include <cstdio>
+          int main() {
+            auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
+            auto fn    = treeweave::fit(runge, -1.0, 1.0, 1e-10);
+            double y   = fn(0.3);
+            if (std::abs(y - runge(0.3)) > 1e-8) { std::printf("FAIL: %g\n", y); return 1; }
+            std::printf("OK: fn(0.3) = %g\n", y);
+            return 0;
+          }
+          EOF
+          cmake -S fc_consumer -B fc_consumer/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build fc_consumer/build -j
+          ./fc_consumer/build/app
+
+      - name: Fortran — consumer built against the tarball's treeweave_c
+        run: |
+          mkdir -p ftn_consumer
+          # The Fortran binding (treeweave.f90) is a thin iso_c_binding shim over
+          # the C ABI, so a consumer just needs find_package(treeweave) and the
+          # treeweave::treeweave_c target — no in-tree build required.
+          cat > ftn_consumer/CMakeLists.txt <<EOF
+          cmake_minimum_required(VERSION 3.20)
+          project(consumer Fortran)
+          find_package(treeweave REQUIRED)
+          add_library(treeweave_fortran STATIC "${GITHUB_WORKSPACE}/bindings/fortran/treeweave.f90")
+          target_link_libraries(treeweave_fortran PUBLIC treeweave::treeweave_c)
+          add_executable(ftn_test "${GITHUB_WORKSPACE}/bindings/fortran/test_treeweave.f90")
+          target_link_libraries(ftn_test PRIVATE treeweave_fortran)
+          EOF
+          cmake -S ftn_consumer -B ftn_consumer/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/_prefix"
+          cmake --build ftn_consumer/build -j
+          ./ftn_consumer/build/ftn_test
+          echo "Fortran consumer OK"
+
+  smoke-julia:
+    name: Smoke — Julia (from source, LIBTREEWEAVE_C -> tarball)
+    needs: [preflight, build-c-abi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32  # v3
+        with:
+          version: '1'
+
+      - name: Download + extract the linux-x86_64 C-ABI tarball
+        uses: actions/download-artifact@v8
+        with:
+          name: treeweave-${{ inputs.version }}-linux-x86_64
+          path: pkg
+
+      - name: Build (LIBTREEWEAVE_C from tarball) + test
+        run: |
+          mkdir -p _prefix
+          tar -C _prefix -xzf pkg/treeweave-${{ inputs.version }}-linux-x86_64.tar.gz
+          lib=$(find "$PWD/_prefix" -name 'libtreeweave_c.so*' | head -1)
+          test -n "$lib" || { echo "::error::libtreeweave_c.so not found in tarball"; exit 1; }
+          echo "using prebuilt $lib"
+          LIBTREEWEAVE_C="$lib" julia -e '
+            using Pkg
+            Pkg.activate(; temp=true)
+            Pkg.develop(path="bindings/julia/Treeweave")
+            Pkg.build("Treeweave"; verbose=true)
+            p = include(joinpath(pwd(), "bindings/julia/Treeweave/deps/deps.jl"))
+            isempty(p) && error("deps.jl empty — LIBTREEWEAVE_C not resolved")
+            isfile(p)  || error("resolved libtreeweave_c path does not exist: $p")
+            @info "resolved libtreeweave_c" path=p
+            Pkg.test("Treeweave")
+          '
+
+  smoke-octave:
+    name: Smoke — Octave (MEX + suite)
+    needs: [preflight, build-c-abi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - name: Install Octave + toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev
+
+      - name: Configure + build the Octave MEX
+        run: |
+          cmake --preset bindings-octave
+          cmake --build build/bindings-octave -j
+
+      - name: Run Octave suite (matlab_treeweave)
+        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
+
+  # Best-effort: the build is a gate but running needs a license MathWorks'
+  # hosted licensing does not reliably grant outside matlab-actions. NOT in
+  # publish-and-tag's needs — the Octave job above is the blocking runtime gate.
+  smoke-matlab:
+    name: Smoke — MATLAB (best-effort)
+    needs: [preflight, build-c-abi]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f  # v3
+
+      - name: Configure + build the MATLAB MEX
+        run: |
+          cmake --preset bindings-matlab
+          cmake --build build/bindings-matlab -j
+
+      - name: Run MATLAB suite (matlab_treeweave)
+        continue-on-error: true
+        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
+
+  # Tag + PyPI publish live in the SAME job so they share a success boundary: if
+  # PyPI publish fails, the tag is rolled back immediately. "Tag exists" is
+  # therefore a reliable signal that the release is on PyPI.
+  publish-and-tag:
+    name: Publish to PyPI + push tag
+    needs: [preflight, smoke-python, smoke-cxx, smoke-julia, smoke-octave]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: pypi
+      url: https://pypi.org/p/treeweave
+    permissions:
+      id-token: write   # PyPI OIDC trusted publishing
+      contents: write   # tag push
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: "wheels-*"
+          merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: sdist
+          path: dist
+
+      - name: Create and push tag
+        id: tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ inputs.version }}" -m "Release v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to PyPI
+        # Default repository-url is the real PyPI (upload.pypi.org). A version
+        # PyPI already has is immutable, so skip-existing stays off: a duplicate
+        # upload should fail loudly rather than pass silently.
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
+
+      - name: Rollback tag on PyPI failure
+        if: failure() && steps.tag.outputs.pushed == 'true'
+        run: |
+          echo "::warning::PyPI publish failed — deleting tag v${{ inputs.version }} to keep the tag/release invariant"
+          git push --delete origin "v${{ inputs.version }}" || true
+
+  # GitHub Release uses the tag that now exists, with the CHANGELOG section as
+  # the body and all tarballs + wheels + sdist attached.
+  github-release:
+    name: Create GitHub Release
+    needs: [preflight, publish-and-tag]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ inputs.version }}"
+          notes=""
+          if [ -f CHANGELOG.md ]; then
+            notes=$(python - "${{ inputs.version }}" <<'PY'
+          import re, sys
+          version = sys.argv[1]
+          text = open("CHANGELOG.md").read()
+          # Match "## [<version>]" through the next "## " heading, the reference
+          # links block, or end of file.
+          pat = re.compile(
+              r"^##\s*\[" + re.escape(version) + r"\].*?(?=^##\s|\n\[[^\]]+\]:|\Z)",
+              re.MULTILINE | re.DOTALL,
+          )
+          m = pat.search(text)
+          sys.stdout.write(m.group(0).strip() if m else "")
+          PY
+          )
+          fi
+          if [ -n "$notes" ]; then
+            printf '%s\n' "$notes" > release-notes.md
+            gh release create "$tag" --repo "${{ github.repository }}" \
+              --title "treeweave $tag" --notes-file release-notes.md \
+              artifacts/*
+          else
+            gh release create "$tag" --repo "${{ github.repository }}" \
+              --title "treeweave $tag" --generate-notes \
+              artifacts/*
+          fi
+
+  # Now that the Release assets exist, verify the one wrapper path that can only
+  # be tested after publishing: Julia's prebuilt-download install (deps/build.jl
+  # pulls libtreeweave_c from the Release across every OS/arch). Surface the
+  # result but do NOT roll back the release on it.
+  verify-prebuilt:
+    name: Verify Julia prebuilt download (post-publish)
+    needs: github-release
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch julia-smoke.yml on the freshly pushed tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run julia-smoke.yml \
+            --repo "${{ github.repository }}" \
+            --ref "v${{ inputs.version }}" \
+            -f tag="v${{ inputs.version }}" \
+            -f repo="${{ github.repository }}"
+          echo "::notice::dispatched julia-smoke.yml for v${{ inputs.version }} (prebuilt-download path across all OS/arch). Watch it under the Actions tab; it does not gate the release."

@@ -1,0 +1,16 @@
+treeweave
+Copyright 2025-2026 Marco Barbone and the treeweave authors.
+
+treeweave is an independent reimplementation inspired by baobzi
+(https://github.com/flatironinstitute/baobzi), an "adaptive fast function
+approximator based on tree search" by Robert Blackwell and the Flatiron
+Institute.
+
+baobzi originated the adaptive-tree-of-polynomial-panels design that treeweave
+builds on. treeweave shares no code with baobzi: it is a clean reimplementation
+that re-architects the fit and evaluation pipeline around polyfit
+(https://github.com/DiamonDinoia/polyfit) and POET
+(https://github.com/DiamonDinoia/POET) and adds a multi-language C ABI.
+
+treeweave is distributed under the BSD 3-Clause License; see the LICENSE file
+for the full terms.

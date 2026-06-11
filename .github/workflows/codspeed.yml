@@ -1,0 +1,53 @@
+name: CodSpeed
+
+# Instruction-count perf gating via CodSpeed.io `simulation` mode: builds the
+# Google Benchmark driver (examples/c++/treeweave_codspeed_bench) RelWithDebInfo
+# at the x86-64-v3 baseline and runs it once under CodSpeed's simulated CPU.
+# This complements bench.yml (nanobench → gh-pages wall-time trend) with a
+# deterministic, runner-independent signal. Uploading a report needs the repo
+# connected at app.codspeed.io (one-time GitHub-App install); until then the job
+# still builds + runs the bench as a smoke test.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# OIDC: CodSpeed's action authenticates via id-token instead of a secret.
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  codspeed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Configure + build the CodSpeed benchmark
+        run: |
+          cmake --preset codspeed -DCODSPEED_MODE=simulation
+          cmake --build build/codspeed -j --target treeweave_codspeed_bench
+
+      # Builds + runs the bench under Valgrind simulation and uploads the
+      # instruction-count report to app.codspeed.io (the repo is connected via
+      # the CodSpeed GitHub App; auth is OIDC, see the id-token permission).
+      - name: Run benchmark under CodSpeed
+        uses: CodSpeedHQ/action@c145068895e045cc725ee76fcd2307624b65c3af  # v4
+        with:
+          mode: simulation
+          run: ./build/codspeed/treeweave_codspeed_bench

@@ -1,0 +1,13 @@
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+TabWidth:        4
+IndentWidth:     4
+ColumnLimit:     120
+AlwaysBreakTemplateDeclarations: true
+# treeweave aligns contiguous declaration/assignment runs (struct members, type
+# aliases). Comment-separated members (e.g. treeweave::options) stay unaligned
+# because Consecutive breaks runs on blank lines and comments.
+AlignConsecutiveAssignments:  true
+AlignConsecutiveDeclarations: true
+...

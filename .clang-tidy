@@ -1,0 +1,79 @@
+# clang-tidy configuration for treeweave.
+#
+# We start from "*" and switch off check families that are pure layout
+# (clang-format owns those) or that actively fight the idioms of a header-only
+# SIMD/template math library, plus a few subjective metrics. The modernize-*
+# family is kept on deliberately — we want modern C++ (trailing return types,
+# `auto`, std::array, [[nodiscard]]). What remains is the set whose warnings
+# indicate a likely bug, a real performance issue, a missed modern-C++ idiom, or
+# a genuine maintainability smell.
+#
+# hicpp-explicit-conversions is off: Value<T,N> is a math type with intentional
+# implicit scalar<->Value conversions, and allocator rebind constructors must
+# stay implicit — forcing `explicit` there breaks the API and STL allocator use.
+# modernize-use-constraints stays ON globally, but is suppressed with NOLINT at
+# two Value constructors whose enable_if -> requires rewrite apple-clang rejects.
+#
+# Disabled, by group (clang-tidy's Checks string takes no inline comments, so
+# the rationale lives here):
+#   Vendor/irrelevant : abseil, altera, android, fuchsia, google, llvm, zircon,
+#                       boost-use-ranges, *-avoid-magic-numbers, magic-numbers,
+#                       portability-avoid-pragma-once, avoid-const-or-ref-data-members
+#   Pure layout/style : braces-around-statements, isolate-declaration,
+#                       identifier-length, implicit-bool-conversion,
+#                       uppercase-literal-suffix, named-parameter
+#   SIMD/low-level     : pro-bounds-pointer-arithmetic (also suits our
+#                       `.data() + i` idiom over `&v[i]`), pro-bounds-constant-
+#                       array-index, pro-bounds-array-to-pointer-decay,
+#                       no-array-decay, pro-type-reinterpret-cast, pro-type-vararg,
+#                       vararg, signed-bitwise, owning-memory,
+#                       pro-bounds-avoid-unchecked-container-access (clang-tidy
+#                       >=22: flags every `operator[]` — the same bounds-safety
+#                       family as the pro-bounds-* entries above, and equally at
+#                       odds with a SIMD/perf library that indexes deliberately)
+#   Numeric readability: math-missing-parentheses (a numerics library writes
+#                       `a*x + b`; the precedence of */ over +- is universal and
+#                       parenthesizing every term reduces readability in the hot
+#                       index/Horner math)
+#   Subjective metrics : function-cognitive-complexity, easily-swappable-
+#                       parameters, non-private-member-variables-in-classes,
+#                       avoid-do-while
+Checks: "*,-abseil-*,-altera-*,-android-*,-fuchsia-*,-google-*,-llvm*,-zircon-*,-boost-use-ranges,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-portability-avoid-pragma-once,-cppcoreguidelines-avoid-const-or-ref-data-members,-readability-braces-around-statements,-hicpp-braces-around-statements,-readability-isolate-declaration,-readability-identifier-length,-readability-implicit-bool-conversion,-readability-uppercase-literal-suffix,-hicpp-uppercase-literal-suffix,-readability-named-parameter,-hicpp-named-parameter,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-cppcoreguidelines-pro-bounds-constant-array-index,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,-hicpp-no-array-decay,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-vararg,-hicpp-vararg,-hicpp-signed-bitwise,-cppcoreguidelines-owning-memory,-readability-math-missing-parentheses,-readability-function-cognitive-complexity,-bugprone-easily-swappable-parameters,-misc-non-private-member-variables-in-classes,-cppcoreguidelines-non-private-member-variables-in-classes,-cppcoreguidelines-avoid-do-while,-hicpp-explicit-conversions"
+
+# Treat every surviving warning as an error so regressions fail the Static
+# Analysis CI job (and local analysis builds) instead of silently accumulating.
+# The library is warning-clean as of this setting; tests and fetched deps are
+# excluded from analysis (see tests/CMakeLists.txt and treeweave_deps.cmake).
+WarningsAsErrors: '*'
+HeaderFilterRegex: '^${PROJECT_SOURCE_DIR}/(include/treeweave/|src)'
+FormatStyle:     none
+
+CheckOptions:
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '5'
+  - key: modernize-use-auto.RemoveStars
+    value: 'true'
+  # `poet::static_for` lives in poet/core/static_for.hpp, but `core/*` is
+  # explicitly non-public — the only sanctioned entry point is the
+  # `<poet/poet.hpp>` umbrella. Tell include-cleaner not to flag it as
+  # "not used directly". xsimd is likewise consumed only through its
+  # `<xsimd/xsimd.hpp>` umbrella; its symbols (xsimd::best_arch, batch types)
+  # resolve to deep internal headers that must never be included directly, so
+  # ignore the whole xsimd/ tree for both "unused" and "missing provider".
+  - key: misc-include-cleaner.IgnoreHeaders
+    value: 'poet/poet\.hpp;.*xsimd.*'
+  # A polymorphic interface whose only special member is a defaulted virtual
+  # destructor (e.g. IEval) is idiomatic and should not be forced to declare all
+  # five. Classes that declare any *other* special member (e.g. Buf's deleted
+  # copy) are still flagged and must spell out the rest.
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: 'true'
+  - key: hicpp-special-member-functions.AllowSoleDefaultDtor
+    value: 'true'
+  # Keep value const-correctness, but drop the pointee analysis: the C ABI
+  # stores typed evaluators behind an opaque `void *impl` handle, so the
+  # transient `IEval<T> *impl` locals in src/capi cannot be `const IEval<T> *`
+  # without a const_cast at the handle boundary. Flagging them as "pointee can
+  # be const" fights that deliberate design for no safety gain.
+  - key: misc-const-correctness.AnalyzePointers
+    value: 'false'

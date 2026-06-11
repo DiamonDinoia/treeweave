@@ -1,0 +1,85 @@
+name: Bump Version
+
+# Human-dispatched version bump. Runs scripts/bump_version.py on a fresh main
+# checkout to rewrite the version in all four hand-synced files (CMakeLists.txt,
+# include/treeweave.h, include/treeweave/treeweave.hpp, and the Julia
+# Project.toml), verifies they agree, then commits and pushes to main.
+#
+# After the bump lands and CI goes green on the new HEAD, dispatch the Release
+# workflow (release.yml) with the same version — it builds everything, runs the
+# smoke gates, publishes to PyPI, and pushes the v<version> tag atomically.
+#
+# Single click; no need to edit the version files locally.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: "Version to bump to (e.g. 0.1.0). Must not already exist as a tag or on PyPI."
+      dry_run:
+        type: boolean
+        default: true
+        description: "If true, show the diff but do not commit or push."
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bump-version
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Refuse if tag already exists
+        run: |
+          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "::error::tag v${{ inputs.version }} already exists; pick a new version"
+            exit 1
+          fi
+
+      - name: Refuse if version is already on PyPI
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/treeweave/${{ inputs.version }}/json")
+          echo "pypi-status=$status"
+          if [ "$status" = "200" ]; then
+            echo "::error::version ${{ inputs.version }} is already published on PyPI"
+            exit 1
+          fi
+
+      - name: Bump version across all four hand-synced files
+        run: python scripts/bump_version.py "${{ inputs.version }}"
+
+      - name: Verify cross-file sync
+        run: python scripts/check_version_sync.py "${{ inputs.version }}"
+
+      - name: Show diff
+        run: git --no-pager diff
+
+      - name: Commit and push
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CMakeLists.txt include/treeweave.h include/treeweave/treeweave.hpp bindings/julia/Treeweave/Project.toml
+          git commit -m "chore(release): bump version to ${{ inputs.version }}"
+          git push origin HEAD:main
+
+      - name: Next step hint
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "::notice::dry run — re-dispatch with dry_run=false to actually commit."
+          else
+            echo "::notice::version bumped and pushed. Wait for CI to go green on the new HEAD, then dispatch the Release workflow with version=${{ inputs.version }} and dry_run=false — it builds, smoke-tests, publishes to PyPI, and pushes v${{ inputs.version }} atomically."
+          fi

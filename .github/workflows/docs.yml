@@ -1,0 +1,76 @@
+name: Docs
+
+# Build the Sphinx (Breathe + Exhale over Doxygen XML) site and publish it to
+# the gh-pages branch on every push to the default branch. Live at
+# https://diamondinoia.github.io/treeweave/.
+#
+# Pages serves the gh-pages branch root (repo Settings -> Pages -> "Deploy from
+# a branch" -> gh-pages /). The Sphinx site lands at the root; the benchmark
+# workflow (bench.yml) keeps its history under dev/bench/ on the same branch,
+# which is why we publish with keep_files (so neither workflow wipes the
+# other's output).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialise gh-pages writers (docs + bench) so their pushes don't race.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # Doxygen (XML for Breathe) + Graphviz for any diagrams.
+      - uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e  # v2
+        with:
+          version: "1.13.2"
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Install Sphinx toolchain
+        run: python -m pip install --upgrade pip -r docs/requirements.txt
+
+      # Configures the library and runs the `docs` target: Doxygen emits XML,
+      # then sphinx-build (Breathe/Exhale) renders docs/ -> _build/html.
+      - name: Build docs (Doxygen XML + Sphinx)
+        run: |
+          cmake -S . -B build \
+            -DTREEWEAVE_BUILD_TESTS=OFF -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            -DTREEWEAVE_GENERATE_DOCS=ON
+          cmake --build build --target docs
+
+      # keep_files: don't delete dev/bench/ (written by bench.yml) when
+      # publishing the freshly built site.
+      - name: Publish to gh-pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453  # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/docs/_build/html
+          keep_files: true

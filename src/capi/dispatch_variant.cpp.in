@@ -1,0 +1,45 @@
+// dispatch_variant.cpp.in — CMake template for one (dtype, input_dim)
+// C-ABI factory TU. configure_file() expands @TREEWEAVE_VT@ / @TREEWEAVE_VIN@
+// into 6 generated TUs (2 dtypes × 3 dims), each compiled once (multiarch
+// OFF) or four times at distinct `-march` levels (multiarch ON). Degree is
+// baked to chosen_degree<Arch,T,IN> (= 7 everywhere per campaign results;
+// see include/treeweave/detail/arch_degree_table.hpp).
+//
+// COMDAT-dedup fix (Bug #2): EvalImpl / EvalFactory / wrap_callback in
+// c_binding_detail.hpp carry the Arch type as a phantom template parameter.
+// This makes poly_eval::FuncEvalND<ArchTaggedFunc<Arch,...>, ...> a distinct
+// type per -march level; the linker cannot fold the four per-march kernel
+// copies because they have different mangled names. No inline namespace is
+// needed; the type system solves the problem cleanly.
+//
+// The heavy machinery (EvalImpl / EvalFactory) is pulled into an anonymous
+// namespace for internal linkage. The lone external symbol this TU emits is
+// `make_eval_for<best_arch, …>`, whose mangled name differs per `-march`
+// (best_arch tracks the level), letting the variants coexist and the baseline
+// dispatcher bind to each via xsimd::dispatch.
+
+#include <xsimd/xsimd.hpp>
+
+// IEval / c_func_t (c_binding.hpp) and chosen_degree (arch_degree_table.hpp) are
+// used only in the explicit-instantiation declaration below, which include-cleaner
+// does not count as a direct use — but both includes are required to compile it.
+#include <treeweave/detail/c_binding.hpp>        // NOLINT(misc-include-cleaner)
+#include <treeweave/detail/arch_degree_table.hpp> // NOLINT(misc-include-cleaner)
+
+namespace treeweave::capi {
+namespace {
+#include <treeweave/detail/c_binding_detail.hpp> // EvalImpl / EvalFactory / wrap_callback
+} // namespace
+#include <treeweave/detail/c_binding_dispatch.hpp> // make_eval_for<Arch, …> body (external)
+
+// One external factory symbol for this object's compiled architecture.
+// best_arch == the TU's `-march` level (verified per toolchain), so the four
+// instantiations carry four distinct mangled names.
+// Degree is baked via chosen_degree (= 7 everywhere per campaign).
+template auto
+make_eval_for<xsimd::best_arch, @TREEWEAVE_VT@, @TREEWEAVE_VIN@,
+              chosen_degree<xsimd::best_arch, @TREEWEAVE_VT@, @TREEWEAVE_VIN@>>(
+    int, c_func_t<@TREEWEAVE_VT@>, void *, const @TREEWEAVE_VT@ *,
+    const @TREEWEAVE_VT@ *, double, const treeweave::options &) -> IEval<@TREEWEAVE_VT@> *;
+
+} // namespace treeweave::capi
