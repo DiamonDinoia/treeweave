@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781187521454,
+  "lastUpdate": 1781189749047,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1538,6 +1538,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001030117,
             "unit": "s/batch",
             "extra": "MdAPE=0.00114980779650744; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "0579da91b5fdbb7ad91412a5588eff8c1c0a0f84",
+          "message": "docs: define batch/sorted eval routes; document from-source + from-release installs\n\n- README + Python/Julia/MATLAB guides: the eval-route comments said only\n  \"1-D ascending fast path\" / \"batch\", which define nothing. Spell them out:\n  batch = many points in one call, any order; sorted = a batch the caller\n  promises is non-decreasing (x[i] <= x[i+1]), 1-D only, ~3-4x faster.\n- install.rst / Julia guide: every language now shows BOTH a from-source path\n  (works today, what CI exercises) and a from-release path (prebuilt). Added an\n  honest note that no v* release is published yet, so the release paths (PyPI,\n  Julia Pkg.add prebuilt download, C/Fortran release archives) are not live —\n  Julia's documented Pkg.add fell straight through to download_prebuilt() and\n  could not succeed without a release. Documented the Julia/Python from-source\n  builds (sibling build dir / LIBTREEWEAVE_C; pip install ./bindings/python).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-11T10:50:43-04:00",
+          "tree_id": "9e7c0dc7c8baaa4727dcef11f825ee6b11278d52",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/0579da91b5fdbb7ad91412a5588eff8c1c0a0f84"
+        },
+        "date": 1781189748239,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000661779666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00227171404280142; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00111204311111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00870813370590526; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002027937875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00650344978706699; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00103123966666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00685236003676305; batch=65536 pts/call"
           }
         ]
       }
