@@ -4,18 +4,23 @@ Python
 Install
 -------
 
-treeweave is not on PyPI yet. Every push to ``main`` publishes a staging wheel to
-`TestPyPI <https://test.pypi.org/project/treeweave/>`_; install it with TestPyPI
-as the primary index and real PyPI for the dependencies:
+Install the latest release from PyPI:
+
+.. code-block:: bash
+
+   pip install treeweave
+
+The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
+AVX2 / AVX-512 at runtime. NumPy is the only dependency.
+
+To test an unreleased change, every push to ``main`` publishes a staging wheel
+(``X.Y.Z.devN``) to `TestPyPI <https://test.pypi.org/project/treeweave/>`_;
+install it with TestPyPI as the primary index and real PyPI for the dependencies:
 
 .. code-block:: bash
 
    pip install --index-url https://test.pypi.org/simple/ \
                --extra-index-url https://pypi.org/simple/ treeweave
-
-The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
-AVX2 / AVX-512 at runtime. NumPy is the only dependency. Plain
-``pip install treeweave`` will work once the first release is published to PyPI.
 
 Minimal example
 ---------------

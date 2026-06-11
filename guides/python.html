@@ -24,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Julia" href="julia.html" />
-    <link rel="prev" title="Fortran" href="fortran.html" /> 
+    <link rel="prev" title="Quick start" href="quickstart.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -58,25 +58,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-the-examples">Build the examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
-</ul>
-</li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
@@ -98,6 +79,25 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-the-examples">Build the examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
 </ul>
 </li>
 </ul>
@@ -231,16 +231,19 @@
 <h1>Python<a class="headerlink" href="#python" title="Link to this heading"></a></h1>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
-<p>treeweave is not on PyPI yet. Every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> publishes a staging wheel to
-<a class="reference external" href="https://test.pypi.org/project/treeweave/">TestPyPI</a>; install it with TestPyPI
-as the primary index and real PyPI for the dependencies:</p>
+<p>Install the latest release from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>treeweave
+</pre></div>
+</div>
+<p>The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
+AVX2 / AVX-512 at runtime. NumPy is the only dependency.</p>
+<p>To test an unreleased change, every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> publishes a staging wheel
+(<code class="docutils literal notranslate"><span class="pre">X.Y.Z.devN</span></code>) to <a class="reference external" href="https://test.pypi.org/project/treeweave/">TestPyPI</a>;
+install it with TestPyPI as the primary index and real PyPI for the dependencies:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--index-url<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span><span class="se">\</span>
 <span class="w">            </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple/<span class="w"> </span>treeweave
 </pre></div>
 </div>
-<p>The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
-AVX2 / AVX-512 at runtime. NumPy is the only dependency. Plain
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">treeweave</span></code> will work once the first release is published to PyPI.</p>
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
@@ -311,7 +314,7 @@ ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-py
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="fortran.html" class="btn btn-neutral float-left" title="Fortran" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="julia.html" class="btn btn-neutral float-right" title="Julia" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

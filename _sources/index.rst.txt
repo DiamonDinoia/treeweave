@@ -57,12 +57,12 @@ Why treeweave
    :maxdepth: 2
    :caption: Language guides
 
-   guides/cpp
-   guides/c
-   guides/fortran
    guides/python
    guides/julia
    guides/matlab
+   guides/cpp
+   guides/c
+   guides/fortran
 
 .. toctree::
    :maxdepth: 2

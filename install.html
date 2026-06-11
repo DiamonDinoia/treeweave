@@ -58,25 +58,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="guides/cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#d-fit">1-D fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#building">Building</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#build">Build</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="guides/python.html">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="guides/python.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/python.html#minimal-example">Minimal example</a></li>
@@ -98,6 +79,25 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#building">Building</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#build">Build</a></li>
 </ul>
 </li>
 </ul>
@@ -230,32 +230,25 @@
   <section id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
 <p>The fastest way to get treeweave depends on the language. Every language offers
-two paths: <strong>from a binary release</strong> (prebuilt, least effort) and <strong>from source</strong>
-(works today, no release required).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><strong>No tagged release is published yet.</strong> The release paths below — PyPI, the
-Julia <code class="docutils literal notranslate"><span class="pre">Pkg.add</span></code> prebuilt download, and the C/Fortran release archives — only
-work once the first <code class="docutils literal notranslate"><span class="pre">v*</span></code> release exists. Until then, use the <strong>from-source</strong>
-instructions; they are what CI exercises on every push. The one live prebuilt
-is the TestPyPI staging wheel (republished on every push to <code class="docutils literal notranslate"><span class="pre">main</span></code>).</p>
-</div>
+two paths: <strong>from a binary release</strong> (prebuilt, least effort) and <strong>from source</strong>.</p>
 <section id="prebuilt-release-binaries">
 <h2>Prebuilt / release binaries<a class="headerlink" href="#prebuilt-release-binaries" title="Link to this heading"></a></h2>
-<p><strong>Python</strong> — treeweave is not on PyPI yet. Every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> publishes a
-staging wheel to <a class="reference external" href="https://test.pypi.org/project/treeweave/">TestPyPI</a>; install
-it with TestPyPI as the primary index and real PyPI for the dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--index-url<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span><span class="se">\</span>
-<span class="w">            </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple/<span class="w"> </span>treeweave
+<p><strong>Python</strong> — install the latest release from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>treeweave
 </pre></div>
 </div>
 <p>The x86-64 wheel bundles a runtime ISA dispatcher (SSE4.2 / AVX2 / AVX-512), so
 one wheel runs on any x86-64 CPU. The C ABI is linked statically into the
-extension — there is no shared library to vendor. Plain <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">treeweave</span></code>
-will work once the first release is published to PyPI.</p>
+extension — there is no shared library to vendor.</p>
+<p>To test an unreleased change, every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> publishes a staging wheel
+(<code class="docutils literal notranslate"><span class="pre">X.Y.Z.devN</span></code>) to <a class="reference external" href="https://test.pypi.org/project/treeweave/">TestPyPI</a>;
+install it with TestPyPI as the primary index and real PyPI for the dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--index-url<span class="w"> </span>https://test.pypi.org/simple/<span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>--extra-index-url<span class="w"> </span>https://pypi.org/simple/<span class="w"> </span>treeweave
+</pre></div>
+</div>
 <p><strong>Julia (from a release)</strong> — add the package; on first build it downloads the
-matching <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from the GitHub Release and caches it. <em>Requires a
-published release</em> (see the from-source path below until then):</p>
+matching <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from the GitHub Release and caches it:</p>
 <div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="n">Pkg</span>
 <span class="n">Pkg</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&quot;https://github.com/DiamonDinoia/treeweave&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">subdir</span><span class="o">=</span><span class="s">&quot;bindings/julia/Treeweave&quot;</span><span class="p">)</span>
 </pre></div>
