@@ -256,13 +256,13 @@ matching <code class="docutils literal notranslate"><span class="pre">libtreewea
 <p>Override the release’s source repo with the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_REPO</span></code> environment
 variable. (See <a class="reference internal" href="#julia-from-source"><span class="std std-ref">Julia from source</span></a> to build without a
 release.)</p>
+<p><strong>MATLAB / Octave</strong> — built from source via CMake; there is no prebuilt MEX
+(Octave has no stable MEX ABI across versions). See <a class="reference internal" href="guides/matlab.html"><span class="doc">MATLAB / Octave</span></a>.</p>
 <p><strong>C / Fortran</strong> — download a relocatable C-ABI archive
 (<code class="docutils literal notranslate"><span class="pre">treeweave-&lt;version&gt;-&lt;platform&gt;</span></code>) from the
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases page</a>. Each
 archive contains <code class="docutils literal notranslate"><span class="pre">include/treeweave.h</span></code>, <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>, and a
 <code class="docutils literal notranslate"><span class="pre">find_package(treeweave)</span></code> CMake package.</p>
-<p><strong>MATLAB / Octave</strong> — built from source via CMake; there is no prebuilt MEX
-(Octave has no stable MEX ABI across versions). See <a class="reference internal" href="guides/matlab.html"><span class="doc">MATLAB / Octave</span></a>.</p>
 </section>
 <section id="use-it-in-your-cmake-project">
 <h2>Use it in your CMake project<a class="headerlink" href="#use-it-in-your-cmake-project" title="Link to this heading"></a></h2>

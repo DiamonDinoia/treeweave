@@ -38,14 +38,14 @@ Override the release's source repo with the ``TREEWEAVE_REPO`` environment
 variable. (See :ref:`Julia from source <julia-from-source>` to build without a
 release.)
 
+**MATLAB / Octave** — built from source via CMake; there is no prebuilt MEX
+(Octave has no stable MEX ABI across versions). See :doc:`guides/matlab`.
+
 **C / Fortran** — download a relocatable C-ABI archive
 (``treeweave-<version>-<platform>``) from the
 `Releases page <https://github.com/DiamonDinoia/treeweave/releases>`_. Each
 archive contains ``include/treeweave.h``, ``libtreeweave_c``, and a
 ``find_package(treeweave)`` CMake package.
-
-**MATLAB / Octave** — built from source via CMake; there is no prebuilt MEX
-(Octave has no stable MEX ABI across versions). See :doc:`guides/matlab`.
 
 Use it in your CMake project
 ----------------------------
