@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781280162511,
+  "lastUpdate": 1781293969782,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1922,6 +1922,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00170777311111111,
             "unit": "s/batch",
             "extra": "MdAPE=0.00334577155157178; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "963c3f591db58f715bf045b78217a064b7057984",
+          "message": "Add cross-language lgamma benchmark showcase (speedup charts)\n\nExtend the six lgamma benchmarks (C, C++, Fortran, Python, Julia,\nOctave) to time three eval modes — single-eval (scalar), multi-eval\n(unsorted batch), and sorted-eval (1-D ascending fast path) — and to\nemit a per-language YAML document when TREEWEAVE_BENCH_YAML names a\npath. Prose stdout and ctest behavior are unchanged (the var is never\nset under ctest).\n\nAdd a zero-copy + out= in-place evaluation API to the Python and Julia\nbindings: results are written directly into a caller-supplied buffer,\ndropping the intermediate std::vector/copy. MATLAB/Octave deliberately\ndoes not offer out= (copy-on-write makes caller-owned writes unsafe);\nthis is documented.\n\nAdd scripts/generate_benchmark_plot.py (matplotlib -> three SVG speedup\ncharts from the YAML files, styled after poet) and\n.github/workflows/benchmark-showcase.yml (a per-language CI matrix whose\naggregate job force-pushes the charts to an orphaned benchmark-results\nbranch). Embed the three charts in README.md and docs/guides/performance.rst\nvia raw.githubusercontent.com URLs.\n\nNote: the embedded chart URLs resolve only after the first\nbenchmark-showcase run creates the benchmark-results branch.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-12T15:34:53-04:00",
+          "tree_id": "d851940d359081bcb752e7ae4951cd3b85f52527",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/963c3f591db58f715bf045b78217a064b7057984"
+        },
+        "date": 1781293968280,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000682834125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0229930083989702; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00193059766666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00588693705490061; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00283170988888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00140894535899534; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001692679,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00385052060103055; batch=65536 pts/call"
           }
         ]
       }
