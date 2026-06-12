@@ -52,10 +52,11 @@ pytest bindings/python/tests
 ```python
 import numpy as np, treeweave
 
-f = treeweave.fit(lambda x: np.exp(0.5*x[0]) + np.sin(3*x[0]), 0.0, 1.0, tol=1e-8)
-f(0.5)                          # scalar
-f(np.linspace(0, 1, 100))               # vectorized -> (100,)
-f(np.linspace(0, 1, 100), sorted=True)  # 1-D ascending fast path
+N = 1000  # zeta_N(s) = sum_{k=1..N} k**-s — expensive; fit once, eval a polynomial
+f = treeweave.fit(lambda x: np.sum(np.arange(1.0, N + 1.0) ** (-x[0])), 2.0, 10.0, tol=1e-8)
+f(3.5)                          # scalar
+f(np.linspace(2, 10, 100))              # vectorized -> (100,)
+f(np.linspace(2, 10, 100), sorted=True) # 1-D ascending fast path
 print(f)                        # dtype, dim, out_dim, memory_usage
 
 # 2D -> 3D vector-valued; out_dim is inferred by probing the callable
@@ -86,9 +87,10 @@ has been built; set `LIBTREEWEAVE_C=/path/to/libtreeweave_c.so` to override.
 
 ```julia
 using Treeweave
-b = fit(x -> exp(0.5x) + sin(3x), 0.0, 1.0, 1e-8)   # dim==1: f(scalar)
-b(0.5)                                                # point
-b(collect(range(0, 1, length=100)))                  # dim==1 batch -> length-100 vector
+N = 1000                                              # zeta_N(s) = sum_{k=1..N} k^-s
+b = fit(s -> sum(k -> k^(-s), 1:N), 2.0, 10.0, 1e-8)  # dim==1: f(scalar)
+b(3.5)                                                # point
+b(collect(range(2, 10, length=100)))                 # dim==1 batch -> length-100 vector
 
 # 2D -> 3D: f(coords...) returns an indexable of length out_dim (inferred)
 g = fit((x, y) -> (exp(0.3x) + sin(2y), cos(x*y) + 2, x^2 + y + 1),
@@ -129,10 +131,11 @@ binding, edit `treeweave.mw` — the next build regenerates automatically. The
 generated gateway and stubs live in the build tree and are never committed.
 
 ```matlab
-f   = @(x) exp(0.5*x(1)) + sin(3*x(1));
-obj = treeweave(f, 0, 1, 1e-8);       % dim & out_dim inferred
-obj(linspace(0, 1, 100)')          % subsref syntax; or obj.eval(...)
-obj(linspace(0, 1, 100)', 'sorted', true)   % 1-D ascending fast path
+N   = 1000;                           % zeta_N(s) = sum_{k=1..N} k^-s
+f   = @(x) sum((1:N).^(-x(1)));       % expensive; fit once, eval a polynomial
+obj = treeweave(f, 2, 10, 1e-8);      % dim & out_dim inferred
+obj(linspace(2, 10, 100)')         % subsref syntax; or obj.eval(...)
+obj(linspace(2, 10, 100)', 'sorted', true)  % 1-D ascending fast path
 
 g = treeweave(@(x) [exp(0.3*x(1))+sin(2*x(2)), cos(x(1)*x(2))+2, x(1)^2+x(2)+1], ...
            [0.2 0.2], [1.5 1.5], 1e-7);     % out_dim inferred (=3); degree auto per CPU
@@ -167,10 +170,10 @@ ctest --test-dir build -R fortran_treeweave --output-on-failure
 use, intrinsic :: iso_c_binding
 use treeweave
 type(c_ptr)    :: h
-real(c_double) :: a(1) = [0.0_c_double], b(1) = [1.0_c_double], x(1), y(1)
+real(c_double) :: a(1) = [2.0_c_double], b(1) = [10.0_c_double], x(1), y(1)
 h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
-               c_null_ptr, c_null_ptr)   ! kernel: bind(C) void(x, y, context)
-x(1) = 0.5_c_double
+               c_null_ptr, c_null_ptr)   ! kernel: bind(C) zeta_N(s) = sum_{k=1..N} k^-s
+x(1) = 3.5_c_double
 call treeweave_eval(h, x, y)
 h = treeweave_free(h)
 ```

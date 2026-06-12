@@ -33,7 +33,14 @@ check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
 # gcc 14's LTO chokes (ICE / "invalid tree code") on the heavy template
 # instantiations in the timing examples. Skip IPO on gcc until that's
 # fixed upstream — clang's LTO handles the same code without trouble.
-if(_ipo_supported AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# Emscripten is also excluded: its clang *can* LTO this code, but LTO of the
+# WASM module markedly slows the link for no eval-throughput gain (the C ABI is
+# the only TU and is already tiny), so we keep WASM builds fast.
+if(
+    _ipo_supported
+    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND NOT EMSCRIPTEN
+)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 elseif(NOT _ipo_supported)
     message(WARNING "IPO is not supported: ${_ipo_error}")
@@ -73,9 +80,14 @@ set(TREEWEAVE_TUNE
     CACHE STRING
     "CPU target for -mtune (defaults to TREEWEAVE_ARCH, or generic for x86-64-v*)"
 )
-# Apple clang on AArch64 rejects `-march=apple-*` / `-mtune=` — it expects
-# `-mcpu=` for that microarch family. Use the right spelling per platform.
-if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+# Emscripten's clang rejects -march=/-mtune= entirely; the only knob that
+# matters for WASM is SIMD128 (xsimd then auto-selects its `xsimd::wasm`
+# backend). No -mtune. -ffp-contract=fast (below) is fine — emcc is clang.
+if(EMSCRIPTEN)
+    set(_treeweave_arch_flags -msimd128)
+    # Apple clang on AArch64 rejects `-march=apple-*` / `-mtune=` — it expects
+    # `-mcpu=` for that microarch family. Use the right spelling per platform.
+elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # Homebrew GCC on Apple Silicon doesn't know the `apple-m1` CPU name
         # (only Apple clang does); `-mcpu=native` targets the runner's core.

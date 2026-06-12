@@ -1,0 +1,202 @@
+name: Benchmark Showcase
+
+# Builds each language's zeta benchmark, has each emit a machine-readable YAML
+# (via the TREEWEAVE_BENCH_YAML env var), then aggregates the per-language
+# results into cross-language speedup SVGs that are force-pushed to the
+# orphaned `benchmark-results` branch — so the README and the docs can embed
+# them by raw.githubusercontent.com URL. Styled after poet's benchmarks.yml.
+#
+# This is intentionally separate from bench.yml (nanobench time-series) and
+# docs.yml (gh-pages): a distinct workflow, concurrency group, and result
+# branch, so it never collides with either.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: benchmark-showcase-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: Bench (${{ matrix.lang }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [c, cpp, fortran, python, julia, octave, js]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Every language builds libtreeweave_c, so all need a C/C++ toolchain.
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install gfortran
+        if: matrix.lang == 'fortran'
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - name: Set up Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python deps
+        if: matrix.lang == 'python'
+        run: python -m pip install --upgrade pip numpy "nanobind>=2.0"
+
+      - name: Set up Julia
+        if: matrix.lang == 'julia'
+        uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Install Octave
+        if: matrix.lang == 'octave'
+        run: sudo apt-get update && sudo apt-get install -y octave-dev
+
+      # The JS showcase bar uses the NATIVE .node backend (comparable to the
+      # other native-language bars); the WASM backend is exercised in bindings.yml.
+      - name: Set up Node
+        if: matrix.lang == 'js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build + run benchmark
+        env:
+          OUT: ${{ github.workspace }}/bench_results
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUT"
+          yaml="$OUT/${{ matrix.lang }}.yaml"
+          case "${{ matrix.lang }}" in
+            c)
+              cmake --preset bench && cmake --build build/bench -j
+              bin=$(find build/bench -type f -name treeweave_c_zeta_bench -perm -u+x | head -1)
+              [[ -n "$bin" ]] || { echo "::error::C bench binary not found under build/bench"; exit 1; }
+              TREEWEAVE_BENCH_YAML="$yaml" "$bin"
+              ;;
+            cpp)
+              cmake --preset bench && cmake --build build/bench -j
+              bin=$(find build/bench -type f -name zeta_bench -perm -u+x | head -1)
+              [[ -n "$bin" ]] || { echo "::error::C++ bench binary not found under build/bench"; exit 1; }
+              TREEWEAVE_BENCH_YAML="$yaml" "$bin"
+              ;;
+            fortran)
+              cmake --preset bindings-fortran && cmake --build build/bindings-fortran -j
+              bin=$(find build/bindings-fortran -type f -name '*zeta_bench*' -perm -u+x | head -1)
+              [[ -n "$bin" ]] || { echo "::error::Fortran bench binary not found under build/bindings-fortran"; exit 1; }
+              TREEWEAVE_BENCH_YAML="$yaml" "$bin"
+              ;;
+            python)
+              cmake --preset bindings-python && cmake --build build/bindings-python -j
+              PYTHONPATH=build/bindings-python/python-pkg \
+                TREEWEAVE_BENCH_YAML="$yaml" \
+                python bindings/python/examples/zeta_bench.py
+              ;;
+            julia)
+              cmake --preset bindings-julia
+              cmake --build build/bindings-julia -j --target treeweave_c
+              # libtreeweave_c.so is the VERSIONED build's unversioned symlink
+              # (-> .so.0 -> .so.0.0.0), so `-type f` (regular files only) skips
+              # it. Match by name without -type f; dlopen follows the symlink.
+              lib=$(find build/bindings-julia -name 'libtreeweave_c.so' | head -1)
+              [[ -n "$lib" ]] || { echo "::error::libtreeweave_c.so not found under build/bindings-julia"; exit 1; }
+              # Export before instantiate: Pkg.instantiate() precompiles the project,
+              # and Treeweave bakes the resolved lib path into a `const` at precompile
+              # time. Without the env set then, it freezes the bare soname and the
+              # later run fails to dlopen. Set it for both invocations.
+              export LIBTREEWEAVE_C="$PWD/$lib"
+              julia --project=bindings/julia/Treeweave -e 'using Pkg; Pkg.instantiate()'
+              TREEWEAVE_BENCH_YAML="$yaml" \
+                julia --project=bindings/julia/Treeweave bindings/julia/Treeweave/examples/zeta_bench.jl
+              ;;
+            octave)
+              cmake --preset bindings-octave && cmake --build build/bindings-octave -j
+              # The generated tw_*.m stubs + treeweave_mex live in the build tree.
+              # Octave's run() cd's into the script's dir, which drops any
+              # RELATIVE path from the load path mid-run (so tw_fit goes
+              # undefined). Use ABSOLUTE paths for both addpath and the script,
+              # mirroring the working matlab_treeweave ctest.
+              tw_fit_m=$(find build/bindings-octave -name 'tw_fit.m' | head -1)
+              [[ -n "$tw_fit_m" ]] || { echo "::error::tw_fit.m not found under build/bindings-octave"; exit 1; }
+              mexdir=$(cd "$(dirname "$tw_fit_m")" && pwd)
+              TREEWEAVE_BENCH_YAML="$yaml" \
+                octave --no-gui --quiet --eval "addpath('$PWD/bindings/matlab'); addpath('$mexdir'); run('$PWD/bindings/matlab/examples/zeta_bench.m')"
+              ;;
+            js)
+              ( cd bindings/js && npm ci )
+              cmake --preset bindings-js
+              cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts
+              TREEWEAVE_BENCH_YAML="$yaml" node bindings/js/examples/zeta_bench.mjs
+              ;;
+          esac
+          echo "--- $yaml ---"; cat "$yaml"
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.lang }}
+          path: bench_results/*.yaml
+          if-no-files-found: error
+
+  aggregate:
+    name: Aggregate + publish charts
+    needs: bench
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Download all bench artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bench-*
+          path: bench_results
+          merge-multiple: true
+
+      - name: Install plot deps
+        run: python -m pip install --upgrade matplotlib numpy pyyaml
+
+      - name: Generate charts
+        run: |
+          ls -la bench_results || true
+          python scripts/generate_benchmark_plot.py --results-dir bench_results --output-dir charts
+          ls -la charts
+
+      - name: Publish to the benchmark-results branch
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Orphan branch holding only the SVGs at its root (no repo history).
+          git checkout --orphan benchmark-results
+          git reset                       # unstage the inherited tree
+          cp charts/*.svg .
+          git add ./*.svg
+          git commit -m "Update benchmark charts ($(date -u +%Y-%m-%dT%H:%M:%SZ)) [skip ci]"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" benchmark-results

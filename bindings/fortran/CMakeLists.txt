@@ -66,20 +66,20 @@ set_target_properties(
     PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
 )
 
-# lgamma benchmark (treeweave vs the intrinsic log_gamma); self-checks accuracy
-# with `error stop`, so it doubles as a ctest.
+# zeta benchmark (treeweave vs a brute-force Riemann-zeta partial sum);
+# self-checks accuracy with `error stop`, so it doubles as a ctest.
 add_executable(
-    treeweave_fortran_lgamma_bench
-    "${CMAKE_CURRENT_SOURCE_DIR}/lgamma_bench.f90"
+    treeweave_fortran_zeta_bench
+    "${CMAKE_CURRENT_SOURCE_DIR}/zeta_bench.f90"
 )
-target_link_libraries(treeweave_fortran_lgamma_bench PRIVATE treeweave_fortran)
+target_link_libraries(treeweave_fortran_zeta_bench PRIVATE treeweave_fortran)
 set_target_properties(
-    treeweave_fortran_lgamma_bench
+    treeweave_fortran_zeta_bench
     PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
 )
 
 add_test(NAME fortran_treeweave COMMAND treeweave_fortran_test)
-add_test(NAME fortran_lgamma_bench COMMAND treeweave_fortran_lgamma_bench)
+add_test(NAME fortran_zeta_bench COMMAND treeweave_fortran_zeta_bench)
 message(
     STATUS
     "treeweave[fortran]: test 'fortran_treeweave' + example registered "

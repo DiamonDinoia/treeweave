@@ -8,8 +8,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
 function(_treeweave_add_cpp_example name source)
     add_executable(${name} ${source})
-    target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR}/include)
-    target_link_libraries(${name} PRIVATE polyfit::polyfit poet::poet)
+    # treeweave::treeweave carries include/ (which holds the generated
+    # <treeweave_version.h>), polyfit/poet, and cxx_std_20.
+    target_link_libraries(${name} PRIVATE treeweave::treeweave)
     treeweave_enable_warnings(${name})
 endfunction()
 
@@ -27,7 +28,7 @@ _treeweave_add_cpp_example(simple3d c++/simple3d.cpp)
 _treeweave_add_cpp_example(with_options c++/with_options.cpp)
 _treeweave_add_cpp_example(vector_output c++/vector_output.cpp)
 _treeweave_add_cpp_example(hankel c++/hankel.cpp)
-_treeweave_add_cpp_example(lgamma_bench c++/lgamma_bench.cpp)
+_treeweave_add_cpp_example(zeta_bench c++/zeta_bench.cpp)
 
 # Performance benchmarks — heavily-templated, slow-to-compile nanobench/perf
 # drivers. Gated by TREEWEAVE_BUILD_BENCHMARKS (OFF in the CI test presets,

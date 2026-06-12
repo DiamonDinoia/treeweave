@@ -27,21 +27,24 @@ Minimal example
 
 .. code-block:: python
 
-   import math
    import numpy as np
    import treeweave
 
-   def f(x):
-       return math.exp(x[0])          # x is a length-`dim` sequence
+   N = 1000                           # zeta_N(s) = sum_{k=1..N} k**-s
+   ks = np.arange(1.0, N + 1.0)
 
-   approx = treeweave.fit(f, 0.0, 1.0, tol=1e-10)
+   def f(x):                          # x is a length-`dim` sequence
+       return np.sum(ks ** (-x[0]))   # expensive; fit once, eval a polynomial
+
+   approx = treeweave.fit(f, 2.0, 10.0, tol=1e-10)
    print(approx)   # dtype, dim, out_dim, memory_usage
 
    # The fit domain is [a, b); evaluating exactly at the upper corner b is
    # allowed as a convenience and returns the boundary value (not NaN).
-   xs = np.linspace(0.0, 1.0, 11)    # includes the endpoint b = 1.0
+   xs = np.linspace(2.0, 10.0, 11)   # includes the endpoint b = 10.0
    ys = approx(xs)                    # batch eval; returns an ndarray
-   assert np.max(np.abs(ys - np.exp(xs))) < 1e-8
+   ref = np.array([f([s]) for s in xs])
+   assert np.max(np.abs(ys - ref) / np.abs(ref)) < 1e-8
 
 ``fit`` infers the input/output dimensions by probing the callable, so the
 common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
@@ -56,7 +59,7 @@ keyword flags select the fast paths:
 
 .. code-block:: python
 
-   approx(0.5)                       # single point  -> scalar (or (out_dim,))
+   approx(3.5)                       # single point  -> scalar (or (out_dim,))
    approx(xs)                        # batch (N,)     -> (N,) / (N, out_dim)
    approx(xs, sorted=True)           # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)

@@ -1,0 +1,51 @@
+{
+  "name": "treeweave",
+  "version": "0.0.0",
+  "description": "Adaptive piecewise-polynomial function approximation — JS/TS binding (native N-API addon + WASM) over the treeweave C ABI.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "node": "./dist/index.js",
+      "browser": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/index.js",
+    "dist/backend.js",
+    "dist/native.js",
+    "dist/wasm.js",
+    "dist/*.d.ts",
+    "dist/treeweave.wasm",
+    "dist/treeweave.mjs",
+    "dist/treeweave.node"
+  ],
+  "scripts": {
+    "build:native": "cmake --preset bindings-js && cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts",
+    "build:wasm": "cmake --preset bindings-js-wasm && cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts",
+    "build:ts": "tsc",
+    "build": "npm run build:native && npm run build:wasm",
+    "test": "node --test test/"
+  },
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DiamonDinoia/treeweave.git",
+    "directory": "bindings/js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

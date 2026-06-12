@@ -32,6 +32,10 @@ venv/
 *.dylib
 *.dll
 *.pyd
+*.node
+# JS/TS binding (bindings/js): npm deps + WASM output (dist/ is already ignored above)
+node_modules/
+*.wasm
 # Scratch / throwaway sources — keep local-only, never commit
 *scratch*
 *.scratch

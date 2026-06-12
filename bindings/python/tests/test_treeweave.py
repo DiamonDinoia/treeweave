@@ -28,9 +28,9 @@ def test_accuracy_1d():
     assert approx.dtype == "f64"
     assert approx.memory_usage > 0
 
-    # The fit domain is [a, b); evaluating exactly at b returns the boundary
-    # value (a convenience), but this accuracy sweep stays inside [a, b).
-    xs = np.linspace(0.0, 1.0, 200, endpoint=False)
+    # Evaluating exactly at b returns the boundary value (a convenience), so the
+    # sweep can include the endpoint.
+    xs = np.linspace(0.0, 1.0, 200)
     exact = np.exp(0.5 * xs) + np.sin(3.0 * xs)
     approx_vals = approx(xs)
     assert approx_vals.shape == (200,)
@@ -157,7 +157,7 @@ def test_float32_path():
     approx = treeweave.fit(func, 0.0, 1.0, tol=1e-4, dtype="f32")
     assert approx.dtype == "f32"
 
-    xs = np.linspace(0.0, 1.0, 50, endpoint=False, dtype=np.float32)
+    xs = np.linspace(0.0, 1.0, 50, dtype=np.float32)
     result = approx(xs)
     assert result.dtype == np.float32
 
@@ -257,3 +257,65 @@ def test_validation_errors():
     # The two flags are mutually exclusive.
     with pytest.raises(ValueError):
         fv(np.linspace(0.0, 1.0, 10), sorted=True, transposed=True)
+
+
+# ---------------------------------------------------------------------------
+# 12. out= writes in place and returns the caller's array (zero-copy path)
+# ---------------------------------------------------------------------------
+
+
+def test_out_param_batch_1d():
+    """approx(xs, out=buf) fills buf in place and returns it, bit-exact with the
+    allocating path."""
+    approx = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-8)
+    xs = np.linspace(0.0, 1.0, 256)
+    expected = approx(xs)
+    buf = np.empty_like(xs)
+    got = approx(xs, out=buf)
+    assert got is buf
+    np.testing.assert_array_equal(got, expected)
+
+
+def test_out_param_sorted_1d():
+    """out= works with the sorted=True fast path."""
+    approx = treeweave.fit(lambda x: math.sin(x[0]), 0.0, 5.0, tol=1e-8)
+    xs = np.sort(np.random.default_rng(1).uniform(0.0, 5.0, 200))
+    expected = approx(xs, sorted=True)
+    buf = np.empty_like(xs)
+    got = approx(xs, sorted=True, out=buf)
+    assert got is buf
+    np.testing.assert_array_equal(got, expected)
+
+
+def test_out_param_vector_output_1d():
+    """out= with an (N, out_dim) buffer for a vector-valued fit."""
+    approx = treeweave.fit(
+        lambda x: np.array([math.sin(x[0]), math.cos(x[0])]), 0.0, math.pi, tol=1e-7
+    )
+    xs = np.linspace(0.1, 3.0, 50)
+    expected = approx(xs)  # (50, 2)
+    buf = np.empty((50, 2))
+    got = approx(xs, out=buf)
+    assert got is buf
+    np.testing.assert_array_equal(got, expected)
+
+
+def test_out_param_validation():
+    """out= rejects the wrong size/dtype/layout and the non-batch call forms."""
+    approx = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-8)
+    xs = np.linspace(0.0, 1.0, 100)
+
+    with pytest.raises(ValueError):  # wrong size
+        approx(xs, out=np.empty(50))
+    with pytest.raises(ValueError):  # wrong dtype
+        approx(xs, out=np.empty(100, dtype=np.float32))
+    with pytest.raises(ValueError):  # non-contiguous
+        approx(xs, out=np.empty(200)[::2])
+    with pytest.raises(ValueError):  # out= with a single point
+        approx(0.5, out=np.empty(1))
+
+    fv = treeweave.fit(
+        lambda x: np.array([math.sin(x[0]), math.cos(x[0])]), 0.0, 1.0, tol=1e-6
+    )
+    with pytest.raises(ValueError):  # out= with transposed=True
+        fv(np.linspace(0.0, 1.0, 10), transposed=True, out=np.empty((2, 10)))

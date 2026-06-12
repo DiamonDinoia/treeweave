@@ -28,6 +28,7 @@
 #include <cstring> // std::memcpy
 #include <limits>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace nb = nanobind;
@@ -263,60 +264,62 @@ class TreeweaveFunction {
     }
 
     // ---- AoS batch eval --------------------------------------------------
-    // x: (N, input_dim) or (N,) for 1D. Returns (N, output_dim) or (N,) for od==1.
-    nb::object eval_multi_py(nb::object x_obj) const {
-        const int id     = input_dim();
-        const int od     = output_dim();
-        bool      is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
+    // x: (N, input_dim) or (N,) for 1D. Returns (N, output_dim) or (N,) for
+    // od==1. The result array is allocated up front (or supplied via `out`) and
+    // the C eval writes straight into its buffer — no intermediate copy.
+    nb::object eval_multi_py(nb::object x_obj, nb::object out_obj) const {
+        const int  id     = input_dim();
+        const int  od     = output_dim();
+        const bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
 
         if (is_f32) {
-            auto               x_arr = _coerce_input_f32(x_obj, id);
-            size_t             n     = x_arr.shape(0);
-            std::vector<float> res(n * od);
+            auto         x_arr = _coerce_input_f32(x_obj, id);
+            const size_t n     = x_arr.shape(0);
+            auto [arr, dst]    = _output_buffer_f32(out_obj, n, od);
             { // pure-C eval: release the GIL so other threads can run
                 nb::gil_scoped_release nogil;
-                treeweavef_batch(handle_, x_arr.data(), res.data(), n);
+                treeweavef_batch(handle_, x_arr.data(), dst, n);
             }
-            return _make_output_f32(res.data(), n, od);
+            return arr;
         } else {
-            auto                x_arr = _coerce_input_f64(x_obj, id);
-            size_t              n     = x_arr.shape(0);
-            std::vector<double> res(n * od);
+            auto         x_arr = _coerce_input_f64(x_obj, id);
+            const size_t n     = x_arr.shape(0);
+            auto [arr, dst]    = _output_buffer_f64(out_obj, n, od);
             {
                 nb::gil_scoped_release nogil;
-                treeweave_batch(handle_, x_arr.data(), res.data(), n);
+                treeweave_batch(handle_, x_arr.data(), dst, n);
             }
-            return _make_output_f64(res.data(), n, od);
+            return arr;
         }
     }
 
     // ---- sorted 1D eval --------------------------------------------------
-    nb::object eval_sorted_py(nb::object x_obj) const {
+    nb::object eval_sorted_py(nb::object x_obj, nb::object out_obj) const {
         const int id = input_dim();
         const int od = output_dim();
         if (id != 1)
             throw std::runtime_error("eval_sorted requires input_dim == 1");
 
-        bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
+        const bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
 
         if (is_f32) {
-            auto               x_arr = _coerce_input_f32(x_obj, 1);
-            size_t             n     = x_arr.shape(0);
-            std::vector<float> res(n * od);
+            auto         x_arr = _coerce_input_f32(x_obj, 1);
+            const size_t n     = x_arr.shape(0);
+            auto [arr, dst]    = _output_buffer_f32(out_obj, n, od);
             {
                 nb::gil_scoped_release nogil;
-                treeweavef_sorted(handle_, x_arr.data(), res.data(), n);
+                treeweavef_sorted(handle_, x_arr.data(), dst, n);
             }
-            return _make_output_f32(res.data(), n, od);
+            return arr;
         } else {
-            auto                x_arr = _coerce_input_f64(x_obj, 1);
-            size_t              n     = x_arr.shape(0);
-            std::vector<double> res(n * od);
+            auto         x_arr = _coerce_input_f64(x_obj, 1);
+            const size_t n     = x_arr.shape(0);
+            auto [arr, dst]    = _output_buffer_f64(out_obj, n, od);
             {
                 nb::gil_scoped_release nogil;
-                treeweave_sorted(handle_, x_arr.data(), res.data(), n);
+                treeweave_sorted(handle_, x_arr.data(), dst, n);
             }
-            return _make_output_f64(res.data(), n, od);
+            return arr;
         }
     }
 
@@ -426,36 +429,41 @@ class TreeweaveFunction {
         return arr;
     }
 
-    // Output array: (N,) for od==1, (N, od) for od>1.
-    static nb::object _make_output_f64(const double *data, size_t n, int od) {
-        auto np = nb::module_::import_("numpy");
-        if (od == 1) {
-            nb::object arr = np.attr("empty")(n, "dtype"_a = np.attr("float64"));
-            double    *dst = nb::cast<F64ArrayMut>(arr).data();
-            std::memcpy(dst, data, n * sizeof(double));
-            return arr;
-        } else {
-            nb::object shape = nb::make_tuple((int)n, od);
-            nb::object arr   = np.attr("empty")(shape, "dtype"_a = np.attr("float64"));
-            double    *dst   = nb::cast<F64ArrayMut>(arr).data();
-            std::memcpy(dst, data, n * od * sizeof(double));
-            return arr;
+    // Resolve the output array for a batch/sorted eval: allocate a fresh (N,) /
+    // (N, od) array, or validate and reuse a caller-supplied `out`. Returns the
+    // array (kept alive by the caller) and a raw pointer the C eval writes into
+    // directly — there is no intermediate buffer or copy.
+    static std::pair<nb::object, double *> _output_buffer_f64(nb::object out_obj, size_t n, int od) {
+        if (out_obj.is_none()) {
+            auto       np = nb::module_::import_("numpy");
+            nb::object arr =
+                (od == 1) ? np.attr("empty")(n, "dtype"_a = np.attr("float64"))
+                          : np.attr("empty")(nb::make_tuple(static_cast<int>(n), od), "dtype"_a = np.attr("float64"));
+            return {arr, nb::cast<F64ArrayMut>(arr).data()};
         }
+        // out= must already be the right type/layout: convert=false so we never
+        // silently write into a throwaway converted copy instead of the caller's.
+        F64ArrayMut arr;
+        if (!nb::try_cast<F64ArrayMut>(out_obj, arr, /*convert=*/false))
+            throw std::invalid_argument("out= must be a contiguous, C-ordered float64 NumPy array");
+        if (arr.size() != n * static_cast<size_t>(od))
+            throw std::invalid_argument("out= has the wrong number of elements for this batch");
+        return {out_obj, arr.data()};
     }
-    static nb::object _make_output_f32(const float *data, size_t n, int od) {
-        auto np = nb::module_::import_("numpy");
-        if (od == 1) {
-            nb::object arr = np.attr("empty")(n, "dtype"_a = np.attr("float32"));
-            float     *dst = nb::cast<F32ArrayMut>(arr).data();
-            std::memcpy(dst, data, n * sizeof(float));
-            return arr;
-        } else {
-            nb::object shape = nb::make_tuple((int)n, od);
-            nb::object arr   = np.attr("empty")(shape, "dtype"_a = np.attr("float32"));
-            float     *dst   = nb::cast<F32ArrayMut>(arr).data();
-            std::memcpy(dst, data, n * od * sizeof(float));
-            return arr;
+    static std::pair<nb::object, float *> _output_buffer_f32(nb::object out_obj, size_t n, int od) {
+        if (out_obj.is_none()) {
+            auto       np = nb::module_::import_("numpy");
+            nb::object arr =
+                (od == 1) ? np.attr("empty")(n, "dtype"_a = np.attr("float32"))
+                          : np.attr("empty")(nb::make_tuple(static_cast<int>(n), od), "dtype"_a = np.attr("float32"));
+            return {arr, nb::cast<F32ArrayMut>(arr).data()};
         }
+        F32ArrayMut arr;
+        if (!nb::try_cast<F32ArrayMut>(out_obj, arr, /*convert=*/false))
+            throw std::invalid_argument("out= must be a contiguous, C-ordered float32 NumPy array");
+        if (arr.size() != n * static_cast<size_t>(od))
+            throw std::invalid_argument("out= has the wrong number of elements for this batch");
+        return {out_obj, arr.data()};
     }
 };
 
@@ -555,8 +563,10 @@ NB_MODULE(_treeweave, m) {
                                   " use _treeweave.fit_f64() or _treeweave.fit_f32().")
         .def("eval_one", &TreeweaveFunction::eval_one, "Evaluate at a single point (scalar or length-dim sequence).",
              "x"_a)
-        .def("eval_multi", &TreeweaveFunction::eval_multi_py, "AoS batch eval. x: (N, dim) or (N,) for 1D.", "x"_a)
-        .def("sorted", &TreeweaveFunction::eval_sorted_py, "Sorted-1D batch eval (input_dim==1).", "x"_a)
+        .def("eval_multi", &TreeweaveFunction::eval_multi_py, "AoS batch eval. x: (N, dim) or (N,) for 1D.", "x"_a,
+             "out"_a = nb::none())
+        .def("sorted", &TreeweaveFunction::eval_sorted_py, "Sorted-1D batch eval (input_dim==1).", "x"_a,
+             "out"_a = nb::none())
         .def("eval_multi_soa", &TreeweaveFunction::eval_multi_soa_py,
              "SoA batch eval. Returns list of (N,) arrays, one per output component.", "x"_a)
         .def("print_stats", &TreeweaveFunction::print_stats)

@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        uses: aminya/setup-cpp@v1.8.0
         with:
           compiler: gcc
           cmake: true
@@ -59,14 +59,14 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        uses: aminya/setup-cpp@v1.8.0
         with:
           compiler: gcc
           cmake: true
           ninja: true
           cache-tools: true
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32  # v3
+      - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
 
@@ -128,7 +128,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        uses: aminya/setup-cpp@v1.8.0
         with:
           compiler: gcc
           cmake: true
@@ -136,7 +136,7 @@ jobs:
           cache-tools: true
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f  # v3
+        uses: matlab-actions/setup-matlab@v3
 
       # bindings-matlab sets TREEWEAVE_BUILD_MATLAB=ON; with MATLAB (and no
       # mkoctfile) present, the MATLAB MEX backend is selected. mwrap is fetched
@@ -163,7 +163,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        uses: aminya/setup-cpp@v1.8.0
         with:
           compiler: gcc
           cmake: true
@@ -181,3 +181,50 @@ jobs:
       # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
       - name: Run Fortran test (fortran_treeweave)
         run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure
+
+  # Builds BOTH JS backends — the native N-API addon (bindings-js) and the WASM
+  # module (bindings-js-wasm, via emsdk) — then runs the node:test suite, which
+  # exercises whichever backends it finds in dist/ (here: both).
+  js:
+    name: JavaScript/TypeScript bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v16
+        with:
+          version: 4.0.9
+
+      - name: Install npm deps
+        run: npm ci
+        working-directory: bindings/js
+
+      - name: Configure + build the native (.node) backend
+        run: |
+          cmake --preset bindings-js
+          cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts
+
+      - name: Configure + build the WASM backend
+        run: |
+          cmake --preset bindings-js-wasm
+          cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
+
+      # The suite runs both backends found in dist/ (node:test, via CTest).
+      - name: Run JS suite (js_treeweave)
+        run: ctest --test-dir build/bindings-js -R js_treeweave --output-on-failure

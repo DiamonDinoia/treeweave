@@ -209,6 +209,25 @@
       "displayName": "Octave (MEX) bindings",
       "description": "License-free CI path. Inherits bindings-matlab (same TREEWEAVE_BUILD_MATLAB=ON flag — there is no separate Octave flag). Backend selection is automatic inside bindings/matlab/CMakeLists.txt: if mkoctfile is found it builds treeweave_mex.mex via mkoctfile; if MATLAB is also found it builds treeweave_mex.mexa64 in addition. Use this preset when only Octave/mkoctfile is present (no MATLAB license needed).",
       "inherits": "bindings-matlab"
+    },
+    {
+      "name": "bindings-js",
+      "displayName": "JS/TS binding (native N-API addon)",
+      "description": "Builds the native Node-API .node addon (links treeweave_c_static) plus the TypeScript layer, and registers the node:test suite. Run 'npm install' in bindings/js first so node-addon-api headers and tsc are present.",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_BUILD_JS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "bindings-js-wasm",
+      "displayName": "JS/TS binding (Emscripten WASM)",
+      "description": "Builds the same C ABI to a WASM module for the browser backend. Needs the Emscripten SDK on PATH with EMSDK set (e.g. via mymindstorm/setup-emsdk); the toolchain file is resolved from $EMSDK. TREEWEAVE_ARCH is cleared because emcc rejects -march (the toolchain enables -msimd128 instead). Build the treeweave_wasm + treeweave_js_ts targets (not ALL — the SHARED treeweave_c isn't meaningful under emcc).",
+      "inherits": "bindings-js",
+      "cacheVariables": {
+        "TREEWEAVE_ARCH": "",
+        "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+      }
     }
   ]
 }

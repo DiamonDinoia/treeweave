@@ -65,9 +65,12 @@ if(_install_targets)
     )
 endif()
 
+# The committed, generated treeweave_version.h lives in include/ and ships with
+# the rest of the headers; its .in template does not (PATTERN exclude below).
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PATTERN "*.in" EXCLUDE
 )
 
 # Relative DESTINATION so `cmake --install --prefix <dir>` is honored (an

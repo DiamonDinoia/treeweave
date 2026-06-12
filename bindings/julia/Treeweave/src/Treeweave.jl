@@ -366,20 +366,26 @@ Keyword flags (batch only):
   caller has sorted `x` (`x[i] ≤ x[i+1]`).
 - `transposed=true` — return an `out_dim × n` `Matrix` (struct-of-arrays
   layout) instead of `n × out_dim`; requires `out_dim > 1`.
+- `out=` — a pre-allocated `Vector{T}` of length `n` to write into (in-place,
+  zero-copy), returned as-is. Batch/sorted only, and scalar-output
+  (`out_dim == 1`) fits only.
 
 A point whose length ≠ `dim`, a batch with the wrong column count, `sorted`
 with `dim ≠ 1`, or `transposed` with `out_dim == 1` raises an error rather
 than silently mis-shaping the result.
 """
-function (b::TreeweaveFn{T})(x; sorted::Bool = false, transposed::Bool = false) where {T}
+function (b::TreeweaveFn{T})(x; sorted::Bool = false, transposed::Bool = false, out = nothing) where {T}
     if sorted && transposed
         error("`sorted` and `transposed` are mutually exclusive")
+    end
+    if out !== nothing && transposed
+        error("out= is not supported with transposed=true")
     end
 
     if sorted
         b.dim == 1 || error("sorted=true requires dim == 1 (got dim=$(b.dim))")
         x isa AbstractVector || error("sorted=true expects a vector of 1-D points")
-        return _eval_sorted(b, x)
+        return _eval_sorted(b, x; out = out)
     end
 
     if transposed
@@ -390,14 +396,20 @@ function (b::TreeweaveFn{T})(x; sorted::Bool = false, transposed::Bool = false) 
     # Point vs batch: a matrix is always a batch; for dim==1 a vector is a
     # batch and a scalar is a point; for dim>1 a length-dim vector is a point.
     if x isa AbstractMatrix
-        return _eval_batch(b, x)
+        return _eval_batch(b, x; out = out)
     elseif b.dim == 1
-        return x isa AbstractVector ? _eval_batch(b, x) : _eval_point(b, x)
+        if x isa AbstractVector
+            return _eval_batch(b, x; out = out)
+        else
+            out === nothing || error("out= requires a batch input, not a single point")
+            return _eval_point(b, x)
+        end
     else
         x isa AbstractVector ||
             error("for dim > 1, pass a length-$(b.dim) vector (point) or an n×$(b.dim) matrix (batch)")
         length(x) == b.dim ||
             error("point has length $(length(x)) but dim == $(b.dim)")
+        out === nothing || error("out= requires a batch input, not a single point")
         return _eval_point(b, x)
     end
 end
@@ -420,9 +432,21 @@ end
     return b.out_dim == 1 ? y[1] : y
 end
 
-@inline function _eval_batch(b::TreeweaveFn{T}, X) where {T}
+# Allocate the flat result buffer for a batch/sorted eval, or validate and reuse
+# a caller-supplied `out` for in-place (zero-copy) evaluation. In-place out= is
+# only meaningful for scalar-output fits, where the C result buffer *is* the
+# returned vector (no point-major -> column-major matrix reshape).
+@inline function _result_buffer(b::TreeweaveFn{T}, n::Int, out) where {T}
+    out === nothing && return Vector{T}(undef, n * b.out_dim)
+    b.out_dim == 1 || error("out= is only supported for scalar-output (out_dim == 1) fits")
+    out isa Vector{T} || error("out= must be a Vector{$T}")
+    length(out) == n || error("out= has length $(length(out)) but the batch has $n points")
+    return out
+end
+
+@inline function _eval_batch(b::TreeweaveFn{T}, X; out=nothing) where {T}
     xbuf, n = _pack_x(X, b.dim, T)
-    res = Vector{T}(undef, n * b.out_dim)
+    res = _result_buffer(b, n, out)
     GC.@preserve xbuf res begin
         if T === Float64
             ccall((:treeweave_batch, LIBTREEWEAVE), Cvoid,
@@ -432,13 +456,13 @@ end
                   (Ptr{Cvoid}, Ptr{Cfloat}, Ptr{Cfloat}, Csize_t), b.ptr, xbuf, res, Csize_t(n))
         end
     end
-    return _unpack_y(res, n, b.out_dim)
+    return out === nothing ? _unpack_y(res, n, b.out_dim) : out
 end
 
-@inline function _eval_sorted(b::TreeweaveFn{T}, x::AbstractVector) where {T}
+@inline function _eval_sorted(b::TreeweaveFn{T}, x::AbstractVector; out=nothing) where {T}
     n   = length(x)
-    xv  = Vector{T}(x)
-    res = Vector{T}(undef, n * b.out_dim)
+    xv  = x isa Vector{T} ? x : Vector{T}(x)   # zero-copy when already Vector{T}
+    res = _result_buffer(b, n, out)
     GC.@preserve xv res begin
         if T === Float64
             ccall((:treeweave_sorted, LIBTREEWEAVE), Cvoid,
@@ -448,7 +472,7 @@ end
                   (Ptr{Cvoid}, Ptr{Cfloat}, Ptr{Cfloat}, Csize_t), b.ptr, xv, res, Csize_t(n))
         end
     end
-    return _unpack_y(res, n, b.out_dim)
+    return out === nothing ? _unpack_y(res, n, b.out_dim) : out
 end
 
 # Struct-of-arrays eval. treeweave_transposed wants `out_dim` contiguous buffers
@@ -515,7 +539,8 @@ end
 function _pack_x(X, dim::Int, ::Type{T}) where T
     if X isa AbstractVector && dim == 1
         n = length(X)
-        return Vector{T}(X), n
+        # Zero-copy when X is already a dense Vector{T}; otherwise convert.
+        return (X isa Vector{T} ? X : Vector{T}(X)), n
     elseif X isa AbstractMatrix
         # X is n × dim in Julia (column-major).  We need a point-major
         # flat buffer: [p0_x0, p0_x1, ..., p0_x{dim-1}, p1_x0, ...].

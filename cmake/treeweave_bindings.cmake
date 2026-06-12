@@ -31,6 +31,11 @@ option(
     "Build the Fortran (iso_c_binding) binding test + example"
     OFF
 )
+option(
+    TREEWEAVE_BUILD_JS
+    "Build the JavaScript/TypeScript binding (native N-API addon, or WASM under emcc) + register the node test"
+    OFF
+)
 
 if(
     NOT (
@@ -38,15 +43,18 @@ if(
         OR TREEWEAVE_BUILD_JULIA
         OR TREEWEAVE_BUILD_MATLAB
         OR TREEWEAVE_BUILD_FORTRAN
+        OR TREEWEAVE_BUILD_JS
     )
 )
     return()
 endif()
 
-if(NOT TARGET treeweave_c_static OR NOT TARGET treeweave_c)
+# Bindings link the static C ABI archive; the shared treeweave_c is optional and
+# absent where the platform has no dynamic linking (Emscripten/WASM JS backend).
+if(NOT TARGET treeweave_c_static)
     message(
         WARNING
-        "treeweave: bindings requested but the C ABI targets are absent "
+        "treeweave: bindings requested but the C ABI static target is absent "
         "(set TREEWEAVE_BUILD_C_API=ON). Skipping all bindings."
     )
     return()
@@ -66,4 +74,7 @@ if(TREEWEAVE_BUILD_MATLAB)
 endif()
 if(TREEWEAVE_BUILD_FORTRAN)
     add_subdirectory(bindings/fortran)
+endif()
+if(TREEWEAVE_BUILD_JS)
+    add_subdirectory(bindings/js)
 endif()

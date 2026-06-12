@@ -15,6 +15,7 @@
 #include <string>
 
 #include <treeweave.h>
+#include <treeweave_version.h>
 
 #include <treeweave/detail/c_binding.hpp>
 #include <treeweave/treeweave.hpp>
@@ -332,5 +333,8 @@ auto treeweave_free(treeweave_t f) -> treeweave_t {
 }
 
 auto treeweave_last_error(void) -> const char * { return error_buffer().c_str(); }
+
+auto treeweave_version(void) -> int { return TREEWEAVE_VERSION; }
+auto treeweave_version_string(void) -> const char * { return TREEWEAVE_VERSION_STRING; }
 
 } // extern "C"

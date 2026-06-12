@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.25...3.31)
-project(treeweave VERSION 0.0.0 LANGUAGES CXX)
+
+# Single source of truth for the version is the tracked VERSION file; project()
+# takes its MAJOR.MINOR.PATCH from it, and treeweave_generate_version.cmake
+# (re)writes the committed include/treeweave_version.h from it + git state.
+file(
+    STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION"
+    TREEWEAVE_BASE_VERSION
+    LIMIT_COUNT 1
+)
+string(STRIP "${TREEWEAVE_BASE_VERSION}" TREEWEAVE_BASE_VERSION)
+project(treeweave VERSION "${TREEWEAVE_BASE_VERSION}" LANGUAGES CXX)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/treeweave_generate_version.cmake")
 
 # ---------------------------------------------------------------------------
 # User-facing options

@@ -32,14 +32,14 @@
 
 #include <stddef.h> /* size_t */
 
-/* Library version. Mirrors the CMake project(VERSION) and the C++
- * `treeweave::version_*` constants. The combined integer is encoded as
- * `MAJOR * 10000 + MINOR * 100 + PATCH` for easy `>=` comparisons. */
-#define TREEWEAVE_VERSION_MAJOR 0
-#define TREEWEAVE_VERSION_MINOR 0
-#define TREEWEAVE_VERSION_PATCH 0
-#define TREEWEAVE_VERSION (TREEWEAVE_VERSION_MAJOR * 10000 + TREEWEAVE_VERSION_MINOR * 100 + TREEWEAVE_VERSION_PATCH)
-#define TREEWEAVE_VERSION_STRING "0.0.0"
+/* Library version. The TREEWEAVE_VERSION_* / TREEWEAVE_VERSION_STRING macros and
+ * the TREEWEAVE_VERSION_AT_LEAST(maj,min,pat) compile-time guard live in the
+ * generated treeweave_version.h, whose single source of truth is the VERSION
+ * file at the repo root. The runtime getters below report the version of the
+ * actually-linked library (which can differ from these macros when a shared
+ * libtreeweave_c is swapped in). The matching C++ constants are
+ * treeweave::version_* in <treeweave/treeweave.hpp>. */
+#include <treeweave_version.h>
 
 /* Symbol visibility. libtreeweave_c is built with hidden default visibility
  * (-fvisibility=hidden on GCC/Clang), so only the TREEWEAVE_EXPORT-tagged public
@@ -235,6 +235,17 @@ TREEWEAVE_EXPORT treeweave_t treeweave_free(treeweave_t f);
  *         treeweave call on the same thread.
  */
 TREEWEAVE_EXPORT const char *treeweave_last_error(void);
+
+/* ---- version (runtime) ----------------------------------------------- *
+ * The version of the linked library, for the shared-library case where it may
+ * differ from the TREEWEAVE_VERSION / TREEWEAVE_VERSION_STRING macros the caller
+ * compiled against. A consumer can assert agreement at startup, e.g.
+ *   assert(treeweave_version() == TREEWEAVE_VERSION); */
+
+/** @brief Linked library version as MAJOR*10000 + MINOR*100 + PATCH. */
+TREEWEAVE_EXPORT int treeweave_version(void);
+/** @brief Linked library version as a dotted string, e.g. "1.2.3". */
+TREEWEAVE_EXPORT const char *treeweave_version_string(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

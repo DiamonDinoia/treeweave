@@ -50,14 +50,20 @@ function(_treeweave_configure_c_target tgt)
     set_property(TARGET ${tgt} PROPERTY POSITION_INDEPENDENT_CODE ON)
 endfunction()
 
-add_library(treeweave_c SHARED ${_treeweave_c_objects})
-add_library(treeweave::treeweave_c ALIAS treeweave_c)
-_treeweave_configure_c_target(treeweave_c)
-set_target_properties(
-    treeweave_c
-    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
-)
-set_property(GLOBAL APPEND PROPERTY TREEWEAVE_INSTALL_TARGETS treeweave_c)
+# The shared library is skipped where the platform has no dynamic linking
+# (Emscripten/WASM: the JS binding links treeweave_c_static and exports the C
+# ABI symbols directly). add_library(... SHARED) is a hard error there.
+get_property(_tw_shared_ok GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+if(_tw_shared_ok)
+    add_library(treeweave_c SHARED ${_treeweave_c_objects})
+    add_library(treeweave::treeweave_c ALIAS treeweave_c)
+    _treeweave_configure_c_target(treeweave_c)
+    set_target_properties(
+        treeweave_c
+        PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+    set_property(GLOBAL APPEND PROPERTY TREEWEAVE_INSTALL_TARGETS treeweave_c)
+endif()
 
 add_library(treeweave_c_static STATIC ${_treeweave_c_objects})
 add_library(treeweave::treeweave_c_static ALIAS treeweave_c_static)
@@ -130,7 +136,7 @@ if(TREEWEAVE_BUILD_EXAMPLES)
         with_options
         with_context
         float32
-        lgamma_bench
+        zeta_bench
     )
         _treeweave_add_c_program(treeweave_c_${_ex} examples/C/${_ex}.c)
         add_test(NAME c_example_${_ex} COMMAND treeweave_c_${_ex})

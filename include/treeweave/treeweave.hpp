@@ -36,6 +36,8 @@
 
 #include <polyfit/polyfit.hpp>
 
+#include <treeweave_version.h> // generated; single source of truth (the VERSION file)
+
 #include <treeweave/detail/eval_policy.hpp>
 #include <treeweave/detail/tol_kind.hpp>
 
@@ -43,11 +45,19 @@
 
 namespace treeweave {
 
-/// Library version. Mirrors the CMake `project(VERSION)` and the C-ABI
+/// Library version, sourced from the CMake-generated <treeweave_version.h>
+/// (single source of truth: `project(VERSION)`); identical to the C-ABI
 /// `TREEWEAVE_VERSION_*` macros in <treeweave.h>.
-inline constexpr int version_major = 0;
-inline constexpr int version_minor = 0;
-inline constexpr int version_patch = 0;
+inline constexpr int version_major = TREEWEAVE_VERSION_MAJOR;
+inline constexpr int version_minor = TREEWEAVE_VERSION_MINOR;
+inline constexpr int version_patch = TREEWEAVE_VERSION_PATCH;
+/// Combined integer MAJOR*10000 + MINOR*100 + PATCH (e.g. 1.2.3 -> 10203).
+inline constexpr int version = TREEWEAVE_VERSION;
+/// Dotted release string, e.g. "1.2.3".
+inline constexpr const char *version_string = TREEWEAVE_VERSION_STRING;
+
+/// Compile-time guard: true iff the headers are at least `maj.min.pat`.
+constexpr auto version_at_least(int maj, int min, int pat) -> bool { return version >= maj * 10000 + min * 100 + pat; }
 
 /// Runtime fit knobs. Every field here only affects fit-time
 /// construction; there is no eval-time benefit to promoting any of them
@@ -184,7 +194,11 @@ template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalP
     if (!(tol > 0.0))
         throw std::invalid_argument("treeweave::fit: tolerance must be > 0");
 
-    using func_t          = std::remove_cvref_t<Func>;
+    // decay (not remove_cvref): a plain function passed by reference decays to a
+    // function *pointer*, so the stored Func is never a bare function type — that
+    // would make the internal `const Func&` params const-qualified function types
+    // (harmless on gcc/clang, but MSVC warns C4180, fatal under /WX).
+    using func_t          = std::decay_t<Func>;
     using result_t        = std::invoke_result_t<func_t &, Domain>;
     constexpr int in_dim  = detail::domain_dim<Domain>();
     constexpr int out_dim = detail::domain_dim<result_t>();

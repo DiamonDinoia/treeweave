@@ -28,6 +28,10 @@ classdef treeweave < handle
 %   y = obj(X)                       same (via subsref)
 %   y = obj(X, 'sorted', true)       1-D ascending fast path (dim==1)
 %   y = obj(X, 'transposed', true)   y is out_dim×N (out_dim>1)
+%
+%   There is deliberately no in-place out= argument (cf. the Python/Julia
+%   bindings): MATLAB/Octave copy-on-write means a MEX cannot safely write into a
+%   caller-owned array, and the gateway returns a fresh array by value regardless.
 %   n = obj.memory_usage()
 %   obj.print_stats()
 %   delete(obj)                      frees C-side memory

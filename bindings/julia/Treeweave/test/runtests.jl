@@ -151,4 +151,36 @@ end
     @test_throws ErrorException b1(rand(10); sorted=true, transposed=true)
 end
 
+# ---------------------------------------------------------------------------
+# 12. out= writes in place and returns the caller's vector (zero-copy path)
+# ---------------------------------------------------------------------------
+@testset "out= in-place batch/sorted" begin
+    b  = fit(x -> exp(0.5x), 0.0, 1.0, 1e-8)
+    xs = collect(LinRange(0.0, 1.0, 256))
+
+    expected = b(xs)
+    buf = similar(xs)
+    got = b(xs; out=buf)
+    @test got === buf            # same array, written in place
+    @test got == expected        # bit-exact with the allocating path
+
+    # sorted fast path with out=
+    xss        = sort(rand(200))
+    exp_sorted = b(xss; sorted=true)
+    buf2       = similar(xss)
+    got2       = b(xss; sorted=true, out=buf2)
+    @test got2 === buf2
+    @test got2 == exp_sorted
+
+    # validation: wrong length / eltype, and the non-batch call forms
+    @test_throws ErrorException b(xs; out=similar(xs, 10))            # wrong length
+    @test_throws ErrorException b(xs; out=zeros(Float32, length(xs))) # wrong eltype
+    @test_throws ErrorException b(0.5; out=zeros(1))                  # out= with a point
+
+    # out= is only supported for scalar-output (out_dim == 1) fits
+    bv = fit(x -> (sin(x), cos(x)), 0.0, 1.0, 1e-6; out_dim=2)
+    @test_throws ErrorException bv(xs; out=zeros(2 * length(xs)))
+    @test_throws ErrorException bv(xs; transposed=true, out=zeros(2, length(xs)))
+end
+
 println("All Treeweave tests passed.")

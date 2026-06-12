@@ -36,10 +36,11 @@ path, then fit and evaluate:
    addpath('/path/to/build/bindings/matlab/treeweave_mw');  % generated tw_*.m + MEX
 
    % 1-D scalar fit (dim & out_dim inferred from the handle)
-   f   = @(x) exp(0.5*x(1)) + sin(3*x(1));
-   obj = treeweave(f, 0, 1, 1e-8);
+   N   = 1000;                 % zeta_N(s) = sum_{k=1..N} k^-s
+   f   = @(x) sum((1:N).^(-x(1)));   % expensive; fit once, eval a polynomial
+   obj = treeweave(f, 2, 10, 1e-10);
 
-   y = obj([0.5]);             % single point: 1 x dim -> 1 x out_dim
+   y = obj([3.5]);             % single point: 1 x dim -> 1 x out_dim
    delete(obj);                % free the C handle (or let the object go out of scope)
 
 The callback receives a ``1 x dim`` row and returns a scalar or a
@@ -56,7 +57,7 @@ select the fast paths:
 
 .. code-block:: matlab
 
-   X = linspace(0, 1, 1000)';            % N x dim
+   X = linspace(2, 10, 1000)';           % N x dim
 
    obj(X)                                % batch:  N x dim -> N x out_dim
    obj.eval(X)                           % identical to obj(X)

@@ -17,7 +17,6 @@ TreeweaveFunction
 from __future__ import annotations
 
 from typing import Callable
-import numpy as np
 import numpy as _np  # cached reference — used inside hot paths
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
@@ -84,7 +83,7 @@ class TreeweaveFunction:
 
     # ---- evaluation -------------------------------------------------------
 
-    def __call__(self, x, *, sorted: bool = False, transposed: bool = False):
+    def __call__(self, x, *, sorted: bool = False, transposed: bool = False, out=None):
         """Evaluate at *x*.
 
         Parameters
@@ -99,6 +98,12 @@ class TreeweaveFunction:
         transposed : bool, optional
             Return the batch result as ``(out_dim, N)`` (struct-of-arrays)
             instead of ``(N, out_dim)``. Requires ``out_dim > 1``.
+        out : ndarray, optional
+            Pre-allocated output to write into (in-place, zero-copy). Must be a
+            contiguous, C-ordered array of this fit's dtype and the exact result
+            shape — ``(N,)`` for ``out_dim == 1`` else ``(N, out_dim)`` — and is
+            returned as-is. Batch only: not valid for a single point or
+            ``transposed=True``.
 
         Returns
         -------
@@ -120,6 +125,8 @@ class TreeweaveFunction:
 
         if use_sorted and use_transposed:
             raise ValueError("sorted=True and transposed=True are mutually exclusive")
+        if out is not None and use_transposed:
+            raise ValueError("out= is not supported with transposed=True")
 
         dtype = _np.float32 if self.dtype == "f32" else _np.float64
         x = _np.asarray(x, dtype=dtype)
@@ -128,7 +135,7 @@ class TreeweaveFunction:
         if use_sorted:
             if self.dim != 1:
                 raise ValueError(f"sorted=True requires dim == 1; this fit has dim={self.dim}")
-            return self._inner.sorted(self._coerce_batch(x))
+            return self._inner.sorted(self._coerce_batch(x), out)
 
         if use_transposed:
             if self.out_dim == 1:
@@ -140,21 +147,29 @@ class TreeweaveFunction:
         if x.ndim == 0:
             if self.dim != 1:
                 raise ValueError(f"a scalar is only a valid point for dim == 1; this fit has dim={self.dim}")
+            if out is not None:
+                raise ValueError("out= requires a batch input, not a single point")
             return self._inner.eval_one(x.item())
 
         if x.ndim == 1:
             if self.dim == 1:
                 # (1,) is the (dim,) point; longer is an (N,) batch.
                 if x.shape[0] == 1:
+                    if out is not None:
+                        raise ValueError(
+                            "out= requires a batch input, not a single point"
+                        )
                     return self._inner.eval_one(float(x[0]))
-                return self._inner.eval_multi(_np.ascontiguousarray(x))
+                return self._inner.eval_multi(_np.ascontiguousarray(x), out)
             # dim > 1: a 1-D input must be a single (dim,) point.
             if x.shape[0] != self.dim:
                 raise ValueError(f"point has length {x.shape[0]} but dim == {self.dim}")
+            if out is not None:
+                raise ValueError("out= requires a batch input, not a single point")
             return self._inner.eval_one(x)
 
         if x.ndim == 2:
-            return self._inner.eval_multi(self._coerce_batch(x))
+            return self._inner.eval_multi(self._coerce_batch(x), out)
 
         raise ValueError(f"x must have ndim <= 2; got ndim={x.ndim}")
 

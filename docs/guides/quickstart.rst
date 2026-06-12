@@ -19,9 +19,10 @@ A 60-second taste, in C++:
 
    #include <treeweave/treeweave.hpp>
 
-   auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
-   auto fn    = treeweave::fit(runge, -1.0, 1.0, /*tol=*/1e-10);
-   double y   = fn(0.3);
+   // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
+   auto zeta = [](double s) { double a = 0; for (int k = 1; k <= 1000; ++k) a += std::pow(k, -s); return a; };
+   auto fn   = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
+   double y  = fn(3.5);
 
 Common rules across every binding:
 
