@@ -65,8 +65,10 @@ keyword flags select the fast paths:
 you can promise ``xs`` is ascending — common for ``linspace`` grids, quadrature
 nodes, and time series. The promise is unchecked: unsorted input gives wrong
 values, so use the plain batch path when unsure. ``transposed=True`` returns each
-output component in its own contiguous row. Out-of-domain points are NaN-filled
-on every route.
+output component in its own contiguous row. Out-of-domain handling is uniform
+across paths: evaluating exactly at ``b`` returns the boundary value, and every
+other point outside ``[a, b]`` — below ``a``, above ``b``, or ``NaN``/±Inf —
+returns ``NaN``.
 
 Multi-dimensional fits
 ----------------------

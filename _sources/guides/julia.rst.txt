@@ -75,8 +75,10 @@ fast paths:
 when you can promise ``xs`` is ascending — common for ``range`` grids, quadrature
 nodes, and time series. The promise is unchecked: unsorted input gives wrong
 values, so use the plain batch path when unsure. ``transposed = true`` returns
-each output component in its own contiguous row. Out-of-domain points are
-NaN-filled on every route. ``sorted`` is 1-D only.
+each output component in its own contiguous row. ``sorted`` is 1-D only.
+Out-of-domain handling is uniform across paths: evaluating exactly at ``b``
+returns the boundary value, and every other point outside ``[a, b]`` — below
+``a``, above ``b``, or ``NaN``/±Inf — returns ``NaN``.
 
 Multi-dimensional fits
 ----------------------

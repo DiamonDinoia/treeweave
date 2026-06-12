@@ -50,10 +50,10 @@ Evaluate
 
 Each has a ``treeweavef_*`` ``float`` twin.
 
-Out-of-domain handling is asymmetric (the cost of a branchless hot path):
-evaluating exactly at the upper corner ``b`` returns the boundary value, points
-below ``a`` (and ``NaN`` inputs) yield ``NaN``, and points above ``b``
-extrapolate from the last cell (the result may be non-finite).
+Out-of-domain handling is uniform across all eval paths: evaluating exactly at
+the upper corner ``b`` returns the boundary value, and every other point outside
+``[a, b]`` — below ``a``, above ``b``, or ``NaN``/±Inf inputs — yields ``NaN``.
+The batch hot path stays branchless (the domain test compiles to a SIMD mask).
 
 By-value scalar eval (C convenience)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -86,6 +86,7 @@ Introspection and teardown
    int               treeweave_input_dim   (treeweave_t f);
    int               treeweave_output_dim  (treeweave_t f);
    size_t            treeweave_memory_usage(treeweave_t f);
+   void              treeweave_print_stats (treeweave_t f);  /* print fit/eval stats to stdout */
    treeweave_t       treeweave_free        (treeweave_t f);  /* returns NULL */
    const char       *treeweave_last_error  (void);           /* thread-local */
 

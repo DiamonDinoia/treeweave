@@ -159,7 +159,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -238,7 +238,7 @@ single <code class="docutils literal notranslate"><span class="pre">treeweave.mw
 <p>There is no prebuilt MEX — Octave has no stable MEX ABI across versions, so the
 binding is built from source. It is an opt-in CMake option,
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_MATLAB</span></code>. With MATLAB or <code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code> on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, CMake
-fetches the mwrap generator, generates the gateway + <code class="docutils literal notranslate"><span class="pre">bz_*.m</span></code> stubs, and
+fetches the mwrap generator, generates the gateway + <code class="docutils literal notranslate"><span class="pre">tw_*.m</span></code> stubs, and
 compiles the MEX:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-matlab<span class="w">      </span><span class="c1"># or bindings-octave for the license-free path</span>
 cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-matlab<span class="w"> </span>-j
@@ -253,7 +253,7 @@ ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-ma
 <p>Add the <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> class directory and the generated MEX directory to the
 path, then fit and evaluate:</p>
 <div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;/path/to/treeweave/bindings/matlab&#39;</span><span class="p">);</span><span class="w">           </span><span class="c">% treeweave.m class</span>
-<span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;/path/to/build/bindings/matlab/treeweave_mw&#39;</span><span class="p">);</span><span class="w">  </span><span class="c">% generated bz_*.m + MEX</span>
+<span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;/path/to/build/bindings/matlab/treeweave_mw&#39;</span><span class="p">);</span><span class="w">  </span><span class="c">% generated tw_*.m + MEX</span>
 
 <span class="c">% 1-D scalar fit (dim &amp; out_dim inferred from the handle)</span>
 <span class="n">f</span><span class="w">   </span><span class="p">=</span><span class="w"> </span><span class="p">@(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sin</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
@@ -265,8 +265,9 @@ path, then fit and evaluate:</p>
 </div>
 <p>The callback receives a <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">x</span> <span class="pre">dim</span></code> row and returns a scalar or a
 <code class="docutils literal notranslate"><span class="pre">out_dim</span> <span class="pre">x</span> <span class="pre">1</span></code> column. The fit domain is <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b)</span></code>; evaluating exactly at the
-upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value, points below <code class="docutils literal notranslate"><span class="pre">a</span></code> (or above <code class="docutils literal notranslate"><span class="pre">b</span></code>)
-return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value (the last cell’s polynomial).
+Every other out-of-domain point returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code> — below <code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf inputs alike — uniformly across the scalar, batch and sorted paths.</p>
 </section>
 <section id="evaluation-routes">
 <h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>

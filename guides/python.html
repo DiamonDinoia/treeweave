@@ -159,7 +159,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -283,8 +283,10 @@ keyword flags select the fast paths:</p>
 you can promise <code class="docutils literal notranslate"><span class="pre">xs</span></code> is ascending — common for <code class="docutils literal notranslate"><span class="pre">linspace</span></code> grids, quadrature
 nodes, and time series. The promise is unchecked: unsorted input gives wrong
 values, so use the plain batch path when unsure. <code class="docutils literal notranslate"><span class="pre">transposed=True</span></code> returns each
-output component in its own contiguous row. Out-of-domain points are NaN-filled
-on every route.</p>
+output component in its own contiguous row. Out-of-domain handling is uniform
+across paths: evaluating exactly at <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value, and every
+other point outside <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b]</span></code> — below <code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, or <code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf —
+returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
 </section>
 <section id="multi-dimensional-fits">
 <h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>

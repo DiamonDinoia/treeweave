@@ -12,7 +12,7 @@ Build
 There is no prebuilt MEX — Octave has no stable MEX ABI across versions, so the
 binding is built from source. It is an opt-in CMake option,
 ``TREEWEAVE_BUILD_MATLAB``. With MATLAB or ``mkoctfile`` on ``PATH``, CMake
-fetches the mwrap generator, generates the gateway + ``bz_*.m`` stubs, and
+fetches the mwrap generator, generates the gateway + ``tw_*.m`` stubs, and
 compiles the MEX:
 
 .. code-block:: bash
@@ -33,7 +33,7 @@ path, then fit and evaluate:
 .. code-block:: matlab
 
    addpath('/path/to/treeweave/bindings/matlab');           % treeweave.m class
-   addpath('/path/to/build/bindings/matlab/treeweave_mw');  % generated bz_*.m + MEX
+   addpath('/path/to/build/bindings/matlab/treeweave_mw');  % generated tw_*.m + MEX
 
    % 1-D scalar fit (dim & out_dim inferred from the handle)
    f   = @(x) exp(0.5*x(1)) + sin(3*x(1));
@@ -44,8 +44,9 @@ path, then fit and evaluate:
 
 The callback receives a ``1 x dim`` row and returns a scalar or a
 ``out_dim x 1`` column. The fit domain is ``[a, b)``; evaluating exactly at the
-upper corner ``b`` returns the boundary value, points below ``a`` (or above ``b``)
-return ``NaN``.
+upper corner ``b`` returns the boundary value (the last cell's polynomial).
+Every other out-of-domain point returns ``NaN`` — below ``a``, above ``b``, and
+``NaN``/±Inf inputs alike — uniformly across the scalar, batch and sorted paths.
 
 Evaluation routes
 -----------------

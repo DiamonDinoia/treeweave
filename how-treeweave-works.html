@@ -161,7 +161,7 @@
 <li class="toctree-l2"><a class="reference internal" href="api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a62f3d6ee2fa944eeb5c1736b37421ad4.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -234,7 +234,7 @@
 <p>Treeweave turns an expensive function <code class="docutils literal notranslate"><span class="pre">f(x)</span></code> into a cheap lookup by precomputing
 a <strong>piecewise polynomial approximation</strong> on an <strong>adaptive tree</strong>. Cost: memory
 plus a one-time fit. Payoff: every later call is a tree descent followed by
-a degree-8 polynomial evaluation.</p>
+a degree-7 polynomial evaluation.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   user calls fn(x), fn(x), fn(x)... a million times.
               │
               ▼
@@ -268,7 +268,7 @@ converges <em>exponentially</em> in the degree for an analytic <code class="docu
 <li><p><strong>Monomial basis at low degree.</strong> Treeweave keeps the polynomial in the plain
 monomial basis <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">cₖ</span> <span class="pre">xᵏ</span></code>. That is famously a bad idea at high degree, but it
 is “easy, fast, accurate” at the low degrees treeweave actually uses
-(degree ≈ 8, well under the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≲</span> <span class="pre">30</span></code> regime where the monomial Vandermonde
+(degree ≈ 7, well under the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≲</span> <span class="pre">30</span></code> regime where the monomial Vandermonde
 solve stays well-behaved). Horner evaluation of a monomial is a tight FMA
 chain that maps directly onto a SIMD register lane (Phase 3).</p></li>
 <li><p><strong>Adaptive panels, not one global fit.</strong> A small enough panel near a rapid
@@ -388,19 +388,19 @@ chain.</p>
 <p>The leaf carries monomial coefficients <code class="docutils literal notranslate"><span class="pre">c[k_0,</span> <span class="pre">k_1,</span> <span class="pre">...,</span> <span class="pre">k_{n-1}]</span></code>.
 Evaluation collapses one axis at a time using Horner’s rule. Total cost:
 <strong><code class="docutils literal notranslate"><span class="pre">K^n</span> <span class="pre">−</span> <span class="pre">1</span></code> FMAs</strong> where <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>              <span class="mi">2</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>              <span class="mi">2</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>
 
-   <span class="n">y</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">0..8</span><span class="p">:</span>
-   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="mf">7..0</span><span class="p">:</span>                      <span class="n">y_j</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="n">over</span> <span class="n">axis</span> <span class="mi">1</span><span class="p">)</span>
+   <span class="n">y</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">0..7</span><span class="p">:</span>
+   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="mf">6..0</span><span class="p">:</span>                      <span class="n">y_j</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="n">over</span> <span class="n">axis</span> <span class="mi">1</span><span class="p">)</span>
        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-                                   <span class="n">y</span> <span class="o">=</span> <span class="n">y_8</span>
-   <span class="mi">8</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">single</span> <span class="n">chain</span><span class="o">.</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">7..0</span><span class="p">:</span>
+                                   <span class="n">y</span> <span class="o">=</span> <span class="n">y_7</span>
+   <span class="mi">7</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">single</span> <span class="n">chain</span><span class="o">.</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">6..0</span><span class="p">:</span>
                                        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x_0</span> <span class="o">+</span> <span class="n">y_j</span>
 
-                                   <span class="mi">80</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">two</span> <span class="n">nested</span> <span class="n">chains</span><span class="o">.</span>
+                                   <span class="mi">63</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">two</span> <span class="n">nested</span> <span class="n">chains</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>For 3D the cost is <code class="docutils literal notranslate"><span class="pre">9^3</span> <span class="pre">−</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">728</span></code> FMAs per evaluation. The shipped kernel
+<p>For 3D the cost is <code class="docutils literal notranslate"><span class="pre">8^3</span> <span class="pre">−</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">511</span></code> FMAs per evaluation. The shipped kernel
 batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
 when the leaf is hot in L1.</p>
 </section>
@@ -438,7 +438,7 @@ callers don’t contend.</p>
 </section>
 <section id="what-costs-what">
 <h2>What costs what<a class="headerlink" href="#what-costs-what" title="Link to this heading"></a></h2>
-<p>Phase-7 attribution at 3D deg=8, N = 10^6:</p>
+<p>Phase-7 attribution at 3D deg=7, N = 10^6:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                          % of runtime
    tree descent        │█████████████████████  55 %   ◄── L1 load-use bound,
                        │                                  at silicon floor
@@ -463,14 +463,13 @@ thread-safety so callers can chunk and thread externally.</p>
               <span class="o">+</span> <span class="n">thread</span><span class="o">-</span><span class="n">safe</span> <span class="n">immutable</span> <span class="n">Function</span>
 </pre></div>
 </div>
-<p>One fit, immutable <code class="docutils literal notranslate"><span class="pre">Function</span></code>, cheap evaluations forever — the “baobab tree
-of life” naming.</p>
+<p>One fit, immutable <code class="docutils literal notranslate"><span class="pre">Function</span></code>, cheap evaluations forever.</p>
 </section>
 <section id="degree-selection-c-abi-vs-c-header-api">
 <h2>Degree selection: C ABI vs C++ header API<a class="headerlink" href="#degree-selection-c-abi-vs-c-header-api" title="Link to this heading"></a></h2>
 <p>The <strong>C++ header API</strong> (<code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;Degree&gt;(...)</span></code>) requires the leaf degree
 as a compile-time template parameter, letting you tune or override it per
-call site. Supported values are any positive integer; 8 is the default
+call site. Supported values are any positive integer; 7 is the default
 (matches one AVX2 / AVX-512 register lane).</p>
 <p>The <strong>C ABI</strong> (<code class="docutils literal notranslate"><span class="pre">treeweave_fit</span></code> for double / <code class="docutils literal notranslate"><span class="pre">treeweavef_fit</span></code> for float in
 <code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code> — precision lives in the prefix, FINUFFT/FFTW style) takes no

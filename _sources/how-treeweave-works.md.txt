@@ -3,7 +3,7 @@
 Treeweave turns an expensive function `f(x)` into a cheap lookup by precomputing
 a **piecewise polynomial approximation** on an **adaptive tree**. Cost: memory
 plus a one-time fit. Payoff: every later call is a tree descent followed by
-a degree-8 polynomial evaluation.
+a degree-7 polynomial evaluation.
 
 ```
    user calls fn(x), fn(x), fn(x)... a million times.
@@ -40,7 +40,7 @@ numerical-analysis folklore (see [Background](#background-and-further-reading)):
 - **Monomial basis at low degree.** Treeweave keeps the polynomial in the plain
   monomial basis `Σ cₖ xᵏ`. That is famously a bad idea at high degree, but it
   is "easy, fast, accurate" at the low degrees treeweave actually uses
-  (degree ≈ 8, well under the `n ≲ 30` regime where the monomial Vandermonde
+  (degree ≈ 7, well under the `n ≲ 30` regime where the monomial Vandermonde
   solve stays well-behaved). Horner evaluation of a monomial is a tight FMA
   chain that maps directly onto a SIMD register lane (Phase 3).
 - **Adaptive panels, not one global fit.** A small enough panel near a rapid
@@ -171,19 +171,19 @@ Evaluation collapses one axis at a time using Horner's rule. Total cost:
 **`K^n − 1` FMAs** where `K = degree + 1`.
 
 ```
-   1D Horner (K = 9):              2D Horner (K = 9):
+   1D Horner (K = 8):              2D Horner (K = 8):
 
-   y = c[8]                        for j in 0..8:
-   for k in 7..0:                      y_j = (1D Horner over axis 1)
+   y = c[7]                        for j in 0..7:
+   for k in 6..0:                      y_j = (1D Horner over axis 1)
        y = y * x + c[k]
-                                   y = y_8
-   8 FMAs total, single chain.     for j in 7..0:
+                                   y = y_7
+   7 FMAs total, single chain.     for j in 6..0:
                                        y = y * x_0 + y_j
 
-                                   80 FMAs total, two nested chains.
+                                   63 FMAs total, two nested chains.
 ```
 
-For 3D the cost is `9^3 − 1 = 728` FMAs per evaluation. The shipped kernel
+For 3D the cost is `8^3 − 1 = 511` FMAs per evaluation. The shipped kernel
 batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
 when the leaf is hot in L1.
 
@@ -223,7 +223,7 @@ callers don't contend.
 
 ## What costs what
 
-Phase-7 attribution at 3D deg=8, N = 10^6:
+Phase-7 attribution at 3D deg=7, N = 10^6:
 
 ```
                           % of runtime
@@ -251,14 +251,13 @@ thread-safety so callers can chunk and thread externally.
               + thread-safe immutable Function
 ```
 
-One fit, immutable `Function`, cheap evaluations forever — the "baobab tree
-of life" naming.
+One fit, immutable `Function`, cheap evaluations forever.
 
 ## Degree selection: C ABI vs C++ header API
 
 The **C++ header API** (`treeweave::fit<Degree>(...)`) requires the leaf degree
 as a compile-time template parameter, letting you tune or override it per
-call site. Supported values are any positive integer; 8 is the default
+call site. Supported values are any positive integer; 7 is the default
 (matches one AVX2 / AVX-512 register lane).
 
 The **C ABI** (`treeweave_fit` for double / `treeweavef_fit` for float in

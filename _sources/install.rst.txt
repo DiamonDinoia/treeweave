@@ -59,7 +59,7 @@ builds treeweave (and its header-only deps) for you:
    FetchContent_Declare(
      treeweave
      GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-     GIT_TAG main
+     GIT_TAG v0.0.0  # pin a release tag or commit SHA for reproducibility
    )
    FetchContent_MakeAvailable(treeweave)
 
