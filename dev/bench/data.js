@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781204095868,
+  "lastUpdate": 1781277685906,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1826,6 +1826,54 @@ window.BENCHMARK_DATA = {
             "value": 0.00149097077777778,
             "unit": "s/batch",
             "extra": "MdAPE=0.00341596104549278; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "815ea758b89dad660056b22ec4d8e376c5814e95",
+          "message": "treeweave 0.0.0 — adaptive N-dimensional polynomial-tree function approximation\n\nHeader-only C++ API (treeweave::treeweave), a relocatable C ABI\n(libtreeweave_c, find_package(treeweave)), and Python, Julia, Fortran,\nMATLAB, and Octave bindings. x86-64 builds dispatch SSE4.2 / AVX2 / AVX-512\nat runtime; aarch64 uses the NEON baseline.\n\nCI covers Linux/macOS/Windows on x86-64 + aarch64, the language-wrapper test\nsuites, install-recipe smoke tests (find_package, FetchContent, pip), and a\nTestPyPI dry-run on every push to main.\n\nRelease is a gated, human-dispatched one-click workflow (mirrors\nDiamonDinoia/simdref): scripts/bump_version.py + check_version_sync.py keep\nthe four hand-synced version files in lockstep, and release.yml builds the\nC-ABI tarballs + wheels + sdist, smoke-tests them against the real artifacts,\nthen publishes to PyPI and pushes the v<version> tag only after every gate is\ngreen (with tag rollback on publish failure). Relocatable tarballs install to\nlib/ so find_package works on Debian/Ubuntu as well as RHEL.\n\nThis tree includes a full cross-surface hardening pass and a cross-language\nbenchmark:\n- Unified out-of-domain contract — a finite x > b returns NaN on every eval\n  path (scalar, batch, sorted, leaf-table, descent), implemented branchlessly\n  (positive-logic SIMD domain mask + unsigned-min clamp), with no f64\n  throughput regression.\n- Fixes for float->int cast UB on non-finite inputs and the aarch64\n  fcvtzs(NaN)=0 mis-classification; C-ABI NULL-safety; Julia GC.@preserve and\n  max_memory_mib default; by-value Fortran eval interfaces; mwrap stub prefix\n  bz_ -> tw_.\n- Build/CI hardening: CPM bootstrap fixed on reconfigure, xsimd SHA-pinned,\n  GitHub Actions SHA-pinned, workflow permissions scoped.\n- lgamma benchmark on [3, 50) comparing the native log-gamma against treeweave\n  in C, C++, Fortran, Python, Julia, and MATLAB/Octave (max relative error,\n  throughput, speedup).\n\nVerified: C++/C-ABI release 74/74 and ASan/UBSan 64/64; Python, Julia,\nFortran, and Octave bindings green; all six lgamma benches at ~1e-10 max\nrelative error.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-12T11:11:48-04:00",
+          "tree_id": "1d10c6c806647dc1b0ed39c8b0b2ee60ae5b3b3f",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/815ea758b89dad660056b22ec4d8e376c5814e95"
+        },
+        "date": 1781277683807,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000668458125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00391733858650226; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00122425822222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0145280042193105; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00217106577777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00171148723881548; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00112831588888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0045094317524455; batch=65536 pts/call"
           }
         ]
       }
