@@ -134,8 +134,12 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-speedup">Cross-language speedup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#sorted-vs-unsorted-batch">Sorted vs unsorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -161,6 +165,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -176,6 +181,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
@@ -239,12 +246,17 @@ pointer and <code class="docutils literal notranslate"><span class="pre">context
 <span class="w">    </span><span class="k">use</span><span class="p">,</span><span class="w"> </span><span class="k">intrinsic</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="nb">iso_c_binding</span>
 <span class="nb">    </span><span class="k">implicit none</span>
 <span class="k">contains</span>
-<span class="k">    subroutine </span><span class="n">kernel_exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="k">bind</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+<span class="w">    </span><span class="c">! zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.</span>
+<span class="w">    </span><span class="k">subroutine </span><span class="n">kernel_zeta</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="k">bind</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
 <span class="w">        </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w">  </span><span class="kd">::</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
 <span class="w">        </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
 <span class="w">        </span><span class="k">type</span><span class="p">(</span><span class="kt">c_ptr</span><span class="p">),</span><span class="w">    </span><span class="k">value</span><span class="w">       </span><span class="kd">::</span><span class="w"> </span><span class="n">context</span>
-<span class="w">        </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-<span class="w">    </span><span class="k">end subroutine </span><span class="n">kernel_exp</span>
+<span class="w">        </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">k</span>
+<span class="w">        </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_c_double</span>
+<span class="w">        </span><span class="k">do </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span>
+<span class="w">            </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="kt">c_double</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="w">        </span><span class="k">end do</span>
+<span class="k">    end subroutine </span><span class="n">kernel_zeta</span>
 <span class="k">end module </span><span class="n">kernels</span>
 
 <span class="k">program </span><span class="n">demo</span>
@@ -255,15 +267,15 @@ pointer and <code class="docutils literal notranslate"><span class="pre">context
 <span class="k">    type</span><span class="p">(</span><span class="kt">c_ptr</span><span class="p">)</span><span class="w">    </span><span class="kd">::</span><span class="w"> </span><span class="n">h</span>
 <span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="w">    </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_c_double</span>
-<span class="w">    </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0_c_double</span>
-<span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel_exp</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">    </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0_c_double</span>
+<span class="w">    </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="mf">0.0_c_double</span>
+<span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel_zeta</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
 <span class="w">                      </span><span class="mf">1.0e-10_c_double</span><span class="p">,</span><span class="w"> </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_null_ptr</span><span class="p">)</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(.</span><span class="nb">not</span><span class="p">.</span><span class="w"> </span><span class="nb">c_associated</span><span class="p">(</span><span class="n">h</span><span class="p">))</span><span class="w"> </span><span class="k">error stop </span><span class="n">treeweave_error_message</span><span class="p">()</span>
 
-<span class="w">    </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5_c_double</span>
+<span class="w">    </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.5_c_double</span>
 <span class="w">    </span><span class="k">call </span><span class="n">treeweave_eval</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span>
-<span class="w">    </span><span class="k">write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,F0.12)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;exp(0.5) ~= &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="k">write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,F0.12)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;zeta_N(3.5) ~= &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_free</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
 <span class="k">end program </span><span class="n">demo</span>
 </pre></div>

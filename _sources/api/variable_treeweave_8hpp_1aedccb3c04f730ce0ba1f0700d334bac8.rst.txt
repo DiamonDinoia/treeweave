@@ -1,0 +1,14 @@
+.. _exhale_variable_treeweave_8hpp_1aedccb3c04f730ce0ba1f0700d334bac8:
+
+Variable treeweave::version
+===========================
+
+- Defined in :ref:`file_include_treeweave_treeweave.hpp`
+
+
+Variable Documentation
+----------------------
+
+
+.. doxygenvariable:: treeweave::version
+   :project: treeweave

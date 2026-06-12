@@ -134,8 +134,12 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-speedup">Cross-language speedup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#sorted-vs-unsorted-batch">Sorted vs unsorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -161,6 +165,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -176,6 +181,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
@@ -248,21 +255,24 @@ install it with TestPyPI as the primary index and real PyPI for the dependencies
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">treeweave</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>          <span class="c1"># x is a length-`dim` sequence</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">1000</span>                           <span class="c1"># zeta_N(s) = sum_{k=1..N} k**-s</span>
+<span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
 
-<span class="n">approx</span> <span class="o">=</span> <span class="n">treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>                          <span class="c1"># x is a length-`dim` sequence</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ks</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>   <span class="c1"># expensive; fit once, eval a polynomial</span>
+
+<span class="n">approx</span> <span class="o">=</span> <span class="n">treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span>   <span class="c1"># dtype, dim, out_dim, memory_usage</span>
 
 <span class="c1"># The fit domain is [a, b); evaluating exactly at the upper corner b is</span>
 <span class="c1"># allowed as a convenience and returns the boundary value (not NaN).</span>
-<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>    <span class="c1"># includes the endpoint b = 1.0</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>   <span class="c1"># includes the endpoint b = 10.0</span>
 <span class="n">ys</span> <span class="o">=</span> <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>                    <span class="c1"># batch eval; returns an ndarray</span>
-<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
+<span class="n">ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">([</span><span class="n">s</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ref</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">1e-8</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">fit</span></code> infers the input/output dimensions by probing the callable, so the
@@ -274,7 +284,7 @@ Python exception.</p>
 <h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
 <p>Calling the fitted object dispatches on the shape of its argument, and two
 keyword flags select the fast paths:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>                       <span class="c1"># single point  -&gt; scalar (or (out_dim,))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="p">(</span><span class="mf">3.5</span><span class="p">)</span>                       <span class="c1"># single point  -&gt; scalar (or (out_dim,))</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>                        <span class="c1"># batch (N,)     -&gt; (N,) / (N, out_dim)</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>           <span class="c1"># promise xs is non-decreasing, xs[i] &lt;= xs[i+1] (dim == 1)</span>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">transposed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>       <span class="c1"># batch -&gt; (out_dim, N)  (requires out_dim &gt; 1)</span>

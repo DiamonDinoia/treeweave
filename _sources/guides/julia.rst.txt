@@ -42,16 +42,17 @@ Minimal example
 
    using Treeweave
 
-   f = x -> exp(0.5x) + sin(3x)
-   approx = fit(f, 0.0, 2.0, 1e-10)
+   N = 1000                            # zeta_N(s) = sum_{k=1..N} k^-s
+   f = s -> sum(k -> k^(-s), 1:N)      # expensive; fit once, eval a polynomial
+   approx = fit(f, 2.0, 10.0, 1e-10)
    println(approx)   # show() prints dtype, dim, out_dim and bytes
 
-   y = approx(1.0)                     # single point
+   y = approx(3.5)                     # single point
 
    # Batch eval — the handle is called directly. The fit domain is [a, b);
    # evaluating exactly at the upper corner b is allowed (returns the boundary
    # value), so the endpoint can be kept.
-   xs = collect(range(0.0, 2.0; length = 1001))
+   xs = collect(range(2.0, 10.0; length = 1001))
    ys = approx(xs)
 
 ``fit`` infers the dimensions from the callable, so the common case is
@@ -66,7 +67,7 @@ fast paths:
 
 .. code-block:: julia
 
-   approx(1.0)                       # single point  -> scalar (or Vector)
+   approx(3.5)                       # single point  -> scalar (or Vector)
    approx(xs)                        # batch (Vector) -> Vector / n×out_dim
    approx(xs; sorted = true)         # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)

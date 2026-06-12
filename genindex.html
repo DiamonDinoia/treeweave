@@ -131,8 +131,12 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#cross-language-speedup">Cross-language speedup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guides/performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/performance.html#sorted-vs-unsorted-batch">Sorted vs unsorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="how-treeweave-works.html">How treeweave works</a><ul>
@@ -158,6 +162,7 @@
 <li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -173,6 +178,8 @@
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
@@ -263,11 +270,17 @@
 </li>
       <li><a href="api/enum_tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552.html#_CPPv4N9treeweave7TolKind12RelativeTailE">treeweave::TolKind::RelativeTail (C++ enumerator)</a>
 </li>
+      <li><a href="api/variable_treeweave_8hpp_1aedccb3c04f730ce0ba1f0700d334bac8.html#_CPPv4N9treeweave7versionE">treeweave::version (C++ member)</a>
+</li>
+      <li><a href="api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html#_CPPv4N9treeweave16version_at_leastEiii">treeweave::version_at_least (C++ function)</a>
+</li>
       <li><a href="api/variable_treeweave_8hpp_1a31035e7dcd81562082a784f5cc055000.html#_CPPv4N9treeweave13version_majorE">treeweave::version_major (C++ member)</a>
 </li>
       <li><a href="api/variable_treeweave_8hpp_1a111fd1bfdba3ec31f3ab27a4d9e009fd.html#_CPPv4N9treeweave13version_minorE">treeweave::version_minor (C++ member)</a>
 </li>
       <li><a href="api/variable_treeweave_8hpp_1a595ec4c456efc7c38360e8e959182c1c.html#_CPPv4N9treeweave13version_patchE">treeweave::version_patch (C++ member)</a>
+</li>
+      <li><a href="api/variable_treeweave_8hpp_1a9b6ab3ed62ac3097e3039d862ba203f5.html#_CPPv4N9treeweave14version_stringE">treeweave::version_string (C++ member)</a>
 </li>
       <li><a href="api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html#_CPPv415treeweave_batch11treeweave_tPKdPd6size_t">treeweave_batch (C++ function)</a>
 </li>
@@ -293,10 +306,10 @@
 </li>
       <li><a href="api/function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html#_CPPv414treeweave_free11treeweave_t">treeweave_free (C++ function)</a>
 </li>
-      <li><a href="api/typedef_treeweave_8h_1ad095928a162fe6d6917a1c96f51bf3cc.html#_CPPv416treeweave_func_t">treeweave_func_t (C++ type)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/typedef_treeweave_8h_1ad095928a162fe6d6917a1c96f51bf3cc.html#_CPPv416treeweave_func_t">treeweave_func_t (C++ type)</a>
+</li>
       <li><a href="api/function_treeweave_8h_1a95b15169a05e04ce66999163e109c141.html#_CPPv419treeweave_input_dim11treeweave_t">treeweave_input_dim (C++ function)</a>
 </li>
       <li><a href="api/function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b.html#_CPPv420treeweave_last_errorv">treeweave_last_error (C++ function)</a>
@@ -338,6 +351,10 @@
       <li><a href="api/enum_treeweave_8h_1a752661af84fa703138b216cf0bbb1ff3.html#_CPPv4N20treeweave_tol_kind_t23TREEWEAVE_RELATIVE_TAILE">treeweave_tol_kind_t::TREEWEAVE_RELATIVE_TAIL (C++ enumerator)</a>
 </li>
       <li><a href="api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html#_CPPv420treeweave_transposed11treeweave_tPKdPPCd6size_t">treeweave_transposed (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html#_CPPv417treeweave_versionv">treeweave_version (C++ function)</a>
+</li>
+      <li><a href="api/function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html#_CPPv424treeweave_version_stringv">treeweave_version_string (C++ function)</a>
 </li>
       <li><a href="api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html#_CPPv416treeweavef_batch11treeweave_tPKfPf6size_t">treeweavef_batch (C++ function)</a>
 </li>

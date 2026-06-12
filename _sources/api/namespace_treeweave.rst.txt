@@ -33,13 +33,19 @@ Functions
 
 - :ref:`exhale_function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b`
 
+- :ref:`exhale_function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382`
+
 
 Variables
 ---------
 
+
+- :ref:`exhale_variable_treeweave_8hpp_1aedccb3c04f730ce0ba1f0700d334bac8`
 
 - :ref:`exhale_variable_treeweave_8hpp_1a31035e7dcd81562082a784f5cc055000`
 
 - :ref:`exhale_variable_treeweave_8hpp_1a111fd1bfdba3ec31f3ab27a4d9e009fd`
 
 - :ref:`exhale_variable_treeweave_8hpp_1a595ec4c456efc7c38360e8e959182c1c`
+
+- :ref:`exhale_variable_treeweave_8hpp_1a9b6ab3ed62ac3097e3039d862ba203f5`

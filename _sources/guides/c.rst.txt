@@ -15,23 +15,25 @@ Minimal example
    #include <math.h>
    #include <stdio.h>
 
-   /* f(x) = exp(x) on [0, 1). input_dim == output_dim == 1. */
+   /* zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial. */
    static void kernel(const double *x, double *y, void *context) {
        (void)context;
-       y[0] = exp(x[0]);
+       double acc = 0.0;
+       for (int k = 1; k <= 1000; ++k) acc += pow(k, -x[0]);
+       y[0] = acc;
    }
 
    int main(void) {
-       double a = 0.0, b = 1.0;
+       double a = 2.0, b = 10.0;
        treeweave_t fn = treeweave_fit(kernel, /*input_dim=*/1, /*output_dim=*/1,
                                       &a, &b, /*tol=*/1e-10,
                                       /*context=*/NULL, /*opts=*/NULL);
        if (!fn) { fprintf(stderr, "fit failed: %s\n", treeweave_last_error()); return 1; }
 
-       double x = 0.5, y;
-       treeweave_eval(fn, &x, &y);             /* pointer scalar eval    */
-       double y2 = treeweave_eval_1d(fn, 0.5); /* by-value:  y2 = f(0.5) */
-       printf("exp(0.5) ~= %.12f (%.12f)\n", y, y2);
+       double x = 3.5, y;
+       treeweave_eval(fn, &x, &y);             /* pointer scalar eval     */
+       double y2 = treeweave_eval_1d(fn, 3.5); /* by-value:  y2 = f(3.5)  */
+       printf("zeta_N(3.5) ~= %.12f (%.12f)\n", y, y2);
 
        fn = treeweave_free(fn);
        return 0;

@@ -134,8 +134,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#cross-language-speedup">Cross-language speedup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#benchmarks-dashboard">Benchmarks dashboard</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#sorted-vs-unsorted-batch">Sorted vs unsorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -161,6 +165,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
@@ -176,6 +181,8 @@
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
@@ -257,6 +264,17 @@
 <li class="toctree-l1"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html#function-documentation">Function Documentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html#_CPPv4I_NSt6size_tE_10EvalPolicy00EN9treeweave3fitEDaRR4Func6Domain6Domaind7options"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html#function-documentation">Function Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html#_CPPv4N9treeweave16version_at_leastEiii"><code class="docutils literal notranslate"><span class="pre">version_at_least()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -422,6 +440,28 @@
 <li class="toctree-l1"><a class="reference internal" href="function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html#function-documentation">Function Documentation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html#_CPPv420treeweave_transposed11treeweave_tPKdPPCd6size_t"><code class="docutils literal notranslate"><span class="pre">treeweave_transposed()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html#function-documentation">Function Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html#_CPPv417treeweave_versionv"><code class="docutils literal notranslate"><span class="pre">treeweave_version()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html#function-documentation">Function Documentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html#_CPPv424treeweave_version_stringv"><code class="docutils literal notranslate"><span class="pre">treeweave_version_string()</span></code></a></li>
 </ul>
 </li>
 </ul>
