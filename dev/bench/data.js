@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781293969782,
+  "lastUpdate": 1781299683871,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -1970,6 +1970,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001692679,
             "unit": "s/batch",
             "extra": "MdAPE=0.00385052060103055; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "cc8cc6f00661b81061217d09970cb53621daa916",
+          "message": "Benchmark showcase (zeta) + JS/TS binding + version API\n\nReplace the cross-language benchmark's lgamma target with a dependency-free\nRiemann-zeta partial sum zeta_N(s) = sum_{k=1..N} k^-s (N=1e6) fit on [2, 10]:\na genuinely expensive function (N pow()s per eval), so a fitted polynomial eval\nbeats recomputing the sum decisively in every mode — including scalar. zeta is\nnow the quick-start example in all seven languages. lgamma and its bench-only\ndeps (scipy, pyyaml, SpecialFunctions, @stdlib/gammaln) are removed.\n\n- Charts: horizontal grouped Mevals/s bars (treeweave vs native, log x,\n  languages on y). README embeds the three throughput charts\n  (single/multi/sorted); the perf guide adds latency + sorted-vs-unsorted.\n- JS/TS binding (bindings/js): N-API addon + WASM, TS layer, node:test suite\n  (9/9), zeta example. CMake TREEWEAVE_BUILD_JS + bindings-js / bindings-js-wasm\n  presets; bindings.yml gains a `js` job (native + WASM).\n- Version API: generated <treeweave_version.h> (single source of truth =\n  project(VERSION)), runtime treeweave_version()/_string(), C++\n  treeweave::version_*, TREEWEAVE_VERSION_AT_LEAST macro.\n- benchmark-showcase.yml: zeta benches, fixed julia/octave legs, `js` leg.\n- GitHub Actions referenced by tag, not commit SHA.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-12T17:27:00-04:00",
+          "tree_id": "feedce2614b69b10f35cb3e821c654845078e93b",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/cc8cc6f00661b81061217d09970cb53621daa916"
+        },
+        "date": 1781299682293,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.0006706152,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00780521216879591; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001943212375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00538760190818233; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00283853944444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00624470809647054; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.001569795,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0251693158427711; batch=65536 pts/call"
           }
         ]
       }
