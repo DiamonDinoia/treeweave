@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781550967654,
+  "lastUpdate": 1781551689757,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2210,6 +2210,54 @@ window.BENCHMARK_DATA = {
             "value": 0.001705435125,
             "unit": "s/batch",
             "extra": "MdAPE=0.00207271507370029; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "2069f00302b571021062ce8b33c219032c18f335",
+          "message": "Pre-release polish: clean release version, per-language CI, README badges\n\nPrepare the treeweave 0.0.0 release.\n\n- Version: add TREEWEAVE_RELEASE_VERSION override to\n  treeweave_generate_version.cmake so release builds bake a clean \"0.0.0\" into\n  shipped C/C++ headers despite being built before the tag; the C-ABI build\n  passes it. Everyday dev builds keep -dev.N.\n- Benches: name the fitted object `fn` consistently across the Python, Julia,\n  JS, MATLAB, and Fortran zeta benches.\n- Examples/docs: use the Riemann-zeta function (not Runge) as the illustrative\n  fit example in docs/index.rst, docs/guides/cpp.rst, and examples/c++/simple1d.cpp,\n  matching the benchmark story; the snippets are self-contained (include <cmath>,\n  define zeta) so they compile and run on copy-paste. The Runge-phenomenon prose\n  in how-treeweave-works.md and the internal perf benchmarks are unchanged.\n- Docs: document the mwrap single-point eval overhead as a known limitation\n  (docs/known-issues.md, linked from performance.rst; mirrored in the MATLAB\n  binding README).\n- CI: split bindings.yml into per-language workflows (python/julia/fortran/\n  octave/js/matlab.yml) so each binding earns its own status badge; release.yml\n  preflight now gates on the per-language set (matlab best-effort, not gated).\n- README: FINUFFT-style badge row (core + per-binding) and a Supported bindings\n  table with status badges + example links.\n- Post-release: add release-install.yml validating pip-from-PyPI and the C-ABI\n  tarball find_package path from a published release.\n- Accuracy: CHANGELOG and docs/index.rst now list the JS/TS wrapper.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>",
+          "timestamp": "2026-06-15T15:26:38-04:00",
+          "tree_id": "e27cf0523fb55998d177fb0d26b16136c15f8fca",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/2069f00302b571021062ce8b33c219032c18f335"
+        },
+        "date": 1781551688939,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000672713444444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00453625506295602; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00135404166666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.026056946246855; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00220173111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00979284386389286; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0011388755,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00750808768195318; batch=65536 pts/call"
           }
         ]
       }
