@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781551689757,
+  "lastUpdate": 1781554555485,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2258,6 +2258,54 @@ window.BENCHMARK_DATA = {
             "value": 0.0011388755,
             "unit": "s/batch",
             "extra": "MdAPE=0.00750808768195318; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "de033dcaa41cd08a0c84d381db58c2925406374f",
+          "message": "Pre-release polish: clean release version, per-language CI, README badges\n\nPrepare the treeweave 0.0.0 release.\n\n- Version tooling: efe889e made the root VERSION file the single source of\n  truth (CMakeLists project() reads it via a variable), which silently broke\n  every consumer that still regex-matched a literal `project(treeweave VERSION\n  X.Y.Z)` or read the pre-refactor header layout. Repoint them at VERSION:\n    * bindings/python/pyproject.toml — scikit-build-core regex provider now\n      reads ../../VERSION (the release wheel build had no version source).\n    * scripts/check_version_sync.py — canonical = VERSION; validates the\n      committed generated treeweave_version.h + Julia Project.toml + JS\n      package.json (drops the obsolete treeweave.h/.hpp literal checks).\n    * scripts/bump_version.py — writes VERSION + the generated header macros +\n      Julia + JS; no longer edits CMakeLists/treeweave.h/.hpp.\n- Release version: add TREEWEAVE_RELEASE_VERSION override to\n  treeweave_generate_version.cmake so release builds bake a clean \"0.0.0\" into\n  shipped C/C++ headers despite being built before the tag; the C-ABI build\n  passes it. Everyday dev builds keep -dev.N.\n- Benches: name the fitted object `fn` consistently across the Python, Julia,\n  JS, MATLAB, and Fortran zeta benches.\n- Examples/docs: use the Riemann-zeta function (not Runge) as the illustrative\n  fit example in docs/index.rst, docs/guides/cpp.rst, and examples/c++/simple1d.cpp;\n  the snippets are self-contained (include <cmath>, define zeta) so they compile\n  and run on copy-paste. The Runge-phenomenon prose and internal perf benchmarks\n  are unchanged.\n- Docs: document the mwrap single-point eval overhead as a known limitation\n  (docs/known-issues.md, linked from performance.rst; mirrored in the MATLAB\n  binding README).\n- CI: split bindings.yml into per-language workflows (python/julia/fortran/\n  octave/js/matlab.yml) so each binding earns its own status badge; release.yml\n  preflight now gates on the per-language set (matlab best-effort, not gated).\n- README: FINUFFT-style badge row (core + per-binding) and a Supported bindings\n  table with status badges + example links.\n- Post-release: add release-install.yml validating pip-from-PyPI and the C-ABI\n  tarball find_package path from a published release.\n- Accuracy: CHANGELOG and docs/index.rst now list the JS/TS wrapper.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>",
+          "timestamp": "2026-06-15T16:13:57-04:00",
+          "tree_id": "f56b6836124f23b7aed37f71bb9785f389f3a99a",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/de033dcaa41cd08a0c84d381db58c2925406374f"
+        },
+        "date": 1781554554645,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000664483,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0016440748737424; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001240078375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00875057280938265; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00217163844444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00339485052816132; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00113278111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0029429081717226; batch=65536 pts/call"
           }
         ]
       }
