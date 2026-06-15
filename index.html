@@ -155,6 +155,10 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="known-issues.html">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="known-issues.html#matlab-octave-single-point-eval-overhead">MATLAB/Octave single-point eval overhead</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -253,7 +257,7 @@ tolerance at lower polynomial order, which is faster on modern SIMD hardware.</p
 </pre></div>
 </div>
 <p>Use it from <strong>C++</strong> (header-only), or from <strong>C</strong>, <strong>Fortran</strong>, <strong>Python</strong>,
-<strong>Julia</strong>, and <strong>MATLAB/Octave</strong> through a stable C ABI.</p>
+<strong>Julia</strong>, <strong>MATLAB/Octave</strong>, and <strong>JavaScript/TypeScript</strong> through a stable C ABI.</p>
 <section id="project-links">
 <h2>Project links<a class="headerlink" href="#project-links" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -272,8 +276,9 @@ tolerance at lower polynomial order, which is faster on modern SIMD hardware.</p
 polynomial lookup; trade a little memory for a lot of speed.</p></li>
 <li><p><strong>Adaptive paneling.</strong> Low-order polynomial panels on an adaptive tree reach
 the target tolerance at lower order than a single global fit — SIMD-friendly.</p></li>
-<li><p><strong>Six languages, one core.</strong> A stable C ABI (<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>) underpins
-Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.</p></li>
+<li><p><strong>Seven languages, one core.</strong> A stable C ABI (<code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>) underpins
+the Python, Julia, MATLAB/Octave, Fortran, and JavaScript/TypeScript wrappers;
+C++ is header-only.</p></li>
 <li><p><strong>Thread-safe by construction.</strong> A fitted object is immutable and its
 <code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe to call concurrently.</p></li>
 </ul>
@@ -376,6 +381,10 @@ Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.</p></li>
 <li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#background-and-further-reading">Background and further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="known-issues.html">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="known-issues.html#matlab-octave-single-point-eval-overhead">MATLAB/Octave single-point eval overhead</a></li>
 </ul>
 </li>
 </ul>

@@ -15,6 +15,10 @@ bindings) amortize leaf lookup and vectorize the polynomial evaluation across
 points. Prefer them to a scalar loop whenever you have more than a handful of
 points.
 
+This matters most in MATLAB/Octave, where single-point eval carries an extra
+per-call overhead inherent to the mwrap binding layer (not treeweave) — see
+:doc:`/known-issues`. The batch path amortises it to ~zero.
+
 The sorted fast path
 ~~~~~~~~~~~~~~~~~~~~~~
 

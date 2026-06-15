@@ -22,7 +22,7 @@ tolerance at lower polynomial order, which is faster on modern SIMD hardware.
    double y   = fast(0.3);                                        // evaluate forever
 
 Use it from **C++** (header-only), or from **C**, **Fortran**, **Python**,
-**Julia**, and **MATLAB/Octave** through a stable C ABI.
+**Julia**, **MATLAB/Octave**, and **JavaScript/TypeScript** through a stable C ABI.
 
 Project links
 -------------
@@ -41,8 +41,9 @@ Why treeweave
   polynomial lookup; trade a little memory for a lot of speed.
 - **Adaptive paneling.** Low-order polynomial panels on an adaptive tree reach
   the target tolerance at lower order than a single global fit — SIMD-friendly.
-- **Six languages, one core.** A stable C ABI (``libtreeweave_c``) underpins
-  Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.
+- **Seven languages, one core.** A stable C ABI (``libtreeweave_c``) underpins
+  the Python, Julia, MATLAB/Octave, Fortran, and JavaScript/TypeScript wrappers;
+  C++ is header-only.
 - **Thread-safe by construction.** A fitted object is immutable and its
   ``operator()`` is safe to call concurrently.
 
@@ -73,6 +74,7 @@ Why treeweave
    guides/dispatch
    guides/performance
    how-treeweave-works
+   known-issues
 
 .. toctree::
    :maxdepth: 2

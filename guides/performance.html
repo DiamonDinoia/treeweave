@@ -156,6 +156,10 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../known-issues.html">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../known-issues.html#matlab-octave-single-point-eval-overhead">MATLAB/Octave single-point eval overhead</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -248,6 +252,9 @@ it.</p>
 bindings) amortize leaf lookup and vectorize the polynomial evaluation across
 points. Prefer them to a scalar loop whenever you have more than a handful of
 points.</p>
+<p>This matters most in MATLAB/Octave, where single-point eval carries an extra
+per-call overhead inherent to the mwrap binding layer (not treeweave) — see
+<a class="reference internal" href="../known-issues.html"><span class="doc">Known issues</span></a>. The batch path amortises it to ~zero.</p>
 <section id="the-sorted-fast-path">
 <h3>The sorted fast path<a class="headerlink" href="#the-sorted-fast-path" title="Link to this heading"></a></h3>
 <p>The general batch path first counting-sorts the inputs by leaf so each leaf’s
