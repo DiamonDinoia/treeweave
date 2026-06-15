@@ -33,6 +33,9 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 90
     container: ${{ matrix.container }}
+    # Optional legs (matrix.optional) must never block the release — a failure
+    # there is reported but does not fail the build-c-abi job.
+    continue-on-error: ${{ matrix.optional == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,6 +45,18 @@ jobs:
             container: quay.io/pypa/manylinux_2_28_x86_64
             multiarch: 'ON'
             arch: x86-64
+          # Optional, NOT mandatory: same multiarch binary (baseline x86-64,
+          # runtime-dispatches up to AVX-512) but built on the newer
+          # manylinux_2_34 base (glibc 2.34, RHEL 9 / Ubuntu 22.04+) with its
+          # current toolchain. Users on a recent OS can prefer this; everyone
+          # else uses the manylinux_2_28 tarball above. Shipped as an extra
+          # release asset, never gated.
+          - name: linux-x86_64-manylinux_2_34
+            runs-on: ubuntu-24.04
+            container: quay.io/pypa/manylinux_2_34_x86_64
+            multiarch: 'ON'
+            arch: x86-64
+            optional: 'true'
           - name: linux-aarch64
             runs-on: ubuntu-24.04-arm
             container: quay.io/pypa/manylinux_2_28_aarch64
@@ -108,6 +123,7 @@ jobs:
             -DCMAKE_INSTALL_LIBDIR=lib \
             -DTREEWEAVE_BUILD_TESTS=OFF \
             -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
             -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} \
             -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build -j
@@ -119,11 +135,15 @@ jobs:
         if: matrix.name == 'windows-x64'
         shell: pwsh
         run: |
+          # Quote the version -D: PowerShell otherwise mangles the bare
+          # X.Y.Z token and CMake receives a truncated value (e.g. 0.0.0 -> 0),
+          # failing the MAJOR.MINOR.PATCH check. The bash legs above are unaffected.
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INSTALL_LIBDIR=lib `
             -DTREEWEAVE_BUILD_TESTS=OFF `
             -DTREEWEAVE_BUILD_EXAMPLES=OFF `
+            "-DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }}" `
             -DTREEWEAVE_C_MULTIARCH=OFF
           cmake --build build
           cmake --install build --prefix dist

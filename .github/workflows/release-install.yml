@@ -1,0 +1,98 @@
+name: Release install
+
+# Validates that a PUBLISHED release is actually installable by a downstream
+# user — the paths that only exist after publishing, which install-smoke.yml
+# (TestPyPI / in-tree find_package / FetchContent) and the in-release
+# verify-prebuilt job cannot cover:
+#
+#   * pip-from-pypi      — `pip install treeweave` from the real PyPI index,
+#                          import, and a tiny fit+eval smoke.
+#   * c-abi-from-release — `gh release download` the linux-x86_64 C-ABI tarball
+#                          asset, then a consumer cmake project does
+#                          find_package(treeweave) + compile + run.
+#
+# The Julia prebuilt-download path is covered by julia-smoke.yml (dispatched by
+# release.yml's verify-prebuilt job), so it is not duplicated here.
+#
+# Runs on every published release, on demand, and weekly so a silent breakage in
+# PyPI / the Release assets is caught even between releases.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays 06:00 UTC
+
+concurrency:
+  group: release-install-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pip-from-pypi:
+    name: pip install (PyPI)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install treeweave from PyPI and evaluate
+        run: |
+          python -m pip install --upgrade pip numpy
+          # The release publish can briefly precede the index update; retry.
+          for i in 1 2 3 4 5; do
+            if python -m pip install treeweave; then break; fi
+            echo "treeweave not on the PyPI index yet; retry $i"
+            sleep 30
+          done
+          python - <<'EOF'
+          import math, importlib.metadata
+          import numpy as np, treeweave
+          print("treeweave", importlib.metadata.version("treeweave"))
+          fn = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-10)
+          xs = np.linspace(0.0, 1.0, 11, endpoint=False)
+          err = float(np.max(np.abs(fn(xs) - np.exp(xs))))
+          assert err < 1e-8, err
+          print(f"OK: max abs error {err:.2e}")
+          EOF
+
+  c-abi-from-release:
+    name: C-ABI from GitHub Release (find_package)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Download the linux-x86_64 C-ABI tarball from the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # On `release: published` use that tag; otherwise the latest release.
+          tag="${{ github.event.release.tag_name }}"
+          mkdir -p pkg
+          gh release download $tag --repo "${{ github.repository }}" \
+            --pattern '*linux-x86_64.tar.gz' --dir pkg
+          ls -l pkg
+
+      - name: Extract to a prefix
+        run: |
+          mkdir -p _prefix
+          tar -C _prefix -xzf pkg/*linux-x86_64.tar.gz
+          ls -R _prefix | head -40
+
+      - name: find_package(treeweave) + link treeweave_c + run
+        run: bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"

@@ -40,8 +40,8 @@ function emit_block(io, name, tw, nat)
 end
 
 const a, b = 2.0, 10.0
-approx = fit(zeta_partial, a, b, 1e-10)  # default tol_kind is RelativeMax
-println(approx)
+fn = fit(zeta_partial, a, b, 1e-10)  # default tol_kind is RelativeMax
+println(fn)
 
 n        = 1_000_000   # batch / sorted points
 n_scalar = 100_000     # scalar-API points
@@ -51,7 +51,7 @@ xs_sorted = sort(xs)
 
 # --- accuracy vs the brute-force sum, on the n_native sample -----------------
 xs_native = xs[1:n_native]
-yhat    = approx(xs_native)
+yhat    = fn(xs_native)
 yref    = zeta_partial.(xs_native)
 max_rel = maximum(abs.(yhat .- yref) ./ abs.(yref))
 
@@ -66,21 +66,21 @@ nat_rate = mevals(n_native, nat_s)                                 # Mevals/s, a
 
 # --- single-eval: the scalar API, one point at a time ------------------------
 xs_scalar = xs[1:n_scalar]
-scalar_sum(approx, xs_scalar)                                      # warm-up (compile)
-t0 = time_ns(); s_tw = scalar_sum(approx, xs_scalar); t1 = time_ns()
+scalar_sum(fn, xs_scalar)                                      # warm-up (compile)
+t0 = time_ns(); s_tw = scalar_sum(fn, xs_scalar); t1 = time_ns()
 tw_single_s = (t1 - t0) / 1e9
 @assert isfinite(s_tw)
 
 # --- multi-eval: the unsorted batch (in place, allocation-free) --------------
 tw_buf = similar(xs)
-approx(xs; out=tw_buf)                                             # warm-up
-t0 = time_ns(); approx(xs; out=tw_buf); t1 = time_ns()
+fn(xs; out=tw_buf)                                             # warm-up
+t0 = time_ns(); fn(xs; out=tw_buf); t1 = time_ns()
 tw_multi_s = (t1 - t0) / 1e9
 @assert isfinite(sum(tw_buf))
 
 # --- sorted-eval: the 1-D ascending fast path --------------------------------
-approx(xs_sorted; sorted=true, out=tw_buf)                        # warm-up
-t0 = time_ns(); approx(xs_sorted; sorted=true, out=tw_buf); t1 = time_ns()
+fn(xs_sorted; sorted=true, out=tw_buf)                        # warm-up
+t0 = time_ns(); fn(xs_sorted; sorted=true, out=tw_buf); t1 = time_ns()
 tw_sorted_s = (t1 - t0) / 1e9
 @assert isfinite(sum(tw_buf))
 

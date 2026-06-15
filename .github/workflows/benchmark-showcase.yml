@@ -9,9 +9,14 @@ name: Benchmark Showcase
 # This is intentionally separate from bench.yml (nanobench time-series) and
 # docs.yml (gh-pages): a distinct workflow, concurrency group, and result
 # branch, so it never collides with either.
+# Non-gating dashboard — only regenerates the README throughput charts. Runs
+# per-release (the correct cadence) plus weekly + on demand, so it no longer
+# fires on every push (it was one of the two heaviest non-gating per-push jobs).
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 concurrency:
@@ -69,7 +74,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y octave-dev
 
       # The JS showcase bar uses the NATIVE .node backend (comparable to the
-      # other native-language bars); the WASM backend is exercised in bindings.yml.
+      # other native-language bars); the WASM backend is exercised in js.yml.
       - name: Set up Node
         if: matrix.lang == 'js'
         uses: actions/setup-node@v4

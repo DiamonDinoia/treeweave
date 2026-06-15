@@ -16,7 +16,7 @@ tol = 1e-10;
 % so the MEX fit callback can resolve it (a script-local function cannot).
 zeta_partial = @(s) sum((1:160) .^ (-s));
 
-obj = treeweave(@(x) zeta_partial(x(1)), [a], [b], tol, 'dim', 1, 'out_dim', 1);
+fn = treeweave(@(x) zeta_partial(x(1)), [a], [b], tol, 'dim', 1, 'out_dim', 1);
 
 n = 1e6;            % batch / sorted points
 n_scalar = 10000;   % scalar-API points (interpreter per-point loops are slow)
@@ -26,7 +26,7 @@ Xsorted = sort(X);
 
 % --- accuracy vs the brute-force sum, on the n_native sample ------------------
 Xnative = X(1:n_native);
-Yhat    = obj.eval(Xnative);
+Yhat    = fn.eval(Xnative);
 Yref    = arrayfun(zeta_partial, Xnative);
 max_rel = max(abs(Yhat - Yref) ./ abs(Yref));
 
@@ -38,18 +38,18 @@ nat_rate = n_native / (nat_s * 1e6);   % Mevals/s, reused in every mode
 
 % --- single-eval: the scalar API, one point at a time ------------------------
 Xs = X(1:n_scalar);
-s = 0; for i = 1:n_scalar, s = s + obj.eval(Xs(i)); end                % warm-up
-t = tic; s = 0; for i = 1:n_scalar, s = s + obj.eval(Xs(i)); end; tw_single_s = toc(t);
+s = 0; for i = 1:n_scalar, s = s + fn.eval(Xs(i)); end                % warm-up
+t = tic; s = 0; for i = 1:n_scalar, s = s + fn.eval(Xs(i)); end; tw_single_s = toc(t);
 assert(isfinite(s));
 
 % --- multi-eval: the unsorted batch ------------------------------------------
-Yt = obj.eval(X);                       % warm-up
-t = tic; Yt = obj.eval(X); tw_multi_s = toc(t);
+Yt = fn.eval(X);                       % warm-up
+t = tic; Yt = fn.eval(X); tw_multi_s = toc(t);
 assert(isfinite(sum(Yt)));
 
 % --- sorted-eval: the 1-D ascending fast path --------------------------------
-Yt = obj.eval(Xsorted, 'sorted', true);                  % warm-up
-t = tic; Yt = obj.eval(Xsorted, 'sorted', true); tw_sorted_s = toc(t);
+Yt = fn.eval(Xsorted, 'sorted', true);                  % warm-up
+t = tic; Yt = fn.eval(Xsorted, 'sorted', true); tw_sorted_s = toc(t);
 assert(isfinite(sum(Yt)));
 
 % --- throughput (Mevals/s) and speedup per mode ------------------------------
@@ -81,4 +81,4 @@ if ~isempty(yaml_path)
     end
 end
 
-delete(obj);
+delete(fn);

@@ -15,7 +15,7 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 - Initial public release of `treeweave`: an adaptive polynomial-tree function
   approximator with a header-only C++ API (`treeweave::treeweave`), a relocatable
   C ABI (`libtreeweave_c`, `find_package(treeweave)`), and Python, Julia,
-  Fortran, MATLAB, and Octave wrappers.
+  Fortran, MATLAB/Octave, and JavaScript/TypeScript wrappers.
 - Prebuilt distributions: Python wheels on PyPI (x86-64 wheels dispatch
   SSE4.2 / AVX2 / AVX-512 at runtime; aarch64 + Apple-silicon wheels), and
   relocatable C-ABI tarballs attached to the GitHub Release for every supported

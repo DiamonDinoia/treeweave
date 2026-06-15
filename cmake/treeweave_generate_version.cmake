@@ -40,6 +40,18 @@ endif()
 file(READ "${_tw_src}/VERSION" TREEWEAVE_VERSION_STRING)
 string(STRIP "${TREEWEAVE_VERSION_STRING}" TREEWEAVE_VERSION_STRING)
 
+# Release override: when TREEWEAVE_RELEASE_VERSION is set non-empty (the release
+# workflow passes -DTREEWEAVE_RELEASE_VERSION=<version>), pin every version field
+# to that exact value and skip the git/dev-suffix logic. This keeps shipped
+# C/C++ headers at the clean X.Y.Z even though artifacts are built before the tag
+# is pushed; everyday main/dev builds (no override) still get -dev.N.
+if(
+    DEFINED TREEWEAVE_RELEASE_VERSION
+    AND NOT TREEWEAVE_RELEASE_VERSION STREQUAL ""
+)
+    set(TREEWEAVE_VERSION_STRING "${TREEWEAVE_RELEASE_VERSION}")
+endif()
+
 if(NOT TREEWEAVE_VERSION_STRING MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
     message(
         FATAL_ERROR
@@ -49,6 +61,22 @@ endif()
 set(TREEWEAVE_VERSION_MAJOR "${CMAKE_MATCH_1}")
 set(TREEWEAVE_VERSION_MINOR "${CMAKE_MATCH_2}")
 set(TREEWEAVE_VERSION_PATCH "${CMAKE_MATCH_3}")
+
+# With the release override active, FULL == STRING and there is no git query.
+if(
+    DEFINED TREEWEAVE_RELEASE_VERSION
+    AND NOT TREEWEAVE_RELEASE_VERSION STREQUAL ""
+)
+    set(TREEWEAVE_VERSION_FULL "${TREEWEAVE_VERSION_STRING}")
+    set(_out "${_tw_src}/include/treeweave_version.h")
+    set(_in "${_tw_src}/include/treeweave_version.h.in")
+    configure_file("${_in}" "${_out}" @ONLY)
+    message(
+        STATUS
+        "treeweave version (release override): ${TREEWEAVE_VERSION_FULL}"
+    )
+    return()
+endif()
 
 find_package(Git QUIET)
 

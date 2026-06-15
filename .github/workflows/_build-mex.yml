@@ -1,0 +1,150 @@
+name: Build MATLAB MEX bundles
+
+# Reusable builder (workflow_call only — leading underscore marks it internal).
+# Produces self-contained, prebuilt MATLAB MEX bundles for linux-x64,
+# windows-x64, macos-arm64 and macos-x64 as run artifacts, at a static X.Y.Z.
+# Called by the Release orchestrator (release.yml); never triggered on its own.
+#
+# The MEX statically links treeweave_c_static (and -static-libstdc++/-static-libgcc
+# on Linux GCC) so each bundle is self-contained: extract, addpath the directory,
+# done. Each bundle ships bindings/matlab/treeweave.m, the mwrap-generated tw_*.m
+# stubs, and the compiled treeweave_mex.<ext>.
+#
+# Every leg is continue-on-error + fail-fast:false: building a cross-OS MEX is
+# the riskiest new release piece, so a failure surfaces as a missing optional
+# asset, never a blocked release. Compiling a MEX needs MATLAB on PATH but NOT a
+# license (only running does), so the build is reliable on hosted runners.
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref to build from (commit SHA / branch / tag)'
+        required: true
+        type: string
+      version:
+        description: 'Static release version X.Y.Z used in bundle names'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  mex:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    # A cross-OS MEX hiccup must never block the release (mirrors smoke-matlab).
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x64
+            runs-on: ubuntu-24.04
+            ext: mexa64
+            arch: x86-64
+            matlab_release: latest
+          - name: windows-x64
+            runs-on: windows-2022
+            ext: mexw64
+            arch: x86-64
+            matlab_release: latest
+          - name: macos-arm64
+            runs-on: macos-15
+            ext: mexmaca64
+            arch: apple-m1
+            matlab_release: latest
+          # macos-15-intel is the last Intel runner image. MATLAB R2025b is the
+          # final release available for Intel Mac (R2026a+ is Apple-silicon only),
+          # so pin it — the default 'latest' fails to install on Intel.
+          - name: macos-x64
+            runs-on: macos-15-intel
+            ext: mexmaci64
+            arch: x86-64
+            matlab_release: R2025b
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      # CMake + Ninja everywhere; GCC on Linux (so -static-libstdc++/-static-libgcc
+      # apply and the .mexa64 doesn't need a newer GLIBCXX than MATLAB's bundled
+      # libstdc++); MSVC env on Windows so the preset's Ninja generator works like
+      # every other platform; system clang on macOS.
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: ${{ matrix.name == 'linux-x64' && 'gcc' || '' }}
+          cmake: true
+          ninja: true
+          vcvarsall: ${{ matrix.name == 'windows-x64' }}
+          cache-tools: true
+
+      # mwrap's CMake build generates its parser/lexer, so it needs bison + flex.
+      # Linux/macOS runners ship them; Windows does not — winflexbison3 provides
+      # win_bison/win_flex, which CMake's FindBISON/FindFLEX discover by name.
+      - name: Install bison + flex (Windows, for mwrap)
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: choco install --no-progress winflexbison3
+
+      # Compiling a MEX needs MATLAB on PATH (FindMatlab); a license is only
+      # needed to *run*, which we do not do here. Intel macOS pins R2025b (the
+      # last Intel-supported release); everything else takes the latest.
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f  # v3
+        with:
+          release: ${{ matrix.matlab_release }}
+
+      # bindings-matlab selects the MATLAB MEX backend (MATLAB present, no
+      # mkoctfile). Override TREEWEAVE_ARCH to a conservative per-platform
+      # baseline so the prebuilt bundle is broadly portable (the preset's
+      # x86-64-v3 default would require AVX2 and breaks on Apple silicon).
+      - name: Configure + build the MATLAB MEX
+        shell: bash
+        run: |
+          cmake --preset bindings-matlab \
+            -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
+            -DTREEWEAVE_ARCH=${{ matrix.arch }}
+          cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
+
+      # Stage treeweave.m + the generated tw_*.m + the compiled MEX into one dir
+      # that a single addpath makes importable. The MEX and tw_*.m live together
+      # in mwrap's generated output directory inside the build tree.
+      - name: Stage bundle
+        id: stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkg="treeweave-matlab-${{ inputs.version }}-${{ matrix.name }}"
+          mex=$(find build/bindings-matlab -name "treeweave_mex.${{ matrix.ext }}" | head -1)
+          test -n "$mex" || { echo "::error::treeweave_mex.${{ matrix.ext }} not found"; exit 1; }
+          gendir=$(dirname "$mex")
+          mkdir -p "$pkg"
+          cp bindings/matlab/treeweave.m "$pkg/"
+          cp "$gendir"/tw_*.m "$pkg/"
+          cp "$mex" "$pkg/"
+          ls -l "$pkg"
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+
+      - name: Package (tar.gz, Linux/macOS)
+        if: matrix.name != 'windows-x64'
+        shell: bash
+        run: tar -czf "${{ steps.stage.outputs.pkg }}.tar.gz" "${{ steps.stage.outputs.pkg }}"
+
+      - name: Package (zip, Windows)
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: Compress-Archive -Path "${{ steps.stage.outputs.pkg }}" -DestinationPath "${{ steps.stage.outputs.pkg }}.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.stage.outputs.pkg }}
+          path: |
+            ${{ steps.stage.outputs.pkg }}.tar.gz
+            ${{ steps.stage.outputs.pkg }}.zip
+          if-no-files-found: ignore

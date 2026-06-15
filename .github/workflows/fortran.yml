@@ -1,0 +1,46 @@
+name: Fortran
+
+# Fortran wrapper: a thin iso_c_binding shim over the C ABI; builds and runs
+# test_treeweave.f90 via the fortran_treeweave CTest target. Split out from the
+# former bindings.yml so it earns its own status badge.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: fortran-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fortran:
+    name: Fortran bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install gfortran
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - name: Configure + build
+        run: |
+          cmake --preset bindings-fortran
+          cmake --build build/bindings-fortran -j
+
+      # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
+      - name: Run Fortran test (fortran_treeweave)
+        run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure

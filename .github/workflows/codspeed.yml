@@ -7,10 +7,14 @@ name: CodSpeed
 # deterministic, runner-independent signal. Uploading a report needs the repo
 # connected at app.codspeed.io (one-time GitHub-App install); until then the job
 # still builds + runs the bench as a smoke test.
+# Non-gating, but keep the main-push trigger: CodSpeed's value is the
+# instruction-count trend over time, which needs a run per main commit to build
+# history. Also runs on PRs (perf diff) + on demand.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 # OIDC: CodSpeed's action authenticates via id-token instead of a secret.
 permissions:

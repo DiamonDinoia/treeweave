@@ -15,9 +15,14 @@ name: Release
 #     (run scripts/bump_version.py / the Bump Version workflow first)
 #   - v<version> tag does not already exist
 #   - <version> is not already on PyPI
-#   - every test + wrapper workflow has a GREEN run on HEAD: ci.yml, bindings.yml
-#     (Python/Julia/Octave/MATLAB/Fortran), install-smoke.yml (C find_package,
-#     C++ FetchContent, pip), and testpypi.yml (the TestPyPI dry-run gate)
+#   - the FAST gate workflows have a GREEN run on HEAD: the per-language binding
+#     workflows (python.yml, julia.yml, fortran.yml, octave.yml, js.yml —
+#     matlab.yml is best-effort, not gated) and install-smoke.yml (C find_package,
+#     C++ FetchContent, pip). ci.yml (27-leg matrix) and testpypi.yml still run on
+#     every push for coverage but DO NOT gate the release: this pipeline rebuilds
+#     and smoke-tests every shipped artifact (C-ABI, wheels, MEX) independently, so
+#     what users download is validated regardless. Gating only on the ~10-min fast
+#     set means a dry-run can start without waiting ~90 min for CI + wheels.
 #
 # IMPORTANT: real publishing requires the `treeweave` project on PyPI configured
 # with Trusted Publishing bound to THIS workflow file + environment. See
@@ -84,16 +89,19 @@ jobs:
             exit 1
           fi
 
-      - name: Require green test + wrapper workflows on this commit
+      - name: Require green fast-gate workflows on this commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           sha="${{ github.sha }}"
           fail=0
-          # Every gate the audit calls out: core tests, all language wrappers,
-          # the install recipes, and the TestPyPI dry-run.
-          for wf in ci.yml bindings.yml install-smoke.yml testpypi.yml; do
+          # FAST gate only: the per-language wrappers + the install recipes —
+          # the ~10-min workflows that uniquely validate each binding. ci.yml and
+          # testpypi.yml are intentionally NOT gated (they still run on every push
+          # for coverage but no longer make a release dispatch wait ~90 min); this
+          # pipeline rebuilds + smoke-tests every shipped artifact below.
+          for wf in python.yml julia.yml fortran.yml octave.yml js.yml install-smoke.yml; do
             run_json=$(gh api \
               "repos/${{ github.repository }}/actions/workflows/$wf/runs?head_sha=$sha&per_page=10" \
               --jq '[.workflow_runs[] | select(.event=="push" or .event=="workflow_dispatch" or .event=="schedule")][0] // empty')
@@ -130,6 +138,76 @@ jobs:
     uses: ./.github/workflows/wheels.yml
     with:
       ref: ${{ needs.preflight.outputs.sha }}
+
+  # Prebuilt MATLAB MEX bundles (win/linux/mac), built ONLY here — zero per-push
+  # cost. Every leg is continue-on-error inside the reusable workflow, so a MEX
+  # hiccup surfaces as a missing optional asset, never a blocked release. NOT in
+  # publish-and-tag's needs (mirrors smoke-matlab); its artifacts flow into
+  # github-release.
+  build-mex:
+    name: Build MATLAB MEX
+    needs: preflight
+    uses: ./.github/workflows/_build-mex.yml
+    with:
+      ref: ${{ needs.preflight.outputs.sha }}
+      version: ${{ inputs.version }}
+
+  # Build the portable WASM JS/TS package and `npm pack` it. The published
+  # package is WASM-only (the native .node is single-platform; the runtime falls
+  # back to WASM when it is absent), so it runs everywhere — Node and browser.
+  # The .tgz flows into github-release as a downloadable asset; publish-npm
+  # (below) pushes the same build to the registry via OIDC.
+  build-js:
+    name: Build JS/WASM package
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v16
+        with:
+          version: 4.0.9
+
+      - name: Install npm deps
+        run: npm ci
+        working-directory: bindings/js
+
+      - name: Build the WASM backend + TypeScript
+        run: |
+          cmake --preset bindings-js-wasm
+          cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
+
+      - name: npm pack
+        id: pack
+        working-directory: bindings/js
+        run: |
+          tgz=$(npm pack --silent)
+          echo "tgz=$tgz" >> "$GITHUB_OUTPUT"
+          ls -l "$tgz"
+
+      - name: Upload JS package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: js-package
+          path: bindings/js/${{ steps.pack.outputs.tgz }}
+          if-no-files-found: error
 
   # ---- Smoke: re-verify each wrapper against the ACTUAL release artifacts ----
 
@@ -417,8 +495,11 @@ jobs:
   # the body and all tarballs + wheels + sdist attached.
   github-release:
     name: Create GitHub Release
-    needs: [preflight, publish-and-tag]
-    if: ${{ !inputs.dry_run }}
+    # build-mex + build-js stay in needs so their artifacts are ready to attach,
+    # but optional/best-effort legs must never skip the Release: gate only on the
+    # release-critical jobs (preflight + publish-and-tag) via always().
+    needs: [preflight, build-mex, build-js, publish-and-tag]
+    if: ${{ !inputs.dry_run && always() && needs.preflight.result == 'success' && needs.publish-and-tag.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -466,6 +547,39 @@ jobs:
               --title "treeweave $tag" --generate-notes \
               artifacts/*
           fi
+
+  # Publish the WASM JS package to npm. Best-effort (continue-on-error) so it
+  # never blocks the release — the .tgz attached to the GitHub Release is the
+  # guaranteed artifact. Auth: NODE_AUTH_TOKEN (NPM_TOKEN secret) when present —
+  # required for the FIRST publish of a brand-new package name; once the package
+  # exists, configure OIDC trusted publishing (id-token: write is already set)
+  # and the token can be removed. Gated after publish-and-tag so npm only goes
+  # out once PyPI did.
+  publish-npm:
+    name: Publish JS/WASM to npm
+    needs: [build-js, publish-and-tag]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      id-token: write   # npm OIDC trusted publishing (once the package exists)
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: js-package
+          path: js-pkg
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Upgrade npm (OIDC trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish js-pkg/*.tgz --access public
 
   # Now that the Release assets exist, verify the one wrapper path that can only
   # be tested after publishing: Julia's prebuilt-download install (deps/build.jl

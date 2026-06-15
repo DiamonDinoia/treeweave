@@ -15,6 +15,7 @@ name: Install smoke
 # The Julia Pkg.add -> GitHub Release path is already covered by julia-smoke.yml.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_run:
     workflows: ["TestPyPI"]

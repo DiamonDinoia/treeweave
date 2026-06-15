@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
-"""Bump the treeweave release version across every hand-synced file.
+"""Bump the treeweave release version across every version-bearing file.
 
 Usage::
 
     python scripts/bump_version.py X.Y.Z
 
-The single source of truth is ``CMakeLists.txt``'s ``project(treeweave VERSION
-...)``, but three other files hard-code the same version and must move in
-lockstep:
+The single source of truth is the root ``VERSION`` file: the root
+``CMakeLists.txt`` ``project()`` reads it, and the Python wheel version is
+derived from it by scikit-build-core's regex metadata provider — so neither is
+edited here. The remaining files carry their own copy and must move in lockstep:
 
-- ``include/treeweave.h``                  ``TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}`` + ``_STRING``
-- ``include/treeweave/treeweave.hpp``      ``version_{major,minor,patch}``
+- ``include/treeweave_version.h``            ``TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}`` + ``_STRING``
 - ``bindings/julia/Treeweave/Project.toml``  ``version = "X.Y.Z"``
+- ``bindings/js/package.json``               ``"version": "X.Y.Z"``
 
-The Python wheel version is NOT edited here: scikit-build-core reads it from
-``CMakeLists.txt`` via its regex metadata provider, so bumping CMake covers the
-wheel.
+``treeweave_version.h`` is normally regenerated from ``VERSION`` by CMake
+(``cmake/treeweave_generate_version.cmake``); its macros are updated here too so
+the committed copy is in sync immediately (its ``TREEWEAVE_VERSION_FULL`` -dev.N
+suffix is recomputed from git on the next configure / pre-commit run). The C and
+C++ headers (treeweave.h / treeweave.hpp) ``#include`` it and need no edit.
 
 Each substitution must match exactly once or the script aborts (fail-loud, like
 ``.github/scripts/set_dev_version.py``). Re-running with the same version is a
@@ -29,10 +32,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CMAKELISTS = ROOT / "CMakeLists.txt"
-HEADER_C = ROOT / "include" / "treeweave.h"
-HEADER_CPP = ROOT / "include" / "treeweave" / "treeweave.hpp"
+VERSION_FILE = ROOT / "VERSION"
+HEADER_VERSION = ROOT / "include" / "treeweave_version.h"
 JULIA_PROJECT = ROOT / "bindings" / "julia" / "Treeweave" / "Project.toml"
+JS_PACKAGE = ROOT / "bindings" / "js" / "package.json"
 
 
 def _sub_once(path: Path, pattern: str, repl: str, text: str) -> str:
@@ -55,65 +58,36 @@ def main() -> int:
         return 2
     major, minor, patch = m.groups()
 
-    # CMakeLists.txt — the source of truth.
-    text = CMAKELISTS.read_text()
-    text = _sub_once(
-        CMAKELISTS,
-        r"project\(treeweave VERSION \d+\.\d+\.\d+",
-        f"project(treeweave VERSION {version}",
-        text,
-    )
-    CMAKELISTS.write_text(text)
+    # VERSION — the single source of truth.
+    VERSION_FILE.write_text(f"{version}\n")
 
-    # include/treeweave.h — version macros.
-    text = HEADER_C.read_text()
+    # include/treeweave_version.h — committed generated header (macros only).
+    text = HEADER_VERSION.read_text()
     text = _sub_once(
-        HEADER_C,
+        HEADER_VERSION,
         r"#define TREEWEAVE_VERSION_MAJOR \d+",
         f"#define TREEWEAVE_VERSION_MAJOR {major}",
         text,
     )
     text = _sub_once(
-        HEADER_C,
+        HEADER_VERSION,
         r"#define TREEWEAVE_VERSION_MINOR \d+",
         f"#define TREEWEAVE_VERSION_MINOR {minor}",
         text,
     )
     text = _sub_once(
-        HEADER_C,
+        HEADER_VERSION,
         r"#define TREEWEAVE_VERSION_PATCH \d+",
         f"#define TREEWEAVE_VERSION_PATCH {patch}",
         text,
     )
     text = _sub_once(
-        HEADER_C,
+        HEADER_VERSION,
         r'#define TREEWEAVE_VERSION_STRING "\d+\.\d+\.\d+"',
         f'#define TREEWEAVE_VERSION_STRING "{version}"',
         text,
     )
-    HEADER_C.write_text(text)
-
-    # include/treeweave/treeweave.hpp — constexpr ints.
-    text = HEADER_CPP.read_text()
-    text = _sub_once(
-        HEADER_CPP,
-        r"inline constexpr int version_major = \d+;",
-        f"inline constexpr int version_major = {major};",
-        text,
-    )
-    text = _sub_once(
-        HEADER_CPP,
-        r"inline constexpr int version_minor = \d+;",
-        f"inline constexpr int version_minor = {minor};",
-        text,
-    )
-    text = _sub_once(
-        HEADER_CPP,
-        r"inline constexpr int version_patch = \d+;",
-        f"inline constexpr int version_patch = {patch};",
-        text,
-    )
-    HEADER_CPP.write_text(text)
+    HEADER_VERSION.write_text(text)
 
     # bindings/julia/Treeweave/Project.toml — package version.
     text = JULIA_PROJECT.read_text()
@@ -125,10 +99,20 @@ def main() -> int:
     )
     JULIA_PROJECT.write_text(text)
 
+    # bindings/js/package.json — package version.
+    text = JS_PACKAGE.read_text()
+    text = _sub_once(
+        JS_PACKAGE,
+        r'"version":\s*"\d+\.\d+\.\d+"',
+        f'"version": "{version}"',
+        text,
+    )
+    JS_PACKAGE.write_text(text)
+
     print(
-        f"bumped treeweave version to {version} across CMakeLists.txt, "
-        "include/treeweave.h, include/treeweave/treeweave.hpp, "
-        "bindings/julia/Treeweave/Project.toml"
+        f"bumped treeweave version to {version} across VERSION, "
+        "include/treeweave_version.h, bindings/julia/Treeweave/Project.toml, "
+        "bindings/js/package.json"
     )
     print(f"next: git commit -am 'chore(release): bump version to {version}'")
     return 0

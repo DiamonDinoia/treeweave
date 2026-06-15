@@ -30,7 +30,7 @@ function zetaPartial(s) {
   return acc;
 }
 
-const approx = await Treeweave.fit((x) => zetaPartial(x[0]), a, b, tol, { backend: "native" });
+const fn = await Treeweave.fit((x) => zetaPartial(x[0]), a, b, tol, { backend: "native" });
 
 const n = 1_000_000; // batch / sorted points
 const nScalar = 100_000; // scalar-API points
@@ -49,7 +49,7 @@ const xsSorted = Float64Array.from(xs).sort();
 let maxRel = 0;
 for (let i = 0; i < nNative; ++i) {
   const ref = zetaPartial(xs[i]);
-  maxRel = Math.max(maxRel, Math.abs(approx.eval(xs[i]) - ref) / Math.abs(ref));
+  maxRel = Math.max(maxRel, Math.abs(fn.eval(xs[i]) - ref) / Math.abs(ref));
 }
 
 const mevals = (count, seconds) => count / (seconds * 1e6);
@@ -65,23 +65,23 @@ if (!Number.isFinite(sink)) throw new Error("sink went non-finite");
 const natRate = mevals(nNative, natS); // Mevals/s, reused in every mode
 
 // --- single-eval -------------------------------------------------------------
-for (let i = 0; i < nScalar; ++i) sink += approx.eval(xs[i]); // warm-up
+for (let i = 0; i < nScalar; ++i) sink += fn.eval(xs[i]); // warm-up
 t0 = now();
-for (let i = 0; i < nScalar; ++i) sink += approx.eval(xs[i]);
+for (let i = 0; i < nScalar; ++i) sink += fn.eval(xs[i]);
 const twSingleS = now() - t0;
 if (!Number.isFinite(sink)) throw new Error("sink went non-finite");
 
 // --- multi-eval (in place) ---------------------------------------------------
 const twBuf = new Float64Array(n);
-approx.batch(xs, { out: twBuf }); // warm-up
+fn.batch(xs, { out: twBuf }); // warm-up
 t0 = now();
-approx.batch(xs, { out: twBuf });
+fn.batch(xs, { out: twBuf });
 const twMultiS = now() - t0;
 
 // --- sorted-eval -------------------------------------------------------------
-approx.sorted(xsSorted, { out: twBuf }); // warm-up
+fn.sorted(xsSorted, { out: twBuf }); // warm-up
 t0 = now();
-approx.sorted(xsSorted, { out: twBuf });
+fn.sorted(xsSorted, { out: twBuf });
 const twSortedS = now() - t0;
 
 // --- throughput (Mevals/s) and speedup per mode ------------------------------
@@ -119,4 +119,4 @@ if (yamlPath) {
   writeFileSync(yamlPath, doc);
 }
 
-approx.free();
+fn.free();

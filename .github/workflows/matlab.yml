@@ -1,0 +1,60 @@
+name: MATLAB
+
+# Real MATLAB (not Octave): setup-matlab@v3 puts MATLAB on PATH so the
+# bindings-matlab preset's FindMatlab picks it up and the MEX compiles — that
+# build is the hard gate here. Actually *running* the suite needs a license,
+# which MathWorks' hosted licensing does not reliably grant for `matlab -batch`
+# launched outside matlab-actions/run-command (observed: "MathWorks Licensing
+# Error 1"). The run step is therefore best-effort; octave.yml runs the identical
+# `matlab_treeweave` test and is the blocking runtime gate. This workflow is NOT
+# a hard release gate (see release.yml preflight). Split out from the former
+# bindings.yml so it earns its own (best-effort) status badge.
+# Non-gating + slow MATLAB setup: runs on PRs + on demand only. The prebuilt
+# MATLAB MEX is built and packaged in the release pipeline (_build-mex.yml);
+# octave.yml gates the shared mwrap gateway logic on every push.
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: matlab-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  matlab:
+    name: MATLAB bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+
+      # bindings-matlab sets TREEWEAVE_BUILD_MATLAB=ON; with MATLAB (and no
+      # mkoctfile) present, the MATLAB MEX backend is selected. mwrap is fetched
+      # via CPM and the gateway + tw_*.m are generated from treeweave.mw.
+      - name: Configure + build the MATLAB MEX
+        run: |
+          cmake --preset bindings-matlab
+          cmake --build build/bindings-matlab -j
+
+      # test_treeweave.m calls error() on any failure -> matlab -batch exits non-zero.
+      # Best-effort: skip blocking CI when no MATLAB license is available on the
+      # runner (the Octave job is the blocking runtime gate). Build above stays a gate.
+      - name: Run MATLAB suite (matlab_treeweave)
+        continue-on-error: true
+        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure

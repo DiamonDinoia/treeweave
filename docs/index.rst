@@ -16,13 +16,23 @@ tolerance at lower polynomial order, which is faster on modern SIMD hardware.
 .. code-block:: cpp
 
    #include <treeweave/treeweave.hpp>
+   #include <cmath>
 
-   auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
-   auto fast  = treeweave::fit(runge, -1.0, 1.0, /*tol=*/1e-10);  // fit once
-   double y   = fast(0.3);                                        // evaluate forever
+   int main() {
+       // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
+       auto zeta = [](double s) {
+           double a = 0.0;
+           for (int k = 1; k <= 1000; ++k)
+               a += std::pow(k, -s);
+           return a;
+       };
+       auto   fast = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);  // fit once
+       double y    = fast(3.5);                                       // evaluate forever
+       return y > 0 ? 0 : 1;
+   }
 
 Use it from **C++** (header-only), or from **C**, **Fortran**, **Python**,
-**Julia**, and **MATLAB/Octave** through a stable C ABI.
+**Julia**, **MATLAB/Octave**, and **JavaScript/TypeScript** through a stable C ABI.
 
 Project links
 -------------
@@ -41,8 +51,9 @@ Why treeweave
   polynomial lookup; trade a little memory for a lot of speed.
 - **Adaptive paneling.** Low-order polynomial panels on an adaptive tree reach
   the target tolerance at lower order than a single global fit — SIMD-friendly.
-- **Six languages, one core.** A stable C ABI (``libtreeweave_c``) underpins
-  Python, Julia, MATLAB/Octave, and Fortran wrappers; C++ is header-only.
+- **Seven languages, one core.** A stable C ABI (``libtreeweave_c``) underpins
+  the Python, Julia, MATLAB/Octave, Fortran, and JavaScript/TypeScript wrappers;
+  C++ is header-only.
 - **Thread-safe by construction.** A fitted object is immutable and its
   ``operator()`` is safe to call concurrently.
 
@@ -73,6 +84,7 @@ Why treeweave
    guides/dispatch
    guides/performance
    how-treeweave-works
+   known-issues
 
 .. toctree::
    :maxdepth: 2

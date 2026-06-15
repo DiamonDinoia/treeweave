@@ -88,7 +88,7 @@ program zeta_bench
     integer, parameter          :: n = 1000000        ! batch / sorted points
     integer, parameter          :: n_scalar = 100000  ! scalar-API points
     integer, parameter          :: n_native = 256     ! brute-force sample (<=160 powers each)
-    type(c_ptr)                 :: h
+    type(c_ptr)                 :: fn
     real(c_double)              :: a(1), b(1), tol
     real(c_double), allocatable :: xs(:), res(:), xs_sorted(:)
     real(c_double)              :: approx, exact, rel, max_rel
@@ -106,9 +106,9 @@ program zeta_bench
 
     ! c_null_ptr opts => defaults, whose tol_kind is RELATIVE_MAX (the right
     ! measure for this zero-free, monotone function).
-    h = treeweave_fit(c_funloc(kernel_zeta), 1_c_int, 1_c_int, a, b, tol, &
+    fn = treeweave_fit(c_funloc(kernel_zeta), 1_c_int, 1_c_int, a, b, tol, &
                       c_null_ptr, c_null_ptr)
-    if (.not. c_associated(h)) then
+    if (.not. c_associated(fn)) then
         write (*, '(2A)') "treeweave_fit failed: ", treeweave_error_message()
         error stop 1
     end if
@@ -124,7 +124,7 @@ program zeta_bench
     max_rel = 0.0_c_double
     do i = 1, n_native
         exact  = zeta_partial(xs(i))
-        approx = treeweave_eval_1d(h, xs(i))
+        approx = treeweave_eval_1d(fn, xs(i))
         rel    = abs(approx - exact) / abs(exact)
         if (rel > max_rel) max_rel = rel
     end do
@@ -146,20 +146,20 @@ program zeta_bench
 
     ! --- single-eval: the scalar by-value API ------------------------------
     do i = 1, n_scalar
-        sink = sink + treeweave_eval_1d(h, xs(i))    ! warm-up (untimed)
+        sink = sink + treeweave_eval_1d(fn, xs(i))    ! warm-up (untimed)
     end do
     call system_clock(c0)
     do i = 1, n_scalar
-        sink = sink + treeweave_eval_1d(h, xs(i))
+        sink = sink + treeweave_eval_1d(fn, xs(i))
     end do
     call system_clock(c1)
     tw_single_s = real(c1 - c0, c_double) / real(rate, c_double)
 
     ! --- multi-eval: the unsorted batch API --------------------------------
-    call treeweave_batch(h, xs, res, int(n, c_size_t))   ! warm-up (untimed)
+    call treeweave_batch(fn, xs, res, int(n, c_size_t))   ! warm-up (untimed)
     sink = res(1)
     call system_clock(c0)
-    call treeweave_batch(h, xs, res, int(n, c_size_t))
+    call treeweave_batch(fn, xs, res, int(n, c_size_t))
     call system_clock(c1)
     tw_multi_s = real(c1 - c0, c_double) / real(rate, c_double)
     sink = res(1)
@@ -168,10 +168,10 @@ program zeta_bench
     ! Sort once, untimed.
     xs_sorted = xs
     call quicksort(xs_sorted, 1, n)
-    call treeweave_sorted(h, xs_sorted, res, int(n, c_size_t))   ! warm-up (untimed)
+    call treeweave_sorted(fn, xs_sorted, res, int(n, c_size_t))   ! warm-up (untimed)
     sink = res(1)
     call system_clock(c0)
-    call treeweave_sorted(h, xs_sorted, res, int(n, c_size_t))
+    call treeweave_sorted(fn, xs_sorted, res, int(n, c_size_t))
     call system_clock(c1)
     tw_sorted_s = real(c1 - c0, c_double) / real(rate, c_double)
     sink = res(1)
@@ -209,7 +209,7 @@ program zeta_bench
     end if
 
     deallocate (xs, res, xs_sorted)
-    h = treeweave_free(h)
+    fn = treeweave_free(fn)
 
     if (max_rel >= 1.0e-7_c_double) error stop 2
 end program zeta_bench

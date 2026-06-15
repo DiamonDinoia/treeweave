@@ -9,9 +9,9 @@ readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.9"
 dependencies = ["numpy"]
-# Single-sourced from the root CMakeLists.txt (project(treeweave VERSION ...))
-# via the regex provider below, so the wheel metadata, the C++ core, and any
-# future bump never drift apart.
+# Single-sourced from the root VERSION file via the regex provider below (the
+# same file the root CMakeLists project() reads), so the wheel metadata, the C++
+# core, and any future bump never drift apart.
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -48,8 +48,8 @@ TREEWEAVE_WARNINGS_AS_ERRORS = "OFF"
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
-input = "../../CMakeLists.txt"
-regex = '''project\(treeweave VERSION (?P<value>[0-9]+\.[0-9]+\.[0-9]+)'''
+input = "../../VERSION"
+regex = '''(?P<value>[0-9]+\.[0-9]+\.[0-9]+)'''
 
 # The sdist is rooted at the repo (cmake.source-dir); drop everything the wheel
 # build doesn't need so it stays small and the build context is lean.

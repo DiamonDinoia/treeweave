@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Fail loudly if treeweave's hand-synced version strings disagree.
 
-The single source of truth for the release version is ``CMakeLists.txt``'s
-``project(treeweave VERSION X.Y.Z)``. Three other files hard-code the same
-version and must match:
+The single source of truth for the release version is the root ``VERSION`` file
+(which the root ``CMakeLists.txt`` ``project()`` reads). Three other files
+hard-code the same version and must match:
 
 - ``include/treeweave.h``                  ``TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}`` (+ ``_STRING``)
 - ``include/treeweave/treeweave.hpp``      ``version_{major,minor,patch}``
 - ``bindings/julia/Treeweave/Project.toml``  ``version``
 
-The Python wheel version is derived from ``CMakeLists.txt`` by
-scikit-build-core's regex metadata provider, so a green ``CMakeLists.txt`` check
-also covers the wheel.
+The Python wheel version is derived from the same ``VERSION`` file by
+scikit-build-core's regex metadata provider, so a green ``VERSION`` check also
+covers the wheel.
 
 Usage::
 
@@ -40,36 +40,41 @@ def _search(path: Path, pattern: str) -> re.Match[str]:
 def main() -> int:
     expected = sys.argv[1].lstrip("v") if len(sys.argv) > 1 else None
 
-    cmake = _search(
-        ROOT / "CMakeLists.txt", r"project\(treeweave VERSION (\d+\.\d+\.\d+)"
-    ).group(1)
+    version_file = (ROOT / "VERSION").read_text().strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version_file):
+        raise SystemExit(
+            f"error: VERSION must be MAJOR.MINOR.PATCH, got: {version_file!r}"
+        )
 
-    hc = ROOT / "include" / "treeweave.h"
-    major = _search(hc, r"#define TREEWEAVE_VERSION_MAJOR (\d+)").group(1)
-    minor = _search(hc, r"#define TREEWEAVE_VERSION_MINOR (\d+)").group(1)
-    patch = _search(hc, r"#define TREEWEAVE_VERSION_PATCH (\d+)").group(1)
-    header_c = f"{major}.{minor}.{patch}"
-    header_c_string = _search(
-        hc, r'#define TREEWEAVE_VERSION_STRING "(\d+\.\d+\.\d+)"'
+    # treeweave_version.h is generated from VERSION and committed; treeweave.h /
+    # treeweave.hpp #include it and derive their version from its macros, so they
+    # are auto-synced and not checked here. Verifying the committed generated
+    # copy catches a stale header (e.g. a bump that skipped regeneration).
+    hv = ROOT / "include" / "treeweave_version.h"
+    major = _search(hv, r"#define TREEWEAVE_VERSION_MAJOR (\d+)").group(1)
+    minor = _search(hv, r"#define TREEWEAVE_VERSION_MINOR (\d+)").group(1)
+    patch = _search(hv, r"#define TREEWEAVE_VERSION_PATCH (\d+)").group(1)
+    header = f"{major}.{minor}.{patch}"
+    header_string = _search(
+        hv, r'#define TREEWEAVE_VERSION_STRING "(\d+\.\d+\.\d+)"'
     ).group(1)
-
-    hpp = ROOT / "include" / "treeweave" / "treeweave.hpp"
-    cmajor = _search(hpp, r"version_major = (\d+);").group(1)
-    cminor = _search(hpp, r"version_minor = (\d+);").group(1)
-    cpatch = _search(hpp, r"version_patch = (\d+);").group(1)
-    header_cpp = f"{cmajor}.{cminor}.{cpatch}"
 
     julia = _search(
         ROOT / "bindings" / "julia" / "Treeweave" / "Project.toml",
         r'^version = "(\d+\.\d+\.\d+)"',
     ).group(1)
 
+    js = _search(
+        ROOT / "bindings" / "js" / "package.json",
+        r'"version":\s*"(\d+\.\d+\.\d+)"',
+    ).group(1)
+
     found = {
-        "CMakeLists.txt": cmake,
-        "include/treeweave.h (MAJOR/MINOR/PATCH)": header_c,
-        "include/treeweave.h (_STRING)": header_c_string,
-        "include/treeweave/treeweave.hpp": header_cpp,
+        "VERSION": version_file,
+        "include/treeweave_version.h (MAJOR/MINOR/PATCH)": header,
+        "include/treeweave_version.h (_STRING)": header_string,
         "bindings/julia/Treeweave/Project.toml": julia,
+        "bindings/js/package.json": js,
     }
 
     versions = set(found.values())

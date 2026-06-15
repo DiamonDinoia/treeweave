@@ -7,11 +7,17 @@
 #include <vector>
 
 int main() {
-    auto runge = [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
-    auto fn    = treeweave::fit(runge, -1.0, 1.0, /*tol=*/1e-10);
+    // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
+    auto zeta = [](double s) {
+        double a = 0.0;
+        for (int k = 1; k <= 1000; ++k)
+            a += std::pow(k, -s);
+        return a;
+    };
+    auto fn = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
 
     std::mt19937                           gen(1);
-    std::uniform_real_distribution<double> d(-0.99, 0.99);
+    std::uniform_real_distribution<double> d(2.0, 10.0);
     constexpr int                          N = 1'000'000;
     std::vector<double>                    xs(N);
     for (auto &x : xs)
@@ -26,7 +32,7 @@ int main() {
 
     double mx = 0.0;
     for (double x : xs)
-        mx = std::max(mx, std::abs(fn(x) - runge(x)) / std::abs(runge(x)));
+        mx = std::max(mx, std::abs(fn(x) - zeta(x)) / std::abs(zeta(x)));
 
     std::cout << "MEvals/s: " << N / (dt * 1e6) << "\n";
     std::cout << "max relative error: " << mx << "\n";

@@ -33,8 +33,8 @@ def zeta_partial(s):
 
 
 # treeweave probes the scalar zeta_partial at Chebyshev nodes during the fit.
-approx = treeweave.fit(lambda x: zeta_partial(x[0]), a, b, tol=1e-10)
-print(approx)
+fn = treeweave.fit(lambda x: zeta_partial(x[0]), a, b, tol=1e-10)
+print(fn)
 
 n = 1_000_000  # batch / sorted points
 n_scalar = 100_000  # scalar-API points
@@ -50,7 +50,7 @@ def mevals(count, seconds):
 
 # --- accuracy vs the brute-force sum, on the n_native sample -----------------
 xs_native = xs[:n_native]
-yhat = approx(xs_native)
+yhat = fn(xs_native)
 yref = np.array([zeta_partial(s) for s in xs_native])
 max_rel = float(np.max(np.abs(yhat - yref) / np.abs(yref)))
 
@@ -69,25 +69,25 @@ nat_rate = mevals(n_native, nat_s)  # Mevals/s, reused in every mode
 xs_scalar = xs[:n_scalar]
 sink = 0.0
 for x in xs_scalar:  # warm-up
-    sink += approx(float(x))
+    sink += fn(float(x))
 t0 = time.perf_counter()
 for x in xs_scalar:
-    sink += approx(float(x))
+    sink += fn(float(x))
 tw_single_s = time.perf_counter() - t0
 assert np.isfinite(sink)
 
 # --- multi-eval: the unsorted batch (in-place, allocation-free) --------------
 tw_buf = np.empty(n)
-approx(xs, out=tw_buf)  # warm-up
+fn(xs, out=tw_buf)  # warm-up
 t0 = time.perf_counter()
-approx(xs, out=tw_buf)
+fn(xs, out=tw_buf)
 tw_multi_s = time.perf_counter() - t0
 assert np.isfinite(tw_buf.sum())
 
 # --- sorted-eval: the 1-D ascending fast path --------------------------------
-approx(xs_sorted, sorted=True, out=tw_buf)  # warm-up
+fn(xs_sorted, sorted=True, out=tw_buf)  # warm-up
 t0 = time.perf_counter()
-approx(xs_sorted, sorted=True, out=tw_buf)
+fn(xs_sorted, sorted=True, out=tw_buf)
 tw_sorted_s = time.perf_counter() - t0
 assert np.isfinite(tw_buf.sum())
 

@@ -56,6 +56,13 @@ if(NOT TARGET mwrap)
     )
     return()
 endif()
+
+# mwrap's flex-generated scanner #includes <unistd.h>, which MSVC lacks. Define
+# YY_NO_UNISTD_H so the generated lexer skips it, letting mwrap build on Windows.
+if(MSVC)
+    target_compile_definitions(mwrap PRIVATE YY_NO_UNISTD_H)
+endif()
+
 include("${mwrap_SOURCE_DIR}/cmake/MwrapAddMex.cmake")
 
 # ---------------------------------------------------------------------------

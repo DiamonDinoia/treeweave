@@ -1,12 +1,18 @@
 # treeweave
 
-[![CI](https://github.com/DiamonDinoia/treeweave/actions/workflows/ci.yml/badge.svg)](https://github.com/DiamonDinoia/treeweave/actions/workflows/ci.yml)
-[![Bindings](https://github.com/DiamonDinoia/treeweave/actions/workflows/bindings.yml/badge.svg)](https://github.com/DiamonDinoia/treeweave/actions/workflows/bindings.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/ci.yml?branch=main&label=CI)](https://github.com/DiamonDinoia/treeweave/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/DiamonDinoia/treeweave/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamonDinoia/treeweave)
 [![docs](https://img.shields.io/badge/docs-treeweave-1f6feb.svg)](https://diamondinoia.github.io/treeweave/)
-[![release](https://img.shields.io/github/v/release/DiamonDinoia/treeweave?display_name=tag&sort=semver)](https://github.com/DiamonDinoia/treeweave/releases)
+[![PyPI](https://img.shields.io/pypi/v/treeweave)](https://pypi.org/project/treeweave/)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+
+[![Python](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/python.yml?branch=main&label=Python)](https://github.com/DiamonDinoia/treeweave/actions/workflows/python.yml)
+[![Julia](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/julia.yml?branch=main&label=Julia)](https://github.com/DiamonDinoia/treeweave/actions/workflows/julia.yml)
+[![Fortran](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/fortran.yml?branch=main&label=Fortran)](https://github.com/DiamonDinoia/treeweave/actions/workflows/fortran.yml)
+[![Octave](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/octave.yml?branch=main&label=Octave)](https://github.com/DiamonDinoia/treeweave/actions/workflows/octave.yml)
+[![JavaScript](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=JS%2FWASM)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml)
+[![MATLAB](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/matlab.yml?branch=main&label=MATLAB)](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
 
 **Evaluate an expensive function millions of times, fast.**
 
@@ -295,12 +301,17 @@ examples (incl. the transposed/SoA output route).
   ```
 - **Julia:** `Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")`
   downloads the matching `libtreeweave_c` from the GitHub Release on first build.
-- **MATLAB / Octave:** built from source (no prebuilt MEX — Octave has no stable
-  MEX ABI). With MATLAB or `mkoctfile` on `PATH`:
+- **MATLAB:** download the prebuilt `treeweave-matlab-<version>-<platform>` bundle
+  (linux-x64, windows-x64, macos-arm64, macos-x64) from
+  [Releases](https://github.com/DiamonDinoia/treeweave/releases), extract it, and
+  `addpath` the extracted directory — the self-contained MEX (statically linked)
+  needs no build.
+- **Octave:** built from source (no prebuilt MEX — Octave has no stable MEX ABI).
+  With `mkoctfile` (or MATLAB) on `PATH`:
 
   ```sh
-  cmake --preset bindings-matlab      # or bindings-octave for the license-free path
-  cmake --build build/bindings-matlab -j
+  cmake --preset bindings-octave      # or bindings-matlab if building against MATLAB
+  cmake --build build/bindings-octave -j
   ```
 
   Then `addpath` the `bindings/matlab` dir and the generated MEX dir (see the
@@ -335,24 +346,28 @@ FetchContent-only headers, so it is **not** part of the installed
 `find_package` package — consume it in-tree. The installable surface is the
 **C ABI** (`treeweave::treeweave_c` / `treeweave::treeweave_c_static`).
 
-## Bindings
+## Supported bindings
 
 A stable C ABI (`libtreeweave_c`, header [`include/treeweave.h`](include/treeweave.h))
 underpins every wrapper, all under [`bindings/`](bindings/). Each is an opt-in
-CMake option (all default OFF); a missing toolchain is skipped gracefully.
+CMake option (all default OFF); a missing toolchain is skipped gracefully. Each
+binding has its own CI workflow (the status badges below); C and C++ are
+exercised by the core `ci.yml`.
 
-| Language | Option | Install / build |
-|----------|--------|-----------------|
-| Python | `TREEWEAVE_BUILD_PYTHON` | `pip install treeweave` |
-| Julia | `TREEWEAVE_BUILD_JULIA` | `Pkg.add(url=…, subdir="bindings/julia/Treeweave")` |
-| MATLAB/Octave | `TREEWEAVE_BUILD_MATLAB` | CMake builds the MEX via [mwrap](https://github.com/zgimbutas/mwrap) |
-| C++ | — (header-only) | `#include <treeweave/treeweave.hpp>` |
-| C | `TREEWEAVE_BUILD_C_API` | `find_package(treeweave)` → `treeweave::treeweave_c` |
-| Fortran | `TREEWEAVE_BUILD_FORTRAN` | `cmake --preset bindings-fortran` |
-| JavaScript/TypeScript | `TREEWEAVE_BUILD_JS` | `cmake --preset bindings-js` (native N-API) / `bindings-js-wasm` (WASM) |
+| Language | Status | Install / build | Source & examples |
+|----------|--------|-----------------|-------------------|
+| C++ (header-only) | [![CI](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/ci.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/ci.yml) | `#include <treeweave/treeweave.hpp>` | [`examples/c++`](examples/c++) |
+| C | [![CI](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/ci.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/ci.yml) | `find_package(treeweave)` → `treeweave::treeweave_c` | [`examples/C`](examples/C) |
+| Fortran | [![Fortran](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/fortran.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/fortran.yml) | `cmake --preset bindings-fortran` | [`bindings/fortran`](bindings/fortran) |
+| Python | [![Python](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/python.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/python.yml) | `pip install treeweave` | [`bindings/python/examples`](bindings/python/examples) |
+| Julia | [![Julia](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/julia.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/julia.yml) | `Pkg.add(url=…, subdir="bindings/julia/Treeweave")` | [`bindings/julia/Treeweave/examples`](bindings/julia/Treeweave/examples) |
+| MATLAB / Octave | [![Octave](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/octave.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/octave.yml) | CMake builds the MEX via [mwrap](https://github.com/zgimbutas/mwrap) | [`bindings/matlab/examples`](bindings/matlab/examples) |
+| JavaScript/TypeScript | [![JS](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml) | `cmake --preset bindings-js` (native N-API) / `bindings-js-wasm` (WASM) | [`bindings/js/examples`](bindings/js/examples) |
 
-See [`bindings/README.md`](bindings/README.md) for per-language usage and the
-cross-language parity check.
+MATLAB has its own [best-effort workflow](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
+(the build gates; running needs a license CI can't reliably obtain — Octave runs
+the identical suite). See [`bindings/README.md`](bindings/README.md) for
+per-language usage and the cross-language parity check.
 
 ## Docs
 

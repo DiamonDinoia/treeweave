@@ -1,6 +1,6 @@
 name: Julia prebuilt smoke test
 
-# The Julia equivalent of the TestPyPI dry run. bindings.yml already tests the
+# The Julia equivalent of the TestPyPI dry run. julia.yml already tests the
 # in-repo (sibling-build) path; this instead exercises the DISTRIBUTION path a
 # real `Pkg.add` user hits: deps/build.jl downloads the prebuilt libtreeweave_c
 # for `tag` from the GitHub Release (see release.yml), dlopens it, and runs the

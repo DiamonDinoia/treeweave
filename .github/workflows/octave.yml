@@ -1,0 +1,50 @@
+name: Octave
+
+# Octave wrapper: builds the MEX from source with mkoctfile (Octave has no stable
+# MEX ABI, so nothing is prebuilt) and runs the matlab_treeweave CTest target.
+# This is the blocking runtime gate for the MATLAB/Octave binding — real MATLAB
+# (matlab.yml) only gates the build, since its hosted license is unreliable in
+# CI. Split out from the former bindings.yml so it earns its own status badge.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: octave-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  octave:
+    name: Octave bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # octave-dev (renamed from liboctave-dev on 24.04) pulls octave and
+      # provides mkoctfile + headers. cmake/ninja/g++ are preinstalled on the
+      # runner image.
+      - name: Install Octave + toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev
+
+      # Builds libtreeweave_c, fetches the mwrap generator via CPM, generates the
+      # gateway + tw_*.m from treeweave.mw, and compiles the Octave MEX with
+      # mkoctfile — all from CMake (no Makefile). bindings-octave sets
+      # TREEWEAVE_BUILD_MATLAB=ON; with only mkoctfile present, the Octave
+      # backend is selected.
+      - name: Configure + build the Octave MEX
+        run: |
+          cmake --preset bindings-octave
+          cmake --build build/bindings-octave -j
+
+      # test_treeweave.m calls error() on any failure -> octave exits non-zero.
+      - name: Run Octave suite (matlab_treeweave)
+        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure

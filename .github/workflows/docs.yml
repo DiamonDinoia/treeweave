@@ -12,6 +12,13 @@ name: Docs
 on:
   push:
     branches: [main]
+    # Only rebuild Doxygen+Sphinx when something the docs render actually changed.
+    paths:
+      - 'docs/**'
+      - '**/*.md'
+      - 'include/**'
+      - 'README.md'
+      - 'cmake/**'
   pull_request:
   workflow_dispatch:
 

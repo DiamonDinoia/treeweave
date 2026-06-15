@@ -1,0 +1,46 @@
+name: Julia
+
+# Julia wrapper: builds libtreeweave_c, dlopens it, and runs runtests.jl via the
+# julia_treeweave CTest target. Split out from the former bindings.yml so it earns
+# its own status badge.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: julia-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  julia:
+    name: Julia bindings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Configure + build libtreeweave_c
+        run: |
+          cmake --preset bindings-julia
+          cmake --build build/bindings-julia -j --target treeweave_c
+
+      - name: Run Julia suite (julia_treeweave)
+        run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure

@@ -85,6 +85,15 @@ delete(obj2);
 The `matlab_treeweave` CTest does the `addpath` wiring for you and runs
 `test_treeweave.m` headless under Octave (preferred) or MATLAB.
 
+## Performance
+
+Single-point eval (`obj.eval(scalar)`) carries a fixed per-call overhead that is
+inherent to mwrap's generic R2008OO codegen, **not** to treeweave: the handle is
+stored as a string in the `mwptr` property and re-parsed via `sscanf` on every
+call, and a temporary output buffer is allocated and copied. Use the **batch**
+API (`obj.eval(X)` with an `N×dim` matrix) for hot loops — it amortises this to
+~zero.
+
 ## Files
 
 | File | Purpose |
