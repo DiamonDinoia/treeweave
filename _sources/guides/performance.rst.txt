@@ -95,11 +95,12 @@ internally, which is what makes that contract safe.
 Cross-language throughput and latency
 --------------------------------------
 
-The same fit (the Riemann-zeta partial sum ``zeta_N(s) = sum_{k=1..N} k**-s``
-with ``N = 10**6``, on ``[2, 10]`` to a ``1e-10`` relative tolerance) is
-benchmarked from every binding (C, C++, Fortran, Python, Julia, Octave,
-JavaScript), against recomputing that sum. One native eval is a million ``pow``\ s,
-so treeweave wins decisively in every mode — including scalar. Each chart is a
+The same fit (the Riemann-zeta sum ``zeta(s) = sum_k k**-s``, summed the honest
+way — stop once the tail drops below ``1e-10`` relative, capped at 160 terms — on
+``[2, 10]`` to a ``1e-10`` relative tolerance) is benchmarked from every binding
+(C, C++, Fortran, Python, Julia, Octave, JavaScript), against recomputing that
+sum. Even that minimal native eval is tens-to-hundreds of ``pow``\ s, so treeweave
+wins in every mode — including scalar. Each chart is a
 horizontal bar per language; read it by comparing a language's treeweave bar to
 *its own* native bar, both measured in the same process. Each bar is labelled
 with the within-language **speedup** (native = ``1×`` baseline, treeweave =

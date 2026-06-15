@@ -324,11 +324,12 @@ internally, which is what makes that contract safe.</p>
 </section>
 <section id="cross-language-throughput-and-latency">
 <h2>Cross-language throughput and latency<a class="headerlink" href="#cross-language-throughput-and-latency" title="Link to this heading"></a></h2>
-<p>The same fit (the Riemann-zeta partial sum <code class="docutils literal notranslate"><span class="pre">zeta_N(s)</span> <span class="pre">=</span> <span class="pre">sum_{k=1..N}</span> <span class="pre">k**-s</span></code>
-with <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">=</span> <span class="pre">10**6</span></code>, on <code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">10]</span></code> to a <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> relative tolerance) is
-benchmarked from every binding (C, C++, Fortran, Python, Julia, Octave,
-JavaScript), against recomputing that sum. One native eval is a million <code class="docutils literal notranslate"><span class="pre">pow</span></code>s,
-so treeweave wins decisively in every mode — including scalar. Each chart is a
+<p>The same fit (the Riemann-zeta sum <code class="docutils literal notranslate"><span class="pre">zeta(s)</span> <span class="pre">=</span> <span class="pre">sum_k</span> <span class="pre">k**-s</span></code>, summed the honest
+way — stop once the tail drops below <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> relative, capped at 160 terms — on
+<code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">10]</span></code> to a <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> relative tolerance) is benchmarked from every binding
+(C, C++, Fortran, Python, Julia, Octave, JavaScript), against recomputing that
+sum. Even that minimal native eval is tens-to-hundreds of <code class="docutils literal notranslate"><span class="pre">pow</span></code>s, so treeweave
+wins in every mode — including scalar. Each chart is a
 horizontal bar per language; read it by comparing a language’s treeweave bar to
 <em>its own</em> native bar, both measured in the same process. Each bar is labelled
 with the within-language <strong>speedup</strong> (native = <code class="docutils literal notranslate"><span class="pre">1×</span></code> baseline, treeweave =
