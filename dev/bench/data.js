@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781547522735,
+  "lastUpdate": 1781548395676,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2066,6 +2066,54 @@ window.BENCHMARK_DATA = {
             "value": 0.000890997,
             "unit": "s/batch",
             "extra": "MdAPE=0.00535110867946027; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "committer": {
+            "email": "mbarbone@flatironinstitute.org",
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia"
+          },
+          "distinct": true,
+          "id": "7d4ca71651c8d1893d78388f6ebfbf9e3a1e7153",
+          "message": "Benchmark showcase (zeta) + JS/TS binding + version API\n\nReplace the cross-language benchmark's lgamma target with a dependency-free\nRiemann-zeta partial sum zeta_N(s) = sum_{k=1..N} k^-s (N=1e6) fit on [2, 10]:\na genuinely expensive function (N pow()s per eval), so a fitted polynomial eval\nbeats recomputing the sum decisively in every mode — including scalar. zeta is\nnow the quick-start example in all seven languages. lgamma and its bench-only\ndeps (scipy, pyyaml, SpecialFunctions, @stdlib/gammaln) are removed.\n\n- Charts: horizontal grouped Mevals/s bars (treeweave vs native, log x,\n  languages on y); bars are labelled with the within-language speedup (native =\n  1x baseline, treeweave = Nx) and the throughput chart marks the 1 Meval/s\n  line. README embeds the three throughput charts (single/multi/sorted); the\n  perf guide adds latency + sorted-vs-unsorted.\n- JS/TS binding (bindings/js): N-API addon + WASM, TS layer, node:test suite\n  (9/9), zeta example. CMake TREEWEAVE_BUILD_JS + bindings-js / bindings-js-wasm\n  presets; bindings.yml gains a `js` job (native + WASM).\n- Version API (poet-style): <treeweave_version.h> is generated from\n  include/treeweave_version.h.in + the tracked VERSION file (single source of\n  truth) by cmake/treeweave_generate_version.cmake, and committed in the\n  include/ tree so every build path that adds include/ finds it (no separate\n  generated-include dir to propagate) — regenerated at configure and guarded by\n  a pre-commit hook. Runtime treeweave_version()/_string(), C++\n  treeweave::version_*, TREEWEAVE_VERSION_AT_LEAST + TREEWEAVE_VERSION_FULL.\n- benchmark-showcase.yml: zeta benches, fixed julia/octave legs, `js` leg.\n- GitHub Actions referenced by tag, not commit SHA.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-15T14:32:09-04:00",
+          "tree_id": "821acf500e1cabcba2aa72fd7d3ce6f6720f4508",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/7d4ca71651c8d1893d78388f6ebfbf9e3a1e7153"
+        },
+        "date": 1781548393905,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00052175425,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00245934903809946; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.000945255888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00776289701920749; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00176293966666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00061444127856183; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00090061325,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00160645282389823; batch=65536 pts/call"
           }
         ]
       }
