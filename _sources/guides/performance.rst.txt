@@ -113,46 +113,47 @@ Throughput — Mevals/s, higher is better
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg
-   :alt: zeta unsorted-batch throughput
+   :alt: Riemann-zeta batch throughput
    :width: 100%
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_sorted.svg
-   :alt: zeta sorted-batch throughput
+   :alt: Riemann-zeta sorted-batch throughput
    :width: 100%
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_single.svg
-   :alt: zeta single-eval throughput
+   :alt: Riemann-zeta single-eval throughput
    :width: 100%
 
 Latency — ns/eval, lower is better
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_multi.svg
-   :alt: zeta unsorted-batch latency
+   :alt: Riemann-zeta batch latency
    :width: 100%
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_sorted.svg
-   :alt: zeta sorted-batch latency
+   :alt: Riemann-zeta sorted-batch latency
    :width: 100%
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_single.svg
-   :alt: zeta single-eval latency
+   :alt: Riemann-zeta single-eval latency
    :width: 100%
 
-Sorted vs unsorted batch
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Batch vs sorted batch
+~~~~~~~~~~~~~~~~~~~~~~~
 
-treeweave's own sorted fast path against its unsorted batch, per language —
-isolating what the 1-D ascending path saves by skipping the counting-sort the
-unsorted batch pays for.
+treeweave's plain batch path against its sorted-batch fast path, per language.
+The plain ``batch`` path counting-sorts the query points by leaf before
+evaluating; the ``sorted batch`` path takes points already in ascending order
+(1-D only) and streams straight through the leaves, skipping that sort — which
+is what these bars isolate.
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_throughput.svg
-   :alt: treeweave sorted vs unsorted throughput
+   :alt: treeweave batch vs sorted batch throughput
    :width: 100%
 
 .. image:: https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_latency.svg
-   :alt: treeweave sorted vs unsorted latency
+   :alt: treeweave batch vs sorted batch latency
    :width: 100%
 
-Because each native eval recomputes the whole sum, treeweave wins in every mode;
-the sorted fast path is simply its strongest.
+Because each native eval recomputes the whole sum, treeweave wins in every mode.
