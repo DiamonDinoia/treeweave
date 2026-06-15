@@ -7,6 +7,7 @@ treeweave's C++ API is header-only. Include the umbrella header and call
 .. code-block:: cpp
 
    #include <treeweave/treeweave.hpp>
+   #include <cmath>   // std::pow, for the zeta example below
 
 1-D fit
 -------
@@ -14,10 +15,15 @@ treeweave's C++ API is header-only. Include the umbrella header and call
 .. code-block:: cpp
 
    // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
-   auto zeta = [](double s) { double a = 0; for (int k = 1; k <= 1000; ++k) a += std::pow(k, -s); return a; };
+   auto zeta = [](double s) {
+       double a = 0.0;
+       for (int k = 1; k <= 1000; ++k)
+           a += std::pow(k, -s);
+       return a;
+   };
 
-   auto fn = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
-   double y = fn(3.5);
+   auto   fn = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
+   double y  = fn(3.5);
 
 Multi-dimensional fit
 ---------------------
@@ -46,17 +52,30 @@ the error metric, depth ceiling, memory budget, or uniform-refinement depth:
 
 .. code-block:: cpp
 
+   auto zeta = [](double s) {
+       double a = 0.0;
+       for (int k = 1; k <= 1000; ++k)
+           a += std::pow(k, -s);
+       return a;
+   };
+
    treeweave::options opts;
    opts.tol_kind       = treeweave::TolKind::AbsoluteMax;
    opts.max_memory_mib = 64;
-   auto fn = treeweave::fit(runge, -1.0, 1.0, 1e-10, opts);
+   auto fn = treeweave::fit(zeta, 2.0, 10.0, 1e-10, opts);
 
 The leaf polynomial degree is a template parameter (default 7, the best across
 the SIMD tuning campaign):
 
 .. code-block:: cpp
 
-   auto fn = treeweave::fit<5>(runge, -1.0, 1.0, 1e-8);  // degree-5 leaves
+   auto zeta = [](double s) {
+       double a = 0.0;
+       for (int k = 1; k <= 1000; ++k)
+           a += std::pow(k, -s);
+       return a;
+   };
+   auto fn = treeweave::fit<5>(zeta, 2.0, 10.0, 1e-8);  // degree-5 leaves
 
 Thread safety
 -------------
