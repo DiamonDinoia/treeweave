@@ -157,9 +157,20 @@ jobs:
   # back to WASM when it is absent), so it runs everywhere — Node and browser.
   # The .tgz flows into github-release as a downloadable asset; publish-npm
   # (below) pushes the same build to the registry via OIDC.
+  # Per-platform native N-API addons (treeweave.node), laid out as
+  # prebuilds/<platform>-<arch>/. build-js bundles these into the npm package so
+  # Node consumers get the fast native backend; WASM stays the browser backend +
+  # fallback for any unmatched host.
+  build-node-prebuilds:
+    name: Build Node prebuilds
+    needs: preflight
+    uses: ./.github/workflows/_build-node-prebuilds.yml
+    with:
+      ref: ${{ needs.preflight.outputs.sha }}
+
   build-js:
     name: Build JS/WASM package
-    needs: preflight
+    needs: [preflight, build-node-prebuilds]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -194,6 +205,26 @@ jobs:
           cmake --preset bindings-js-wasm
           cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
 
+      # Pull every native prebuild and lay it out under bindings/js/prebuilds/
+      # so `npm pack` bundles them. Each artifact is named node-prebuilds-<platdir>
+      # (the platform-arch dir node-gyp-build expects); reconstruct that dir from
+      # the artifact name (upload flattens the single .node inside each artifact).
+      - name: Download native prebuilds
+        uses: actions/download-artifact@v8
+        with:
+          path: _prebuilds_staging
+          pattern: node-prebuilds-*
+
+      - name: Assemble prebuilds/
+        run: |
+          mkdir -p bindings/js/prebuilds
+          for d in _prebuilds_staging/node-prebuilds-*; do
+            platdir="${d##*/node-prebuilds-}"
+            mkdir -p "bindings/js/prebuilds/$platdir"
+            cp "$d"/*.node "bindings/js/prebuilds/$platdir/"
+          done
+          find bindings/js/prebuilds -type f
+
       - name: npm pack
         id: pack
         working-directory: bindings/js
@@ -207,6 +238,20 @@ jobs:
         with:
           name: js-package
           path: bindings/js/${{ steps.pack.outputs.tgz }}
+          if-no-files-found: error
+
+      # Attach the raw WASM module + its ES6 loader glue as standalone Release
+      # assets so a web page can fetch them directly from a stable URL
+      #   https://github.com/<repo>/releases/download/v<ver>/treeweave.wasm
+      # without going through npm. (The emscripten .mjs loads treeweave.wasm by
+      # that exact name, so both keep their original filenames.)
+      - name: Upload raw WASM assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: js-wasm
+          path: |
+            bindings/js/dist/treeweave.wasm
+            bindings/js/dist/treeweave.mjs
           if-no-files-found: error
 
   # ---- Smoke: re-verify each wrapper against the ACTUAL release artifacts ----

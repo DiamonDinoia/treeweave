@@ -4,6 +4,8 @@
 // the fit request (typed a/b arrays + the packed opts) and casts the result.
 
 import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { Backend, BackendFunction, FitRequest } from "./backend.js";
 
@@ -22,10 +24,24 @@ interface Addon {
   version: number;
 }
 
+// Resolve the N-API addon. Published packages carry per-platform prebuilt
+// binaries under prebuilds/<platform>-<arch>/ (node-gyp-build picks the one
+// matching the running Node/OS/arch — N-API is ABI-stable, so one binary per
+// platform serves every Node version). A local CMake build instead drops
+// treeweave.node next to this file in dist/, so fall back to that.
+function loadAddon(require: NodeRequire): Addon {
+  const here = dirname(fileURLToPath(import.meta.url));
+  try {
+    const gypBuild = require("node-gyp-build") as (dir: string) => Addon;
+    return gypBuild(join(here, "..")); // package root holds prebuilds/
+  } catch {
+    return require("./treeweave.node") as Addon;
+  }
+}
+
 export function makeNativeBackend(): Backend {
   const require = createRequire(import.meta.url);
-  // Built next to the compiled JS (dist/treeweave.node) by CMake.
-  const addon = require("./treeweave.node") as Addon;
+  const addon = loadAddon(require);
 
   return {
     name: "native",

@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/DiamonDinoia/treeweave/branch/main/graph/badge.svg)](https://codecov.io/gh/DiamonDinoia/treeweave)
 [![docs](https://img.shields.io/badge/docs-treeweave-1f6feb.svg)](https://diamondinoia.github.io/treeweave/)
 [![PyPI](https://img.shields.io/pypi/v/treeweave)](https://pypi.org/project/treeweave/)
+[![npm](https://img.shields.io/npm/v/%40flatironinstitute%2Ftreeweave)](https://www.npmjs.com/package/@flatironinstitute/treeweave)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 
@@ -214,8 +215,12 @@ end subroutine kernel_zeta
 
 ### JavaScript / TypeScript
 
+```sh
+npm install @flatironinstitute/treeweave   # WASM-only: Node and browser, no toolchain
+```
+
 ```ts
-import { Treeweave } from "treeweave";
+import { Treeweave } from "@flatironinstitute/treeweave";
 
 // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
 const zeta = (s) => { let a = 0; for (let k = 1; k <= 1000; ++k) a += Math.pow(k, -s); return a; };
@@ -288,6 +293,17 @@ examples (incl. the transposed/SoA output route).
 
 ## Install
 
+**One-liner per language** (details below):
+
+| Language | Install |
+|----------|---------|
+| Python | `pip install treeweave` |
+| JavaScript/TypeScript | `npm install @flatironinstitute/treeweave` |
+| C / C++ (CMake) | `CPMAddPackage("gh:DiamonDinoia/treeweave@0.0.0")` — or FetchContent / `find_package` |
+| Julia | `Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")` |
+| MATLAB | download the prebuilt MEX bundle from [Releases](https://github.com/DiamonDinoia/treeweave/releases) and `addpath` |
+| Octave / Fortran | build from source (see below) |
+
 **Prebuilt binaries (recommended).**
 
 - **Python:** `pip install treeweave` (latest release from PyPI). The x86-64
@@ -299,6 +315,15 @@ examples (incl. the transposed/SoA output route).
   pip install --index-url https://test.pypi.org/simple/ \
               --extra-index-url https://pypi.org/simple/ treeweave
   ```
+- **JavaScript / TypeScript:** `npm install @flatironinstitute/treeweave`. The
+  package ships **prebuilt native N-API binaries** for Linux (x64/arm64), macOS
+  (arm64/x64), and Windows (x64) — used automatically under Node for full
+  speed — and bundles a **WASM** build that drives the browser and serves as the
+  fallback on any host without a matching prebuild. No native toolchain needed
+  either way (N-API is ABI-stable, so one binary per platform covers every Node
+  version). The raw `treeweave.wasm` + `treeweave.mjs` loader are also attached
+  to each [Release](https://github.com/DiamonDinoia/treeweave/releases) for
+  fetching directly from a web page without npm.
 - **Julia:** `Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")`
   downloads the matching `libtreeweave_c` from the GitHub Release on first build.
 - **MATLAB:** download the prebuilt `treeweave-matlab-<version>-<platform>` bundle
@@ -320,7 +345,14 @@ examples (incl. the transposed/SoA output route).
   from [Releases](https://github.com/DiamonDinoia/treeweave/releases) — it carries
   `include/treeweave.h`, `libtreeweave_c`, and a `find_package(treeweave)` package.
 
-**FetchContent (easiest source path for CMake).**
+**CPM.cmake (one-liner source consumption).**
+
+```cmake
+CPMAddPackage("gh:DiamonDinoia/treeweave@0.0.0")
+target_link_libraries(my_app PRIVATE treeweave::treeweave)   # header-only C++
+```
+
+**FetchContent (no extra tooling).**
 
 ```cmake
 include(FetchContent)
@@ -362,7 +394,7 @@ exercised by the core `ci.yml`.
 | Python | [![Python](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/python.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/python.yml) | `pip install treeweave` | [`bindings/python/examples`](bindings/python/examples) |
 | Julia | [![Julia](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/julia.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/julia.yml) | `Pkg.add(url=…, subdir="bindings/julia/Treeweave")` | [`bindings/julia/Treeweave/examples`](bindings/julia/Treeweave/examples) |
 | MATLAB / Octave | [![Octave](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/octave.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/octave.yml) | CMake builds the MEX via [mwrap](https://github.com/zgimbutas/mwrap) | [`bindings/matlab/examples`](bindings/matlab/examples) |
-| JavaScript/TypeScript | [![JS](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml) | `cmake --preset bindings-js` (native N-API) / `bindings-js-wasm` (WASM) | [`bindings/js/examples`](bindings/js/examples) |
+| JavaScript/TypeScript | [![JS](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml) | `npm install @flatironinstitute/treeweave` (prebuilt native + WASM fallback) | [`bindings/js/examples`](bindings/js/examples) |
 
 MATLAB has its own [best-effort workflow](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
 (the build gates; running needs a license CI can't reliably obtain — Octave runs
