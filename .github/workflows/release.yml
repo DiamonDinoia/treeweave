@@ -205,6 +205,10 @@ jobs:
           cmake --preset bindings-js-wasm
           cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
 
+      # Smoke the exact raw WASM assets being attached below, before they ship.
+      - name: Smoke the raw WASM module
+        run: node tests/smoke/wasm_smoke.mjs bindings/js/dist/treeweave.mjs
+
       # Pull every native prebuild and lay it out under bindings/js/prebuilds/
       # so `npm pack` bundles them. Each artifact is named node-prebuilds-<platdir>
       # (the platform-arch dir node-gyp-build expects); reconstruct that dir from
