@@ -14,6 +14,9 @@ name: Release install
 #   * npm-from-registry  — `npm install @flatironinstitute/treeweave` from the
 #                          real npm registry (WASM-only, so any OS), then
 #                          tests/smoke/npm_smoke.mjs fits + evals.
+#   * wasm-from-release  — `gh release download` the standalone treeweave.wasm +
+#                          treeweave.mjs assets (the web-fetch path, no npm), then
+#                          tests/smoke/wasm_smoke.mjs fits + evals.
 #
 # The Julia prebuilt-download path is covered by julia-smoke.yml (dispatched by
 # release.yml's verify-prebuilt job), so it is not duplicated here.
@@ -160,3 +163,33 @@ jobs:
 
       - name: Fit + eval smoke (WASM)
         run: node tests/smoke/npm_smoke.mjs
+
+  wasm-from-release:
+    name: Raw WASM from Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # release.yml deterministically attaches treeweave.wasm + treeweave.mjs
+      # (build-js -> github-release), so this is a hard gate. Only a release
+      # predating these assets (before this change landed) would lack them.
+      - name: Download the standalone WASM assets from the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          mkdir -p wasm
+          gh release download $tag --repo "${{ github.repository }}" \
+            --pattern 'treeweave.wasm' --pattern 'treeweave.mjs' --dir wasm
+          ls -l wasm
+
+      - name: Fit + eval smoke (raw WASM)
+        run: node tests/smoke/wasm_smoke.mjs wasm/treeweave.mjs

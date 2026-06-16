@@ -57,6 +57,12 @@ jobs:
           cmake --preset bindings-js-wasm
           cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
 
+      # Validate the raw WASM module (treeweave.mjs + treeweave.wasm) on its own,
+      # the standalone path shipped as a Release asset — driven directly through
+      # the Emscripten runtime, independent of the TypeScript wrapper.
+      - name: Smoke the raw WASM module
+        run: node tests/smoke/wasm_smoke.mjs bindings/js/dist/treeweave.mjs
+
       # The suite runs both backends found in dist/ (node:test, via CTest).
       - name: Run JS suite (js_treeweave)
         run: ctest --test-dir build/bindings-js -R js_treeweave --output-on-failure
