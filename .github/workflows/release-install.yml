@@ -5,17 +5,21 @@ name: Release install
 # (TestPyPI / in-tree find_package / FetchContent) and the in-release
 # verify-prebuilt job cannot cover:
 #
-#   * pip-from-pypi      — `pip install treeweave` from the real PyPI index,
-#                          import, and a tiny fit+eval smoke.
-#   * c-abi-from-release — `gh release download` the linux-x86_64 C-ABI tarball
+#   * pip-from-pypi      — `pip install treeweave` from the real PyPI index
+#                          across linux/macOS/windows × py3.9/3.12, then a tiny
+#                          fit+eval smoke (tests/smoke/pip_smoke.py).
+#   * c-abi-from-release — `gh release download` each per-platform C-ABI tarball
 #                          asset, then a consumer cmake project does
 #                          find_package(treeweave) + compile + run.
+#   * npm-from-registry  — `npm install @flatironinstitute/treeweave` from the
+#                          real npm registry (WASM-only, so any OS), then
+#                          tests/smoke/npm_smoke.mjs fits + evals.
 #
 # The Julia prebuilt-download path is covered by julia-smoke.yml (dispatched by
 # release.yml's verify-prebuilt job), so it is not duplicated here.
 #
 # Runs on every published release, on demand, and weekly so a silent breakage in
-# PyPI / the Release assets is caught even between releases.
+# PyPI / npm / the Release assets is caught even between releases.
 on:
   release:
     types: [published]
@@ -32,38 +36,57 @@ permissions:
 
 jobs:
   pip-from-pypi:
-    name: pip install (PyPI)
-    runs-on: ubuntu-24.04
+    name: pip install (PyPI) — ${{ matrix.os }} py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+        python-version: ['3.9', '3.12']  # oldest supported + abi3 floor
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install treeweave from PyPI and evaluate
+      - name: Install treeweave from PyPI
+        shell: bash
         run: |
           python -m pip install --upgrade pip numpy
+          # Pin to the released version on `release: published`; otherwise (cron /
+          # dispatch) take latest. Strip a leading "v" from the tag.
+          ver="${{ github.event.release.tag_name }}"
+          ver="${ver#v}"
+          spec="treeweave"
+          [ -n "$ver" ] && spec="treeweave==$ver"
           # The release publish can briefly precede the index update; retry.
           for i in 1 2 3 4 5; do
-            if python -m pip install treeweave; then break; fi
-            echo "treeweave not on the PyPI index yet; retry $i"
+            if python -m pip install "$spec"; then break; fi
+            echo "$spec not on the PyPI index yet; retry $i"
             sleep 30
           done
-          python - <<'EOF'
-          import math, importlib.metadata
-          import numpy as np, treeweave
-          print("treeweave", importlib.metadata.version("treeweave"))
-          fn = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-10)
-          xs = np.linspace(0.0, 1.0, 11, endpoint=False)
-          err = float(np.max(np.abs(fn(xs) - np.exp(xs))))
-          assert err < 1e-8, err
-          print(f"OK: max abs error {err:.2e}")
-          EOF
+
+      - name: Fit + eval smoke
+        run: python tests/smoke/pip_smoke.py
 
   c-abi-from-release:
-    name: C-ABI from GitHub Release (find_package)
-    runs-on: ubuntu-24.04
+    name: C-ABI from Release (${{ matrix.pattern }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    env:
+      CMAKE_GENERATOR: Ninja  # single-config build dir on every OS (build/smoke)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04,     pattern: '*linux-x86_64.tar.gz',  compiler: gcc }
+          - { os: ubuntu-24.04-arm, pattern: '*linux-aarch64.tar.gz', compiler: gcc }
+          - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   compiler: llvm }
+          - { os: windows-2022,     pattern: '*windows-x64.tar.gz',   compiler: msvc }
     steps:
       - uses: actions/checkout@v6
         with:
@@ -72,12 +95,13 @@ jobs:
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
         with:
-          compiler: gcc
+          compiler: ${{ matrix.compiler }}
           cmake: true
           ninja: true
           cache-tools: true
 
-      - name: Download the linux-x86_64 C-ABI tarball from the release
+      - name: Download the C-ABI tarball from the release
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -85,14 +109,54 @@ jobs:
           tag="${{ github.event.release.tag_name }}"
           mkdir -p pkg
           gh release download $tag --repo "${{ github.repository }}" \
-            --pattern '*linux-x86_64.tar.gz' --dir pkg
+            --pattern '${{ matrix.pattern }}' --dir pkg
           ls -l pkg
 
       - name: Extract to a prefix
+        shell: bash
         run: |
           mkdir -p _prefix
-          tar -C _prefix -xzf pkg/*linux-x86_64.tar.gz
+          tar -C _prefix -xzf pkg/${{ matrix.pattern }}
           ls -R _prefix | head -40
 
       - name: find_package(treeweave) + link treeweave_c + run
-        run: bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
+        shell: bash
+        run: |
+          # On Windows the DLL lives in bin/; the consumer exe must find it at
+          # runtime. Harmless on linux/macOS (loader uses RPATH, not PATH).
+          export PATH="$PWD/_prefix/bin:$PWD/_prefix/lib:$PATH"
+          bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
+
+  npm-from-registry:
+    name: npm install (registry) — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    # The npm publish is best-effort in release.yml (continue-on-error) and the
+    # package may not be on the registry yet. Keep this soft until npm is live;
+    # tighten to a hard failure once @flatironinstitute/treeweave is published.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install @flatironinstitute/treeweave from the registry
+        shell: bash
+        run: |
+          # Pin to the released version on `release: published`; latest otherwise.
+          ver="${{ github.event.release.tag_name }}"
+          ver="${ver#v}"
+          spec="@flatironinstitute/treeweave"
+          [ -n "$ver" ] && spec="@flatironinstitute/treeweave@$ver"
+          npm install "$spec"
+
+      - name: Fit + eval smoke (WASM)
+        run: node tests/smoke/npm_smoke.mjs

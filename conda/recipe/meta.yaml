@@ -1,0 +1,68 @@
+{% set name = "treeweave" %}
+# Keep in sync with the repo-root VERSION file and the release tag. conda-forge
+# feedstocks hardcode the version (the autotick bot bumps it on each release);
+# the staged-recipes infra only copies this recipe dir, so it cannot read
+# ../../VERSION at build time.
+{% set version = "0.0.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # The GitHub release (tag) tarball, not the PyPI sdist: it carries LICENSE
+  # (required by `license_file` below) and the full tree the build needs. Update
+  # sha256 whenever version changes (the autotick bot does this).
+  url: https://github.com/DiamonDinoia/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 120addd79eabf79733dc62cf4ad8477f4187b0f867914565a13934128eec33ec
+
+build:
+  number: 0
+  # Compiled C++/nanobind extension -> NOT noarch; one build per python/platform.
+  # abi3 (cp312) wheel logic lives in the build; conda still builds per-python.
+  # The Python project lives in bindings/python; its pyproject points
+  # cmake.source-dir at the repo root, so this builds the self-contained wheel.
+  script: {{ PYTHON }} -m pip install ./bindings/python -vv --no-deps --no-build-isolation
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake >=3.20
+    - ninja
+  host:
+    - python
+    - pip
+    - scikit-build-core >=0.10
+    - nanobind >=2.0
+    - numpy
+  run:
+    - python
+    - numpy
+
+test:
+  imports:
+    - treeweave
+  requires:
+    - pip
+    - numpy
+  commands:
+    - pip check
+    - python -c "import math, numpy as np, treeweave; fn = treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, tol=1e-10); xs = np.linspace(0.0, 1.0, 11, endpoint=False); err = float(np.max(np.abs(fn(xs) - np.exp(xs)))); assert err < 1e-8, err; print('OK', err)"
+
+about:
+  home: https://github.com/DiamonDinoia/treeweave
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: LICENSE
+  summary: Adaptive piecewise-polynomial function approximation (fit once, evaluate forever)
+  description: |
+    treeweave fits an expensive function piecewise with low-order polynomials on
+    an adaptive tree, then evaluates the result far more cheaply than the
+    original. Header-only C++ core with a stable C ABI and Python, Julia,
+    Fortran, MATLAB/Octave, and JavaScript/TypeScript wrappers.
+  doc_url: https://diamondinoia.github.io/treeweave/
+  dev_url: https://github.com/DiamonDinoia/treeweave
+
+extra:
+  recipe-maintainers:
+    - DiamonDinoia

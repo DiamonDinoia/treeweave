@@ -149,7 +149,10 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The instrumented -O0 --coverage build of the whole test suite + the
+    # force-inlined (TREEWEAVE_FLATTEN) dispatch TUs sits right at ~30 min on a
+    # 4-core runner; 30 was tipping over into a timeout (job -> cancelled).
+    timeout-minutes: 50
     needs: build
     steps:
       - name: Checkout

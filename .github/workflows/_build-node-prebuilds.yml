@@ -1,0 +1,136 @@
+name: Build Node prebuilds
+
+# Reusable builder (workflow_call only — leading underscore marks it internal).
+# Produces per-platform native N-API addons (treeweave.node) as run artifacts,
+# laid out under prebuilds/<platform>-<arch>/ so node-gyp-build picks the right
+# one at install/runtime. The Release orchestrator (release.yml) calls this and
+# bundles the assembled prebuilds/ into the npm package before pack/publish.
+#
+# N-API is ABI-stable across Node majors (the addon builds with NAPI_VERSION=8),
+# so ONE binary per platform serves every Node version — no per-Node matrix,
+# unlike Python wheels. Each Linux leg runs inside the same manylinux_2_28 image
+# the wheels/C-ABI use, so the glibc floor is 2.28, not the runner's. x86 enables
+# TREEWEAVE_C_MULTIARCH (one binary dispatches SSE4.2/AVX2/AVX-512 at runtime);
+# Linux aarch64 likewise at armv8-a; Apple silicon and MSVC build one baseline.
+# The published JS package stays WASM-capable: WASM remains the browser backend
+# and the fallback when no prebuild matches the host.
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref to build from (commit SHA / branch / tag)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prebuild:
+    name: ${{ matrix.platdir }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 90
+    container: ${{ matrix.container }}
+    # The native addon has only ever been built on Linux (js.yml). macOS should
+    # link (the JS CMakeLists uses -undefined dynamic_lookup), and Windows MSVC
+    # N-API linking (node.lib + delay-load) is unproven here — so the non-Linux
+    # legs are best-effort: a failure surfaces as a MISSING prebuild for that
+    # platform (its users transparently get the bundled WASM backend), never a
+    # blocked release. A workflow_dispatch dry-run shows which actually build.
+    continue-on-error: ${{ matrix.optional == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platdir: linux-x64
+            runs-on: ubuntu-24.04
+            container: quay.io/pypa/manylinux_2_28_x86_64
+            multiarch: 'ON'
+            arch: x86-64
+          - platdir: linux-arm64
+            runs-on: ubuntu-24.04-arm
+            container: quay.io/pypa/manylinux_2_28_aarch64
+            multiarch: 'ON'
+            arch: armv8-a
+          - platdir: darwin-arm64
+            runs-on: macos-14
+            container: ''
+            multiarch: 'OFF'
+            arch: apple-m1
+            optional: 'true'
+          - platdir: darwin-x64
+            runs-on: macos-15-intel
+            container: ''
+            multiarch: 'ON'
+            arch: x86-64
+            optional: 'true'
+          - platdir: win32-x64
+            runs-on: windows-2022
+            container: ''
+            multiarch: 'OFF'
+            arch: x86-64
+            optional: 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # node 20 needs glibc >= 2.28, met by manylinux_2_28
+
+      # manylinux images ship a compiler but not CMake/Ninja; pipx is present.
+      - name: Install CMake/Ninja (manylinux)
+        if: startsWith(matrix.platdir, 'linux')
+        run: pipx install cmake ninja
+
+      # macOS/Windows: CMake + Ninja via setup-cpp, with the MSVC environment on
+      # Windows so the addon builds with Ninja (single-config) like everywhere else.
+      - name: Setup CMake + Ninja (macOS/Windows)
+        if: ${{ !startsWith(matrix.platdir, 'linux') }}
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          cmake: true
+          ninja: true
+          vcvarsall: ${{ matrix.platdir == 'win32-x64' }}
+
+      - name: Install node-addon-api headers
+        shell: bash
+        run: npm ci
+        working-directory: bindings/js
+
+      - name: Configure + build the N-API addon
+        shell: bash
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTREEWEAVE_BUILD_TESTS=OFF \
+            -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            -DTREEWEAVE_BUILD_JS=ON \
+            -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} \
+            -DTREEWEAVE_ARCH=${{ matrix.arch }}
+          cmake --build build -j --target treeweave_node
+
+      # Lay the addon out where node-gyp-build looks: prebuilds/<platform>-<arch>/.
+      # The `.napi` tag tells node-gyp-build it is ABI-stable across Node versions.
+      - name: Assemble prebuilds/${{ matrix.platdir }}
+        shell: bash
+        run: |
+          mkdir -p "prebuilds/${{ matrix.platdir }}"
+          cp bindings/js/dist/treeweave.node "prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
+          ls -l "prebuilds/${{ matrix.platdir }}"
+
+      - name: Smoke test the freshly built addon (Node import + eval)
+        shell: bash
+        run: node tests/smoke/node_native_smoke.mjs "$PWD/prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: node-prebuilds-${{ matrix.platdir }}
+          path: prebuilds/${{ matrix.platdir }}/*.node
+          if-no-files-found: error
