@@ -33,7 +33,8 @@
     "build:wasm": "cmake --preset bindings-js-wasm && cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts",
     "build:ts": "tsc",
     "build": "npm run build:native && npm run build:wasm",
-    "test": "node --test test/"
+    "test": "node --test test/",
+    "format": "prettier --write src test examples"
   },
   "license": "BSD-3-Clause",
   "repository": {
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "prettier": "^3.3.0",
     "typescript": "^5.5.0"
   }
 }

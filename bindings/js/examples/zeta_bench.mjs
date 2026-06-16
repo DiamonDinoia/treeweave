@@ -21,13 +21,13 @@ const MAX_TERMS = 160;
 // ζ(s) ≈ Σ_k k^-s (early stop). The fit callback and the native baseline are
 // the same function (apples-to-apples).
 function zetaPartial(s) {
-  let acc = 0;
-  for (let k = 1; k <= MAX_TERMS; ++k) {
-    const term = Math.pow(k, -s);
-    acc += term;
-    if (term < EPS * acc) break;
-  }
-  return acc;
+    let acc = 0;
+    for (let k = 1; k <= MAX_TERMS; ++k) {
+        const term = Math.pow(k, -s);
+        acc += term;
+        if (term < EPS * acc) break;
+    }
+    return acc;
 }
 
 const fn = await Treeweave.fit((x) => zetaPartial(x[0]), a, b, tol, { backend: "native" });
@@ -40,16 +40,16 @@ const nNative = 256; // brute-force sample (<=160 pows each)
 const xs = new Float64Array(n);
 let seed = 7;
 for (let i = 0; i < n; ++i) {
-  seed = (1103515245 * seed + 12345) & 0x7fffffff;
-  xs[i] = a + (seed / 0x7fffffff) * (b - a);
+    seed = (1103515245 * seed + 12345) & 0x7fffffff;
+    xs[i] = a + (seed / 0x7fffffff) * (b - a);
 }
 const xsSorted = Float64Array.from(xs).sort();
 
 // --- accuracy vs the brute-force sum, on the n_native sample -----------------
 let maxRel = 0;
 for (let i = 0; i < nNative; ++i) {
-  const ref = zetaPartial(xs[i]);
-  maxRel = Math.max(maxRel, Math.abs(fn.eval(xs[i]) - ref) / Math.abs(ref));
+    const ref = zetaPartial(xs[i]);
+    maxRel = Math.max(maxRel, Math.abs(fn.eval(xs[i]) - ref) / Math.abs(ref));
 }
 
 const mevals = (count, seconds) => count / (seconds * 1e6);
@@ -89,34 +89,36 @@ const twSingle = mevals(nScalar, twSingleS);
 const twMulti = mevals(n, twMultiS);
 const twSorted = mevals(n, twSortedS);
 
-console.log(`zeta(s) = sum_k k^-s (<=${MAX_TERMS} terms, stop at ${EPS} rel), fit on [${a}, ${b}], relative tol ${tol}`);
+console.log(
+    `zeta(s) = sum_k k^-s (<=${MAX_TERMS} terms, stop at ${EPS} rel), fit on [${a}, ${b}], relative tol ${tol}`,
+);
 console.log(`  max rel err: ${maxRel.toExponential(3)}`);
 console.log(
-  `  single-eval  treeweave ${twSingle.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twSingle / natRate).toFixed(1)}x`,
+    `  single-eval  treeweave ${twSingle.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twSingle / natRate).toFixed(1)}x`,
 );
 console.log(
-  `  multi-eval   treeweave ${twMulti.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twMulti / natRate).toFixed(1)}x`,
+    `  multi-eval   treeweave ${twMulti.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twMulti / natRate).toFixed(1)}x`,
 );
 console.log(
-  `  sorted-eval  treeweave ${twSorted.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twSorted / natRate).toFixed(1)}x`,
+    `  sorted-eval  treeweave ${twSorted.toFixed(1)}  native ${natRate.toFixed(4)} Mevals/s  speedup ${(twSorted / natRate).toFixed(1)}x`,
 );
 
 // --- machine-readable YAML (optional) ----------------------------------------
 const yamlPath = process.env.TREEWEAVE_BENCH_YAML;
 if (yamlPath) {
-  const e = (x) => x.toExponential(17); // always carries a '.', so YAML reads a float
-  const block = (tw, nat) =>
-    `  treeweave_mevals_s: ${e(tw)}\n  native_mevals_s: ${e(nat)}\n  speedup: ${e(tw / nat)}\n`;
-  const doc =
-    `language: "js"\n` +
-    `domain: [${e(a)}, ${e(b)}]\n` +
-    `tol: ${e(tol)}\n` +
-    `n_pts: ${n}\n` +
-    `max_rel_err: ${e(maxRel)}\n` +
-    `single_eval:\n${block(twSingle, natRate)}` +
-    `multi_eval:\n${block(twMulti, natRate)}` +
-    `sorted_eval:\n${block(twSorted, natRate)}`;
-  writeFileSync(yamlPath, doc);
+    const e = (x) => x.toExponential(17); // always carries a '.', so YAML reads a float
+    const block = (tw, nat) =>
+        `  treeweave_mevals_s: ${e(tw)}\n  native_mevals_s: ${e(nat)}\n  speedup: ${e(tw / nat)}\n`;
+    const doc =
+        `language: "js"\n` +
+        `domain: [${e(a)}, ${e(b)}]\n` +
+        `tol: ${e(tol)}\n` +
+        `n_pts: ${n}\n` +
+        `max_rel_err: ${e(maxRel)}\n` +
+        `single_eval:\n${block(twSingle, natRate)}` +
+        `multi_eval:\n${block(twMulti, natRate)}` +
+        `sorted_eval:\n${block(twSorted, natRate)}`;
+    writeFileSync(yamlPath, doc);
 }
 
 fn.free();
