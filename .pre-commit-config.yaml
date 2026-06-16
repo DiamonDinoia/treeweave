@@ -41,6 +41,17 @@ repos:
         # *.cmake.in is covered too: gersemi 0.27.1 parses treeweaveConfig.cmake.in's
         # @PACKAGE_INIT@ placeholder cleanly.
         files: '(^|/)(CMakeLists\.txt|[^/]+\.cmake(\.in)?)$'
+      # --- JS/TS: reformat staged hunks only via prettier (changed lines, like
+      # the C++/CMake hooks). prettier is the only mainstream JS formatter with a
+      # CLI char-range flag; the binary comes from bindings/js/node_modules. ---
+      - id: prettier-staged
+        name: prettier (staged hunks)
+        entry: python tools/prettier-staged.py
+        language: python
+        pass_filenames: true
+        require_serial: true
+        files: ^bindings/js/.*\.(ts|mjs|cjs|js)$
+        exclude: ^bindings/js/dist/
       # --- Version header: regenerate include/treeweave_version.h from VERSION
       # + git state; -DCHECK=ON fails (and re-stages) if it was stale. ---
       - id: update-treeweave-version
@@ -68,6 +79,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-yaml
+        # conda/recipe/meta.yaml is a Jinja template (`{% set %}`), not plain
+        # YAML — check-yaml's parser chokes on it (the only templated YAML here).
+        exclude: '^conda/recipe/meta\.yaml$'
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-illegal-windows-names

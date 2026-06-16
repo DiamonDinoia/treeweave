@@ -15,7 +15,16 @@ assert.ok(addonPath, "usage: node node_native_smoke.mjs <path-to-addon.node>");
 
 const addon = require(addonPath);
 const opts = Int32Array.of(/*relative_max*/ 2, /*maxDepth*/ 50, /*maxMemoryMib*/ -1, 0, 0);
-const fn = addon.fit((x) => x[0] * x[0], 1, 1, Float64Array.of(0.0), Float64Array.of(2.0), 1e-8, opts, "f64");
+const fn = addon.fit(
+    (x) => x[0] * x[0],
+    1,
+    1,
+    Float64Array.of(0.0),
+    Float64Array.of(2.0),
+    1e-8,
+    opts,
+    "f64",
+);
 const y = fn.evalOne(Float64Array.of(1.5));
 fn.free();
 

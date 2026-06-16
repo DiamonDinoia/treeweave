@@ -52,7 +52,12 @@ jobs:
           - {os: macos-14,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
           - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
-          - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release}
+          # arch_native: this leg is the one that resolves to -mcpu=native
+          # (Homebrew gcc on Apple Silicon doesn't know apple-m1 — see
+          # treeweave_toolchain.cmake). Cross-run ccache is unsafe for native
+          # arch: an object built on one runner's microarch could be restored
+          # onto another and fault. So it skips the persisted cache below.
+          - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
           # Windows (Ninja, Release only — Debug MSVC builds are very slow)
           - {os: windows-2022, toolchain: msvc, build_type: Release, preset: ci-windows}
           - {os: windows-2022, toolchain: llvm, build_type: Release, preset: ci-windows-clang}
@@ -68,14 +73,35 @@ jobs:
           compiler: ${{ matrix.toolchain }}
           cmake: true
           ninja: true
+          ccache: true
           cache-tools: true
           vcvarsall: ${{ runner.os == 'Windows' }}
+
+      # Persist the ccache object cache per leg. setup-cpp installs ccache; the
+      # COMPILER_LAUNCHER env on Configure routes the compiler through it.
+      # Skipped on the -mcpu=native leg: a persisted cache shared across runners
+      # of differing microarch would risk restoring instructions the restoring
+      # host can't execute. (The launcher still runs ccache intra-job — single
+      # CPU, safe — it just never reads/writes a cross-run cache.)
+      - name: ccache cache
+        if: ${{ !matrix.arch_native }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-
+            ccache-${{ runner.os }}-${{ matrix.toolchain }}-
 
       # All build settings (portable -march baseline, sanitizers on the Linux
       # Debug rows, -Og for the Debug test matrix) live in CMakePresets.json.
       # Every platform builds single-config via Ninja (Windows uses the MSVC
-      # environment set up by setup-cpp's vcvarsall above).
+      # environment set up by setup-cpp's vcvarsall above). ccache is wired via
+      # COMPILER_LAUNCHER here (not in the presets) so local builds are untouched.
       - name: Configure
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
         run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
@@ -166,7 +192,16 @@ jobs:
           compiler: gcc-13
           cmake: true
           ninja: true
+          ccache: true
           cache-tools: true
+
+      - name: ccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-coverage-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-coverage-
 
       - name: Install coverage tools
         run: |
@@ -174,10 +209,15 @@ jobs:
           sudo apt-get install -y lcov
 
       - name: Configure (coverage)
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
         run: cmake --preset coverage
 
+      # -j: the coverage target was the one build missing parallelism; with
+      # ccache + all cores it lands well under the 50-min timeout.
       - name: Build coverage target
-        run: cmake --build build/coverage --target coverage
+        run: cmake --build build/coverage --parallel --target coverage
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7
@@ -217,7 +257,7 @@ jobs:
       # files in the explicit pass below.
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
         env:
-          SKIP: clang-format-staged,gersemi-staged
+          SKIP: clang-format-staged,gersemi-staged,prettier-staged
 
       # Enforce formatting on whole files (committed code, not just changed
       # hunks), with the same pinned tool versions the hooks use.
@@ -230,6 +270,16 @@ jobs:
           # placeholder in treeweaveConfig.cmake.in cleanly.
           git ls-files '*.cmake' '*.cmake.in' 'CMakeLists.txt' '**/CMakeLists.txt' \
             | xargs gersemi --check
+
+      # JS/TS whole-file backstop, mirroring the C++/CMake pass above: the
+      # prettier-staged hook only sees changed hunks, so enforce committed files
+      # with the pinned prettier from bindings/js (npm ci honours the lockfile).
+      # prettier resolves bindings/js/.prettierrc per-file, so full paths work.
+      - name: prettier (full files)
+        run: |
+          npm --prefix bindings/js ci
+          git ls-files 'bindings/js/**/*.ts' 'bindings/js/**/*.mjs' 'bindings/js/**/*.cjs' 'bindings/js/**/*.js' ':!:bindings/js/dist/**' \
+            | xargs bindings/js/node_modules/.bin/prettier --check
 
   valgrind:
     name: Valgrind (C ABI)
@@ -271,12 +321,24 @@ jobs:
           compiler: gcc
           cmake: true
           ninja: true
+          ccache: true
           cache-tools: true
+
+      - name: ccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-multiarch-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-multiarch-
 
       # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
       # pick one at runtime; the rest of CI pins a single -march, leaving the
       # dispatcher and its AVX-512 variant otherwise unbuilt/untested.
       - name: Configure (multiarch dispatch)
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
         run: cmake --preset multiarch
 
       - name: Build
@@ -326,12 +388,24 @@ jobs:
           compiler: gcc
           cmake: true
           ninja: true
+          ccache: true
           cache-tools: true
+
+      - name: ccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-multiarch-arm-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-multiarch-arm-
 
       # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
       # armv8-a baseline with the runtime dispatcher, which selects the single
       # mandatory neon64 variant (SVE excluded by design — see dispatch_arch.hpp).
       - name: Configure (multiarch dispatch)
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
         run: cmake --preset multiarch-arm
 
       - name: Build
