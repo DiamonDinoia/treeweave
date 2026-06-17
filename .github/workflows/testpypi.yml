@@ -1,11 +1,15 @@
 name: TestPyPI
 
-# Every push to the default branch publishes a staging build to
-# https://test.pypi.org/. The version is X.Y.Z.devN, where X.Y.Z is the root
-# CMakeLists project version and N is the number of commits since the last v*
-# release tag — so each commit gets a unique, monotonically increasing dev
+# Publishes a staging build to https://test.pypi.org/ for every *green* commit
+# on the default branch — it runs only after the CI workflow succeeds, so a
+# broken commit never publishes. The version is X.Y.Z.devN, where X.Y.Z is the
+# root CMakeLists project version and N is the number of commits since the last
+# v* release tag — so each commit gets a unique, monotonically increasing dev
 # version and TestPyPI never rejects a re-upload. This is the dry run for the
 # real PyPI publish: it exercises the full wheel matrix + sdist + metadata.
+#
+# Because it triggers on CI's workflow_run, the checkout steps pin
+# workflow_run.head_sha — the exact commit CI validated, not default-branch HEAD.
 #
 # Publishing uses PyPI Trusted Publishing (OIDC) — no API token to store.
 # One-time setup on test.pypi.org -> the `treeweave` project -> Publishing:
@@ -13,7 +17,9 @@ name: TestPyPI
 #   Workflow: testpypi.yml | Environment: testpypi
 # (Create a "pending publisher" before the project's first upload.)
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main, master]
   workflow_dispatch:
 
@@ -28,12 +34,17 @@ jobs:
   # Compute the shared X.Y.Z.devN version once so every builder pins the same one.
   version:
     name: Derive dev version
+    # Publish only green commits: workflow_dispatch, or a CI run that succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.v.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}   # the commit CI validated
           fetch-depth: 0   # need tags + full history for the commit count
       - id: v
         shell: bash
@@ -78,6 +89,8 @@ jobs:
             cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}   # the commit CI validated
 
       # Pin the wheel to the shared dev version (CMake's numeric project version
       # cannot carry a .devN suffix, so we statically override pyproject here).
@@ -107,6 +120,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}   # the commit CI validated
       - name: Pin dev version
         run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
       - name: Build sdist
