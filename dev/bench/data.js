@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781554555485,
+  "lastUpdate": 1782130309040,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2306,6 +2306,52 @@ window.BENCHMARK_DATA = {
             "value": 0.00113278111111111,
             "unit": "s/batch",
             "extra": "MdAPE=0.0029429081717226; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "430086d9fb48bbeaf903ac17615eba50db95bfdc",
+          "message": "CI: gate TestPyPI publish on green CI, publish the tested commit\n\nRe-trigger the TestPyPI staging publish off the CI workflow's successful\ncompletion instead of a raw push to main, so only commits that pass CI are\npublished ('pushed only if it works'). Pin every checkout to\nworkflow_run.head_sha — the exact commit CI validated — since workflow_run\notherwise defaults to default-branch HEAD.\n\nThis also fixes the perpetually skipped/cancelled 'pip install (TestPyPI)'\nsmoke: bursts of main pushes used to cancel in-flight TestPyPI runs, and a\ncancelled run fired the downstream workflow_run with conclusion!='success',\nskipping the smoke. Now exactly one green commit's CI drives one publish.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-17T19:11:05Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/430086d9fb48bbeaf903ac17615eba50db95bfdc"
+        },
+        "date": 1782130307436,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000516073222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00430803015653534; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00111274555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00721113716327958; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00173145555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00180593625396697; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.000888609444444445,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0020428054444574; batch=65536 pts/call"
           }
         ]
       }
