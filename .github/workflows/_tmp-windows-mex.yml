@@ -1,0 +1,52 @@
+name: TEMP Windows MEX probe
+
+# TEMPORARY — delete before squash-merge. Proves the MSVC C++20 compile of the
+# treeweave core + checked-in mwrap gateway, and the new MSVC /arch: dispatch
+# ladder, on a real windows-2022 runner. Mirrors the windows-x64 leg of
+# _build-mex.yml but standalone, no continue-on-error (failures must surface),
+# and gated to this feature branch so it never runs on main.
+on:
+  push:
+    branches: [matlab-pregenerated-windows-mex]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-mex:
+    name: windows-x64 MEX (MSVC)
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134 # v1.8.0
+        with:
+          cmake: true
+          ninja: true
+          vcvarsall: true
+          cache-tools: true
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3
+
+      # Same invocation as _build-mex.yml's windows-x64 leg: checked-in gateway,
+      # SSE2 baseline, runtime dispatch ladder up to AVX-512 via /arch: flags.
+      - name: Configure + build the MATLAB MEX
+        shell: bash
+        run: |
+          cmake --preset bindings-matlab \
+            -DTREEWEAVE_ARCH=x86-64 \
+            -DTREEWEAVE_C_MULTIARCH=ON
+          cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
+
+      - name: Confirm the MEX exists
+        shell: bash
+        run: |
+          mex=$(find build/bindings-matlab -name 'treeweave_mex.mexw64' | head -1)
+          test -n "$mex" || { echo "::error::treeweave_mex.mexw64 not found"; exit 1; }
+          ls -l "$mex"
