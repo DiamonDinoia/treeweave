@@ -162,23 +162,21 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64|riscv)$")
     set(_treeweave_is_riscv64 TRUE)
 endif()
 
-# The fan-out drives per-variant `-march`/`-mtune` flags, which are a GCC/Clang
-# spelling; MSVC has no `-march` (cl.exe only *warns* on it, so all "variants"
-# would silently collapse to the baseline) and no equivalent runtime-dispatch
-# story here, so MSVC builds single-arch regardless of ISA. Apple aarch64 also
-# stays single-arch: Apple clang rejects `-march=armv8-a`, has no SVE, and a
-# one-entry neon64 ladder adds nothing over the existing `-mcpu=apple-m1` path.
-# So the multi-arch fan-out is gated on a non-MSVC toolchain targeting x86,
-# non-Apple aarch64, or riscv64; everything else (MSVC, Apple, unknown) falls
-# through to the single-arch branch.
+# The fan-out drives per-variant ISA flags. On GCC/Clang these are the
+# `-march`/`-mtune` spelling; on MSVC x86 they are `/arch:` (cl.exe has no
+# `-march`). MSVC's `/arch:` jumps SSE2 → AVX (no SSE4.2-only rung), so the MSVC
+# x86 ladder is SSE2/AVX/AVX2/AVX512 — dispatch_arch.hpp picks the matching list.
+# Apple aarch64 stays single-arch: Apple clang rejects `-march=armv8-a`, has no
+# SVE, and a one-entry neon64 ladder adds nothing over `-mcpu=apple-m1`. MSVC on
+# non-x86 (Arm) has no `/arch:` ladder either. So the multi-arch fan-out is gated
+# on: x86 (any compiler), or a non-MSVC non-Apple aarch64 / riscv64 toolchain.
 set(_treeweave_multiarch_family FALSE)
 if(
     TREEWEAVE_C_MULTIARCH
-    AND NOT MSVC
     AND (
         _treeweave_is_x86
-        OR (_treeweave_is_aarch64 AND NOT APPLE)
-        OR _treeweave_is_riscv64
+        OR (_treeweave_is_aarch64 AND NOT APPLE AND NOT MSVC)
+        OR (_treeweave_is_riscv64 AND NOT MSVC)
     )
 )
     set(_treeweave_multiarch_family TRUE)
@@ -188,7 +186,18 @@ if(_treeweave_multiarch_family)
     # -----------------------------------------------------------------------
     # ON: one per-`-march` variant object lib per level + a baseline dispatcher.
     # -----------------------------------------------------------------------
-    if(_treeweave_is_x86)
+    if(_treeweave_is_x86 AND MSVC)
+        # MSVC x86 ladder: `/arch:` flags (cl.exe has no `-march`). No SSE4.2-only
+        # rung — SSE2 is the x64 default (no flag), then /arch:AVX, /arch:AVX2
+        # (adds FMA → xsimd fma3<avx2>), /arch:AVX512 (F/CD/BW/DQ/VL → avx512bw).
+        # best_arch at each level must equal dispatch_arch.hpp's MSVC x86 list.
+        set(_treeweave_arch_levels sse2 avx avx2 avx512)
+        set(_treeweave_flags_sse2 "") # SSE2 is the MSVC x64 baseline
+        set(_treeweave_flags_avx /arch:AVX)
+        set(_treeweave_flags_avx2 /arch:AVX2)
+        set(_treeweave_flags_avx512 /arch:AVX512)
+        set(_treeweave_baseline_flags "") # dispatcher: SSE2 baseline, no flag
+    elseif(_treeweave_is_x86)
         # The fixed four-type x86 dispatch ladder; each level's best_arch maps to
         # one dispatch_arch_list entry.
         set(_treeweave_arch_levels x86-64 x86-64-v2 x86-64-v3 x86-64-v4)
@@ -212,8 +221,12 @@ if(_treeweave_multiarch_family)
     endif()
 
     # Every variant level's flags must compile; error early (not at link) if the
-    # toolchain or assembler can't target one.
+    # toolchain or assembler can't target one. An empty flag set (the MSVC SSE2
+    # baseline rung) is the default target — nothing to probe.
     foreach(_lvl IN LISTS _treeweave_arch_levels)
+        if(NOT _treeweave_flags_${_lvl})
+            continue()
+        endif()
         # check_cxx_compiler_flag wants one space-separated string; our per-level
         # flags are a CMake list (`-march=…;-mtune=…`), so join before probing.
         string(REPLACE ";" " " _treeweave_probe "${_treeweave_flags_${_lvl}}")
@@ -231,12 +244,15 @@ if(_treeweave_multiarch_family)
     foreach(_lvl IN LISTS _treeweave_arch_levels)
         string(REPLACE "-" "_" _tag "${_lvl}")
         _treeweave_add_c_object_lib(treeweave_c_variants_${_tag} ${_treeweave_variant_srcs})
-        # Appended after the global arch flags; on GCC/Clang the last `-march`
-        # wins, pinning this variant to its level regardless of TREEWEAVE_ARCH.
-        target_compile_options(
-            treeweave_c_variants_${_tag}
-            PRIVATE ${_treeweave_flags_${_lvl}}
-        )
+        # Appended after the global arch flags; the last ISA flag wins, pinning
+        # this variant to its level regardless of TREEWEAVE_ARCH. Skipped for the
+        # MSVC SSE2 rung (empty flags = the x64 baseline).
+        if(_treeweave_flags_${_lvl})
+            target_compile_options(
+                treeweave_c_variants_${_tag}
+                PRIVATE ${_treeweave_flags_${_lvl}}
+            )
+        endif()
         target_precompile_headers(
             treeweave_c_variants_${_tag}
             PRIVATE <treeweave/detail/c_binding.hpp>
@@ -249,10 +265,12 @@ if(_treeweave_multiarch_family)
       "${PROJECT_SOURCE_DIR}/src/capi/arch_dispatch.cpp"
       "${PROJECT_SOURCE_DIR}/src/capi/treeweave.cpp"
     )
-    target_compile_options(
-        treeweave_c_baseline
-        PRIVATE ${_treeweave_baseline_flags}
-    )
+    if(_treeweave_baseline_flags)
+        target_compile_options(
+            treeweave_c_baseline
+            PRIVATE ${_treeweave_baseline_flags}
+        )
+    endif()
     message(
         STATUS
         "treeweave: C ABI multi-arch dispatch ON on ${CMAKE_SYSTEM_PROCESSOR} "
