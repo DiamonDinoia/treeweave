@@ -65,8 +65,7 @@ if(TREEWEAVE_MATLAB_USE_PREGENERATED)
     # Stage the checked-in tw_*.m into a build dir alongside where the MEX will
     # land, so a single addpath imports the binding (same layout as the regen
     # path), and the source tree never gets a compiled MEX written into it.
-    set(
-        _treeweave_mex_src
+    set(_treeweave_mex_src
         "${CMAKE_CURRENT_SOURCE_DIR}/generated/treeweave_mex_gen.cpp"
     )
     set(_treeweave_gen_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -120,8 +119,7 @@ else()
     # then `git diff bindings/matlab/generated/` shows the .mw edit's effect.
     set(_treeweave_regen_script "${CMAKE_CURRENT_BINARY_DIR}/regen_copy.cmake")
     file(
-        WRITE
-        "${_treeweave_regen_script}"
+        WRITE "${_treeweave_regen_script}"
         "file(COPY \"${_treeweave_gen_dir}/\" DESTINATION \"${CMAKE_CURRENT_SOURCE_DIR}/generated\" FILES_MATCHING PATTERN \"tw_*.m\")\nfile(COPY \"${_treeweave_mex_src}\" DESTINATION \"${CMAKE_CURRENT_SOURCE_DIR}/generated\")\n"
     )
     add_custom_target(
@@ -158,7 +156,10 @@ if(Matlab_FOUND)
     # a newer GLIBCXX than MATLAB's bundled libstdc++ — the standard portable-MEX
     # fix. Default ON (release bundles need it); dev can link dynamically with
     # -DTREEWEAVE_MATLAB_STATIC_LIBSTDCXX=OFF.
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TREEWEAVE_MATLAB_STATIC_LIBSTDCXX)
+    if(
+        CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        AND TREEWEAVE_MATLAB_STATIC_LIBSTDCXX
+    )
         target_link_options(
             treeweave_mex_matlab
             PRIVATE -static-libstdc++ -static-libgcc

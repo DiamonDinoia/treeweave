@@ -56,10 +56,9 @@ using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::a
 using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::sse4_2, xsimd::sse2>;
 #endif
 
-using dispatch_arch_list =
-    std::conditional_t<dispatch_is_x86, x86_dispatch_list,
-                       std::conditional_t<dispatch_is_aarch64, xsimd::arch_list<xsimd::neon64>,
-                                          xsimd::arch_list<rvv128>>>;
+using dispatch_arch_list = std::conditional_t<
+    dispatch_is_x86, x86_dispatch_list,
+    std::conditional_t<dispatch_is_aarch64, xsimd::arch_list<xsimd::neon64>, xsimd::arch_list<rvv128>>>;
 
 } // namespace treeweave::capi
 
