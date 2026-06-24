@@ -227,14 +227,14 @@ if(_treeweave_multiarch_family)
     endif()
 
     # Every variant level's flags must compile; error early (not at link) if the
-    # toolchain or assembler can't target one. An empty flag set (the MSVC SSE2
-    # baseline rung) is the default target — nothing to probe.
+    # toolchain or assembler can't target one. Empty-flag levels (MSVC SSE2
+    # baseline) are skipped — they are the default target, nothing to probe.
     foreach(_lvl IN LISTS _treeweave_arch_levels)
         if(NOT _treeweave_flags_${_lvl})
             continue()
         endif()
-        # check_cxx_compiler_flag wants one space-separated string; our per-level
-        # flags are a CMake list (`-march=…;-mtune=…`), so join before probing.
+        # check_cxx_compiler_flag wants a space-separated string; per-level flags
+        # are a CMake list (`-march=…;-mtune=…`), so join before probing.
         string(REPLACE ";" " " _treeweave_probe "${_treeweave_flags_${_lvl}}")
         check_cxx_compiler_flag("${_treeweave_probe}" _treeweave_flagok_${_lvl})
         if(NOT _treeweave_flagok_${_lvl})
