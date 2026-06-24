@@ -7,13 +7,18 @@ name: Build MATLAB MEX bundles
 #
 # The MEX statically links treeweave_c_static (and -static-libstdc++/-static-libgcc
 # on Linux GCC) so each bundle is self-contained: extract, addpath the directory,
-# done. Each bundle ships bindings/matlab/treeweave.m, the mwrap-generated tw_*.m
-# stubs, and the compiled treeweave_mex.<ext>.
+# done. Each bundle ships bindings/matlab/treeweave.m, the checked-in mwrap tw_*.m
+# stubs (bindings/matlab/generated/), and the compiled treeweave_mex.<ext>.
+#
+# The mwrap gateway is checked in, so no leg runs mwrap (the MSVC link of mwrap's
+# flex/bison globals never resolved — the old Windows blocker). Windows now just
+# compiles the gateway + links the C ABI like every other platform.
 #
 # Every leg is continue-on-error + fail-fast:false: building a cross-OS MEX is
 # the riskiest new release piece, so a failure surfaces as a missing optional
 # asset, never a blocked release. Compiling a MEX needs MATLAB on PATH but NOT a
 # license (only running does), so the build is reliable on hosted runners.
+# TODO: drop continue-on-error from the windows-x64 leg once it is green.
 on:
   workflow_call:
     inputs:
@@ -85,12 +90,6 @@ jobs:
 
       # mwrap's CMake build generates its parser/lexer, so it needs bison + flex.
       # Linux/macOS runners ship them; Windows does not — winflexbison3 provides
-      # win_bison/win_flex, which CMake's FindBISON/FindFLEX discover by name.
-      - name: Install bison + flex (Windows, for mwrap)
-        if: matrix.name == 'windows-x64'
-        shell: pwsh
-        run: choco install --no-progress winflexbison3
-
       # Compiling a MEX needs MATLAB on PATH (FindMatlab); a license is only
       # needed to *run*, which we do not do here. Intel macOS pins R2025b (the
       # last Intel-supported release); everything else takes the latest.
@@ -100,15 +99,21 @@ jobs:
           release: ${{ matrix.matlab_release }}
 
       # bindings-matlab selects the MATLAB MEX backend (MATLAB present, no
-      # mkoctfile). Override TREEWEAVE_ARCH to a conservative per-platform
-      # baseline so the prebuilt bundle is broadly portable (the preset's
-      # x86-64-v3 default would require AVX2 and breaks on Apple silicon).
+      # mkoctfile). The mwrap gateway is checked in (bindings/matlab/generated/),
+      # so this just compiles it + links the C ABI — no mwrap, no bison/flex.
+      # TREEWEAVE_ARCH is a conservative per-platform *baseline* (the preset's
+      # x86-64-v3 default needs AVX2 and breaks on Apple silicon); TREEWEAVE_C_MULTIARCH=ON
+      # then fans the C ABI out across the ISA ladder and dispatches at runtime,
+      # so each bundle loads on any CPU of the family yet uses AVX2/AVX-512/NEON
+      # where present (no-op single-arch on Apple-arm64; SSE2→AVX→AVX2→AVX512 on
+      # MSVC, where /arch: replaces -march).
       - name: Configure + build the MATLAB MEX
         shell: bash
         run: |
           cmake --preset bindings-matlab \
             -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
-            -DTREEWEAVE_ARCH=${{ matrix.arch }}
+            -DTREEWEAVE_ARCH=${{ matrix.arch }} \
+            -DTREEWEAVE_C_MULTIARCH=ON
           cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
 
       # Stage treeweave.m + the generated tw_*.m + the compiled MEX into one dir
