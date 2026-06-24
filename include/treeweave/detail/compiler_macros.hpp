@@ -28,4 +28,29 @@
 #define TREEWEAVE_FLATTEN
 #endif
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <xmmintrin.h> // _mm_prefetch / _MM_HINT_* (MSVC has no __builtin_prefetch)
+#endif
+
+namespace treeweave::detail {
+
+/// Software prefetch hint for a read. `Locality` mirrors __builtin_prefetch's
+/// locality arg: 3 = keep in all caches (T0) … 0 = non-temporal (NTA). No-op on
+/// compilers without a prefetch intrinsic.
+template <int Locality = 3>
+TREEWEAVE_ALWAYS_INLINE void prefetch([[maybe_unused]] const void *addr) noexcept {
+    static_assert(Locality >= 0 && Locality <= 3, "prefetch locality must be 0..3");
+#if defined(__GNUC__) || defined(__clang__)
+    __builtin_prefetch(addr, /*rw=*/0, Locality);
+#elif defined(_MSC_VER)
+    constexpr int hint = Locality == 3 ? _MM_HINT_T0
+                         : Locality == 2 ? _MM_HINT_T1
+                         : Locality == 1 ? _MM_HINT_T2
+                                         : _MM_HINT_NTA;
+    _mm_prefetch(reinterpret_cast<const char *>(addr), hint);
+#endif
+}
+
+} // namespace treeweave::detail
+
 #endif // TREEWEAVE_DETAIL_COMPILER_MACROS_HPP

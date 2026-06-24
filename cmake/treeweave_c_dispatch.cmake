@@ -92,6 +92,12 @@ function(_treeweave_configure_c_object tgt)
             $<BUILD_INTERFACE:poet::poet>
     )
     target_compile_definitions(${tgt} PRIVATE TREEWEAVE_C_BUILD)
+    # std::getenv (arch_dispatch.cpp's TREEWEAVE_FORCE_ARCH hook) is standard C++,
+    # but MSVC flags it C4996 ("unsafe"); under /WX that fails the build. Silence
+    # the CRT deprecation for our own TUs rather than dropping warnings-as-errors.
+    if(MSVC)
+        target_compile_definitions(${tgt} PRIVATE _CRT_SECURE_NO_WARNINGS)
+    endif()
     set_target_properties(
         ${tgt}
         PROPERTIES
