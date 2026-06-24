@@ -52,6 +52,13 @@ option(
     "Compile the checked-in mwrap gateway (generated/) instead of running mwrap"
     ON
 )
+# Static-link libstdc++/libgcc into the GNU MATLAB MEX (portable shipped binary);
+# OFF links them dynamically (smaller, but needs a compatible system libstdc++).
+option(
+    TREEWEAVE_MATLAB_STATIC_LIBSTDCXX
+    "Static-link the C++ runtime into the GNU MATLAB MEX (portable .mexa64)"
+    ON
+)
 set(_treeweave_inc "${PROJECT_SOURCE_DIR}/include")
 
 if(TREEWEAVE_MATLAB_USE_PREGENERATED)
@@ -147,7 +154,11 @@ if(Matlab_FOUND)
     # target_link_libraries signature, so this one must be plain too (CMake
     # forbids mixing the keyword and plain signatures on one target).
     target_link_libraries(treeweave_mex_matlab treeweave_c_static)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Static-link the C++ runtime (NOT glibc) so the shipped .mexa64 doesn't need
+    # a newer GLIBCXX than MATLAB's bundled libstdc++ — the standard portable-MEX
+    # fix. Default ON (release bundles need it); dev can link dynamically with
+    # -DTREEWEAVE_MATLAB_STATIC_LIBSTDCXX=OFF.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TREEWEAVE_MATLAB_STATIC_LIBSTDCXX)
         target_link_options(
             treeweave_mex_matlab
             PRIVATE -static-libstdc++ -static-libgcc
