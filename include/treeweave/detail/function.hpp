@@ -1122,7 +1122,6 @@ class Function {
             prev_end                = end;
             if (cnt == 0)
                 continue;
-#if defined(__GNUC__) || defined(__clang__)
             std::uint32_t next_id = id + 1;
             while (next_id < n_leaves && counts[next_id] == end)
                 ++next_id;
@@ -1131,12 +1130,11 @@ class Function {
                     // ND: polyfit doesn't expose a coefficient pointer; the
                     // evaluator object's first cacheline contains domain
                     // params and (on default layouts) the start of coeffsFlat.
-                    __builtin_prefetch(&polyfits_[next_id]);
+                    detail::prefetch(polyfits_.data() + next_id);
                 } else {
-                    __builtin_prefetch(polyfits_[next_id].coeffs().data());
+                    detail::prefetch(polyfits_[next_id].coeffs().data());
                 }
             }
-#endif
             eval_run(id, off, cnt);
         }
         return prev_end;
@@ -1189,15 +1187,12 @@ class Function {
         // Inverse-permutation form: sequential write to `res`, random read
         // from `out_packed`. Sequential stores coalesce (no RFO); random
         // loads are easily prefetched.
-        [[maybe_unused]] constexpr std::size_t LOOKAHEAD = 32;
+        constexpr std::size_t LOOKAHEAD = 32;
         for (std::size_t i = 0; i < n_trg; ++i) {
-#if defined(__GNUC__) || defined(__clang__)
             if (i + LOOKAHEAD < n_trg) {
                 const std::uint32_t pf = perm_inv[i + LOOKAHEAD];
-                __builtin_prefetch(out_packed + (output_dim * pf),
-                                   /*rw=*/0, /*locality=*/0);
+                detail::prefetch</*locality=*/0>(out_packed + (output_dim * pf));
             }
-#endif
             const std::uint32_t src  = perm_inv[i];
             const value_type   *srcp = out_packed + (output_dim * src);
             value_type         *dstp = res + (output_dim * i);
@@ -1272,18 +1267,15 @@ class Function {
 
         // Permute outputs back to caller order — per-component stride-1
         // stores into `soa_out[d]`.
-        [[maybe_unused]] constexpr std::size_t LOOKAHEAD = 32;
+        constexpr std::size_t LOOKAHEAD = 32;
         for (std::size_t i = 0; i < n_trg; ++i) {
-#if defined(__GNUC__) || defined(__clang__)
             if (i + LOOKAHEAD < n_trg) {
                 const std::uint32_t pf = perm_inv[i + LOOKAHEAD];
                 poet::static_for<output_dim>([&](auto D) -> void {
                     constexpr std::size_t d = D;
-                    __builtin_prefetch(out_soa_packed[d] + pf,
-                                       /*rw=*/0, /*locality=*/0);
+                    detail::prefetch</*locality=*/0>(out_soa_packed[d] + pf);
                 });
             }
-#endif
             const std::uint32_t src = perm_inv[i];
             poet::static_for<output_dim>([&](auto D) -> void {
                 constexpr std::size_t d = D;

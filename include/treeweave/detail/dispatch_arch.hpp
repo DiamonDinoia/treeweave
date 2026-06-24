@@ -46,8 +46,18 @@ static_assert(std::is_base_of_v<xsimd::neon, xsimd::neon64>,
 // Fixed-128-bit RVV, matching the dispatch TU's -mrvv-vector-bits=zvl flag.
 using rvv128 = xsimd::detail::rvv<128>;
 
+// x86 ladder. MSVC has no SSE4.2-only switch (its `/arch:` jumps SSE2 → AVX),
+// so the MSVC variant TUs fan out at SSE2 / AVX / AVX2 / AVX512 and this list
+// uses `avx` where the GCC/Clang ladder (x86-64-v2) uses `sse4_2`. Each entry
+// must equal a variant TU's xsimd::best_arch (see treeweave_c_dispatch.cmake).
+#if defined(_MSC_VER) && !defined(__clang__)
+using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::avx, xsimd::sse2>;
+#else
+using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::sse4_2, xsimd::sse2>;
+#endif
+
 using dispatch_arch_list = std::conditional_t<
-    dispatch_is_x86, xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::sse4_2, xsimd::sse2>,
+    dispatch_is_x86, x86_dispatch_list,
     std::conditional_t<dispatch_is_aarch64, xsimd::arch_list<xsimd::neon64>, xsimd::arch_list<rvv128>>>;
 
 } // namespace treeweave::capi
