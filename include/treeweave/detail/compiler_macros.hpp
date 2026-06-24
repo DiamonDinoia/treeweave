@@ -43,11 +43,8 @@ TREEWEAVE_ALWAYS_INLINE void prefetch([[maybe_unused]] const void *addr) noexcep
 #if defined(__GNUC__) || defined(__clang__)
     __builtin_prefetch(addr, /*rw=*/0, Locality);
 #elif defined(_MSC_VER)
-    constexpr int hint = Locality == 3   ? _MM_HINT_T0
-                         : Locality == 2 ? _MM_HINT_T1
-                         : Locality == 1 ? _MM_HINT_T2
-                                         : _MM_HINT_NTA;
-    _mm_prefetch(reinterpret_cast<const char *>(addr), hint);
+    constexpr int hints[] = {_MM_HINT_NTA, _MM_HINT_T2, _MM_HINT_T1, _MM_HINT_T0};
+    _mm_prefetch(reinterpret_cast<const char *>(addr), hints[Locality]);
 #endif
 }
 
