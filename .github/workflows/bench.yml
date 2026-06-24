@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0

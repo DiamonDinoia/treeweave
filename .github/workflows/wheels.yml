@@ -57,7 +57,7 @@ jobs:
             cibw-arch: AMD64
             cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
