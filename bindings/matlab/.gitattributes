@@ -1,0 +1,4 @@
+# mwrap output, generated from treeweave.mw (see CMakeLists.txt). Committed
+# because it is platform-independent; marked generated so it collapses in diffs
+# and drops out of GitHub blame / PR review noise.
+generated/** linguist-generated=true -diff

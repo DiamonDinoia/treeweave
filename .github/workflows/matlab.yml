@@ -45,8 +45,9 @@ jobs:
         uses: matlab-actions/setup-matlab@v3
 
       # bindings-matlab sets TREEWEAVE_BUILD_MATLAB=ON; with MATLAB (and no
-      # mkoctfile) present, the MATLAB MEX backend is selected. mwrap is fetched
-      # via CPM and the gateway + tw_*.m are generated from treeweave.mw.
+      # mkoctfile) present, the MATLAB MEX backend is selected. The mwrap gateway
+      # is checked in (bindings/matlab/generated/) and compiled directly — no CPM,
+      # no mwrap, no bison/flex. The regen-check job below guards its freshness.
       - name: Configure + build the MATLAB MEX
         run: |
           cmake --preset bindings-matlab
@@ -58,3 +59,46 @@ jobs:
       - name: Run MATLAB suite (matlab_treeweave)
         continue-on-error: true
         run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
+
+  # The mwrap gateway (bindings/matlab/generated/) is checked in and compiled by
+  # default. This job is the only thing keeping it in sync with treeweave.mw:
+  # rerun mwrap and fail if the output differs from what's committed. Fast (no
+  # MATLAB) — CMake + the mwrap generator + a git diff.
+  regen-check:
+    name: mwrap gateway is up to date
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      # octave-dev gives mkoctfile so the binding's CMakeLists selects a backend
+      # (else it skips and the regen target is never defined); bison/flex/m4 build
+      # the mwrap generator's parser/lexer.
+      - name: Install Octave + mwrap deps
+        run: sudo apt-get update && sudo apt-get install -y octave-dev bison flex m4
+
+      # OFF flips the binding to fetch+build mwrap; treeweave_mw_regen runs it and
+      # writes the fresh output back into bindings/matlab/generated/.
+      - name: Regenerate the gateway from treeweave.mw
+        run: |
+          cmake --preset bindings-octave -DTREEWEAVE_MATLAB_USE_PREGENERATED=OFF
+          cmake --build build/bindings-octave --target treeweave_mw_regen
+
+      - name: Fail if generated/ is stale
+        run: |
+          if ! git diff --exit-code -- bindings/matlab/generated/; then
+            echo "::error::bindings/matlab/generated/ is out of date. Configure with" \
+              "-DTREEWEAVE_MATLAB_USE_PREGENERATED=OFF, build the treeweave_mw_regen" \
+              "target, and commit the result."
+            exit 1
+          fi
