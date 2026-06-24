@@ -14,11 +14,11 @@ name: Build MATLAB MEX bundles
 # flex/bison globals never resolved — the old Windows blocker). Windows now just
 # compiles the gateway + links the C ABI like every other platform.
 #
-# Every leg is continue-on-error + fail-fast:false: building a cross-OS MEX is
-# the riskiest new release piece, so a failure surfaces as a missing optional
-# asset, never a blocked release. Compiling a MEX needs MATLAB on PATH but NOT a
-# license (only running does), so the build is reliable on hosted runners.
-# TODO: drop continue-on-error from the windows-x64 leg once it is green.
+# fail-fast:false so one leg never cancels the others. linux-x64 + windows-x64
+# are gating; the macOS legs are best-effort (continue-on-error) since their
+# runtime-dispatch fan-out is unproven on Apple runners. Compiling a MEX needs
+# MATLAB on PATH but NOT a license (only running does), so it is reliable on
+# hosted runners.
 on:
   workflow_call:
     inputs:
@@ -39,8 +39,10 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 60
-    # A cross-OS MEX hiccup must never block the release (mirrors smoke-matlab).
-    continue-on-error: true
+    # linux-x64 + windows-x64 are validated and gating; the macOS legs stay
+    # best-effort (best_effort:true) — the runtime-dispatch fan-out is unproven
+    # there and an Apple-runner hiccup must never block the release.
+    continue-on-error: ${{ matrix.best_effort || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -60,6 +62,7 @@ jobs:
             ext: mexmaca64
             arch: apple-m1
             matlab_release: latest
+            best_effort: true
           # macos-15-intel is the last Intel runner image. MATLAB R2025b is the
           # final release available for Intel Mac (R2026a+ is Apple-silicon only),
           # so pin it — the default 'latest' fails to install on Intel.
@@ -68,6 +71,7 @@ jobs:
             ext: mexmaci64
             arch: x86-64
             matlab_release: R2025b
+            best_effort: true
     steps:
       - name: Checkout
         uses: actions/checkout@v6
