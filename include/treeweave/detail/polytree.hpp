@@ -375,7 +375,11 @@ struct PolyTree {
             return lane_ood ? ood_id : leaf_table_[static_cast<std::size_t>(q)];
         };
 
-        const std::size_t n_simd = (n / lanes) * lanes;
+        // Round n down to a whole number of lanes. `lanes` is a power of two
+        // (xsimd batch size), so this is a single mask — same codegen as the
+        // div+mul, just explicit about the assumption.
+        static_assert((lanes & (lanes - 1)) == 0, "lanes must be a power of two");
+        const std::size_t n_simd = n & -lanes;
 
         // Lane-matched signed-integer lane type for `value_type`:
         // `as_integer_t<float> == int32_t` (-> vcvttps2dq),
@@ -384,10 +388,28 @@ struct PolyTree {
         // point classifies identically whichever code path handles it.
         using int_t = xsimd::as_integer_t<value_type>;
 
-        if constexpr (kFastInt64 || kFastInt32) {
-            // One packed truncate per W lanes (`vcvttpd2qq` / `vcvttps2dq`)
-            // in place of W scalar conversions; xsimd::batch_cast selects the
-            // intrinsic via `fast_cast` ADL on this arch.
+        if constexpr (kFastInt32) {
+            // f32: gather the leaf table for W lanes in one shot, replacing the W
+            // dependent scalar `leaf_table_[q]` loads the audit measured as the
+            // bottleneck of the scalar resolve sweep. Lowers to `vpgatherdd` on
+            // AVX2+; xsimd emulates with a scalar load loop below that, which
+            // still beats the old sweep (measured ~1.7x at SSE2, ~2-4x with a
+            // hardware gather) — so no ISA gate, let xsimd pick. Only the consumer
+            // stays scalar: `on_id` may carry a cross-lane RMW (e.g. the histogram
+            // `++counts[id]`) a vector scatter can't serialize. `gather_leaf_ids`
+            // does the floor/clamp/OOD-select in SIMD, matching `quantize_one`.
+            const auto mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
+            const auto ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
+            alignas(aligned) std::array<std::uint32_t, lanes> id_arr{};
+            for (std::size_t i = 0; i < n_simd; i += lanes) {
+                gather_leaf_ids(batch_t::load_unaligned(xp + i), lo_v, hi_v, inv_v, mask_v, ood_v)
+                    .store_aligned(id_arr.data());
+                for (std::size_t j = 0; j < lanes; ++j) on_id(i + j, id_arr[j]);
+            }
+        } else if constexpr (kFastInt64) {
+            // double on AVX-512DQ: one packed `vcvttpd2qq` per W lanes in place of
+            // W scalar conversions (xsimd::batch_cast selects it via `fast_cast`
+            // ADL). f32 goes through the gather path above; this is double-only.
             using ibatch_t = xsimd::batch<int_t, typename batch_t::arch_type>;
             static_assert(ibatch_t::size == lanes, "integer batch must be lane-matched to the value batch");
             alignas(aligned) std::array<int_t, lanes> q_arr{};
@@ -442,6 +464,56 @@ struct PolyTree {
             const auto       qi       = lane_ood ? int_t{0} : static_cast<int_t>(fq);
             on_id(i, resolve(qi, lane_ood));
         }
+    }
+
+    /// f32 gather kernel shared by `for_each_leaf_id_batch` and `leaf_ids_batch`:
+    /// floor -> truncate -> clamp (`vpminud`) -> gather (`vpgatherdd` on AVX2+,
+    /// xsimd scalar-loop emulation below that) -> OOD-select, matching
+    /// `quantize_one` lane-for-lane. Index and value are both 32-bit so the
+    /// gather lanes match. `*_v` are loop-invariant broadcasts hoisted by the
+    /// caller. Only instantiated for `float`.
+    TREEWEAVE_ALWAYS_INLINE auto gather_leaf_ids(xsimd::batch<value_type> x_v, xsimd::batch<value_type> lo_v,
+                                                 xsimd::batch<value_type> hi_v, xsimd::batch<value_type> inv_v,
+                                                 xsimd::batch<std::uint32_t> mask_v,
+                                                 xsimd::batch<std::uint32_t> ood_v) const
+        -> xsimd::batch<std::uint32_t>
+        requires(std::is_same_v<value_type, float> && input_dim == 1)
+    {
+        const auto fq  = xsimd::floor((x_v - lo_v) * inv_v);
+        const auto qi  = xsimd::min(xsimd::batch_cast<std::uint32_t>(xsimd::batch_cast<std::int32_t>(fq)), mask_v);
+        const auto ids = xsimd::batch<std::uint32_t>::gather(leaf_table_.data(), xsimd::bitwise_cast<std::int32_t>(qi));
+        const auto ood = ~((x_v >= lo_v) & (x_v <= hi_v));
+        return xsimd::select(xsimd::batch_bool_cast<std::uint32_t>(ood), ood_v, ids);
+    }
+
+    /// Vectorized leaf-id stream into `out[i]` (dependency-free consumer, unlike
+    /// the histogram/scatter callbacks). On the f32 path this is the fully packed
+    /// gather pipeline with a vector store — no per-lane callback, the audit's
+    /// ~4x cell. The double path falls back to the generic callback.
+    auto leaf_ids_batch(const value_type *xp, std::uint32_t *out, std::uint32_t ood_id, std::size_t n) const -> void
+        requires(input_dim == 1)
+    {
+        if constexpr (std::is_same_v<value_type, float>) {
+            using batch_t               = xsimd::batch<value_type>;
+            constexpr std::size_t lanes = batch_t::size;
+            const std::size_t     mask  = (std::size_t{1} << leaf_table_depth_) - 1;
+            const auto            lo_v  = batch_t::broadcast(lower_[0]);
+            const auto            hi_v  = batch_t::broadcast(upper_[0]);
+            const auto            inv_v = batch_t::broadcast(inv_span_bins_[0]);
+            const auto mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
+            const auto ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
+
+            const std::size_t n_simd = n & -lanes;
+            for (std::size_t i = 0; i < n_simd; i += lanes)
+                gather_leaf_ids(batch_t::load_unaligned(xp + i), lo_v, hi_v, inv_v, mask_v, ood_v)
+                    .store_unaligned(out + i);
+            // Tail (< lanes): reuse the generic path's scalar quantize.
+            if (n_simd < n)
+                for_each_leaf_id_batch(xp + n_simd, ood_id, n - n_simd,
+                                       [&](std::size_t i, std::uint32_t id) { out[n_simd + i] = id; });
+            return;
+        }
+        for_each_leaf_id_batch(xp, ood_id, n, [&](std::size_t i, std::uint32_t id) { out[i] = id; });
     }
 
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto find_leaf_id_with_ood(const input_type &x, std::uint32_t ood_id) const

@@ -129,8 +129,7 @@ class Function {
         const bool table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
         if constexpr (input_dim == 1) {
             if (table) {
-                subtrees_.front().for_each_leaf_id_batch(xp, ood_id, n,
-                                                         [&](std::size_t i, std::uint32_t id) -> void { out[i] = id; });
+                subtrees_.front().leaf_ids_batch(xp, out, ood_id, n);
                 return;
             }
         }
