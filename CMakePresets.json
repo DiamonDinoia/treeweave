@@ -40,6 +40,38 @@
     },
 
     {
+      "name": "arch-native",
+      "hidden": true,
+      "cacheVariables": { "TREEWEAVE_ARCH": "native" }
+    },
+    {
+      "name": "dev-release",
+      "displayName": "Dev Release (-march=native)",
+      "inherits": ["arch-native", "base"],
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "dev-debug",
+      "displayName": "Dev Debug (-Og, -march=native)",
+      "inherits": ["debug-og", "arch-native", "base"]
+    },
+    {
+      "name": "dev-relwithdebinfo",
+      "displayName": "Dev RelWithDebInfo (-march=native)",
+      "inherits": ["arch-native", "base"],
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    },
+    {
+      "name": "dev-perftests",
+      "displayName": "Dev perftests (Release + benchmarks, -march=native)",
+      "inherits": ["arch-native", "base"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "TREEWEAVE_BUILD_BENCHMARKS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+
+    {
       "name": "ci-linux-debug",
       "displayName": "CI Linux Debug (-Og, no sanitizers)",
       "description": "Plain -Og Debug: full build + test suite, no runtime sanitizers. Used by the GCC Debug rows (compiler-portability coverage); GCC+ASan instrumentation of the template-heavy eval TUs exhausts the hosted runner's memory.",
