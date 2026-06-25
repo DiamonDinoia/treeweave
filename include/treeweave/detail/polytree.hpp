@@ -302,7 +302,7 @@ struct PolyTree {
     /// TODO(xsimd): upstream as a lane-narrowing `fast_cast<int32_t>(double)`
     /// so this reaches-into-the-register helper can go away.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE static auto narrow_trunc_to_u32(xsimd::batch<double> fq) noexcept {
-#if defined(__AVX512F__)
+#ifdef __AVX512F__
         return xsimd::batch<std::uint32_t, xsimd::avx2>(_mm512_cvttpd_epi32(fq.data)); // 8 doubles -> 8 i32 (ymm)
 #else
         return xsimd::batch<std::uint32_t, xsimd::sse2>(_mm256_cvttpd_epi32(fq.data)); // 4 doubles -> 4 i32 (xmm)
