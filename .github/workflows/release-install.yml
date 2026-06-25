@@ -48,7 +48,7 @@ jobs:
         os: [ubuntu-24.04, macos-14, windows-2022]
         python-version: ['3.9', '3.12']  # oldest supported + abi3 floor
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -91,7 +91,7 @@ jobs:
           - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   compiler: llvm }
           - { os: windows-2022,     pattern: '*windows-x64.tar.gz',   compiler: msvc }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -143,7 +143,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, macos-14, windows-2022]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -169,7 +169,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
