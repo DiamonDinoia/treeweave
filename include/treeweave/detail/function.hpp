@@ -955,13 +955,29 @@ class Function {
     ///
     /// Leaf-id materialisation is path-dependent. The 1D leaf-table fast path
     /// amortises the quantize over an xsimd batch (`for_each_leaf_id_batch`,
-    /// FINUFFT bin-sort recon, spread.hpp:421) and re-quantizes in pass 2 —
-    /// one cheap SIMD quantize per W points beats the L1d round trip a stored
-    /// array would cost. The descent (`!table`) path is the opposite: each
-    /// lookup is a full `get_node_index` tree walk, far dearer than a u32
-    /// load, so pass 1 stores ids into `leaf_ids_` and pass 2 reads them back —
-    /// halving the descents per point (measured ~1.6× full-throughput on deep
-    /// no-leaf-table 1D fits, depth 17–18; see bench/binsort_phase0.md).
+    /// FINUFFT bin-sort recon, spread.hpp:421) and re-quantizes in pass 2
+    /// rather than materialising the ids. The descent (`!table`) path is the
+    /// opposite: each lookup is a full `get_node_index` tree walk, far dearer
+    /// than a u32 load, so pass 1 stores ids into `leaf_ids_` and pass 2 reads
+    /// them back — halving the descents per point (measured ~1.6×
+    /// full-throughput on deep no-leaf-table 1D fits, depth 17–18; see
+    /// bench/binsort_phase0.md).
+    ///
+    /// Why the 1D table path keeps re-quantizing (re-measured 2026-06-25, SPR
+    /// w5-3435X, paired-interleaved). An asm sweep flagged the pass-2 quantize
+    /// cast (`vcvttpd2qq`/`vcvttps2dq`) as ~34% of the 1D kernel at N=1e6, so we
+    /// tried materialising the id in pass 1 and reading it in pass 2 (one cast,
+    /// not two). It is a win *only at small leaf counts*: deg-8 smooth fits
+    /// (32–64 leaves) gained ~+15%, and the deg-3 bin-sort microbench gained
+    /// ~+10% at depth 4–6. But from ~256 leaves up it *regresses* — −9%→−26%
+    /// (f64) and up to −37% (f32) by depth 16 — because at high leaf counts the
+    /// scatter is bound on the random `counts[]` RMW, the re-quantize overlaps
+    /// those stalls for free, and the extra `leaf_id_buf` round-trip is pure
+    /// added traffic. Re-quantize is therefore the right default across the
+    /// whole leaf-count range; a leaf-count gate would just reintroduce the
+    /// kind of fragile cache-size threshold the 2-level-radix attempt was
+    /// reverted for. Stretch follow-up: narrow the single remaining cast to
+    /// `vcvttpd2dq` (lat 1c vs 4c) instead of removing the second sweep.
     template <class Allocator>
     TREEWEAVE_ALWAYS_INLINE auto partition_into_leaves(const value_type *xp, std::size_t n_trg, Scratch<Allocator> &s,
                                                        std::uint32_t ood_id) const -> void {
