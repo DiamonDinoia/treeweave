@@ -289,6 +289,34 @@ struct PolyTree {
         }
     }
 
+    /// Packed truncate of `W = batch<double>::size` doubles to `W` uint32 lanes
+    /// (the leaf-table index width). xsimd has no lane-matched double->int32
+    /// cast — the result is half the source width (zmm->ymm at 8 lanes,
+    /// ymm->xmm at 4) — so we issue `vcvttpd2dq` on the batch register directly
+    /// and wrap the half-width result in a uint32 batch whose lane count
+    /// matches the double batch, ready for a `vpgatherdd` of `leaf_table_`.
+    /// `vcvttpd2dq` is lat 1c vs the int64 `vcvttpd2qq`'s 4c and skips the
+    /// int64->int32 lane juggling the index would otherwise need.
+    ///
+    /// x86 AVX2 / AVX-512 only — the only callers gate on `kFastGatherF64`,
+    /// which is false everywhere else, so the `#else` stub below is never
+    /// instantiated. It exists purely so the name stays *declared* on ARM/SSE2
+    /// targets: the discarded `if constexpr (kFastGatherF64)` branch still
+    /// mentions `narrow_trunc_to_u32` in a `decltype`, and some non-x86
+    /// compilers reject an undeclared name there even though it never compiles.
+    /// TODO(xsimd): upstream as a lane-narrowing `fast_cast<int32_t>(double)`
+    /// so this reaches-into-the-register helper can go away.
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE static auto
+    narrow_trunc_to_u32([[maybe_unused]] xsimd::batch<double> fq) noexcept {
+#ifdef __AVX512F__
+        return xsimd::batch<std::uint32_t, xsimd::avx2>(_mm512_cvttpd_epi32(fq.data)); // 8 doubles -> 8 i32 (ymm)
+#elif defined(__AVX2__)
+        return xsimd::batch<std::uint32_t, xsimd::sse2>(_mm256_cvttpd_epi32(fq.data)); // 4 doubles -> 4 i32 (xmm)
+#else
+        return xsimd::batch<std::uint32_t>{}; // unreachable: f64 fast path is x86 AVX2+ only
+#endif
+    }
+
     /// 1D batch leaf-id stream — invokes `on_id(i, id)` for every point in
     /// `[xp, xp+n)`, amortising the quantize across
     /// `xsimd::batch<value_type>::size` lanes per iteration. Caller picks
@@ -333,19 +361,19 @@ struct PolyTree {
         //     domain mask below, so the packed cast only has to land in-range
         //     for the *kept* lanes — the clamp in `resolve` guarantees that.
         //
-        //   * double -> int64 via `vcvttpd2qq`, but ONLY on AVX-512DQ (the one
-        //     x86 packed double->int64 truncate, xsimd_avx512dq.hpp:259).
-        //     Off that ISA `xsimd::batch_cast<int64_t>` emulates per-lane
-        //     (slower than the per-lane sweep below), so AVX2/SSE double stays
-        //     on the per-lane `vcvttsd2si` sweep. Phase 0 measured that sweep at
-        //     ~1.5 cyc/pt, on par with the AVX-512DQ fast path, so narrowing
-        //     double to int32 buys nothing — and double->int32 is not
-        //     lane-matched in xsimd, so it would need a per-arch intrinsic for
-        //     no gain. Left as-is deliberately.
-#ifdef __AVX512DQ__
-        constexpr bool kFastInt64 = std::is_same_v<value_type, double>;
+        //   * double -> int32 via `vcvttpd2dq` (`narrow_trunc_to_u32`, a direct
+        //     intrinsic since xsimd has no lane-narrowing double->int cast),
+        //     then the SAME `vpgatherdd` the float path uses. An asm profile put
+        //     the old int64 quantize (`vcvttpd2qq`, lat 4c) + dependent scalar
+        //     `leaf_table_[q]` loads at ~43% of the 1D kernel; narrowing to
+        //     int32 (lat 1c, no int64 lane juggling) lets W ids gather in one
+        //     shot, exactly the win the f32 path already measured. AVX2 /
+        //     AVX-512 only; SSE2 and non-x86 double keep the per-lane
+        //     `vcvttsd2si` sweep (no hardware gather to feed).
+#if defined(__AVX512F__) || defined(__AVX2__)
+        constexpr bool kFastGatherF64 = std::is_same_v<value_type, double>;
 #else
-        constexpr bool kFastInt64 = false;
+        constexpr bool kFastGatherF64 = false;
 #endif
         constexpr bool kFastInt32 = std::is_same_v<value_type, float>;
 
@@ -375,7 +403,11 @@ struct PolyTree {
             return lane_ood ? ood_id : leaf_table_[static_cast<std::size_t>(q)];
         };
 
-        const std::size_t n_simd = (n / lanes) * lanes;
+        // Round n down to a whole number of lanes. `lanes` is a power of two
+        // (xsimd batch size), so this is a single mask — same codegen as the
+        // div+mul, just explicit about the assumption.
+        static_assert((lanes & (lanes - 1)) == 0, "lanes must be a power of two");
+        const std::size_t n_simd = n & ~(lanes - 1);
 
         // Lane-matched signed-integer lane type for `value_type`:
         // `as_integer_t<float> == int32_t` (-> vcvttps2dq),
@@ -384,30 +416,54 @@ struct PolyTree {
         // point classifies identically whichever code path handles it.
         using int_t = xsimd::as_integer_t<value_type>;
 
-        if constexpr (kFastInt64 || kFastInt32) {
-            // One packed truncate per W lanes (`vcvttpd2qq` / `vcvttps2dq`)
-            // in place of W scalar conversions; xsimd::batch_cast selects the
-            // intrinsic via `fast_cast` ADL on this arch.
-            using ibatch_t = xsimd::batch<int_t, typename batch_t::arch_type>;
-            static_assert(ibatch_t::size == lanes, "integer batch must be lane-matched to the value batch");
-            alignas(aligned) std::array<int_t, lanes> q_arr{};
-            alignas(aligned) std::array<bool, lanes>  ood_arr{};
+        if constexpr (kFastInt32) {
+            // f32: gather the leaf table for W lanes in one shot, replacing the W
+            // dependent scalar `leaf_table_[q]` loads the audit measured as the
+            // bottleneck of the scalar resolve sweep. Lowers to `vpgatherdd` on
+            // AVX2+; xsimd emulates with a scalar load loop below that, which
+            // still beats the old sweep (measured ~1.7x at SSE2, ~2-4x with a
+            // hardware gather) — so no ISA gate, let xsimd pick. Only the consumer
+            // stays scalar: `on_id` may carry a cross-lane RMW (e.g. the histogram
+            // `++counts[id]`) a vector scatter can't serialize. `gather_leaf_ids`
+            // does the floor/clamp/OOD-select in SIMD, matching `quantize_one`.
+            const auto mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
+            const auto ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
+            alignas(aligned) std::array<std::uint32_t, lanes> id_arr{};
+            for (std::size_t i = 0; i < n_simd; i += lanes) {
+                gather_leaf_ids(batch_t::load_unaligned(xp + i), lo_v, hi_v, inv_v, mask_v, ood_v)
+                    .store_aligned(id_arr.data());
+                for (std::size_t j = 0; j < lanes; ++j)
+                    on_id(i + j, id_arr[j]);
+            }
+        } else if constexpr (kFastGatherF64) {
+            // double on AVX2/AVX-512: narrow double->int32 (`vcvttpd2dq`, lat 1c,
+            // one ymm) in place of the int64 `vcvttpd2qq` (lat 4c, two zmm). The
+            // profile fingered the *cast* as the bottleneck (~43% of the kernel),
+            // feeding a dependent scalar `leaf_table_[q]` load — so narrow the
+            // cast only and KEEP the scalar loads. A `vpgatherdd` over the
+            // narrowed indices also classifies right but loses from ~256 leaves
+            // up (one gather uop waits on every lane's cache line; the table
+            // spills L1) — measured -9% at d8 to -24% at d16, vs +8% at d4/d6.
+            // The narrowed index batch is u32 (`vpminud` clamp) so the scalar
+            // loop indexes the table with a zero-extended 32-bit lane.
+            using idx_batch_t = decltype(narrow_trunc_to_u32(std::declval<batch_t>()));
+            static_assert(idx_batch_t::size == lanes, "narrowed index batch must be lane-matched to the value batch");
+            const auto mask_v = idx_batch_t::broadcast(static_cast<std::uint32_t>(mask));
+            alignas(aligned) std::array<std::uint32_t, lanes> q_arr{};
+            alignas(aligned) std::array<bool, lanes>          ood_arr{};
             for (std::size_t i = 0; i < n_simd; i += lanes) {
                 const auto x_v  = batch_t::load_unaligned(xp + i);
                 const auto fq_v = xsimd::floor((x_v - lo_v) * inv_v);
                 // Positive-logic domain mask, identical to `quantize_one`'s gate:
-                // a lane is OOD unless `lo <= x <= hi`. This subsumes the old
-                // non-finite guard (NaN and ±Inf fail both compares) and adds the
-                // finite OOD-high case, so finite `x > upper_` now maps to `ood_id`
-                // instead of extrapolating from the last cell. Computed on `x_v`
-                // (not `fq_v`) so the closed upper endpoint `x == upper_` stays
-                // in-domain. The packed cast runs on every lane (well-defined on
-                // SIMD, no per-lane UB); `resolve`'s clamp keeps the discarded
-                // OOD lanes' table index in bounds.
+                // a lane is OOD unless `lo <= x <= hi` (NaN/±Inf fail both
+                // compares; finite `x > upper_` maps to `ood_id`). On `x_v` not
+                // `fq_v` so the closed upper endpoint `x == upper_` stays in.
                 (~((x_v >= lo_v) & (x_v <= hi_v))).store_aligned(ood_arr.data());
-                xsimd::batch_cast<int_t>(fq_v).store_aligned(q_arr.data());
+                // Clamp the narrowed index to [0, mask] (vpminud) so the scalar
+                // table load stays in bounds; OOD lanes are remapped below.
+                xsimd::min(narrow_trunc_to_u32(fq_v), mask_v).store_aligned(q_arr.data());
                 for (std::size_t j = 0; j < lanes; ++j)
-                    on_id(i + j, resolve(q_arr[j], ood_arr[j]));
+                    on_id(i + j, ood_arr[j] ? ood_id : leaf_table_[q_arr[j]]);
             }
         } else {
             // AVX2/SSE double: per-lane `vcvttsd2si` sweep (no packed
@@ -442,6 +498,55 @@ struct PolyTree {
             const auto       qi       = lane_ood ? int_t{0} : static_cast<int_t>(fq);
             on_id(i, resolve(qi, lane_ood));
         }
+    }
+
+    /// f32 gather kernel shared by `for_each_leaf_id_batch` and `leaf_ids_batch`:
+    /// floor -> truncate -> clamp (`vpminud`) -> gather (`vpgatherdd` on AVX2+,
+    /// xsimd scalar-loop emulation below that) -> OOD-select, matching
+    /// `quantize_one` lane-for-lane. Index and value are both 32-bit so the
+    /// gather lanes match. `*_v` are loop-invariant broadcasts hoisted by the
+    /// caller. Only instantiated for `float`.
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto
+    gather_leaf_ids(xsimd::batch<value_type> x_v, xsimd::batch<value_type> lo_v, xsimd::batch<value_type> hi_v,
+                    xsimd::batch<value_type> inv_v, xsimd::batch<std::uint32_t> mask_v,
+                    xsimd::batch<std::uint32_t> ood_v) const -> xsimd::batch<std::uint32_t>
+        requires(std::is_same_v<value_type, float> && input_dim == 1)
+    {
+        const auto fq  = xsimd::floor((x_v - lo_v) * inv_v);
+        const auto qi  = xsimd::min(xsimd::batch_cast<std::uint32_t>(xsimd::batch_cast<std::int32_t>(fq)), mask_v);
+        const auto ids = xsimd::batch<std::uint32_t>::gather(leaf_table_.data(), xsimd::bitwise_cast<std::int32_t>(qi));
+        const auto ood = ~((x_v >= lo_v) & (x_v <= hi_v));
+        return xsimd::select(xsimd::batch_bool_cast<std::uint32_t>(ood), ood_v, ids);
+    }
+
+    /// Vectorized leaf-id stream into `out[i]` (dependency-free consumer, unlike
+    /// the histogram/scatter callbacks). On the f32 path this is the fully packed
+    /// gather pipeline with a vector store — no per-lane callback, the audit's
+    /// ~4x cell. The double path falls back to the generic callback.
+    auto leaf_ids_batch(const value_type *xp, std::uint32_t *out, std::uint32_t ood_id, std::size_t n) const -> void
+        requires(input_dim == 1)
+    {
+        if constexpr (std::is_same_v<value_type, float>) {
+            using batch_t                = xsimd::batch<value_type>;
+            constexpr std::size_t lanes  = batch_t::size;
+            const std::size_t     mask   = (std::size_t{1} << leaf_table_depth_) - 1;
+            const auto            lo_v   = batch_t::broadcast(lower_[0]);
+            const auto            hi_v   = batch_t::broadcast(upper_[0]);
+            const auto            inv_v  = batch_t::broadcast(inv_span_bins_[0]);
+            const auto            mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
+            const auto            ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
+
+            const std::size_t n_simd = n & ~(lanes - 1);
+            for (std::size_t i = 0; i < n_simd; i += lanes)
+                gather_leaf_ids(batch_t::load_unaligned(xp + i), lo_v, hi_v, inv_v, mask_v, ood_v)
+                    .store_unaligned(out + i);
+            // Tail (< lanes): reuse the generic path's scalar quantize.
+            if (n_simd < n)
+                for_each_leaf_id_batch(xp + n_simd, ood_id, n - n_simd,
+                                       [&](std::size_t i, std::uint32_t id) -> void { out[n_simd + i] = id; });
+            return;
+        }
+        for_each_leaf_id_batch(xp, ood_id, n, [&](std::size_t i, std::uint32_t id) -> void { out[i] = id; });
     }
 
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto find_leaf_id_with_ood(const input_type &x, std::uint32_t ood_id) const
