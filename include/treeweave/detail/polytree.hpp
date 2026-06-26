@@ -289,7 +289,6 @@ struct PolyTree {
         }
     }
 
-#if defined(__AVX512F__) || defined(__AVX2__)
     /// Packed truncate of `W = batch<double>::size` doubles to `W` uint32 lanes
     /// (the leaf-table index width). xsimd has no lane-matched double->int32
     /// cast — the result is half the source width (zmm->ymm at 8 lanes,
@@ -297,18 +296,26 @@ struct PolyTree {
     /// and wrap the half-width result in a uint32 batch whose lane count
     /// matches the double batch, ready for a `vpgatherdd` of `leaf_table_`.
     /// `vcvttpd2dq` is lat 1c vs the int64 `vcvttpd2qq`'s 4c and skips the
-    /// int64->int32 lane juggling the index would otherwise need. x86 AVX2 /
-    /// AVX-512 only; other targets keep the per-lane sweep.
+    /// int64->int32 lane juggling the index would otherwise need.
+    ///
+    /// x86 AVX2 / AVX-512 only — the only callers gate on `kFastGatherF64`,
+    /// which is false everywhere else, so the `#else` stub below is never
+    /// instantiated. It exists purely so the name stays *declared* on ARM/SSE2
+    /// targets: the discarded `if constexpr (kFastGatherF64)` branch still
+    /// mentions `narrow_trunc_to_u32` in a `decltype`, and some non-x86
+    /// compilers reject an undeclared name there even though it never compiles.
     /// TODO(xsimd): upstream as a lane-narrowing `fast_cast<int32_t>(double)`
     /// so this reaches-into-the-register helper can go away.
-    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE static auto narrow_trunc_to_u32(xsimd::batch<double> fq) noexcept {
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE static auto
+    narrow_trunc_to_u32([[maybe_unused]] xsimd::batch<double> fq) noexcept {
 #ifdef __AVX512F__
         return xsimd::batch<std::uint32_t, xsimd::avx2>(_mm512_cvttpd_epi32(fq.data)); // 8 doubles -> 8 i32 (ymm)
-#else
+#elif defined(__AVX2__)
         return xsimd::batch<std::uint32_t, xsimd::sse2>(_mm256_cvttpd_epi32(fq.data)); // 4 doubles -> 4 i32 (xmm)
+#else
+        return xsimd::batch<std::uint32_t>{}; // unreachable: f64 fast path is x86 AVX2+ only
 #endif
     }
-#endif
 
     /// 1D batch leaf-id stream — invokes `on_id(i, id)` for every point in
     /// `[xp, xp+n)`, amortising the quantize across
