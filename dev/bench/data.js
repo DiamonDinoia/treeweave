@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782130309040,
+  "lastUpdate": 1782731267754,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2352,6 +2352,76 @@ window.BENCHMARK_DATA = {
             "value": 0.000888609444444445,
             "unit": "s/batch",
             "extra": "MdAPE=0.0020428054444574; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "DiamonDinoia@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "e7f75710972c7ac29508962c47029edcebec6b7d",
+          "message": "perf(polytree): vectorize the leaf-table quantize (f32 gather + f64 narrow cast)\n\n1D leaf-table batch eval — two profile-guided wins on the quantize:\n\n- f32: floor -> truncate -> clamp -> vpgatherdd of leaf_table_ in one shot,\n  replacing the per-lane dependent scalar loads. CodSpeed: +12.3% on the\n  deep-leaf case; xsimd emulates the gather where no hardware gather exists.\n- f64: narrow the quantize cast to int32 (vcvttpd2dq, lat 1c) in place of the\n  int64 vcvttpd2qq (lat 4c) the profile fingered as ~43% of the kernel; keep\n  scalar table loads (a vpgatherdd over a spilled table regressed large-leaf).\n  +3-8% wall locally, no regression on the new deep-leaf guard cases.\n\nnarrow_trunc_to_u32 is x86 AVX2/AVX-512 only and stays declared (portable\n#else stub) on ARM/SSE2 so the discarded if-constexpr decltype compiles there.",
+          "timestamp": "2026-06-26T15:30:46Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/e7f75710972c7ac29508962c47029edcebec6b7d"
+        },
+        "date": 1782731266075,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000553436777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00496233507978461; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.000941023875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00271680640491165; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000694310777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00613716917677785; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00112733988888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00736296031533274; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00188473388888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00202054678778225; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.00404267825,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0167627831619271; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.015761373625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00342394946876516; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00102841025,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000602397590517838; batch=65536 pts/call"
           }
         ]
       }
