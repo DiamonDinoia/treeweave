@@ -42,7 +42,7 @@ jobs:
 
       # Every language builds libtreeweave_c, so all need a C/C++ toolchain.
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.0
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
