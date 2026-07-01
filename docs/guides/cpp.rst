@@ -95,3 +95,19 @@ Build the examples
 
 Runnable sources live under
 `examples/c++/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B>`_.
+
+Compile without CMake
+---------------------
+
+The header-only API pulls in polyfit, POET, xsimd and mdspan, so ``-Iinclude``
+alone won't compile. The configure step above consolidates every header into a
+single ``build/include`` tree, so one flag suffices — xsimd-style:
+
+.. code-block:: bash
+
+   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+
+After ``cmake --install build --prefix P`` the same headers land in
+``P/include``, so a build against the install prefix is ``-IP/include`` (or
+nothing, for a standard prefix). ``cd examples/c++ && make`` does the same via
+the generated ``build/make.inc`` — see :doc:`../install` for the full recipe.

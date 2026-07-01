@@ -373,10 +373,20 @@ add_subdirectory(extern/treeweave)                     # vendored
 target_link_libraries(my_app PRIVATE treeweave::treeweave)
 ```
 
-The header-only C++ template API (`treeweave::treeweave`) instantiates against
-FetchContent-only headers, so it is **not** part of the installed
-`find_package` package — consume it in-tree. The installable surface is the
-**C ABI** (`treeweave::treeweave_c` / `treeweave::treeweave_c_static`).
+**Without CMake.** Configuring the project consolidates the C++ headers and
+their deps (polyfit, POET, xsimd, mdspan) into one `build/include` tree, so a
+manual compile takes a single include flag — xsimd-style:
+
+```bash
+cmake -S . -B build -DTREEWEAVE_BUILD_EXAMPLES=ON && cmake --build build
+g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+```
+
+`cmake --install` ships the same bundle, so a build against the prefix is just
+`-I<prefix>/include`. `find_package(treeweave)` still exposes only the **C ABI**
+CMake targets (`treeweave::treeweave_c` / `treeweave::treeweave_c_static`); the
+header-only C++ API is consumed by include path or in-tree via FetchContent /
+`add_subdirectory`.
 
 ## Supported bindings
 

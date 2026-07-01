@@ -111,8 +111,36 @@ POET, Catch2) are fetched automatically.
    cmake --build build -j
    ctest --test-dir build
 
-Non-CMake C++ builds: add ``include/`` to your compiler include path and
-``#include <treeweave/treeweave.hpp>``.
+Non-CMake C++ builds: the header-only C++ API pulls in polyfit, POET, xsimd and
+mdspan. Rather than track down four include paths, let CMake consolidate them
+into a single tree. Configure once — it fetches the deps and merges every header
+(treeweave's own plus the four deps) into ``<build>/include``:
+
+.. code-block:: bash
+
+   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON
+   cmake --build build
+
+Then compile with one include flag, xsimd-style:
+
+.. code-block:: bash
+
+   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+
+The build also writes a FINUFFT-style ``build/make.inc`` (``CXX``, ``CXXFLAGS``,
+``TREEWEAVE_INC``); ``examples/c++/Makefile`` includes it, so
+``cd examples/c++ && make`` builds every example (``make -n simple1d`` prints the
+exact command).
+
+**Against an installed treeweave.** ``cmake --install`` ships the same
+consolidated headers, so a build against the install prefix is just
+``-I<prefix>/include`` — or nothing, for a standard prefix already on the
+compiler's search path:
+
+.. code-block:: bash
+
+   cmake --install build --prefix /your/prefix
+   g++ -std=c++20 -O3 -march=native simple1d.cpp -I/your/prefix/include -o simple1d
 
 .. _julia-from-source:
 
