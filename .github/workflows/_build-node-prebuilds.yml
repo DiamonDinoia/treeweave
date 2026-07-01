@@ -90,7 +90,7 @@ jobs:
       # Windows so the addon builds with Ninja (single-config) like everywhere else.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.platdir, 'linux') }}
-        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
         with:
           cmake: true
           ninja: true
