@@ -171,3 +171,26 @@ jobs:
             ${{ steps.ver.outputs.pkg }}.tar.gz
             ${{ steps.ver.outputs.pkg }}.zip
           if-no-files-found: ignore
+
+      # Arch-independent C++ headers bundle for the no-CMake "download &
+      # -Iinclude" path (issue #20). The C++ API is header-only, so the same
+      # dist/include tree ships on every platform — build it ONCE, on the linux
+      # x86_64 leg. release.yml's github-release job attaches artifacts/* via a
+      # merge-multiple download, so this is picked up with no extra glue.
+      #
+      # Filename is deliberately UNVERSIONED so the release asset has a stable,
+      # floating URL: .../releases/latest/download/treeweave-cxx-headers.tar.gz
+      # always resolves to the newest release. Users who want to pin still can,
+      # via the tagged path .../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz.
+      - name: Package C++ headers (tar.gz, arch-independent)
+        if: matrix.name == 'linux-x86_64'
+        shell: bash
+        run: tar -C dist -czf treeweave-cxx-headers.tar.gz include
+
+      - name: Upload C++ headers artifact
+        if: matrix.name == 'linux-x86_64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: treeweave-cxx-headers
+          path: treeweave-cxx-headers.tar.gz
+          if-no-files-found: error

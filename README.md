@@ -373,9 +373,25 @@ add_subdirectory(extern/treeweave)                     # vendored
 target_link_libraries(my_app PRIVATE treeweave::treeweave)
 ```
 
-**Without CMake.** Configuring the project consolidates the C++ headers and
-their deps (polyfit, POET, xsimd, mdspan) into one `build/include` tree, so a
-manual compile takes a single include flag — xsimd-style:
+**Without CMake — two easy ways.** The C++ API is header-only but pulls in four
+deps (polyfit, POET, xsimd, mdspan); treeweave consolidates them into one
+`include/` tree so a manual compile takes a single include flag — xsimd-style.
+
+*(a) From a release — nothing to build.* Download the arch-independent headers
+bundle, extract, `-Iinclude` ([`examples/standalone`](examples/standalone)):
+
+```bash
+wget https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
+tar xzf treeweave-cxx-headers.tar.gz                  # -> ./include/...
+g++ -std=c++20 -O3 -march=native demo.cpp -Iinclude -o demo
+```
+
+The asset name is unversioned; swap the URL for the channel you want:
+- **latest stable** — `.../releases/latest/download/treeweave-cxx-headers.tar.gz`
+- **pinned** — `.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz`
+- **unstable** (rolling, from every green main CI) — `.../releases/download/unstable/treeweave-cxx-headers.tar.gz`
+
+*(b) From a checkout.* Configuring merges every header into `build/include`:
 
 ```bash
 cmake -S . -B build -DTREEWEAVE_BUILD_EXAMPLES=ON && cmake --build build

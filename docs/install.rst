@@ -47,6 +47,44 @@ release.)
 archive contains ``include/treeweave.h``, ``libtreeweave_c``, and a
 ``find_package(treeweave)`` CMake package.
 
+**C++ header-only drop-in (no CMake)** — the simplest path if you just want the
+C++ API and don't use CMake. The headers are platform-independent, so one
+arch-independent archive covers every OS. Download, extract, ``-Iinclude``:
+
+.. code-block:: bash
+
+   # Latest stable release (floating URL — never needs bumping):
+   wget https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
+   tar xzf treeweave-cxx-headers.tar.gz             # -> ./include/treeweave/..., ./include/polyfit/..., ...
+   g++ -std=c++20 -O3 -march=native demo.cpp -Iinclude -o demo
+
+The asset name is unversioned, so pick the URL for the channel you want — the
+tarball layout is identical:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Channel
+     - URL
+   * - Latest stable
+     - ``.../releases/latest/download/treeweave-cxx-headers.tar.gz``
+   * - Pinned version
+     - ``.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz``
+   * - Unstable (bleeding edge)
+     - ``.../releases/download/unstable/treeweave-cxx-headers.tar.gz``
+
+``latest`` always resolves to the newest tagged release; pin ``vX.Y.Z`` for
+reproducibility. ``unstable`` is a rolling prerelease refreshed from every green
+main CI (bleeding edge, no stability promise) — it stays out of ``latest``.
+
+The bundle carries every transitive header (treeweave, polyfit, POET, xsimd,
+mdspan) under one ``include/`` — no dependency hunting. See the runnable
+`examples/standalone/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone>`_
+example. (Already grabbing the per-platform ``treeweave-<version>-<platform>``
+archive for the C ABI? It carries the identical ``include/`` — no separate
+download needed.)
+
 Use it in your CMake project
 ----------------------------
 

@@ -111,3 +111,9 @@ After ``cmake --install build --prefix P`` the same headers land in
 ``P/include``, so a build against the install prefix is ``-IP/include`` (or
 nothing, for a standard prefix). ``cd examples/c++ && make`` does the same via
 the generated ``build/make.inc`` — see :doc:`../install` for the full recipe.
+
+No checkout at all? The release ships the identical bundle as an
+arch-independent ``treeweave-cxx-headers.tar.gz`` at a floating
+``releases/latest/download`` URL — download, extract, ``-Iinclude``. The runnable
+`examples/standalone/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone>`_
+example (and :doc:`../install`) shows the three-command flow.
