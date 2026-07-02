@@ -1184,32 +1184,11 @@ class Function {
     /// point. `TREEWEAVE_FLATTEN` here doesn't fix it — the durable fix is
     /// `PF_ALWAYS_INLINE` on `evalCanonical`.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto operator()(const input_type &x) const noexcept -> output_type {
-        bool ood = false;
-        poet::static_for<input_dim>([&](auto D) -> void {
-            constexpr std::size_t d  = D;
-            const value_type      xd = [&]() -> value_type {
-                if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
-                    return x[d];
-                else
-                    return x;
-            }();
-            // Positive-logic guard: NaN fails both comparisons, so the
-            // negation flags it OOD. A `xd < lo || xd > hi` test is *false*
-            // for NaN (all NaN compares are false), letting NaN reach
-            // `get_linear_bin(NaN)` -> `cvttsd2si(NaN)` = INT64_MIN -> a huge
-            // index -> out-of-bounds `subtrees_` read. The high bound is
-            // inclusive (`<= upper_right_`) so the closed upper endpoint
-            // `x == upper_right_` passes the guard and `get_linear_bin`'s clamp
-            // routes it to the last subtree; OOD-low and finite `x > upper`
-            // stay NaN. Semantics for interior x are unchanged.
-            if (!(xd >= lower_left_[d] && xd <= upper_right_[d]))
-                ood = true;
-        });
-        if (ood) [[unlikely]] {
-            // NaN-fill every output component — matches the batch path's OOD
-            // bucket. A bare `output_type{nan}` aggregate-initialises only the
-            // first element of a multi-output `std::array`, leaving the rest
-            // zero (a scalar/batch disagreement caught by the SoA batch test).
+        // NaN-fill every output component — matches the batch path's OOD bucket.
+        // A bare `output_type{nan}` aggregate-initialises only the first element
+        // of a multi-output `std::array`, leaving the rest zero (a scalar/batch
+        // disagreement caught by the SoA batch test).
+        auto nan_out = [&]() -> output_type {
             constexpr value_type nan_v = std::numeric_limits<value_type>::quiet_NaN();
             if constexpr (poly_eval::detail::hasTupleSize_v<output_type>) {
                 output_type out{};
@@ -1219,7 +1198,46 @@ class Function {
             } else {
                 return output_type{nan_v};
             }
+        };
+
+        // Single-subtree fast path (the common case — any fit whose tree stays
+        // within one subtree's leaf-table cap). Skip the redundant
+        // `get_linear_bin`, which only ever returns bin 0 here, and fold the OOD
+        // gate into the leaf-table quantize — exactly the `subtrees_.size() == 1`
+        // fast path the batch/sorted paths already take. `find_leaf_id_with_ood`
+        // (== `quantize_one`) applies the same positive-logic per-axis domain
+        // gate as the general path below, so OOD-low / finite OOD-high / NaN /
+        // ±Inf all map to `ood_id` -> NaN, point-for-point identical.
+        if (subtrees_.size() == 1 && subtrees_.front().has_leaf_table()) {
+            const auto          ood_id = static_cast<std::uint32_t>(polyfits_.size());
+            const std::uint32_t id     = subtrees_.front().find_leaf_id_with_ood(x, ood_id);
+            if (id == ood_id) [[unlikely]]
+                return nan_out();
+            return polyfits_[id](x);
         }
+
+        // General path: per-axis OOD guard, then outer bin -> subtree -> leaf.
+        // Positive-logic guard: NaN fails both comparisons, so the negation flags
+        // it OOD. A `xd < lo || xd > hi` test is *false* for NaN (all NaN compares
+        // are false), letting NaN reach `get_linear_bin(NaN)` -> `cvttsd2si(NaN)`
+        // = INT64_MIN -> a huge index -> out-of-bounds `subtrees_` read. The high
+        // bound is inclusive (`<= upper_right_`) so the closed upper endpoint
+        // `x == upper_right_` passes the guard and `get_linear_bin`'s clamp routes
+        // it to the last subtree; OOD-low and finite `x > upper` stay NaN.
+        bool ood = false;
+        poet::static_for<input_dim>([&](auto D) -> void {
+            constexpr std::size_t d  = D;
+            const value_type      xd = [&]() -> value_type {
+                if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
+                    return x[d];
+                else
+                    return x;
+            }();
+            if (!(xd >= lower_left_[d] && xd <= upper_right_[d]))
+                ood = true;
+        });
+        if (ood) [[unlikely]]
+            return nan_out();
         return polyfits_[subtrees_[get_linear_bin(x)].find_leaf_id(x)](x);
     }
 
