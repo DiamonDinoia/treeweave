@@ -9,6 +9,7 @@
 
 #include <array>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <functional>
 #include <numbers>
@@ -947,5 +948,68 @@ TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[tr
             }
         }
     }
+}
+TEST_CASE("Complex-valued scalar fit: double in, std::complex out", "[treeweave][complex][1d]") {
+    // Issue #23: scalar `double` in, `std::complex<double>` out — no manual
+    // array (un)packing at the fit or eval boundary.
+    using cd = std::complex<double>;
+    auto g   = [](double x) -> cd { return {std::sin(3.0 * x), std::exp(-x)}; };
+    auto fn  = fit(g, 0.1, 2.0, /*tol=*/1e-10);
+
+    for (double x = 0.15; x < 1.95; x += 0.01) {
+        const cd got = fn(x);
+        REQUIRE(std::abs(got - g(x)) < 1e-8);
+    }
+
+    // Out-of-domain is NaN in both components (matches the real batch path).
+    const cd ood = fn(5.0);
+    REQUIRE(std::isnan(ood.real()));
+    REQUIRE(std::isnan(ood.imag()));
+
+    // Batch + sorted over a std::complex<double> buffer (reinterpret path).
+    std::vector<double> xs;
+    for (double x = 0.15; x < 1.95; x += 0.01)
+        xs.push_back(x);
+    std::vector<cd> batch(xs.size());
+    std::vector<cd> srt(xs.size());
+    fn(xs.data(), batch.data(), xs.size());
+    fn.sorted(xs.data(), srt.data(), xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) {
+        REQUIRE(std::abs(batch[i] - g(xs[i])) < 1e-8);
+        REQUIRE(srt[i] == batch[i]);
+        // The modulus of the fit tracks the modulus of the target — i.e. the
+        // complex value (not just each real channel) is a faithful interpolant.
+        REQUIRE(std::abs(batch[i]) == Catch::Approx(std::abs(g(xs[i]))).margin(1e-8));
+    }
+}
+
+TEST_CASE("Complex-valued scalar fit: float value_type", "[treeweave][complex][1d]") {
+    // Same ergonomic path on the f32 leaf math (value_type == float): scalar
+    // float in, std::complex<float> out, batch over a std::complex<float> buffer.
+    using cf = std::complex<float>;
+    auto g   = [](float x) -> cf { return {std::sin(3.0F * x), std::exp(-x)}; };
+    // 1e-4 is a realistic f32 target — a tighter tol hits float epsilon in the
+    // relative convergence check and over-panels past the auto memory budget.
+    auto fn = fit(g, 0.1F, 2.0F, /*tol=*/1e-4);
+
+    std::vector<float> xs;
+    for (float x = 0.15F; x < 1.95F; x += 0.01F)
+        xs.push_back(x);
+    std::vector<cf> batch(xs.size());
+    fn(xs.data(), batch.data(), xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) {
+        REQUIRE(std::abs(fn(xs[i]) - g(xs[i])) < 1e-2F);
+        REQUIRE(std::abs(batch[i] - g(xs[i])) < 1e-2F);
+    }
+}
+
+TEST_CASE("Scalar double input with array output routes through ND path", "[treeweave][complex][1d]") {
+    // Issue #23 part (a): a plain `double` domain with vector output no longer
+    // trips the scalar-input static_assert — it auto-wraps to std::array<T,1>.
+    auto       h   = [](double x) -> std::array<double, 2> { return {x * x, std::cos(x)}; };
+    auto       fn  = fit(h, 0.0, 1.0, /*tol=*/1e-10);
+    const auto out = fn(0.37);
+    REQUIRE(out[0] == Catch::Approx(0.37 * 0.37).epsilon(1e-8));
+    REQUIRE(out[1] == Catch::Approx(std::cos(0.37)).epsilon(1e-8));
 }
 // NOLINTEND(cert-msc51-cpp,cert-msc32-c)
