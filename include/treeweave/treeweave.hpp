@@ -27,6 +27,7 @@
 /// on return.
 
 #include <array>
+#include <complex>
 #include <concepts>
 #include <cstddef>
 #include <memory>
@@ -181,6 +182,106 @@ constexpr auto domain_dim() -> int {
         return static_cast<int>(std::tuple_size_v<Domain>);
 }
 
+// ---- Ergonomic complex / scalar-input adaptors (issue #23) ---------------
+// The core fitter only speaks real array-in / array-out. These map the
+// natural spellings (scalar `double` in, `std::complex` out) onto it and back,
+// purely at the fit()/operator() boundary — the leaf math stays real.
+
+template <class T>
+inline constexpr bool is_complex_v = false;
+template <class T>
+inline constexpr bool is_complex_v<std::complex<T>> = true;
+
+template <class R>
+struct complex_elem {
+    using type = R;
+};
+template <class T>
+struct complex_elem<std::complex<T>> {
+    using type = T;
+};
+template <class R>
+using complex_elem_t = complex_elem<R>::type;
+
+// What the core Function actually fits: scalar domain -> 1-element array;
+// complex result -> 2-element real array (re, im); everything else unchanged.
+template <class D>
+using canonical_input_t = std::conditional_t<std::is_arithmetic_v<D>, std::array<D, 1>, D>;
+template <class R>
+using canonical_output_t = std::conditional_t<is_complex_v<R>, std::array<complex_elem_t<R>, 2>, R>;
+
+// fit() must interpose an adaptor when the result is complex, or a scalar
+// domain has a vector output (the case the core static_assert rejects).
+template <class Domain, class Result>
+inline constexpr bool needs_adaptor_v =
+    is_complex_v<Result> || (std::is_arithmetic_v<Domain> && domain_dim<canonical_output_t<Result>>() > 1);
+
+// Wraps the user callable into canonical array-in / array-out so the core
+// fitter (polyfit's FuncEvalND) only ever sees real vector math.
+template <class Func, class Domain>
+struct CanonicalFn {
+    Func f;
+    using result_t  = std::invoke_result_t<Func &, Domain>;
+    using canon_in  = canonical_input_t<Domain>;
+    using canon_out = canonical_output_t<result_t>;
+
+    auto operator()(const canon_in &xi) const -> canon_out {
+        const result_t r = [&]() -> result_t {
+            if constexpr (std::is_arithmetic_v<Domain>)
+                return f(xi[0]);
+            else
+                return f(xi);
+        }();
+        if constexpr (is_complex_v<result_t>)
+            return {r.real(), r.imag()};
+        else
+            return r;
+    }
+};
+
+// Restores the user-facing spelling around a real-valued Function.
+// std::complex<T> is layout-compatible with T[2] and std::array<T,N> with
+// T[N], so the batch/sorted overloads just reinterpret the output buffer —
+// no per-point repack. Point eval converts the one returned value.
+template <class Inner, class Domain, class Result>
+class AdaptedFunction {
+    Inner fn_;
+
+  public:
+    using value_type  = Inner::value_type;
+    using input_type  = Domain;
+    using output_type = Result;
+
+    explicit AdaptedFunction(Inner fn) : fn_(std::move(fn)) {}
+
+    // Escape hatch to the real Function (num_leaves, memory_usage, subtrees, ...).
+    [[nodiscard]] auto function() const noexcept -> const Inner & { return fn_; }
+
+    [[nodiscard]] auto operator()(const Domain &x) const -> Result {
+        canonical_input_t<Domain> xi;
+        if constexpr (std::is_arithmetic_v<Domain>)
+            xi = {x};
+        else
+            xi = x;
+        const auto r = fn_(xi);
+        if constexpr (is_complex_v<Result>)
+            return Result{r[0], r[1]};
+        else
+            return r;
+    }
+
+    template <class Allocator = std::allocator<value_type>>
+    auto operator()(const value_type *xp, Result *res, std::size_t n, const Allocator &alloc = {}) const -> void {
+        fn_(xp, reinterpret_cast<value_type *>(res), n, alloc);
+    }
+
+    auto sorted(const value_type *xp, Result *res, std::size_t n) const -> void
+        requires std::is_arithmetic_v<Domain>
+    {
+        fn_.sorted(xp, reinterpret_cast<value_type *>(res), n);
+    }
+};
+
 } // namespace detail
 
 /// Canonical "fit f on [a, b] to tolerance" one-liner. Panel count falls out
@@ -198,14 +299,37 @@ template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalP
     // function *pointer*, so the stored Func is never a bare function type — that
     // would make the internal `const Func&` params const-qualified function types
     // (harmless on gcc/clang, but MSVC warns C4180, fatal under /WX).
-    using func_t          = std::decay_t<Func>;
-    using result_t        = std::invoke_result_t<func_t &, Domain>;
-    constexpr int in_dim  = detail::domain_dim<Domain>();
-    constexpr int out_dim = detail::domain_dim<result_t>();
+    using func_t   = std::decay_t<Func>;
+    using result_t = std::invoke_result_t<func_t &, Domain>;
 
-    auto input = detail::make_input(in_dim, out_dim, static_cast<int>(Degree), tol, opts);
-    return Function<Degree, func_t, Policy>(input, detail::midpoint(a, b), detail::half_length(a, b),
-                                            std::forward<Func>(f));
+    if constexpr (detail::needs_adaptor_v<Domain, result_t>) {
+        // Route scalar-in / complex-out spellings through the real ND path via
+        // a canonical array-in / array-out wrapper (issue #23).
+        using canon_fn_t      = detail::CanonicalFn<func_t, Domain>;
+        using canon_in        = canon_fn_t::canon_in;
+        using canon_out       = canon_fn_t::canon_out;
+        constexpr int in_dim  = detail::domain_dim<canon_in>();
+        constexpr int out_dim = detail::domain_dim<canon_out>();
+
+        auto to_canon = [](Domain v) -> canon_in {
+            if constexpr (std::is_arithmetic_v<Domain>)
+                return canon_in{v};
+            else
+                return v;
+        };
+        auto input    = detail::make_input(in_dim, out_dim, static_cast<int>(Degree), tol, opts);
+        using inner_t = Function<Degree, canon_fn_t, Policy>;
+        inner_t inner(input, detail::midpoint(to_canon(a), to_canon(b)), detail::half_length(to_canon(a), to_canon(b)),
+                      canon_fn_t{std::forward<Func>(f)});
+        return detail::AdaptedFunction<inner_t, Domain, result_t>(std::move(inner));
+    } else {
+        constexpr int in_dim  = detail::domain_dim<Domain>();
+        constexpr int out_dim = detail::domain_dim<result_t>();
+
+        auto input = detail::make_input(in_dim, out_dim, static_cast<int>(Degree), tol, opts);
+        return Function<Degree, func_t, Policy>(input, detail::midpoint(a, b), detail::half_length(a, b),
+                                                std::forward<Func>(f));
+    }
 }
 
 } // namespace treeweave
