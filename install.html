@@ -88,6 +88,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-the-examples">Build the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#compile-without-cmake">Compile without CMake</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
@@ -276,6 +277,48 @@ release.)</p>
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases page</a>. Each
 archive contains <code class="docutils literal notranslate"><span class="pre">include/treeweave.h</span></code>, <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code>, and a
 <code class="docutils literal notranslate"><span class="pre">find_package(treeweave)</span></code> CMake package.</p>
+<p><strong>C++ header-only drop-in (no CMake)</strong> — the simplest path if you just want the
+C++ API and don’t use CMake. The headers are platform-independent, so one
+arch-independent archive covers every OS. Download, extract, <code class="docutils literal notranslate"><span class="pre">-Iinclude</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Latest stable release (floating URL — never needs bumping):</span>
+wget<span class="w"> </span>https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
+tar<span class="w"> </span>xzf<span class="w"> </span>treeweave-cxx-headers.tar.gz<span class="w">             </span><span class="c1"># -&gt; ./include/treeweave/..., ./include/polyfit/..., ...</span>
+g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>demo.cpp<span class="w"> </span>-Iinclude<span class="w"> </span>-o<span class="w"> </span>demo
+</pre></div>
+</div>
+<p>The asset name is unversioned, so pick the URL for the channel you want — the
+tarball layout is identical:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Channel</p></th>
+<th class="head"><p>URL</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Latest stable</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.../releases/latest/download/treeweave-cxx-headers.tar.gz</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Pinned version</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Unstable (bleeding edge)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.../releases/download/unstable/treeweave-cxx-headers.tar.gz</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">latest</span></code> always resolves to the newest tagged release; pin <code class="docutils literal notranslate"><span class="pre">vX.Y.Z</span></code> for
+reproducibility. <code class="docutils literal notranslate"><span class="pre">unstable</span></code> is a rolling prerelease refreshed from every green
+main CI (bleeding edge, no stability promise) — it stays out of <code class="docutils literal notranslate"><span class="pre">latest</span></code>.</p>
+<p>The bundle carries every transitive header (treeweave, polyfit, POET, xsimd,
+mdspan) under one <code class="docutils literal notranslate"><span class="pre">include/</span></code> — no dependency hunting. See the runnable
+<a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone">examples/standalone/</a>
+example. (Already grabbing the per-platform <code class="docutils literal notranslate"><span class="pre">treeweave-&lt;version&gt;-&lt;platform&gt;</span></code>
+archive for the C ABI? It carries the identical <code class="docutils literal notranslate"><span class="pre">include/</span></code> — no separate
+download needed.)</p>
 </section>
 <section id="use-it-in-your-cmake-project">
 <h2>Use it in your CMake project<a class="headerlink" href="#use-it-in-your-cmake-project" title="Link to this heading"></a></h2>
@@ -331,8 +374,30 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"
 ctest<span class="w"> </span>--test-dir<span class="w"> </span>build
 </pre></div>
 </div>
-<p>Non-CMake C++ builds: add <code class="docutils literal notranslate"><span class="pre">include/</span></code> to your compiler include path and
-<code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;treeweave/treeweave.hpp&gt;</span></code>.</p>
+<p>Non-CMake C++ builds: the header-only C++ API pulls in polyfit, POET, xsimd and
+mdspan. Rather than track down four include paths, let CMake consolidate them
+into a single tree. Configure once — it fetches the deps and merges every header
+(treeweave’s own plus the four deps) into <code class="docutils literal notranslate"><span class="pre">&lt;build&gt;/include</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-S<span class="w"> </span>treeweave<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_BUILD_EXAMPLES<span class="o">=</span>ON
+cmake<span class="w"> </span>--build<span class="w"> </span>build
+</pre></div>
+</div>
+<p>Then compile with one include flag, xsimd-style:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/include<span class="w"> </span>-o<span class="w"> </span>simple1d
+</pre></div>
+</div>
+<p>The build also writes a FINUFFT-style <code class="docutils literal notranslate"><span class="pre">build/make.inc</span></code> (<code class="docutils literal notranslate"><span class="pre">CXX</span></code>, <code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_INC</span></code>); <code class="docutils literal notranslate"><span class="pre">examples/c++/Makefile</span></code> includes it, so
+<code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> builds every example (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">-n</span> <span class="pre">simple1d</span></code> prints the
+exact command).</p>
+<p><strong>Against an installed treeweave.</strong> <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span></code> ships the same
+consolidated headers, so a build against the install prefix is just
+<code class="docutils literal notranslate"><span class="pre">-I&lt;prefix&gt;/include</span></code> — or nothing, for a standard prefix already on the
+compiler’s search path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--install<span class="w"> </span>build<span class="w"> </span>--prefix<span class="w"> </span>/your/prefix
+g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>simple1d.cpp<span class="w"> </span>-I/your/prefix/include<span class="w"> </span>-o<span class="w"> </span>simple1d
+</pre></div>
+</div>
 <p id="julia-from-source"><strong>Julia (from source).</strong> Build the C ABI in a checkout, then <code class="docutils literal notranslate"><span class="pre">develop</span></code> the
 package against it — no release needed. <code class="docutils literal notranslate"><span class="pre">Pkg.build</span></code> resolves
 <code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> from a sibling <code class="docutils literal notranslate"><span class="pre">build*/</span></code> directory automatically (or from

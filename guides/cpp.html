@@ -88,6 +88,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#build-the-examples">Build the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compile-without-cmake">Compile without CMake</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
@@ -323,6 +324,24 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"
 </div>
 <p>Runnable sources live under
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B">examples/c++/</a>.</p>
+</section>
+<section id="compile-without-cmake">
+<h2>Compile without CMake<a class="headerlink" href="#compile-without-cmake" title="Link to this heading"></a></h2>
+<p>The header-only API pulls in polyfit, POET, xsimd and mdspan, so <code class="docutils literal notranslate"><span class="pre">-Iinclude</span></code>
+alone won’t compile. The configure step above consolidates every header into a
+single <code class="docutils literal notranslate"><span class="pre">build/include</span></code> tree, so one flag suffices — xsimd-style:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/include<span class="w"> </span>-o<span class="w"> </span>simple1d
+</pre></div>
+</div>
+<p>After <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">build</span> <span class="pre">--prefix</span> <span class="pre">P</span></code> the same headers land in
+<code class="docutils literal notranslate"><span class="pre">P/include</span></code>, so a build against the install prefix is <code class="docutils literal notranslate"><span class="pre">-IP/include</span></code> (or
+nothing, for a standard prefix). <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> does the same via
+the generated <code class="docutils literal notranslate"><span class="pre">build/make.inc</span></code> — see <a class="reference internal" href="../install.html"><span class="doc">Installation</span></a> for the full recipe.</p>
+<p>No checkout at all? The release ships the identical bundle as an
+arch-independent <code class="docutils literal notranslate"><span class="pre">treeweave-cxx-headers.tar.gz</span></code> at a floating
+<code class="docutils literal notranslate"><span class="pre">releases/latest/download</span></code> URL — download, extract, <code class="docutils literal notranslate"><span class="pre">-Iinclude</span></code>. The runnable
+<a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone">examples/standalone/</a>
+example (and <a class="reference internal" href="../install.html"><span class="doc">Installation</span></a>) shows the three-command flow.</p>
 </section>
 </section>
 
