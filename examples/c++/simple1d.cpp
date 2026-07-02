@@ -1,41 +1,48 @@
+// simple1d — the smallest treeweave demo: fit an expensive 1-D function once,
+// then evaluate its fast polynomial approximant. Runs in a fraction of a second.
+//
+// Set the project up with CMake once; it fetches the deps (polyfit, POET, xsimd,
+// mdspan) and consolidates every header into a single <build>/include tree:
+//
+//   git clone https://github.com/DiamonDinoia/treeweave.git
+//   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON
+//   cmake --build build
+//
+// Then compile this file without CMake — one include flag, like xsimd. Which -I
+// you pass depends only on whether you installed:
+//
+//   * built, NOT installed:      -Ibuild/include      (the tree CMake just merged)
+//   * after `cmake --install`:   -I<prefix>/include   (or nothing, standard prefix)
+//
+//   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+//
+// Simpler still: `cd examples/c++ && make` (uses the generated build/make.inc;
+// `make -n simple1d` prints the exact command). Inside a CMake project, just
+// `target_link_libraries(app PRIVATE treeweave::treeweave)` — no -I at all.
+// For a throughput benchmark (single / batched / sorted eval), see zeta_bench.cpp.
+
 #include <treeweave/treeweave.hpp>
 
-#include <chrono>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
-#include <random>
-#include <vector>
 
 int main() {
-    // zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
+    // zeta_N(s) = sum_{k=1..1000} k^-s — hundreds of pow() calls per evaluation.
     auto zeta = [](double s) {
         double a = 0.0;
         for (int k = 1; k <= 1000; ++k)
             a += std::pow(k, -s);
         return a;
     };
-    auto fn = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
 
-    std::mt19937                           gen(1);
-    std::uniform_real_distribution<double> d(2.0, 10.0);
-    constexpr int                          N = 1'000'000;
-    std::vector<double>                    xs(N);
-    for (auto &x : xs)
-        x = d(gen);
+    // Fit once (milliseconds); f is then a cheap polynomial good to ~1e-10.
+    auto f = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
 
-    const auto t0  = std::chrono::steady_clock::now();
-    double     acc = 0.0;
-    for (double x : xs)
-        acc += fn(x);
-    const auto   t1 = std::chrono::steady_clock::now();
-    const double dt = std::chrono::duration<double>(t1 - t0).count();
-
-    double mx = 0.0;
-    for (double x : xs)
-        mx = std::max(mx, std::abs(fn(x) - zeta(x)) / std::abs(zeta(x)));
-
-    std::cout << "MEvals/s: " << N / (dt * 1e6) << "\n";
-    std::cout << "max relative error: " << mx << "\n";
-    std::cout << "ignore: " << acc << "\n";
+    const double x = 3.5;
+    std::cout << std::setprecision(15)           //
+              << "zeta(x) = " << zeta(x) << "\n" //
+              << "f(x)    = " << f(x) << "\n"    //
+              << "rel err = " << std::abs(f(x) - zeta(x)) / std::abs(zeta(x)) << "\n";
     return 0;
 }

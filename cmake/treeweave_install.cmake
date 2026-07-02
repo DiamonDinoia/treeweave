@@ -2,12 +2,12 @@
 # package for the C ABI.
 #
 # The installed package ships the C ABI (`treeweave::treeweave_c` /
-# `treeweave::treeweave_c_static`): it is self-contained (only needs the installed
-# `treeweave.h`, links polyfit/POET privately). The header-only C++ template API
-# (`treeweave::treeweave`) is intentionally NOT installed — it instantiates against
-# polyfit/POET headers that are FetchContent-only, so it is consumed in-tree
-# via add_subdirectory / FetchContent (where those deps resolve). See
-# treeweave_c_api.cmake and the README.
+# `treeweave::treeweave_c_static`) — self-contained, links polyfit/POET privately.
+# It also ships the header-only C++ API: the consolidated bundle
+# (treeweave_bundle.cmake) installs treeweave's headers alongside the polyfit /
+# POET / xsimd / mdspan trees it instantiates against, so `-I<prefix>/include`
+# is enough. find_package still exposes only the C-ABI CMake targets; the C++
+# headers are consumed by include path (see treeweave_c_api.cmake and the README).
 
 include_guard(GLOBAL)
 include(CMakePackageConfigHelpers)
@@ -65,13 +65,29 @@ if(_install_targets)
     )
 endif()
 
-# The committed, generated treeweave_version.h lives in include/ and ships with
-# the rest of the headers; its .in template does not (PATTERN exclude below).
-install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PATTERN "*.in" EXCLUDE
+# Ship the consolidated header bundle (treeweave_bundle.cmake): treeweave's own
+# headers plus the vendored polyfit/POET/xsimd/mdspan trees. This makes the
+# header-only C++ API consumable from the install prefix with a single
+# `-I<prefix>/include` (or none, for a standard prefix), the same as the build
+# tree. Falls back to the source include/ if the bundle wasn't built (e.g. a
+# non-top-level configure). The generated treeweave_version.h ships; its .in
+# template does not.
+if(
+    TREEWEAVE_BUNDLE_INCLUDE_DIR
+    AND IS_DIRECTORY "${TREEWEAVE_BUNDLE_INCLUDE_DIR}"
 )
+    install(
+        DIRECTORY ${TREEWEAVE_BUNDLE_INCLUDE_DIR}/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        PATTERN "*.in" EXCLUDE
+    )
+else()
+    install(
+        DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        PATTERN "*.in" EXCLUDE
+    )
+endif()
 
 # Relative DESTINATION so `cmake --install --prefix <dir>` is honored (an
 # absolute ${CMAKE_INSTALL_PREFIX} here would bake in the configure-time

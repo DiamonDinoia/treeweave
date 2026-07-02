@@ -47,6 +47,44 @@ release.)
 archive contains ``include/treeweave.h``, ``libtreeweave_c``, and a
 ``find_package(treeweave)`` CMake package.
 
+**C++ header-only drop-in (no CMake)** — the simplest path if you just want the
+C++ API and don't use CMake. The headers are platform-independent, so one
+arch-independent archive covers every OS. Download, extract, ``-Iinclude``:
+
+.. code-block:: bash
+
+   # Latest stable release (floating URL — never needs bumping):
+   wget https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
+   tar xzf treeweave-cxx-headers.tar.gz             # -> ./include/treeweave/..., ./include/polyfit/..., ...
+   g++ -std=c++20 -O3 -march=native demo.cpp -Iinclude -o demo
+
+The asset name is unversioned, so pick the URL for the channel you want — the
+tarball layout is identical:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Channel
+     - URL
+   * - Latest stable
+     - ``.../releases/latest/download/treeweave-cxx-headers.tar.gz``
+   * - Pinned version
+     - ``.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz``
+   * - Unstable (bleeding edge)
+     - ``.../releases/download/unstable/treeweave-cxx-headers.tar.gz``
+
+``latest`` always resolves to the newest tagged release; pin ``vX.Y.Z`` for
+reproducibility. ``unstable`` is a rolling prerelease refreshed from every green
+main CI (bleeding edge, no stability promise) — it stays out of ``latest``.
+
+The bundle carries every transitive header (treeweave, polyfit, POET, xsimd,
+mdspan) under one ``include/`` — no dependency hunting. See the runnable
+`examples/standalone/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone>`_
+example. (Already grabbing the per-platform ``treeweave-<version>-<platform>``
+archive for the C ABI? It carries the identical ``include/`` — no separate
+download needed.)
+
 Use it in your CMake project
 ----------------------------
 
@@ -111,8 +149,36 @@ POET, Catch2) are fetched automatically.
    cmake --build build -j
    ctest --test-dir build
 
-Non-CMake C++ builds: add ``include/`` to your compiler include path and
-``#include <treeweave/treeweave.hpp>``.
+Non-CMake C++ builds: the header-only C++ API pulls in polyfit, POET, xsimd and
+mdspan. Rather than track down four include paths, let CMake consolidate them
+into a single tree. Configure once — it fetches the deps and merges every header
+(treeweave's own plus the four deps) into ``<build>/include``:
+
+.. code-block:: bash
+
+   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON
+   cmake --build build
+
+Then compile with one include flag, xsimd-style:
+
+.. code-block:: bash
+
+   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+
+The build also writes a FINUFFT-style ``build/make.inc`` (``CXX``, ``CXXFLAGS``,
+``TREEWEAVE_INC``); ``examples/c++/Makefile`` includes it, so
+``cd examples/c++ && make`` builds every example (``make -n simple1d`` prints the
+exact command).
+
+**Against an installed treeweave.** ``cmake --install`` ships the same
+consolidated headers, so a build against the install prefix is just
+``-I<prefix>/include`` — or nothing, for a standard prefix already on the
+compiler's search path:
+
+.. code-block:: bash
+
+   cmake --install build --prefix /your/prefix
+   g++ -std=c++20 -O3 -march=native simple1d.cpp -I/your/prefix/include -o simple1d
 
 .. _julia-from-source:
 

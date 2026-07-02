@@ -50,6 +50,7 @@ include(treeweave_toolchain) # C++ standard, IPO, -march/-mtune, FP-contraction
 include(dev_helpers) # warnings / sanitizers / static analysis helpers
 include(treeweave_deps) # fetch polyfit, POET, Catch2
 include(treeweave_c_api) # C ABI (libtreeweave_c) — built before examples/tests
+include(treeweave_bundle) # consolidate C++ headers + deps into <build>/include
 
 if(TREEWEAVE_BUILD_EXAMPLES)
     add_subdirectory(examples) # C++ examples

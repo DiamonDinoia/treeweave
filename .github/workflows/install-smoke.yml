@@ -149,6 +149,43 @@ jobs:
           cmake --build consumer/build -j
           ./consumer/build/app
 
+  # README: header-only "download & -Iinclude" drop-in (no CMake link, no lib).
+  # Build the consolidated build/include tree, tar it exactly as the release
+  # cxx-headers asset is packed, extract to a temp dir, then compile+run the
+  # standalone demo with just -Iinclude — simulating the download without a
+  # published release.
+  cxx-headers:
+    name: C++ headers drop-in (-Iinclude, no CMake)
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134  # v1.8.0
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Build the consolidated headers tree
+        run: |
+          cmake -S . -B build -G Ninja -DTREEWEAVE_BUILD_EXAMPLES=ON
+          cmake --build build -j
+
+      - name: Pack + extract headers, then compile the standalone demo
+        run: |
+          # Pack exactly as _build-c-abi.yml packs the cxx-headers asset.
+          tar -C build -czf hdrs.tar.gz include
+          dest="$(mktemp -d)"
+          tar -C "$dest" -xzf hdrs.tar.gz
+          g++ -std=c++20 -O3 examples/standalone/demo.cpp -I"$dest/include" -o app
+          ./app
+
   # README: pip install from TestPyPI. Only meaningful once a wheel is published,
   # so gate on the TestPyPI workflow having succeeded (or a manual dispatch).
   pip-testpypi:
