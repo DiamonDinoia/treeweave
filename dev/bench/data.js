@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782731267754,
+  "lastUpdate": 1783334658027,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2422,6 +2422,76 @@ window.BENCHMARK_DATA = {
             "value": 0.00102841025,
             "unit": "s/batch",
             "extra": "MdAPE=0.000602397590517838; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "DiamonDinoia@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "d9c1c560dca9205a73d1889ccb632ba40699f911",
+          "message": "feat: ergonomic complex-valued & scalar-in/vector-out fits (#23) (#24)\n\nSupport the natural spelling for complex-valued fits of a real scalar:\n\n    auto fn = treeweave::fit(g, a, b, tol);   // g: double -> std::complex<double>\n    std::complex<double> z = fn(x);           // scalar in, complex out\n\nBoth asks in #23 are pure boundary adaptors, so the leaf math stays real:\n\n- fit() detects a complex result, or a scalar `double` domain with a\n  vector output (the case the core static_assert rejects), and routes it\n  through a CanonicalFn wrapper: scalar in -> std::array<T,1>,\n  std::complex<T> out -> std::array<T,2>. It returns an AdaptedFunction\n  that restores the user-facing spelling; plain real fits are unchanged.\n- std::complex<T> is layout-compatible with T[2] (and std::array<T,N>\n  with T[N]), so the batch and sorted overloads just reinterpret the\n  output buffer -- no per-point repack. Point eval converts the one\n  returned value. A function() accessor exposes the underlying real\n  Function for introspection.\n\nTests: two Catch2 cases covering fn(x)->complex, complex batch/sorted,\nOOD->NaN through the complex boundary, and scalar-in/array-out.",
+          "timestamp": "2026-07-02T20:20:36Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/d9c1c560dca9205a73d1889ccb632ba40699f911"
+        },
+        "date": 1783334656605,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000706463444444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00256606964106837; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.0012164385,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00651188237764508; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000588440888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00527203927171336; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00201194875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00559051875253621; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00278813777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000680765869778473; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.0060588951,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00658214892534689; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.015984391375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00507508361017506; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00166083088888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00188187028348211; batch=65536 pts/call"
           }
         ]
       }
