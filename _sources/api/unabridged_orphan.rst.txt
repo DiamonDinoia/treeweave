@@ -75,11 +75,6 @@ Variables
 
    variable_treeweave_8hpp_1a9b6ab3ed62ac3097e3039d862ba203f5.rst
 
-.. toctree::
-   :maxdepth: 5
-
-   variable_treeweave_8h_1aeb7263890077f23fbd2f051f267e7138.rst
-
 Typedefs
 ********
 

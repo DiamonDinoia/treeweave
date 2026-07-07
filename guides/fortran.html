@@ -49,12 +49,11 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul class="current">
@@ -63,7 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
@@ -71,7 +71,8 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
@@ -80,26 +81,33 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-the-examples">Build the examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#compile-without-cmake">Compile without CMake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#batch-sorted-eval">Batch &amp; sorted eval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further">Further</a></li>
 </ul>
 </li>
 </ul>
@@ -108,6 +116,22 @@
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
@@ -126,22 +150,6 @@
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -173,6 +181,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0.html">Function treeweave_default_opts</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
@@ -246,44 +255,89 @@
 <p>The Fortran binding is a thin <code class="docutils literal notranslate"><span class="pre">iso_c_binding</span></code> module (<code class="docutils literal notranslate"><span class="pre">treeweave</span></code>) over the C
 ABI. Callbacks are <code class="docutils literal notranslate"><span class="pre">bind(C)</span></code> procedures; <code class="docutils literal notranslate"><span class="pre">c_funloc</span></code> yields the C-callable
 pointer and <code class="docutils literal notranslate"><span class="pre">context</span></code> carries runtime parameters via <code class="docutils literal notranslate"><span class="pre">c_loc</span></code> / <code class="docutils literal notranslate"><span class="pre">c_f_pointer</span></code>.</p>
+<section id="install">
+<h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
+<p>Build from source using the CMake preset:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
+cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-fortran
+cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-fortran<span class="w"> </span>-j
+</pre></div>
+</div>
+<p>A missing Fortran compiler is skipped gracefully. The <code class="docutils literal notranslate"><span class="pre">treeweave</span></code> module is generated in the build tree.</p>
+</section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">module </span><span class="n">kernels</span>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="c">! example.f90 — fit exp(x) and evaluate from Fortran via the treeweave C ABI.</span>
+<span class="c">! Mirrors examples/C/simple.c: plain bind(C) callback, scalar eval, batch eval.</span>
+<span class="c">! For the context pattern see README.md § &quot;The context pattern&quot;.</span>
+
+<span class="c">! Callbacks must be bind(C) procedures so c_funloc() yields a C-callable</span>
+<span class="c">! pointer; module procedures are the cleanest way to provide them.</span>
+<span class="k">module </span><span class="n">example_kernels</span>
 <span class="w">    </span><span class="k">use</span><span class="p">,</span><span class="w"> </span><span class="k">intrinsic</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="nb">iso_c_binding</span>
 <span class="nb">    </span><span class="k">implicit none</span>
 <span class="k">contains</span>
-<span class="w">    </span><span class="c">! zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.</span>
-<span class="w">    </span><span class="k">subroutine </span><span class="n">kernel_zeta</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="k">bind</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+<span class="k">    subroutine </span><span class="n">kernel_exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="k">bind</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
 <span class="w">        </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">in</span><span class="p">)</span><span class="w">  </span><span class="kd">::</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
 <span class="w">        </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">),</span><span class="w"> </span><span class="k">intent</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
 <span class="w">        </span><span class="k">type</span><span class="p">(</span><span class="kt">c_ptr</span><span class="p">),</span><span class="w">    </span><span class="k">value</span><span class="w">       </span><span class="kd">::</span><span class="w"> </span><span class="n">context</span>
-<span class="w">        </span><span class="kt">integer</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">k</span>
-<span class="w">        </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_c_double</span>
-<span class="w">        </span><span class="k">do </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span>
-<span class="w">            </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="kt">c_double</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-<span class="w">        </span><span class="k">end do</span>
-<span class="k">    end subroutine </span><span class="n">kernel_zeta</span>
-<span class="k">end module </span><span class="n">kernels</span>
+<span class="w">        </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="w">    </span><span class="k">end subroutine </span><span class="n">kernel_exp</span>
+<span class="k">end module </span><span class="n">example_kernels</span>
 
-<span class="k">program </span><span class="n">demo</span>
+
+<span class="k">program </span><span class="n">treeweave_example</span>
 <span class="w">    </span><span class="k">use</span><span class="p">,</span><span class="w"> </span><span class="k">intrinsic</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="nb">iso_c_binding</span>
 <span class="nb">    </span><span class="k">use </span><span class="n">treeweave</span>
-<span class="w">    </span><span class="k">use </span><span class="n">kernels</span>
+<span class="w">    </span><span class="k">use </span><span class="n">example_kernels</span>
 <span class="w">    </span><span class="k">implicit none</span>
+
 <span class="k">    type</span><span class="p">(</span><span class="kt">c_ptr</span><span class="p">)</span><span class="w">    </span><span class="kd">::</span><span class="w"> </span><span class="n">h</span>
-<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">tol</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">xs</span><span class="p">(</span><span class="mi">11</span><span class="p">),</span><span class="w"> </span><span class="n">res</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span>
+<span class="w">    </span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">exact</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">,</span><span class="w"> </span><span class="n">max_err</span>
+<span class="w">    </span><span class="kt">integer</span><span class="w">        </span><span class="kd">::</span><span class="w"> </span><span class="n">i</span>
 
-<span class="w">    </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0_c_double</span>
-<span class="w">    </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="mf">0.0_c_double</span>
-<span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel_zeta</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
-<span class="w">                      </span><span class="mf">1.0e-10_c_double</span><span class="p">,</span><span class="w"> </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_null_ptr</span><span class="p">)</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(.</span><span class="nb">not</span><span class="p">.</span><span class="w"> </span><span class="nb">c_associated</span><span class="p">(</span><span class="n">h</span><span class="p">))</span><span class="w"> </span><span class="k">error stop </span><span class="n">treeweave_error_message</span><span class="p">()</span>
+<span class="w">    </span><span class="n">a</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_c_double</span>
+<span class="w">    </span><span class="n">b</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0_c_double</span>
+<span class="w">    </span><span class="n">tol</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0e-10_c_double</span>
 
-<span class="w">    </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.5_c_double</span>
+<span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel_exp</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="n">tol</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">                   </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_null_ptr</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(.</span><span class="nb">not</span><span class="p">.</span><span class="w"> </span><span class="nb">c_associated</span><span class="p">(</span><span class="n">h</span><span class="p">))</span><span class="w"> </span><span class="k">then</span>
+<span class="k">        write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(2A)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;treeweave_fit failed: &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">treeweave_error_message</span><span class="p">()</span>
+<span class="w">        </span><span class="k">error stop </span><span class="mi">1</span>
+<span class="w">    </span><span class="k">end if</span>
+
+<span class="k">    write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,I0,A,I0,A,I0,A)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;fit exp(x): input_dim=&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">treeweave_input_dim</span><span class="p">(</span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">        </span><span class="s2">&quot; output_dim=&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">treeweave_output_dim</span><span class="p">(</span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="s2">&quot; memory=&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">treeweave_memory_usage</span><span class="p">(</span><span class="n">h</span><span class="p">),</span><span class="w"> </span><span class="s2">&quot; bytes&quot;</span>
+
+<span class="w">    </span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5_c_double</span>
 <span class="w">    </span><span class="k">call </span><span class="n">treeweave_eval</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span>
-<span class="w">    </span><span class="k">write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,F0.12)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;zeta_N(3.5) ~= &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="w">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_free</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
-<span class="k">end program </span><span class="n">demo</span>
+<span class="w">    </span><span class="k">write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,F0.12,A,F0.12)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;exp(0.5) approx=&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="s2">&quot; exact=&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="mf">0.5_c_double</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c">! Batch eval over 11 points on [0, 1].</span>
+<span class="w">    </span><span class="k">do </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">11</span>
+<span class="w">        </span><span class="n">xs</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">real</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1</span><span class="mf">0.0_c_double</span>
+<span class="w">    </span><span class="k">end do</span>
+<span class="k">    call </span><span class="n">treeweave_batch</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">xs</span><span class="p">,</span><span class="w"> </span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="nb">int</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="kt">c_size_t</span><span class="p">))</span>
+<span class="w">    </span><span class="n">max_err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0_c_double</span>
+<span class="w">    </span><span class="k">do </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">11</span>
+<span class="w">        </span><span class="n">exact</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+<span class="w">        </span><span class="n">err</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="nb">abs</span><span class="p">(</span><span class="n">res</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">exact</span><span class="p">)</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">err</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">max_err</span><span class="p">)</span><span class="w"> </span><span class="n">max_err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">err</span>
+<span class="w">    </span><span class="k">end do</span>
+<span class="k">    write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A,ES10.3)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;batch exp(x): max |approx - exact| = &quot;</span><span class="p">,</span><span class="w"> </span><span class="n">max_err</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">max_err</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">1.0e-8_c_double</span><span class="p">)</span><span class="w"> </span><span class="k">then</span>
+<span class="k">        write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;error too large&quot;</span>
+<span class="w">        </span><span class="k">error stop </span><span class="mi">1</span>
+<span class="w">    </span><span class="k">end if</span>
+
+<span class="k">    </span><span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_free</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="w">    </span><span class="k">write</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;(A)&#39;</span><span class="p">)</span><span class="w"> </span><span class="s2">&quot;OK&quot;</span>
+<span class="k">end program </span><span class="n">treeweave_example</span>
 </pre></div>
 </div>
 <p>Carrying parameters through <code class="docutils literal notranslate"><span class="pre">context</span></code>:</p>
@@ -298,8 +352,32 @@ pointer and <code class="docutils literal notranslate"><span class="pre">context
 </pre></div>
 </div>
 </section>
-<section id="build">
-<h2>Build<a class="headerlink" href="#build" title="Link to this heading"></a></h2>
+<section id="batch-sorted-eval">
+<h2>Batch &amp; sorted eval<a class="headerlink" href="#batch-sorted-eval" title="Link to this heading"></a></h2>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">real</span><span class="p">(</span><span class="kt">c_double</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">xs</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span><span class="w"> </span><span class="n">res</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="kt">integer</span><span class="p">(</span><span class="kt">c_size_t</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1000_c_size_t</span>
+<span class="k">call </span><span class="n">treeweave_batch</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">xs</span><span class="p">,</span><span class="w"> </span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">    </span><span class="c">! batch: many points, any order</span>
+<span class="k">call </span><span class="n">treeweave_sorted</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">xs</span><span class="p">,</span><span class="w"> </span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">   </span><span class="c">! promise xs(i) &lt;= xs(i+1), 1-D; ~3-4x faster</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">treeweave_sorted</span></code> requires 1-D input (<code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">==</span> <span class="pre">1</span></code>). The caller promises ascending order; treeweave does not verify it.</p>
+</section>
+<section id="options">
+<h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
+<p>Pass an options struct via the last argument (or <code class="docutils literal notranslate"><span class="pre">c_null_ptr</span></code> for defaults):</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">use </span><span class="n">treeweave</span>
+<span class="k">type</span><span class="p">(</span><span class="n">treeweave_opts_t</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">opts</span>
+<span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_default_opts</span><span class="p">()</span>
+<span class="n">opts</span><span class="p">%</span><span class="n">tol_kind</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">TREEWEAVE_ABSOLUTE_MAX</span>
+<span class="n">opts</span><span class="p">%</span><span class="n">max_memory_mib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span>
+<span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0e-10_c_double</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">                  </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_loc</span><span class="p">(</span><span class="n">opts</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> for the full description of each field and tolerance kind.</p>
+</section>
+<section id="further">
+<h2>Further<a class="headerlink" href="#further" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-fortran
 cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-fortran<span class="w"> </span>-j
 ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-fortran<span class="w"> </span>-R<span class="w"> </span>fortran_treeweave

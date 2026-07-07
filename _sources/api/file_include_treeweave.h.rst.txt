@@ -56,6 +56,8 @@ Functions
 
 - :ref:`exhale_function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad`
 
+- :ref:`exhale_function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0`
+
 - :ref:`exhale_function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8`
 
 - :ref:`exhale_function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4`
@@ -114,11 +116,4 @@ Typedefs
 - :ref:`exhale_typedef_treeweave_8h_1abac62693503605964b20ccd8e187eab9`
 
 - :ref:`exhale_typedef_treeweave_8h_1a7bdbc48d165b8f6d7e5cebb858c7bea5`
-
-
-Variables
----------
-
-
-- :ref:`exhale_variable_treeweave_8h_1aeb7263890077f23fbd2f051f267e7138`
 

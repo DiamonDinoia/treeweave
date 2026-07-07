@@ -49,12 +49,11 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul class="current">
@@ -63,7 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
@@ -71,7 +71,8 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
@@ -80,26 +81,33 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-the-examples">Build the examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#compile-without-cmake">Compile without CMake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
 </ul>
@@ -108,6 +116,22 @@
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
@@ -126,22 +150,6 @@
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -173,6 +181,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0.html">Function treeweave_default_opts</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
@@ -243,31 +252,90 @@
              
   <section id="c">
 <h1>C++<a class="headerlink" href="#c" title="Link to this heading"></a></h1>
-<p>treeweave’s C++ API is header-only. Include the umbrella header and call
-<code class="docutils literal notranslate"><span class="pre">treeweave::fit</span></code>:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span><span class="c1">   // std::pow, for the zeta example below</span>
+<p>treeweave’s C++ API is header-only — include <code class="docutils literal notranslate"><span class="pre">treeweave/treeweave.hpp</span></code> and call
+<code class="docutils literal notranslate"><span class="pre">treeweave::fit</span></code>.</p>
+<section id="install">
+<h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
+<p><strong>Download headers (no CMake):</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
+tar<span class="w"> </span>xzf<span class="w"> </span>treeweave-cxx-headers.tar.gz<span class="w">   </span><span class="c1"># -&gt; ./include/treeweave/, ./include/polyfit/, ...</span>
+g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Iinclude<span class="w"> </span>-o<span class="w"> </span>simple1d
+./simple1d
 </pre></div>
 </div>
+<p>The floating URL always resolves to the newest release; use
+<code class="docutils literal notranslate"><span class="pre">.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz</span></code> to pin a version.</p>
+<p><strong>CMake — FetchContent:</strong></p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">FetchContent</span><span class="p">)</span>
+<span class="nb">FetchContent_Declare</span><span class="p">(</span><span class="s">treeweave</span>
+<span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s">https://github.com/DiamonDinoia/treeweave.git</span>
+<span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s">v0.0.0</span><span class="p">)</span>
+<span class="nb">FetchContent_MakeAvailable</span><span class="p">(</span><span class="s">treeweave</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>CMake — CPM:</strong></p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">CPMAddPackage</span><span class="p">(</span><span class="s2">&quot;gh:DiamonDinoia/treeweave@0.0.0&quot;</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="d-fit">
 <h2>1-D fit<a class="headerlink" href="#d-fit" title="Link to this heading"></a></h2>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">zeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
-<span class="w">        </span><span class="n">a</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">s</span><span class="p">);</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
-<span class="p">};</span>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// simple1d — the smallest treeweave demo: fit an expensive 1-D function once,</span>
+<span class="c1">// then evaluate its fast polynomial approximant. Runs in a fraction of a second.</span>
+<span class="c1">//</span>
+<span class="c1">// Set the project up with CMake once; it fetches the deps (polyfit, POET, xsimd,</span>
+<span class="c1">// mdspan) and consolidates every header into a single &lt;build&gt;/include tree:</span>
+<span class="c1">//</span>
+<span class="c1">//   git clone https://github.com/DiamonDinoia/treeweave.git</span>
+<span class="c1">//   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON</span>
+<span class="c1">//   cmake --build build</span>
+<span class="c1">//</span>
+<span class="c1">// Then compile this file without CMake — one include flag, like xsimd. Which -I</span>
+<span class="c1">// you pass depends only on whether you installed:</span>
+<span class="c1">//</span>
+<span class="c1">//   * built, NOT installed:      -Ibuild/include      (the tree CMake just merged)</span>
+<span class="c1">//   * after `cmake --install`:   -I&lt;prefix&gt;/include   (or nothing, standard prefix)</span>
+<span class="c1">//</span>
+<span class="c1">//   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d</span>
+<span class="c1">//</span>
+<span class="c1">// Simpler still: `cd examples/c++ &amp;&amp; make` (uses the generated build/make.inc;</span>
+<span class="c1">// `make -n simple1d` prints the exact command). Inside a CMake project, just</span>
+<span class="c1">// `target_link_libraries(app PRIVATE treeweave::treeweave)` — no -I at all.</span>
+<span class="c1">// For a throughput benchmark (single / batched / sorted eval), see zeta_bench.cpp.</span>
 
-<span class="k">auto</span><span class="w">   </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span>
-<span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">fn</span><span class="p">(</span><span class="mf">3.5</span><span class="p">);</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iomanip&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// zeta_N(s) = sum_{k=1..1000} k^-s — hundreds of pow() calls per evaluation.</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">zeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
+<span class="w">            </span><span class="n">a</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">s</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="c1">// Fit once (milliseconds); f is then a cheap polynomial good to ~1e-10.</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.5</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="w">           </span><span class="c1">//</span>
+<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;zeta(x) = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="w"> </span><span class="c1">//</span>
+<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;f(x)    = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="w">    </span><span class="c1">//</span>
+<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;rel err = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </section>
 <section id="multi-dimensional-fit">
 <h2>Multi-dimensional fit<a class="headerlink" href="#multi-dimensional-fit" title="Link to this heading"></a></h2>
-<p>Inputs and outputs are <code class="docutils literal notranslate"><span class="pre">std::array</span></code>; the dimensions are deduced from the
-callable:</p>
+<p>Inputs and outputs are <code class="docutils literal notranslate"><span class="pre">std::array</span></code>; dimensions are deduced from the callable:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">bump</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="o">&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">exp</span><span class="p">(</span><span class="mf">-100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span>
 <span class="w">                            </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">))};</span>
@@ -277,71 +345,42 @@ callable:</p>
 <span class="k">auto</span><span class="w"> </span><span class="n">y</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">fn</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="p">{</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">});</span><span class="w">   </span><span class="c1">// std::array&lt;double, 1&gt;</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">float</span></code> works the same way — use <code class="docutils literal notranslate"><span class="pre">float</span></code> corners and a <code class="docutils literal notranslate"><span class="pre">float</span></code>-returning
-callable, and the approximant carries <code class="docutils literal notranslate"><span class="pre">float</span></code> throughout.</p>
+<p><code class="docutils literal notranslate"><span class="pre">float</span></code> works the same — use <code class="docutils literal notranslate"><span class="pre">float</span></code> corners and a <code class="docutils literal notranslate"><span class="pre">float</span></code>-returning callable.</p>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
-<p>Pass a <a class="reference internal" href="options.html"><span class="doc">treeweave::options</span></a> as the trailing argument to override
-the error metric, depth ceiling, memory budget, or uniform-refinement depth:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">zeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
-<span class="w">        </span><span class="n">a</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">s</span><span class="p">);</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
-<span class="p">};</span>
-
-<span class="n">treeweave</span><span class="o">::</span><span class="n">options</span><span class="w"> </span><span class="n">opts</span><span class="p">;</span>
+<p>Pass a <a class="reference internal" href="options.html"><span class="doc">treeweave::options</span></a> as the trailing argument:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">treeweave</span><span class="o">::</span><span class="n">options</span><span class="w"> </span><span class="n">opts</span><span class="p">;</span>
 <span class="n">opts</span><span class="p">.</span><span class="n">tol_kind</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">TolKind</span><span class="o">::</span><span class="n">AbsoluteMax</span><span class="p">;</span>
 <span class="n">opts</span><span class="p">.</span><span class="n">max_memory_mib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
 <span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The leaf polynomial degree is a template parameter (default 7, the best across
-the SIMD tuning campaign):</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">zeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
-<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
-<span class="w">        </span><span class="n">a</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">s</span><span class="p">);</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">);</span><span class="w">  </span><span class="c1">// degree-5 leaves</span>
+<p>The leaf polynomial degree is a template parameter (default 7):</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">);</span><span class="w">  </span><span class="c1">// degree-5 leaves</span>
 </pre></div>
 </div>
 </section>
 <section id="thread-safety">
 <h2>Thread safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h2>
-<p>Once <code class="docutils literal notranslate"><span class="pre">fit</span></code> returns, the <code class="docutils literal notranslate"><span class="pre">Function</span></code> is immutable and <code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe
-to call concurrently from many threads, provided each call writes to a disjoint
-output slice. treeweave does not parallelize internally — chunk your inputs and
-spawn threads yourself.</p>
+<p>A fitted <code class="docutils literal notranslate"><span class="pre">Function</span></code> is immutable; <code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe to call concurrently
+from many threads. treeweave does not parallelize internally.</p>
 </section>
-<section id="build-the-examples">
-<h2>Build the examples<a class="headerlink" href="#build-the-examples" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-S<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_BUILD_EXAMPLES<span class="o">=</span>ON
+<section id="build-from-source">
+<h2>Build from source<a class="headerlink" href="#build-from-source" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
+cmake<span class="w"> </span>-S<span class="w"> </span>treeweave<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_BUILD_EXAMPLES<span class="o">=</span>ON
 cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"> </span>-j
+<span class="c1"># one-flag compile against the consolidated header tree:</span>
+g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/include<span class="w"> </span>-o<span class="w"> </span>simple1d
 </pre></div>
 </div>
-<p>Runnable sources live under
+<p>After <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">build</span> <span class="pre">--prefix</span> <span class="pre">P</span></code>, use <code class="docutils literal notranslate"><span class="pre">-IP/include</span></code> (or nothing for a
+standard prefix). <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> uses the generated <code class="docutils literal notranslate"><span class="pre">build/make.inc</span></code>.</p>
+<p>The prebuilt C-ABI binary dispatches SSE4.2/AVX2/AVX-512 at runtime; the C++
+header-only path compiles into your TU with your own <code class="docutils literal notranslate"><span class="pre">-march</span></code>. See <a class="reference internal" href="dispatch.html"><span class="doc">Runtime ISA dispatch</span></a>.</p>
+<p>Runnable sources:
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B">examples/c++/</a>.</p>
-</section>
-<section id="compile-without-cmake">
-<h2>Compile without CMake<a class="headerlink" href="#compile-without-cmake" title="Link to this heading"></a></h2>
-<p>The header-only API pulls in polyfit, POET, xsimd and mdspan, so <code class="docutils literal notranslate"><span class="pre">-Iinclude</span></code>
-alone won’t compile. The configure step above consolidates every header into a
-single <code class="docutils literal notranslate"><span class="pre">build/include</span></code> tree, so one flag suffices — xsimd-style:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/include<span class="w"> </span>-o<span class="w"> </span>simple1d
-</pre></div>
-</div>
-<p>After <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">build</span> <span class="pre">--prefix</span> <span class="pre">P</span></code> the same headers land in
-<code class="docutils literal notranslate"><span class="pre">P/include</span></code>, so a build against the install prefix is <code class="docutils literal notranslate"><span class="pre">-IP/include</span></code> (or
-nothing, for a standard prefix). <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> does the same via
-the generated <code class="docutils literal notranslate"><span class="pre">build/make.inc</span></code> — see <a class="reference internal" href="../install.html"><span class="doc">Installation</span></a> for the full recipe.</p>
-<p>No checkout at all? The release ships the identical bundle as an
-arch-independent <code class="docutils literal notranslate"><span class="pre">treeweave-cxx-headers.tar.gz</span></code> at a floating
-<code class="docutils literal notranslate"><span class="pre">releases/latest/download</span></code> URL — download, extract, <code class="docutils literal notranslate"><span class="pre">-Iinclude</span></code>. The runnable
-<a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/standalone">examples/standalone/</a>
-example (and <a class="reference internal" href="../install.html"><span class="doc">Installation</span></a>) shows the three-command flow.</p>
 </section>
 </section>
 

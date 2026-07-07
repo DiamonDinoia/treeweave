@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="How treeweave works" href="../how-treeweave-works.html" />
-    <link rel="prev" title="Runtime ISA dispatch" href="dispatch.html" /> 
+    <link rel="next" title="C ABI reference" href="c-abi.html" />
+    <link rel="prev" title="Fit options" href="options.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,12 +49,11 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul>
@@ -63,7 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
@@ -71,7 +71,8 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
@@ -80,26 +81,33 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-the-examples">Build the examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#compile-without-cmake">Compile without CMake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
 </ul>
@@ -108,6 +116,22 @@
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
@@ -126,22 +150,6 @@
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
-</ul>
-</li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#batch-over-scalar">Batch over scalar</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#the-sorted-fast-path">The sorted fast path</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -173,6 +181,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0.html">Function treeweave_default_opts</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
@@ -243,10 +252,6 @@
              
   <section id="performance">
 <h1>Performance<a class="headerlink" href="#performance" title="Link to this heading"></a></h1>
-<p>treeweave is built so the eval path is cheap: a fitted approximant is a tree of
-low-order polynomial panels, and a point evaluation is a leaf lookup plus a small
-fixed-degree polynomial. A few things are worth knowing to get the most out of
-it.</p>
 <section id="batch-over-scalar">
 <h2>Batch over scalar<a class="headerlink" href="#batch-over-scalar" title="Link to this heading"></a></h2>
 <p>The batch entry points (<code class="docutils literal notranslate"><span class="pre">treeweave_batch</span></code> / <code class="docutils literal notranslate"><span class="pre">treeweave_sorted</span></code> /
@@ -264,38 +269,8 @@ points are contiguous, runs one vectorized Horner stream per leaf, then permutes
 the results back to the caller’s order. When the inputs are <em>already</em> ascending,
 that sort and permute-back are pure overhead. The <code class="docutils literal notranslate"><span class="pre">sorted</span></code> path skips them and
 streams straight through the leaves — ~3–4× faster on a presorted 1-D batch.</p>
-<p>What the fast path really needs is that the <em>leaf-id</em> sequence be monotone — the
-points already grouped by leaf. It is exposed only for <code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">==</span> <span class="pre">1</span></code> for two
-reasons:</p>
-<ul class="simple">
-<li><p><strong>Cheap precondition.</strong> In 1-D ascending <code class="docutils literal notranslate"><span class="pre">x</span></code> guarantees monotone leaf ids, so
-the caller has a trivially checkable promise. In 2-D/3-D no single-axis sort
-makes leaf ids monotone (you’d need a space-filling / per-tree bin order
-treeweave doesn’t expose), so there is no caller-side guarantee to offer.</p></li>
-<li><p><strong>Diminishing payoff.</strong> Per-point eval is a tensor-product Horner sweep of
-<code class="docutils literal notranslate"><span class="pre">K**n</span> <span class="pre">-</span> <span class="pre">1</span></code> FMAs, so the work grows as <code class="docutils literal notranslate"><span class="pre">K**n</span></code>. In 1-D the polynomial work
-(~``K`` FMAs) is comparable to the O(1) sort + scatter per point, so dropping
-the sort wins ~3–4×. In 2-D/3-D the <code class="docutils literal notranslate"><span class="pre">K**2</span></code> / <code class="docutils literal notranslate"><span class="pre">K**3</span></code> FMAs dominate and the
-sort is a small fraction of the cost — skipping it would barely move the
-needle. So an ND fast path would be both hard to guarantee and low-value; the
-plain <code class="docutils literal notranslate"><span class="pre">batch</span></code> path is the right tool there.</p></li>
-</ul>
-<p>This is worth reaching for because many workloads hand you ascending <code class="docutils literal notranslate"><span class="pre">x</span></code> for
-free:</p>
-<ul class="simple">
-<li><p><strong>Regular grids / linspace</strong> — plotting, lookup tables, and resampling sweep a
-domain left to right.</p></li>
-<li><p><strong>Quadrature</strong> — Gauss/Chebyshev/Clenshaw–Curtis abscissae come out in
-ascending order.</p></li>
-<li><p><strong>Time marching</strong> — ODE/PDE integrators and signal processing advance
-monotonically in <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p></li>
-<li><p><strong>Parameter sweeps</strong> — continuation methods and line searches step one
-coordinate monotonically.</p></li>
-</ul>
-<p>The caller promises <code class="docutils literal notranslate"><span class="pre">x[i]</span> <span class="pre">&lt;=</span> <span class="pre">x[i+1]</span></code>; treeweave does not verify it, so unsorted
-input on this path yields wrong values (not an error). When in doubt, use the
-plain batch path — it sorts internally and is always correct. Both NaN-fill
-out-of-domain points.</p>
+<p>Common cases where inputs are ascending for free: regular grids, <code class="docutils literal notranslate"><span class="pre">linspace</span></code>, quadrature nodes, time series, and parameter sweeps.</p>
+<p>The caller promises <code class="docutils literal notranslate"><span class="pre">x[i]</span> <span class="pre">&lt;=</span> <span class="pre">x[i+1]</span></code>; treeweave does not verify it, so unsorted input yields wrong values. When in doubt, use the plain batch path — it sorts internally and is always correct. Both NaN-fill out-of-domain points.</p>
 </section>
 </section>
 <section id="the-leaf-table-fast-path">
@@ -333,20 +308,7 @@ internally, which is what makes that contract safe.</p>
 </section>
 <section id="cross-language-throughput-and-latency">
 <h2>Cross-language throughput and latency<a class="headerlink" href="#cross-language-throughput-and-latency" title="Link to this heading"></a></h2>
-<p>The same fit (the Riemann-zeta sum <code class="docutils literal notranslate"><span class="pre">zeta(s)</span> <span class="pre">=</span> <span class="pre">sum_k</span> <span class="pre">k**-s</span></code>, summed the honest
-way — stop once the tail drops below <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> relative, capped at 160 terms — on
-<code class="docutils literal notranslate"><span class="pre">[2,</span> <span class="pre">10]</span></code> to a <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> relative tolerance) is benchmarked from every binding
-(C, C++, Fortran, Python, Julia, Octave, JavaScript), against recomputing that
-sum. Even that minimal native eval is tens-to-hundreds of <code class="docutils literal notranslate"><span class="pre">pow</span></code>s, so treeweave
-wins in every mode — including scalar. Each chart is a
-horizontal bar per language; read it by comparing a language’s treeweave bar to
-<em>its own</em> native bar, both measured in the same process. Each bar is labelled
-with the within-language <strong>speedup</strong> (native = <code class="docutils literal notranslate"><span class="pre">1×</span></code> baseline, treeweave =
-<code class="docutils literal notranslate"><span class="pre">N×</span></code>), while the axis carries the absolute metric. Absolute Mevals/s across
-languages is <strong>not</strong> comparable — the matrix spreads languages over different CI
-runners — so the axis is log-scaled and the within-language pair is the
-meaningful comparison. The charts are regenerated by the <code class="docutils literal notranslate"><span class="pre">benchmark-showcase</span></code>
-CI matrix.</p>
+<p>Riemann-zeta sum benchmarked from all 7 bindings against native recomputation. Bars: Mevals/s (log scale); labels: within-language speedup. Cross-language Mevals/s is <strong>not</strong> comparable (different CI runners) — compare each language’s treeweave bar to its own native bar. Charts are regenerated by the <code class="docutils literal notranslate"><span class="pre">benchmark-showcase</span></code> CI matrix.</p>
 <section id="throughput-mevals-s-higher-is-better">
 <h3>Throughput — Mevals/s, higher is better<a class="headerlink" href="#throughput-mevals-s-higher-is-better" title="Link to this heading"></a></h3>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg"><img alt="Riemann-zeta batch throughput" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg" style="width: 100%;" />
@@ -367,16 +329,10 @@ CI matrix.</p>
 </section>
 <section id="batch-vs-sorted-batch">
 <h3>Batch vs sorted batch<a class="headerlink" href="#batch-vs-sorted-batch" title="Link to this heading"></a></h3>
-<p>treeweave’s plain batch path against its sorted-batch fast path, per language.
-The plain <code class="docutils literal notranslate"><span class="pre">batch</span></code> path counting-sorts the query points by leaf before
-evaluating; the <code class="docutils literal notranslate"><span class="pre">sorted</span> <span class="pre">batch</span></code> path takes points already in ascending order
-(1-D only) and streams straight through the leaves, skipping that sort — which
-is what these bars isolate.</p>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_throughput.svg"><img alt="treeweave batch vs sorted batch throughput" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_throughput.svg" style="width: 100%;" />
 </a>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_latency.svg"><img alt="treeweave batch vs sorted batch latency" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/sorted_vs_unsorted_latency.svg" style="width: 100%;" />
 </a>
-<p>Because each native eval recomputes the whole sum, treeweave wins in every mode.</p>
 </section>
 </section>
 </section>
@@ -385,8 +341,8 @@ is what these bars isolate.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="dispatch.html" class="btn btn-neutral float-left" title="Runtime ISA dispatch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../how-treeweave-works.html" class="btn btn-neutral float-right" title="How treeweave works" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="options.html" class="btn btn-neutral float-left" title="Fit options" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="c-abi.html" class="btn btn-neutral float-right" title="C ABI reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

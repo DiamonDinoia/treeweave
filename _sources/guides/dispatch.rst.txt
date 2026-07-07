@@ -51,18 +51,7 @@ Apple silicon, MSVC, and unknown targets fall back to a single-arch build at
 Why no SVE on ARM
 -----------------
 
-ARM SVE is deliberately **excluded** from the runtime ladder. xsimd models SVE
-as ``sve<N>`` with the vector width ``N`` baked in at compile time, but the
-runtime probe (``available_architectures().has(sve<N>)``) only checks the SVE
-*presence* HWCAP bit — it does not check the width. A fixed-width SVE variant
-would therefore falsely match SVE hardware of a *different* width and mis-run.
-NEON64 is mandatory on every ARMv8-A core, so dropping SVE costs no coverage.
-
-The dispatch mechanism itself is unchanged across families: ``xsimd::dispatch``
-over the family arch-list, with selection driven by
-``available_architectures().has(Arch)`` — *not* ``Arch::available()`` (which is
-a constexpr ``true`` and would blindly pick the widest *compiled* arch on every
-CPU, faulting on hosts that lack it).
+ARM SVE is excluded: xsimd's ``sve<N>`` bakes the width in at compile time, but the runtime probe only checks SVE *presence* — not width — so a fixed-width variant would falsely match hardware of a different width. NEON64 is mandatory on ARMv8-A, so dropping SVE costs no coverage.
 
 Forcing an ISA for testing
 ---------------------------

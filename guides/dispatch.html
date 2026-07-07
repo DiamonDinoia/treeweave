@@ -23,7 +23,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Performance" href="performance.html" />
+    <link rel="next" title="How treeweave works" href="../how-treeweave-works.html" />
     <link rel="prev" title="C ABI reference" href="c-abi.html" /> 
 </head>
 
@@ -49,12 +49,11 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-release-binaries">Prebuilt / release binaries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick start</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
 <ul>
@@ -63,7 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
@@ -71,7 +71,8 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
-<li class="toctree-l2"><a class="reference internal" href="julia.html#build-test-against-a-local-library">Build / test against a local library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
@@ -80,26 +81,33 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-the-examples">Build the examples</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#compile-without-cmake">Compile without CMake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#building">Building</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#build">Build</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
 </ul>
@@ -108,6 +116,22 @@
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
@@ -126,22 +150,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-the-family-is-chosen">How the family is chosen</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
-<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
@@ -173,6 +181,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0.html">Function treeweave_default_opts</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
@@ -303,17 +312,7 @@ verified.</p></li>
 </section>
 <section id="why-no-sve-on-arm">
 <h2>Why no SVE on ARM<a class="headerlink" href="#why-no-sve-on-arm" title="Link to this heading"></a></h2>
-<p>ARM SVE is deliberately <strong>excluded</strong> from the runtime ladder. xsimd models SVE
-as <code class="docutils literal notranslate"><span class="pre">sve&lt;N&gt;</span></code> with the vector width <code class="docutils literal notranslate"><span class="pre">N</span></code> baked in at compile time, but the
-runtime probe (<code class="docutils literal notranslate"><span class="pre">available_architectures().has(sve&lt;N&gt;)</span></code>) only checks the SVE
-<em>presence</em> HWCAP bit — it does not check the width. A fixed-width SVE variant
-would therefore falsely match SVE hardware of a <em>different</em> width and mis-run.
-NEON64 is mandatory on every ARMv8-A core, so dropping SVE costs no coverage.</p>
-<p>The dispatch mechanism itself is unchanged across families: <code class="docutils literal notranslate"><span class="pre">xsimd::dispatch</span></code>
-over the family arch-list, with selection driven by
-<code class="docutils literal notranslate"><span class="pre">available_architectures().has(Arch)</span></code> — <em>not</em> <code class="docutils literal notranslate"><span class="pre">Arch::available()</span></code> (which is
-a constexpr <code class="docutils literal notranslate"><span class="pre">true</span></code> and would blindly pick the widest <em>compiled</em> arch on every
-CPU, faulting on hosts that lack it).</p>
+<p>ARM SVE is excluded: xsimd’s <code class="docutils literal notranslate"><span class="pre">sve&lt;N&gt;</span></code> bakes the width in at compile time, but the runtime probe only checks SVE <em>presence</em> — not width — so a fixed-width variant would falsely match hardware of a different width. NEON64 is mandatory on ARMv8-A, so dropping SVE costs no coverage.</p>
 </section>
 <section id="forcing-an-isa-for-testing">
 <h2>Forcing an ISA for testing<a class="headerlink" href="#forcing-an-isa-for-testing" title="Link to this heading"></a></h2>
@@ -335,7 +334,7 @@ widest-supported selection.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="c-abi.html" class="btn btn-neutral float-left" title="C ABI reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="performance.html" class="btn btn-neutral float-right" title="Performance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../how-treeweave-works.html" class="btn btn-neutral float-right" title="How treeweave works" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

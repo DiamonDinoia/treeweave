@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0:
+
+Function treeweave_default_opts
+===============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_default_opts(treeweave_opts *)
+   :project: treeweave

@@ -41,18 +41,8 @@ Minimal example
 Add the ``treeweave.m`` class directory and the generated MEX directory to the
 path, then fit and evaluate:
 
-.. code-block:: matlab
-
-   addpath('/path/to/treeweave/bindings/matlab');           % treeweave.m class
-   addpath('/path/to/build/bindings/matlab/treeweave_mw');  % generated tw_*.m + MEX
-
-   % 1-D scalar fit (dim & out_dim inferred from the handle)
-   N   = 1000;                 % zeta_N(s) = sum_{k=1..N} k^-s
-   f   = @(x) sum((1:N).^(-x(1)));   % expensive; fit once, eval a polynomial
-   obj = treeweave(f, 2, 10, 1e-10);
-
-   y = obj([3.5]);             % single point: 1 x dim -> 1 x out_dim
-   delete(obj);                % free the C handle (or let the object go out of scope)
+.. literalinclude:: ../../bindings/matlab/examples/example_1d.m
+   :language: matlab
 
 The callback receives a ``1 x dim`` row and returns a scalar or a
 ``out_dim x 1`` column. The fit domain is ``[a, b)``; evaluating exactly at the
@@ -98,6 +88,46 @@ Pass row-vector corners; the callback takes a ``1 x dim`` row and returns an
 
    fprintf('Memory: %.1f KiB\n', obj2.memory_usage() / 1024);
    delete(obj2);
+
+Options
+-------
+
+Pass name-value pairs after ``tol`` to ``treeweave(...)`` to override defaults:
+
+.. code-block:: matlab
+
+   obj = treeweave(f, 2, 10, 1e-10, 'tol_kind', 'absolute_max', 'max_memory_mib', 64);
+
+Available options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 15 57
+
+   * - Name
+     - Default
+     - Meaning
+   * - ``'tol_kind'``
+     - ``'relative_max'``
+     - Tolerance interpretation. One of ``'relative_max'``, ``'absolute_max'``,
+       ``'relative_l2'``, ``'absolute_l2'``, ``'relative_tail'``, ``'absolute_tail'``.
+   * - ``'max_depth'``
+     - ``50``
+     - Tree-depth ceiling.
+   * - ``'max_memory_mib'``
+     - ``-1`` (auto)
+     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
+   * - ``'allow_max_depth_leaves'``
+     - ``false``
+     - Keep non-converged panels at max depth instead of raising.
+   * - ``'min_uniform_depth'``
+     - ``0``
+     - Force uniform refinement to this depth before adaptivity.
+
+See `the options guide <https://diamondinoia.github.io/treeweave/guides/options.html>`_ for full descriptions.
+
+Further
+-------
 
 Examples: `bindings/matlab/examples/
 <https://github.com/DiamonDinoia/treeweave/tree/main/bindings/matlab/examples>`_
