@@ -25,26 +25,8 @@ install it with TestPyPI as the primary index and real PyPI for the dependencies
 Minimal example
 ---------------
 
-.. code-block:: python
-
-   import numpy as np
-   import treeweave
-
-   N = 1000                           # zeta_N(s) = sum_{k=1..N} k**-s
-   ks = np.arange(1.0, N + 1.0)
-
-   def f(x):                          # x is a length-`dim` sequence
-       return np.sum(ks ** (-x[0]))   # expensive; fit once, eval a polynomial
-
-   approx = treeweave.fit(f, 2.0, 10.0, tol=1e-10)
-   print(approx)   # dtype, dim, out_dim, memory_usage
-
-   # The fit domain is [a, b); evaluating exactly at the upper corner b is
-   # allowed as a convenience and returns the boundary value (not NaN).
-   xs = np.linspace(2.0, 10.0, 11)   # includes the endpoint b = 10.0
-   ys = approx(xs)                    # batch eval; returns an ndarray
-   ref = np.array([f([s]) for s in xs])
-   assert np.max(np.abs(ys - ref) / np.abs(ref)) < 1e-8
+.. literalinclude:: ../../bindings/python/examples/simple_1d.py
+   :language: python
 
 ``fit`` infers the input/output dimensions by probing the callable, so the
 common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
@@ -87,8 +69,48 @@ scalar or a length-``out_dim`` sequence:
    approx = treeweave.fit(bump, [0.0, 0.0], [1.0, 1.0], tol=1e-8)
    y = approx(np.array([[0.4, 0.6]]))   # shape (N, dim) -> (N, out_dim)
 
-Build from source
------------------
+Options
+-------
+
+Pass keyword arguments to ``fit`` to override defaults:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 15 57
+
+   * - Kwarg
+     - Default
+     - Meaning
+   * - ``tol_kind``
+     - ``'relative_max'``
+     - Tolerance interpretation. One of ``'relative_max'``, ``'absolute_max'``,
+       ``'relative_l2'``, ``'absolute_l2'``, ``'relative_tail'``, ``'absolute_tail'``.
+   * - ``max_depth``
+     - ``50``
+     - Tree-depth ceiling; raises ``RuntimeError`` with ``MaxDepthExceeded`` if hit.
+   * - ``max_memory_mib``
+     - ``-1`` (auto)
+     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
+   * - ``allow_max_depth_leaves``
+     - ``False``
+     - Keep non-converged panels at max depth instead of raising.
+   * - ``min_uniform_depth``
+     - ``0``
+     - Force uniform refinement to this depth before adaptivity.
+   * - ``dim``
+     - inferred
+     - Input dimension; inferred from ``len(a)`` (scalar corners → 1).
+   * - ``out_dim``
+     - inferred
+     - Output dimension; inferred by probing ``f`` at the box midpoint.
+   * - ``dtype``
+     - ``'f64'``
+     - Floating-point precision: ``'f64'`` or ``'f32'``.
+
+See :doc:`options` for a full description of each option and the tolerance kinds.
+
+Further
+-------
 
 .. code-block:: bash
 
