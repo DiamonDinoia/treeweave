@@ -333,7 +333,7 @@ jobs:
         run: |
           mkdir -p _prefix
           tar -C _prefix -xzf pkg/treeweave-${{ inputs.version }}-linux-x86_64.tar.gz
-          ls -R _prefix | head -40
+          ls -R _prefix | head -40 || true  # ponytail: guard broken-pipe exit under pipefail
 
       - name: C — find_package(treeweave) + link treeweave_c
         run: bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"

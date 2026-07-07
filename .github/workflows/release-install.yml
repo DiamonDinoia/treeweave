@@ -89,7 +89,7 @@ jobs:
           - { os: ubuntu-24.04,     pattern: '*linux-x86_64.tar.gz',  compiler: gcc }
           - { os: ubuntu-24.04-arm, pattern: '*linux-aarch64.tar.gz', compiler: gcc }
           - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   compiler: llvm }
-          - { os: windows-2022,     pattern: '*windows-x64.tar.gz',   compiler: msvc }
+          - { os: windows-2022,     pattern: '*windows-x64.zip',      compiler: msvc }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -119,8 +119,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p _prefix
-          tar -C _prefix -xzf pkg/${{ matrix.pattern }}
-          ls -R _prefix | head -40
+          # The glob can match a sibling asset (the treeweave-matlab-* bundle
+          # shares the -macos-arm64 suffix); take the C-ABI package. Windows
+          # ships a .zip, the rest a .tar.gz.
+          pkgfile=$(ls pkg/${{ matrix.pattern }} | grep -v -- -matlab- | head -1)
+          case "$pkgfile" in
+            *.zip) unzip -q "$pkgfile" -d _prefix ;;
+            *)     tar -C _prefix -xzf "$pkgfile" ;;
+          esac
+          ls -R _prefix | head -40 || true  # ponytail: log peek; head closes the pipe, guard the broken-pipe exit under pipefail
 
       - name: find_package(treeweave) + link treeweave_c + run
         shell: bash
