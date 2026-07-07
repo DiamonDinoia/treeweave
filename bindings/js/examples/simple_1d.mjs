@@ -4,16 +4,17 @@
 
 import { Treeweave } from "../dist/index.js";
 
+// Fit sin(x) on [0, 1] syntax is fit(callback, lower_bound, upper_bound, tolerance, options).
 const fn = await Treeweave.fit((x) => Math.sin(x[0]), 0.0, 1.0, 1e-10, {
     backend: "native",
 });
 
-// Single-point eval.
+// Evaluate fn on (0.5) and print the result.
 const single = fn.eval(0.5);
 const singleExact = Math.sin(0.5);
 console.log(`sin(0.5) approx=${single.toFixed(12)} exact=${singleExact.toFixed(12)}`);
 
-// Batch eval over 11 points.
+// Evaluate fn on 11 points and print the maximum error.
 const xs = new Float64Array(11);
 for (let i = 0; i < 11; ++i) xs[i] = i / 10;
 const ys = fn.batch(xs);

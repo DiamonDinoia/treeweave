@@ -62,6 +62,18 @@ set(TREEWEAVE_TUNE
 # backend). No -mtune. -ffp-contract=fast (below) is fine — emcc is clang.
 if(EMSCRIPTEN)
     set(_treeweave_arch_flags -msimd128)
+elseif(MSVC)
+    # MSVC and clang-cl use /arch, and have no exact spelling for x86-64-v2 or
+    # native. Keep those at the compiler baseline; map the useful x86 tiers.
+    if(TREEWEAVE_ARCH STREQUAL "x86-64-v3")
+        set(_treeweave_arch_flags /arch:AVX2)
+    elseif(TREEWEAVE_ARCH STREQUAL "x86-64-v4")
+        set(_treeweave_arch_flags /arch:AVX512)
+    elseif(TREEWEAVE_ARCH STREQUAL "avx")
+        set(_treeweave_arch_flags /arch:AVX)
+    else()
+        set(_treeweave_arch_flags "")
+    endif()
     # Apple clang on AArch64 rejects `-march=apple-*` / `-mtune=` — it expects
     # `-mcpu=` for that microarch family. Use the right spelling per platform.
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
@@ -83,4 +95,9 @@ else()
     set(_treeweave_fp_flags -ffp-contract=fast)
 endif()
 add_compile_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
-add_link_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
+# GCC/Clang want -march on the link line too (LTO codegen). MSVC/clang-cl
+# /arch:* is compile-only — lld-link reads it as an input file and errors;
+# ThinLTO picks the ISA up from the per-function attributes instead.
+if(NOT MSVC)
+    add_link_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
+endif()

@@ -2,12 +2,15 @@ Fit options
 ===========
 
 Everything here is optional — the defaults are tuned to be good out of the box.
-The C++ knobs live in ``treeweave::options`` (passed as the trailing ``fit``
-argument); the C ABI mirrors the subset that matters across the boundary in
-``treeweave_opts``.
 
-``treeweave::options``
-----------------------
+Options are documented here once. Language guides show how to pass them, and
+use each language's naming style: C++ uses ``tol_kind``, Python/Julia/MATLAB use
+``tol_kind``, JavaScript uses ``tolKind``, and C/Fortran use the C ABI fields.
+
+Common fit options
+------------------
+
+These apply to every language binding:
 
 .. list-table::
    :header-rows: 1
@@ -45,6 +48,34 @@ argument); the C ABI mirrors the subset that matters across the boundary in
 The leaf polynomial **degree** is not a runtime option: in C++ it is a template
 parameter (``treeweave::fit<N>``, default 7); the C ABI auto-selects a
 register-optimal degree for the detected CPU.
+
+Language-specific options
+-------------------------
+
+Some bindings add convenience fields around the shared C ABI:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 24 52
+
+   * - Language
+     - Field
+     - Meaning
+   * - Python, JavaScript
+     - ``dim`` / ``out_dim`` or ``outDim``
+     - Input/output dimensions can be inferred by probing the callback; set
+       them explicitly when inference is ambiguous or expensive.
+   * - Python, JavaScript
+     - ``dtype``
+     - Select ``f64``/``float64`` or ``f32``/``float32``.
+   * - JavaScript
+     - ``backend``
+     - ``auto`` chooses native under Node and WASM in browsers; ``native`` and
+       ``wasm`` force one backend.
+   * - C++
+     - degree template parameter
+     - ``treeweave::fit<N>`` sets the leaf polynomial degree. Other bindings use
+       the C ABI's CPU-selected degree.
 
 .. _tolkind:
 

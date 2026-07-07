@@ -35,13 +35,15 @@ int main() {
     opts.tol_kind = treeweave::TolKind::AbsoluteMax;
     std::array<double, 1> a{1.0};
     std::array<double, 1> b{30.0};
-    auto                  fn = treeweave::fit(hankel0, a, b, tol, opts);
+    // Fit Hankel H0^(1)(x) on [1, 30] syntax is fit(callback, lower_bound, upper_bound, tolerance, options).
+    auto fn = treeweave::fit(hankel0, a, b, tol, opts);
 
     // Check accuracy on random points in [1, 30).
     std::mt19937                           gen(7);
     std::uniform_real_distribution<double> dx(a[0], b[0]);
     constexpr int                          n_pts = 1'000'000;
     std::array<double, 2>                  max_abs{0.0, 0.0};
+    // Evaluate fn on random points and print the maximum absolute error.
     for (int i = 0; i < n_pts; ++i) {
         const double x      = dx(gen);
         const auto   approx = fn(std::array<double, 1>{x});

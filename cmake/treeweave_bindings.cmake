@@ -1,29 +1,7 @@
 # treeweave_bindings.cmake — optional language wrappers over the C ABI.
-# Each guarded by its own option (default OFF); missing toolchain → STATUS + skip.
+# Options live in the top-level CMakeLists.txt; missing toolchain → STATUS + skip.
 
 include_guard(GLOBAL)
-
-option(
-    TREEWEAVE_BUILD_PYTHON
-    "Build the Python (nanobind) bindings + register pytest"
-    OFF
-)
-option(TREEWEAVE_BUILD_JULIA "Register the Julia binding test suite" OFF)
-option(
-    TREEWEAVE_BUILD_MATLAB
-    "Build the MATLAB/Octave (MEX) bindings + register the test"
-    OFF
-)
-option(
-    TREEWEAVE_BUILD_FORTRAN
-    "Build the Fortran (iso_c_binding) binding test + example"
-    OFF
-)
-option(
-    TREEWEAVE_BUILD_JS
-    "Build the JavaScript/TypeScript binding (native N-API addon, or WASM under emcc) + register the node test"
-    OFF
-)
 
 if(
     NOT (

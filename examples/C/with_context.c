@@ -34,6 +34,8 @@ int main(void) {
     Params params = {/*amplitude=*/2.5, /*frequency=*/7.0};
 
     /* Pass &params as `context`; default opts (NULL). */
+    /* Fit kernel(x) on [0, 1] syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn = treeweave_fit(kernel,
                                    /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-10, /*context=*/&params,
                                    /*opts=*/NULL);
@@ -42,6 +44,7 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
+    /* Evaluate fn on points in [0, 1] and print the maximum error. */
     double max_abs_err = 0.0;
     for (int i = 0; i <= 20; ++i) {
         const double x = (double)i / 20.0;

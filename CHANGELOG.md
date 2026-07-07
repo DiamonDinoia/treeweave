@@ -12,14 +12,27 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 ### Added
 
+- Documentation now defaults to released/prebuilt install paths, with source
+  builds moved to the end of each language guide for development or unreleased
+  changes.
+- Added a CMake guide covering the minimal CPM/FetchContent usage, user-facing
+  presets, user-facing CMake options, and targets by language.
+- Added MATLAB/Octave install docs for both `mip` and direct release-bundle
+  `curl`/`wget` installs.
+- Added runtime ISA dispatch documentation for MSVC ABI compilers. MSVC x86
+  builds use the `SSE2 -> AVX -> AVX2 -> AVX-512` ladder because there is no
+  `/arch:SSE4.2`.
+- Added the Practical HPC NUFFTs talk link to the acknowledgements/background
+  material.
 - Post-publish `release-install.yml` now verifies the **published** binaries on a
   full matrix: `pip install treeweave` from PyPI (linux/macOS/windows × py3.9 +
   py3.12), each per-platform C-ABI release tarball via `find_package`
   (linux-x86_64/-aarch64, macOS-arm64, windows-x64), and a new
   `npm install @flatironinstitute/treeweave` job (WASM-only, all three OSes).
-- One-liner installs surfaced in the README (quick table + per-language sections):
-  `npm install @flatironinstitute/treeweave` (+ npm version badge) and a
-  `CPMAddPackage("gh:DiamonDinoia/treeweave@0.0.0")` recipe for C/C++.
+- One-liner installs surfaced in the README and install guide: `pip install
+  treeweave`, `npm install @flatironinstitute/treeweave`, release tarball
+  `curl`/`wget` commands, Julia `Pkg.add`, and
+  `CPMAddPackage("gh:DiamonDinoia/treeweave@stable")` for C++.
 - `conda/recipe/meta.yaml` + `conda/README.md`: a conda-forge recipe prepared for
   submission to `conda-forge/staged-recipes` (manual follow-up).
 - The raw `treeweave.wasm` + `treeweave.mjs` loader are attached to each GitHub
@@ -35,8 +48,6 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 - **conda-forge:** submit `conda/recipe` to `conda-forge/staged-recipes`; then
   `conda install -c conda-forge treeweave` is the one-liner (add a conda badge).
-- **npm hard-fail:** flip `release-install.yml`'s `npm-from-registry` job off
-  `continue-on-error` once `@flatironinstitute/treeweave` is live on the registry.
 - **Julia General registry:** register so `Pkg.add("Treeweave")` works (needs a
   tagged release + Registrator/JLL, or keep the bespoke `build.jl`).
 - **vcpkg / Conan:** C/C++ ports.

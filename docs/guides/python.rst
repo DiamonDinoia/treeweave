@@ -10,8 +10,8 @@ Install the latest release from PyPI:
 
    pip install treeweave
 
-The wheel bundles the C ABI statically; the x86-64 wheel dispatches SSE4.2 /
-AVX2 / AVX-512 at runtime. NumPy is the only dependency.
+The wheel bundles the C ABI statically; the x86-64 wheel dispatches across the
+x86 SIMD ISAs at runtime. NumPy is the only dependency.
 
 To test an unreleased change, every push to ``main`` publishes a staging wheel
 (``X.Y.Z.devN``) to `TestPyPI <https://test.pypi.org/project/treeweave/>`_;

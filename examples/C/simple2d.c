@@ -23,6 +23,8 @@ int main(void) {
     const double a[2] = {0.0, 0.0};
     const double b[2] = {1.0, 1.0};
 
+    /* Fit bump(x, y) on [0, 1]^2 syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(bump,
                       /*input_dim=*/2, /*output_dim=*/1, a, b, /*tol=*/1e-8, /*context=*/NULL, /*opts=*/NULL);
@@ -34,6 +36,7 @@ int main(void) {
     printf("input_dim=%d output_dim=%d memory=%zu bytes\n", treeweave_input_dim(fn), treeweave_output_dim(fn),
            treeweave_memory_usage(fn));
 
+    /* Evaluate fn on a grid and print the maximum error. */
     /* Scalar eval on a grid; track the worst absolute error vs the exact f. */
     double max_abs_err = 0.0;
     for (int i = 1; i < 10; ++i) {
@@ -53,6 +56,7 @@ int main(void) {
     /* AoS batch eval: 3 packed (x, y) coords -> 3 results. */
     const double xs[6] = {0.5, 0.5, 0.25, 0.75, 0.9, 0.1};
     double       ys[3] = {0};
+    /* Evaluate fn on batched points and print the center result. */
     treeweave_batch(fn, xs, ys, 3);
     double exact_center = 0.0;
     bump(&xs[0], &exact_center, NULL);

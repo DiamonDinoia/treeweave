@@ -28,6 +28,8 @@ int main(void) {
     const double a = 0.0;
     const double b = 1.0;
 
+    /* Fit kernel(x) on [0, 1] syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(kernel,
                       /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-10, /*context=*/NULL, /*opts=*/NULL);
@@ -49,6 +51,7 @@ int main(void) {
 
     double ym[N]    = {0}; /* general AoS batch */
     double ysort[N] = {0}; /* sorted fast path  */
+    /* Evaluate fn on sorted points with both batch paths and print their difference. */
     treeweave_batch(fn, xs, ym, N);
     treeweave_sorted(fn, xs, ysort, N);
 

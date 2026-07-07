@@ -231,12 +231,6 @@ if(TREEWEAVE_ENABLE_CPPCHECK)
     endif()
 endif()
 
-option(
-    TREEWEAVE_GENERATE_DOCS
-    "Generate documentation using Doxygen + Sphinx pipeline"
-    OFF
-)
-
 if(TREEWEAVE_GENERATE_DOCS)
     find_package(Doxygen REQUIRED)
     find_program(SPHINX_BUILD_EXECUTABLE NAMES sphinx-build REQUIRED)

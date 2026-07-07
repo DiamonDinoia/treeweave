@@ -11,6 +11,7 @@ int main() {
     auto f = [](double x) { return std::sin(50.0 * x) / x; };
 
     try {
+        // Fit f(x) on [0.01, 5] syntax is fit(callback, lower_bound, upper_bound, tolerance, options).
         auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8, treeweave::options{.max_depth = 4});
         (void)fn;
         std::cerr << "expected MaxDepthExceeded but fit succeeded\n";
@@ -23,7 +24,9 @@ int main() {
     }
 
     // Re-fit with the default max_depth — converges now.
+    // Fit f(x) on [0.01, 5] syntax is fit(callback, lower_bound, upper_bound, tolerance).
     auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8);
+    // Evaluate fn on (1.0) and print the result.
     std::cout << "converged fit at x=1.0: fn=" << fn(1.0) << "  exact=" << f(1.0) << "\n";
     return 0;
 }

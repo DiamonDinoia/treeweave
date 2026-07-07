@@ -17,17 +17,13 @@
 
 ## Why you care
 
-If you call an expensive function many times on a bounded domain, treeweave turns that cost into a one-time fit plus cheap polynomial lookups.
+Treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
 
-Typical use cases:
-
-- evaluating special functions or kernels in tight loops
-- replacing repeated model/table interpolation calls
-- sweeping many points after a calibration or setup step
+When `f(x)` is expensive but smooth on a bounded domain, Treeweave samples it once, builds a compact polynomial approximation, and reuses that approximation for cheap lookups. It is meant for workloads where the same function is evaluated many times: special functions, kernels, simulations, calibration models, or table-backed interpolators.
 
 ## Benchmarks
 
-These charts fit a Riemann-zeta sum on `[2, 10]` to `1e-10`, then compare treeweave evaluation with recomputing the sum. Bars are Mevals/s on a log scale; higher is better.
+These charts fit a Riemann-zeta sum on `[2, 10]` to `1e-10` using a naive algorithm, then compare against treeweave. Bars are Mevals/s on a log scale; higher is better.
 
 ### Single Eval
 
@@ -47,7 +43,7 @@ See the [performance guide](https://diamondinoia.github.io/treeweave/guides/perf
 
 treeweave fits low-order polynomial panels on an adaptive tree. The fitted object is immutable and can be evaluated from C++, C, Python, Julia, MATLAB/Octave, Fortran, and JavaScript/TypeScript.
 
-The fit domain is `[a, b)`. Evaluating exactly at `b` returns the boundary value. Other out-of-domain inputs, including `NaN` and infinities, return `NaN`.
+The fit domain is `[a, b)`, but evaluation is valid on the interval [a,b] (magic!). That is to say don't worry about `b` even if the function is not defined on that point there will not be issues by passing `[a,b]` to treeweave fit. Other out-of-domain inputs, including `NaN` and infinities, return `NaN`.
 
 ## Examples And Install
 
@@ -92,14 +88,7 @@ int main() {
 }
 ```
 
-Install with CMake:
-
-```cmake
-CPMAddPackage("gh:DiamonDinoia/treeweave@0.0.0")
-target_link_libraries(my_app PRIVATE treeweave::treeweave)
-```
-
-Or download `treeweave-cxx-headers.tar.gz` from
+Use the CMake section below, or download `treeweave-cxx-headers.tar.gz` from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases) and compile with
 `-std=c++20 -Iinclude`.
 
@@ -127,12 +116,14 @@ int main(void) {
 }
 ```
 
-Install:
+Install the C ABI tarball directly:
 
 ```bash
-VER=0.0.0
-wget "https://github.com/DiamonDinoia/treeweave/releases/download/v${VER}/treeweave-${VER}-linux-x86_64.tar.gz"
-tar xzf "treeweave-${VER}-linux-x86_64.tar.gz"
+VER=stable
+PLATFORM=linux-x86_64
+URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-${VER}-${PLATFORM}.tar.gz"
+curl -fLO "$URL" || wget "$URL"
+tar xzf "treeweave-${VER}-${PLATFORM}.tar.gz"
 gcc example.c -Iinclude -Llib -ltreeweave_c -lm -o example
 LD_LIBRARY_PATH=lib ./example
 ```
@@ -170,11 +161,28 @@ delete(approx);
 
 Install:
 
+With [mip](https://mip.sh/) after `treeweave` is published to a mip channel:
+
 ```matlab
-addpath('/path/to/extracted/treeweave-matlab-<version>-<platform>')
+mip install treeweave
+mip load treeweave
 ```
 
-Download `treeweave-matlab-<version>-<platform>` from
+Or download the MATLAB bundle directly:
+
+```bash
+VER=stable
+PLATFORM=linux-x64
+URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+curl -fLO "$URL" || wget "$URL"
+tar xzf "treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+```
+
+```matlab
+addpath('treeweave-matlab-stable-linux-x64')
+```
+
+Other platforms use the matching `treeweave-matlab-<version>-<platform>` asset from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases).
 
 [MATLAB/Octave guide](https://diamondinoia.github.io/treeweave/guides/matlab.html)
@@ -191,6 +199,11 @@ delete(approx);
 Install:
 
 ```bash
+VER=stable
+URL="https://github.com/DiamonDinoia/treeweave/archive/refs/tags/${VER}.tar.gz"
+curl -fL "$URL" -o "treeweave-${VER}-source.tar.gz" || wget -O "treeweave-${VER}-source.tar.gz" "$URL"
+tar xzf "treeweave-${VER}-source.tar.gz"
+cd "treeweave-${VER}"
 cmake --preset bindings-octave
 cmake --build build/bindings-octave -j
 ```
@@ -272,11 +285,71 @@ npm install @flatironinstitute/treeweave
 
 Source builds, release channels, and package details are in the [install guide](https://diamondinoia.github.io/treeweave/install.html).
 
+
+## CMake
+
+The default CMake path is enough for C++:
+
+```cmake
+CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
+add_executable(my_app example.cpp)
+target_link_libraries(my_app PRIVATE treeweave::treeweave)
+```
+
+With `FetchContent`:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    treeweave
+    GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
+    GIT_TAG stable # or any other release tag
+)
+
+FetchContent_MakeAvailable(treeweave)
+add_executable(my_app example.cpp)
+target_link_libraries(my_app PRIVATE treeweave::treeweave)
+```
+
+For this repo, prefer `cmake --preset <name>`:
+
+| Preset | What it sets |
+| --- | --- |
+| `dev-release` | `Release`, `TREEWEAVE_ARCH=native`; examples/tests use top-level defaults. |
+| `dev-debug` | `Debug`, `-Og -g`, `TREEWEAVE_ARCH=native`. |
+| `bindings-matlab` | `TREEWEAVE_BUILD_MATLAB=ON`; examples/tests off via `lib-release`. |
+| `bindings-octave` | Same CMake options as `bindings-matlab`; intended for `mkoctfile`/Octave builds. |
+| `bindings-fortran` | `TREEWEAVE_BUILD_FORTRAN=ON`; examples/tests off via `lib-release`. |
+| `multiarch` | `TREEWEAVE_C_MULTIARCH=ON`, `TREEWEAVE_ARCH=x86-64`; examples off. |
+
+Advanced options:
+
+| Option | Default | Use |
+| --- | --- | --- |
+| `TREEWEAVE_BUILD_C_API` | `ON` | Build `treeweave::treeweave_c` and `treeweave::treeweave_c_static`. |
+| `TREEWEAVE_C_MULTIARCH` | `OFF` | Build the C ABI with runtime ISA dispatch when supported. |
+| `TREEWEAVE_BUILD_EXAMPLES` | top-level only | Build examples. |
+| `TREEWEAVE_BUILD_TESTS` | top-level only | Build tests. |
+| `TREEWEAVE_BUILD_PYTHON` | `OFF` | Build/register the Python binding test path. |
+| `TREEWEAVE_BUILD_JULIA` | `OFF` | Register the Julia binding test path. |
+| `TREEWEAVE_BUILD_MATLAB` | `OFF` | Build MATLAB/Octave MEX. |
+| `TREEWEAVE_BUILD_FORTRAN` | `OFF` | Build Fortran module, example, and tests. |
+| `TREEWEAVE_BUILD_JS` | `OFF` | Build JavaScript/TypeScript native or WASM binding. |
+
+Targets by language:
+
+| Language | CMake target | Notes |
+| --- | --- | --- |
+| C++ | `treeweave::treeweave` | Header/interface target for `#include <treeweave/treeweave.hpp>`. |
+| C | `treeweave::treeweave_c` | Shared C ABI, enabled by `TREEWEAVE_BUILD_C_API=ON`. |
+| C | `treeweave::treeweave_c_static` | Static C ABI, enabled by `TREEWEAVE_BUILD_C_API=ON`. |
+| Fortran | `treeweave_fortran` | Local target when `TREEWEAVE_BUILD_FORTRAN=ON`. |
+
 ## Acknowledgements
 
 treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute). It reimplements the fit/eval pipeline around [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
 
-For numerical background, see Alex Barnett's talk [What everyone should know about function approximation](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) (FWAM7, Flatiron Institute, 2025).
+For numerical background, see Alex Barnett's talk [What everyone should know about function approximation](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) (FWAM7, Flatiron Institute, 2025), and Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 
 ## License
 

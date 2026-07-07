@@ -10,10 +10,12 @@ def bump(x):
     return math.exp(-100.0 * dx * dx - dy * dy)
 
 
+# Fit bump(x, y) on [0, 1]^2 syntax is fit(callback, lower_bound, upper_bound, tol).
 approx = treeweave.fit(bump, [0.0, 0.0], [1.0, 1.0], tol=1e-8)
 print(approx)  # dtype, dim, out_dim, memory_usage
 
 xs = np.array([[0.5, 0.5], [0.25, 0.75], [0.9, 0.1]])
+# Evaluate approx on three points and print the results.
 ys = approx(xs)
 for i, (x, y_approx) in enumerate(zip(xs, ys)):
     y_exact = bump(x)

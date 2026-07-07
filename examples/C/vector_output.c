@@ -24,6 +24,8 @@ int main(void) {
     const double a[2] = {0.2, 0.2};
     const double b[2] = {1.5, 1.5};
 
+    /* Fit f(x, y) on [0.2, 1.5]^2 syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(f,
                       /*input_dim=*/2, /*output_dim=*/3, a, b, /*tol=*/1e-8, /*context=*/NULL, /*opts=*/NULL);
@@ -41,6 +43,7 @@ int main(void) {
 
     /* AoS: N points * 3 components, packed per point. */
     double aos[N * 3];
+    /* Evaluate fn on batched points and print AoS/SoA parity plus max error. */
     treeweave_batch(fn, xs, aos, N);
 
     /* SoA: three contiguous component buffers. */

@@ -27,9 +27,10 @@ static_assert(std::is_base_of_v<xsimd::neon, xsimd::neon64>,
 // Fixed-128-bit RVV, matching the dispatch TU's -mrvv-vector-bits=zvl flag.
 using rvv128 = xsimd::detail::rvv<128>;
 
-// x86 ladder: MSVC uses avx instead of sse4_2 (no /arch:SSE4.2; jumps SSE2→AVX).
+// x86 ladder: MSVC ABI compilers use avx instead of sse4_2 (no /arch:SSE4.2;
+// they jump SSE2→AVX). Keep this list in lockstep with treeweave_c_dispatch.cmake.
 // Each entry must equal a variant TU's xsimd::best_arch (see treeweave_c_dispatch.cmake).
-#if defined(_MSC_VER) && !defined(__clang__)
+#ifdef _MSC_VER
 using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::avx, xsimd::sse2>;
 #else
 using x86_dispatch_list = xsimd::arch_list<xsimd::avx512bw, xsimd::fma3<xsimd::avx2>, xsimd::sse4_2, xsimd::sse2>;

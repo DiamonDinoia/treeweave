@@ -26,7 +26,7 @@ The floating URL always resolves to the newest release; use
    include(FetchContent)
    FetchContent_Declare(treeweave
      GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-     GIT_TAG v0.0.0)
+     GIT_TAG stable)
    FetchContent_MakeAvailable(treeweave)
    target_link_libraries(my_app PRIVATE treeweave::treeweave)
 
@@ -34,7 +34,7 @@ The floating URL always resolves to the newest release; use
 
 .. code-block:: cmake
 
-   CPMAddPackage("gh:DiamonDinoia/treeweave@0.0.0")
+   CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
    target_link_libraries(my_app PRIVATE treeweave::treeweave)
 
 1-D fit
@@ -98,7 +98,7 @@ Build from source
 After ``cmake --install build --prefix P``, use ``-IP/include`` (or nothing for a
 standard prefix). ``cd examples/c++ && make`` uses the generated ``build/make.inc``.
 
-The prebuilt C-ABI binary dispatches SSE4.2/AVX2/AVX-512 at runtime; the C++
+The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime; the C++
 header-only path compiles into your TU with your own ``-march``. See :doc:`dispatch`.
 
 Runnable sources:
