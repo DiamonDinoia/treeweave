@@ -1,24 +1,8 @@
 # treeweave host-language bindings
 
-Thin wrappers that let you fit and evaluate a treeweave piecewise-polynomial
-approximant from **Python**, **Julia**, **MATLAB/Octave**, or **Fortran**,
-passing a *function handle written in the host language* into the fit and
-getting C++ fit failures back as native exceptions.
+Thin wrappers over the C ABI (`libtreeweave_c`, [`treeweave.h`](../include/treeweave.h)) for **Python**, **Julia**, **MATLAB/Octave**, and **Fortran**. All reuse the pre-instantiated C++ templates — no re-compilation.
 
-All sit on the same C ABI (`libtreeweave_c`, see [`../include/treeweave.h`](../include/treeweave.h))
-and reuse its pre-instantiated shapes — they do **not** re-instantiate the C++
-templates. The mechanism is identical in spirit across languages: the wrapper
-hands the C fit a **C function pointer** (a *trampoline*) plus an opaque
-`context` pointer carrying the host callable; the trampoline re-enters the host
-language once per Chebyshev sample.
-
-In the Python, Julia, and MATLAB wrappers the fitted object is simply *called*
-— with a point or a batch — and `fit` infers `dim` and `out_dim` (the latter by
-probing your function once at the box midpoint), so the common call is just
-`fit(f, a, b, tol)`. Two optional flags, `sorted` (1-D ascending fast path) and
-`transposed` (struct-of-arrays `out_dim × N` output), select the alternate
-batch modes. The Fortran binding is deliberately faithful instead: explicit
-named procedures with explicit `input_dim` / `output_dim`, no call operator.
+Python, Julia, and MATLAB infer `dim` and `out_dim` from the callable and are called directly with a point or batch; `sorted` and `transposed` flags select fast paths. The Fortran binding is explicit: named procedures, `input_dim` / `output_dim` passed directly, no inference.
 
 | Supported | values |
 |-----------|--------|
@@ -26,19 +10,7 @@ named procedures with explicit `input_dim` / `output_dim`, no call operator.
 | output dim | 1, 2, 3 (a 1-D vector-valued fit is `dim=1, out_dim>1`) |
 | dtype      | `f64` (double), `f32` (float) |
 
-**Domain note (all languages):** the fit domain is the half-open box `[a, b)` —
-the target only needs to be defined there. As a convenience, evaluating exactly
-at the upper corner `b` returns the boundary value (the last cell's polynomial),
-not `NaN`. Every other out-of-domain point returns `NaN` uniformly across all
-eval paths — points below `a`, points above `b`, and `NaN`/±Inf inputs — so the
-scalar, batch, and sorted APIs agree point-for-point. The batch hot path stays
-branchless (the domain test is a SIMD mask, not a branch).
-
-**Reverse-exception safety (all languages):** if your host callback raises
-*during* the fit, the trampoline catches it, writes `NaN`, short-circuits the
-remaining samples (it never re-enters the host language again), lets the C fit
-unwind cleanly, and then re-raises the original exception. A throwing callback
-never crashes the interpreter / corrupts the C++ stack.
+**Domain:** `[a, b)` — evaluating at `b` returns the boundary value; every other out-of-domain point returns `NaN`, branchless. **Exceptions:** a raising callback is re-thrown after the C ABI unwinds cleanly.
 
 ---
 
@@ -80,11 +52,6 @@ in the message. See [`python/README.md`](https://github.com/DiamonDinoia/treewea
 julia --project=bindings/julia/Treeweave -e 'using Pkg; Pkg.test()'
 ```
 
-The library is located in order: `LIBTREEWEAVE_C` (explicit path) → `deps/deps.jl`
-(written by `Pkg.build("Treeweave")`) → the loader search path → a sibling CMake
-`build*/libtreeweave_c.<ext>`. So an in-repo `Pkg.test()` works once the project
-has been built; set `LIBTREEWEAVE_C=/path/to/libtreeweave_c.so` to override.
-
 ```julia
 using Treeweave
 N = 1000                                              # zeta_N(s) = sum_{k=1..N} k^-s
@@ -105,12 +72,6 @@ after the fit. See [`julia/Treeweave/README.md`](https://github.com/DiamonDinoia
 
 ## MATLAB / Octave (MEX)
 
-Built entirely from CMake — no Makefile. [`treeweave.mw`](matlab/treeweave.mw) is
-the mwrap source of truth; CMake fetches the
-[mwrap](https://github.com/zgimbutas/mwrap) generator via CPM, generates the
-gateway (`treeweave_mex_gen.cpp`) + `tw_*.m` stubs in the build tree, and
-compiles the MEX (MATLAB via `matlab_add_mex`, Octave via `mkoctfile`):
-
 ```bash
 # MATLAB and/or Octave — whichever is found is built (MATLAB links
 # -static-libstdc++ so the .mexa64 is independent of MATLAB's libstdc++).
@@ -124,11 +85,6 @@ cmake --preset bindings-octave
 cmake --build build/bindings-octave -j
 ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
 ```
-
-One source serves both: Octave can pass a `function_handle` into a MEX and
-`feval` it, so the trampoline needs no Octave-specific path. To change the
-binding, edit `treeweave.mw` — the next build regenerates automatically. The
-generated gateway and stubs live in the build tree and are never committed.
 
 ```matlab
 N   = 1000;                           % zeta_N(s) = sum_{k=1..N} k^-s
@@ -146,19 +102,7 @@ g(rand(100,2)*1.3 + 0.2, 'transposed', true) % -> 3x100
 A C++ fit failure raises `treeweave:fit`; a callback error raises `treeweave:callback`.
 See [`matlab/README.md`](https://github.com/DiamonDinoia/treeweave/blob/main/bindings/matlab/README.md).
 
-> **libstdc++ / GLIBCXX note (fallback only).** The canonical `Makefile` (and
-> the CMake glue) link the C++ runtime statically (`-static-libstdc++
-> -static-libgcc`), so the `.mexa64` does not depend on MATLAB's bundled
-> libstdc++. Only if you build the mex some other way and MATLAB reports
-> `version GLIBCXX_3.4.xx not found` do you need a workaround — e.g. launch
-> MATLAB with `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6`.
-
 ## Fortran (iso_c_binding)
-
-A faithful, thin Fortran 2008 binding: the `module treeweave` binds every C symbol
-by name. Unlike the other wrappers it has no call operator and no inference —
-you pass `input_dim` / `output_dim` explicitly and write the target as a
-`bind(C)` callback, exactly as a C consumer would.
 
 ```bash
 cmake -S . -B build -DTREEWEAVE_BUILD_FORTRAN=ON
@@ -196,13 +140,11 @@ cmake --build build
 ctest --test-dir build -R "python_treeweave|julia_treeweave|matlab_treeweave|fortran_treeweave"
 ```
 
-Missing toolchains are detected and skipped with a STATUS message rather than
-failing configuration. (The Python CTest additionally needs `numpy` + `pytest`
-in the interpreter CMake selected; the Julia CTest passes `LIBTREEWEAVE_C` pointing
+Missing toolchains are detected and skipped. (The Julia CTest passes `LIBTREEWEAVE_C` pointing
 at the freshly-built shared library.)
 
 ## Cross-language parity
 
 [`parity/run_parity.sh`](parity/run_parity.sh) fits the same 2-D → 3-D kernel in
 C (the reference), Python, and Julia, evaluates a fixed point set, and checks
-that every language agrees with the C result. See that directory for details.
+that every language agrees with the C result.

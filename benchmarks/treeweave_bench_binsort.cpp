@@ -1,34 +1,5 @@
-// Measurement harness for the bin-sort (point->tile binning) optimization work.
-// Originally the Phase-0 "where does time go" probe; now also the regression
-// guard for what shipped. See bench/binsort_phase0.md for the full write-up:
-//   * Phase 1 (f32 int32 quantize, `vcvttps2dq`): shipped — quantize cell numbers.
-//   * Phase 2 (descent `!table` leaf-id materialization): shipped — `run_descent`.
-//   * Phase 3 (2-level radix): measured 2-5x SLOWER than the flat counting sort
-//     on 2 MiB-L2 hardware and REVERTED; the flat sort is the sole large-leaf path.
-//
-// Three measurements:
-//
-//   1. Per-phase split (quantize / histogram / scatter) over one tile of
-//      `kTileN` points, via the macro-guarded `Function::bench_partition_phases`
-//      hook (x86 __rdtsc). Isolates whether a cell is quantize- or sort-bound.
-//
-//   2. Full unsorted-batch throughput `operator()(xp,res,n)` (nanobench
-//      MEvals/s) over `kFullN`. NB: at high `n_leaves` this is memory/turbo-bound
-//      and noisy on a powersave/shared host — trust the per-phase cyc/pt and
-//      controlled A/B deltas over the absolute MEvals/s.
-//
-//   3. `run_descent`: full throughput on deep no-leaf-table fits (depth 17-18),
-//      the descent path Phase 2 targets.
-//
-// `n_leaves` is pinned exactly to 2^depth via `options.min_uniform_depth`
-// (1D leaf table is built up to depth 16 -> 64K leaves).
-//
-// Build the SAME source across the arch matrix and diff:
-//   native    (AVX-512DQ: f64 `vcvttpd2qq`, f32 `vcvttps2dq`, floor `vrndscale`)
-//   x86-64-v3 (AVX2: f32 `vcvttps2dq`, floor `vroundps`; f64 per-lane sweep)
-//   x86-64-v2 (SSE)
-// Pin to a P-core for stable cycles:
-//   taskset -c 2 ./treeweave_bench_binsort > /tmp/binsort_native.txt
+// Bin-sort optimization harness: Phase 1 (f32 int32 quantize) and Phase 2 (descent leaf-id
+// materialization) shipped; Phase 3 (radix) reverted 2–5× slower on 2 MiB-L2.
 
 // The per-phase split uses the x86 cycle counter (__rdtsc), so this benchmark
 // is x86-only; on other architectures it compiles to a no-op skip.
@@ -71,7 +42,6 @@ constexpr std::size_t kDeg = 3;
 // One tile's worth of points for the per-phase split — matches the batch
 // path's default tile cap, so `counts[]` sees its real per-tile footprint.
 constexpr std::size_t kTileN = 65536;
-// Large fixed batch for the full-throughput measurement (multiple tiles).
 constexpr std::size_t kFullN = 1u << 20;
 
 // Depth sweep -> n_leaves = 2^depth in 1D. 4..16 walks counts[] from 64 B
@@ -145,12 +115,7 @@ void run_dtype(const char *tag) {
     }
 }
 
-// Phase 2 measurement: the !table descent fallback. A uniform tree deeper than
-// 16 levels (1D) exceeds the 64K-entry leaf-table cap, so no table is built and
-// `partition_into_leaves` walks `get_node_index` (the tree descent) twice per
-// point — once to histogram, once to scatter. This times the full unsorted
-// batch on such a fit; comparing against a build that materialises leaf ids in
-// pass 1 (read back in pass 2) isolates the double-walk's cost.
+// run_descent: times unsorted batch on no-leaf-table fits (depth > 16 -> descent fallback, double tree-walk cost).
 template <class T>
 void run_descent(const char *tag) {
     std::mt19937                           gen(7);

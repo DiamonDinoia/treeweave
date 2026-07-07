@@ -29,7 +29,6 @@ template <class Fn, class X>
 void time_and_check(const std::string &label, Fn &fn, const std::vector<X> &xs, auto exact) {
     constexpr std::size_t in_dim = dim_of<X>::value;
 
-    // Flatten point array for the batch API.
     const std::size_t   n = xs.size();
     std::vector<double> flat(in_dim * n);
     for (std::size_t i = 0; i < n; ++i) {
@@ -40,7 +39,6 @@ void time_and_check(const std::string &label, Fn &fn, const std::vector<X> &xs, 
                 flat[in_dim * i + d] = xs[i][d];
     }
 
-    // Probe output dimensionality once.
     constexpr std::size_t out_dim = []() -> std::size_t {
         if constexpr (requires { std::declval<Fn>()(std::declval<X>())[0]; })
             return std::tuple_size_v<std::remove_cvref_t<decltype(std::declval<Fn>()(std::declval<X>()))>>;

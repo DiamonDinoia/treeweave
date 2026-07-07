@@ -1,21 +1,6 @@
-// Microbench harness for the perf-sensitive batch surfaces added on the
-// use-polyfit branch:
-//   * Function::eval_pack<N>(std::array<value_type, N>) — compile-time-N
-//     pack eval. Three regimes: poet-unrolled fan-out (N <= 16),
-//     plain for-loop (16 < N < 1024), batch-path delegation (N >= 1024).
-//   * treeweave::eval_scatter_sorted(...) — multi-Function scattered eval;
-//     counting-sort groups by fit_id, then dispatches per fit.
-//
-// Each surface is benched against a hand-rolled scalar baseline so the
-// nanobench `relative` column shows the win directly. Output is the
-// existing nanobench markdown-table format consumed by
-// `bench/compare_nb.py`.
-//
-// Pin the process to a single core for stability:
-//   taskset -c 2 ./treeweave_bench_pack_scatter > /tmp/bench_after.txt
-//
-// Diff vs the pinned baseline:
-//   ./bench/compare_nb.py bench/baseline_pack_scatter_nb.txt /tmp/bench_after.txt
+// Microbench for eval_pack<N> (compile-time-N pack eval, three regimes) and
+// eval_scatter_sorted (counting-sort scatter). Each surface is compared with a
+// hand-rolled scalar baseline; output is consumed by bench/compare_nb.py.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
@@ -42,8 +27,6 @@
 // NOLINTBEGIN(cert-msc51-cpp,cert-msc32-c)
 namespace {
 
-// --- 1D kernels (mirrors treeweave_microbench's set; kept small so this
-//     file stays focused on the batch-surface measurements). ---
 auto make_runge1d() {
     return [](double x) { return 1.0 / (1.0 + 25.0 * x * x); };
 }
@@ -75,11 +58,9 @@ auto make_bench() {
     return b;
 }
 
-// ---------------------------------------------------------------------
 // eval_pack<N> sweep. Drives the pack repeatedly so the outer loop
 // amortises nanobench's epoch overhead while keeping eval_pack itself
 // at compile-time-N. `n_packs` controls total work per call.
-// ---------------------------------------------------------------------
 template <std::size_t Deg, std::size_t N, class FitT>
 void bench_pack(ankerl::nanobench::Bench &b, const char *label, const FitT &fn, double lo, double hi,
                 std::size_t n_packs) {
@@ -95,7 +76,6 @@ void bench_pack(ankerl::nanobench::Bench &b, const char *label, const FitT &fn, 
 
     const std::size_t total_evals = n_packs * N;
 
-    // (1) eval_pack<N> path.
     {
         std::string name = std::string(label) + " eval_pack<" + std::to_string(N) + "> deg=" + std::to_string(Deg);
         b.batch(static_cast<double>(total_evals));
@@ -147,10 +127,7 @@ void sweep_pack_1d(ankerl::nanobench::Bench &b, const char *label, FmakeT make_f
     bench_pack<Deg, 1024>(b, label, fn, lo, hi, kPacks / 32);
 }
 
-// ---------------------------------------------------------------------
-// eval_scatter_sorted sweep. R independent 1D fits over a shared
-// domain; n scattered (fit_id, x) pairs per call.
-// ---------------------------------------------------------------------
+// eval_scatter_sorted sweep: R independent 1D fits over a shared domain; n scattered (fit_id, x) pairs per call.
 template <std::size_t Deg>
 void sweep_scatter_1d(ankerl::nanobench::Bench &b, const char *label, std::size_t R) {
     // Use std::function so all fits share one type (eval_scatter_sorted
@@ -207,7 +184,6 @@ void sweep_scatter_1d(ankerl::nanobench::Bench &b, const char *label, std::size_
         const std::string suffix =
             std::string(" deg=") + std::to_string(Deg) + " R=" + std::to_string(R) + " N=" + std::to_string(n_pts);
 
-        // (1) eval_scatter_sorted path — counting-sort overload.
         {
             std::string name = std::string(label) + " scatter_counting" + suffix;
             b.batch(static_cast<double>(n_pts));

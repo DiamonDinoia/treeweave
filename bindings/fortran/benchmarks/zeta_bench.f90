@@ -26,7 +26,6 @@ contains
         end do
     end function zeta_partial
 
-    ! f(x) = ζ(x); context unused.
     subroutine kernel_zeta(x, y, context) bind(C)
         real(c_double), intent(in)  :: x(*)
         real(c_double), intent(out) :: y(*)
@@ -115,12 +114,11 @@ program zeta_bench
 
     allocate (xs(n), res(n), xs_sorted(n))
     call random_seed()
-    call random_number(xs)                 ! xs in [0,1)
-    xs = a(1) + (b(1) - a(1)) * xs         ! map into [2, 10)
+    call random_number(xs)
+    xs = a(1) + (b(1) - a(1)) * xs
 
     call system_clock(count_rate=rate)
 
-    ! --- accuracy vs the brute-force sum, on the n_native sample ----------
     max_rel = 0.0_c_double
     do i = 1, n_native
         exact  = zeta_partial(xs(i))
@@ -144,7 +142,6 @@ program zeta_bench
     nat_s    = real(c1 - c0, c_double) / real(rate, c_double)
     nat_rate = real(n_native, c_double) / (nat_s * 1.0e6_c_double)   ! Mevals/s, all modes
 
-    ! --- single-eval: the scalar by-value API ------------------------------
     do i = 1, n_scalar
         sink = sink + treeweave_eval_1d(fn, xs(i))    ! warm-up (untimed)
     end do
@@ -155,7 +152,6 @@ program zeta_bench
     call system_clock(c1)
     tw_single_s = real(c1 - c0, c_double) / real(rate, c_double)
 
-    ! --- multi-eval: the unsorted batch API --------------------------------
     call treeweave_batch(fn, xs, res, int(n, c_size_t))   ! warm-up (untimed)
     sink = res(1)
     call system_clock(c0)
@@ -176,7 +172,6 @@ program zeta_bench
     tw_sorted_s = real(c1 - c0, c_double) / real(rate, c_double)
     sink = res(1)
 
-    ! --- throughput (Mevals/s) and speedup per mode ------------------------
     tw_single = real(n_scalar, c_double) / (tw_single_s * 1.0e6_c_double)
     tw_multi  = real(n, c_double) / (tw_multi_s * 1.0e6_c_double)
     tw_sorted = real(n, c_double) / (tw_sorted_s * 1.0e6_c_double)
@@ -191,7 +186,6 @@ program zeta_bench
     write (*, '(A,F0.1,A,F0.4,A,F0.1,A)') "  sorted-eval  treeweave ", tw_sorted, "  native ", nat_rate, &
         " Mevals/s  speedup ", tw_sorted / nat_rate, "x"
 
-    ! --- machine-readable YAML (optional) ----------------------------------
     call get_environment_variable("TREEWEAVE_BENCH_YAML", yaml_path, yaml_len)
     if (yaml_len > 0) then
         open (newunit=u, file=trim(yaml_path), status="replace", action="write", iostat=ios)

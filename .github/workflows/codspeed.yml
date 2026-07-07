@@ -1,7 +1,7 @@
 name: CodSpeed
 
 # Instruction-count perf gating via CodSpeed.io `simulation` mode: builds the
-# Google Benchmark driver (examples/c++/treeweave_codspeed_bench) RelWithDebInfo
+# Google Benchmark driver (benchmarks/treeweave_codspeed_bench.cpp) RelWithDebInfo
 # at the x86-64-v3 baseline and runs it once under CodSpeed's simulated CPU.
 # This complements bench.yml (nanobench → gh-pages wall-time trend) with a
 # deterministic, runner-independent signal. Uploading a report needs the repo

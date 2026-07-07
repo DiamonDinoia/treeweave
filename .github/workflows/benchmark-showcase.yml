@@ -111,7 +111,7 @@ jobs:
               cmake --preset bindings-python && cmake --build build/bindings-python -j
               PYTHONPATH=build/bindings-python/python-pkg \
                 TREEWEAVE_BENCH_YAML="$yaml" \
-                python bindings/python/examples/zeta_bench.py
+                python bindings/python/benchmarks/zeta_bench.py
               ;;
             julia)
               cmake --preset bindings-julia
@@ -128,7 +128,7 @@ jobs:
               export LIBTREEWEAVE_C="$PWD/$lib"
               julia --project=bindings/julia/Treeweave -e 'using Pkg; Pkg.instantiate()'
               TREEWEAVE_BENCH_YAML="$yaml" \
-                julia --project=bindings/julia/Treeweave bindings/julia/Treeweave/examples/zeta_bench.jl
+                julia --project=bindings/julia/Treeweave bindings/julia/Treeweave/benchmarks/zeta_bench.jl
               ;;
             octave)
               cmake --preset bindings-octave && cmake --build build/bindings-octave -j
@@ -141,13 +141,13 @@ jobs:
               [[ -n "$tw_fit_m" ]] || { echo "::error::tw_fit.m not found under build/bindings-octave"; exit 1; }
               mexdir=$(cd "$(dirname "$tw_fit_m")" && pwd)
               TREEWEAVE_BENCH_YAML="$yaml" \
-                octave --no-gui --quiet --eval "addpath('$PWD/bindings/matlab'); addpath('$mexdir'); run('$PWD/bindings/matlab/examples/zeta_bench.m')"
+                octave --no-gui --quiet --eval "addpath('$PWD/bindings/matlab'); addpath('$mexdir'); run('$PWD/bindings/matlab/benchmarks/zeta_bench.m')"
               ;;
             js)
               ( cd bindings/js && npm ci )
               cmake --preset bindings-js
               cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts
-              TREEWEAVE_BENCH_YAML="$yaml" node bindings/js/examples/zeta_bench.mjs
+              TREEWEAVE_BENCH_YAML="$yaml" node bindings/js/benchmarks/zeta_bench.mjs
               ;;
           esac
           echo "--- $yaml ---"; cat "$yaml"

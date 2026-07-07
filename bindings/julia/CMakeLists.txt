@@ -19,4 +19,19 @@ set_tests_properties(
     julia_treeweave
     PROPERTIES ENVIRONMENT "LIBTREEWEAVE_C=$<TARGET_FILE:treeweave_c>"
 )
+
+foreach(_example IN ITEMS example_1d example_2d_scalar example_2d_vector)
+    add_test(
+        NAME "julia_example_${_example}"
+        COMMAND
+            "${TREEWEAVE_JULIA_EXECUTABLE}"
+            "--project=${CMAKE_CURRENT_SOURCE_DIR}/Treeweave"
+            "${CMAKE_CURRENT_SOURCE_DIR}/Treeweave/examples/${_example}.jl"
+    )
+    set_tests_properties(
+        "julia_example_${_example}"
+        PROPERTIES ENVIRONMENT "LIBTREEWEAVE_C=$<TARGET_FILE:treeweave_c>"
+    )
+endforeach()
+
 message(STATUS "treeweave[julia]: test 'julia_treeweave' registered.")

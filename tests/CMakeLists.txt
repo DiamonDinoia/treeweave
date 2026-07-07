@@ -38,6 +38,16 @@ function(_treeweave_add_cpp_test name source)
     set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS ${name})
 endfunction()
 
+# Compile-time (constexpr / static_assert) test. No Catch2 needed — compiling
+# the TU is the test; the binary returns 0 unconditionally. Warnings stay on
+# (treeweave_enable_warnings) but clang-tidy/cppcheck are already cleared above.
+add_executable(test_constexpr test_constexpr.cpp)
+target_include_directories(test_constexpr PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(test_constexpr PRIVATE polyfit::polyfit poet::poet)
+treeweave_enable_warnings(test_constexpr)
+add_test(NAME test_constexpr COMMAND test_constexpr)
+set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS test_constexpr)
+
 _treeweave_add_cpp_test(test_template test_template.cpp)
 _treeweave_add_cpp_test(test_cpp      test_cpp.cpp)
 _treeweave_add_cpp_test(test_quantize test_quantize.cpp)
@@ -47,7 +57,6 @@ find_package(Threads REQUIRED)
 target_link_libraries(test_threadsafe PRIVATE Threads::Threads)
 _treeweave_add_cpp_test(test_allocator test_allocator.cpp)
 
-# C ABI parity tests — link the C library built by treeweave_c_api.cmake.
 if(TREEWEAVE_BUILD_C_API)
     _treeweave_add_cpp_test(test_c test_c.cpp)
     # test_c.cpp spins std::threads to assert treeweave_last_error() is

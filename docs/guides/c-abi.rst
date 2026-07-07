@@ -29,9 +29,10 @@ Fit
                               void *context, const treeweave_opts *opts);
 
 ``context`` carries optional callback state (NULL if unused). ``opts`` is NULL
-for ``treeweave_default_opts``. It takes **no degree argument** — the library
-auto-selects a register-optimal leaf degree for the detected CPU. On failure it
-returns ``NULL`` and sets the thread-local ``treeweave_last_error()``.
+for defaults, or points at a ``treeweave_opts`` initialized with
+``treeweave_default_opts(&opts)``. Options take **no degree argument** — the
+library auto-selects a register-optimal leaf degree for the detected CPU. On
+failure it returns ``NULL`` and sets the thread-local ``treeweave_last_error()``.
 
 Evaluate
 --------

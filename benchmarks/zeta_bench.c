@@ -1,8 +1,5 @@
-/* zeta_bench.c — treeweave vs a fair brute-force Riemann-zeta eval, via the C ABI.
- * See examples/c++/zeta_bench.cpp for the rationale. ζ(s) = Σ_k k^-s summed until
- * the tail is negligible (rel 1e-10, ≤160 terms) yet smooth on [2,10]: fit once.
- * Times single/multi/sorted; the native rate is sampled over n_native and reused.
- * TREEWEAVE_BENCH_YAML=path emits YAML. C11 — also exercises the C ABI. */
+/* Zeta bench (C ABI): treeweave vs adaptive-stop Riemann-zeta (<=160 terms, rel 1e-10); times
+ * single/batch/sorted modes. TREEWEAVE_BENCH_YAML=path emits YAML. */
 
 #include <math.h>
 #include <stdio.h>
@@ -46,7 +43,6 @@ static double now_s(void) {
     return (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9;
 }
 
-/* qsort comparator for ascending doubles — builds the sorted input. */
 static int cmp_double(const void *pa, const void *pb) {
     const double a = *(const double *)pa;
     const double b = *(const double *)pb;
@@ -92,7 +88,6 @@ int main(void) {
     for (size_t i = 0; i < n; ++i)
         xs[i] = a + (b - a) * ((double)rand() / (double)RAND_MAX);
 
-    /* --- accuracy vs the brute-force sum, on the n_native sample ---------- */
     double max_rel = 0.0;
     for (size_t i = 0; i < n_native; ++i) {
         const double approx = treeweave_eval_1d(fn, xs[i]);
@@ -105,7 +100,6 @@ int main(void) {
     volatile double sink = 0.0; /* anti-DCE sink for every timed loop */
     double          t0, t1;
 
-    /* --- native rate: measured once, reused as the baseline in all modes --- */
     for (size_t i = 0; i < n_native; ++i)
         sink = sink + zeta_partial(xs[i]); /* warm-up (untimed) */
     t0 = now_s();
@@ -115,7 +109,6 @@ int main(void) {
     const double nat_s    = t1 - t0;
     const double nat_rate = (double)n_native / (nat_s * 1e6); /* Mevals/s, all modes */
 
-    /* --- single-eval: the scalar by-value API ----------------------------- */
     for (size_t i = 0; i < n_scalar; ++i)
         sink = sink + treeweave_eval_1d(fn, xs[i]); /* warm-up (untimed) */
     t0 = now_s();
@@ -124,7 +117,6 @@ int main(void) {
     t1                       = now_s();
     const double tw_single_s = t1 - t0;
 
-    /* --- multi-eval: the unsorted batch API -------------------------------- */
     treeweave_batch(fn, xs, out, n); /* warm-up (untimed) */
     sink = out[0];
     t0   = now_s();
@@ -133,7 +125,6 @@ int main(void) {
     const double tw_multi_s = t1 - t0;
     sink                    = out[0];
 
-    /* --- sorted-eval: the 1-D ascending fast path -------------------------- */
     memcpy(xs_sorted, xs, n * sizeof(double));
     qsort(xs_sorted, n, sizeof(double), cmp_double); /* untimed */
     treeweave_sorted(fn, xs_sorted, out, n);         /* warm-up (untimed) */
@@ -144,7 +135,6 @@ int main(void) {
     const double tw_sorted_s = t1 - t0;
     sink                     = out[0];
 
-    /* --- throughput (Mevals/s) and speedup per mode ----------------------- */
     const double tw_single = (double)n_scalar / (tw_single_s * 1e6);
     const double tw_multi  = (double)n / (tw_multi_s * 1e6);
     const double tw_sorted = (double)n / (tw_sorted_s * 1e6);
@@ -159,7 +149,6 @@ int main(void) {
     printf("  sorted-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_sorted, nat_rate,
            tw_sorted / nat_rate);
 
-    /* --- machine-readable YAML (optional) --------------------------------- */
     const char *yaml_path = getenv("TREEWEAVE_BENCH_YAML");
     if (yaml_path != NULL) {
         FILE *y = fopen(yaml_path, "w");

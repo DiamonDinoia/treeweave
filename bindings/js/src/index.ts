@@ -120,8 +120,6 @@ export class Treeweave {
         return new Treeweave(fn, backend.versionString);
     }
 
-    // ---- evaluation -------------------------------------------------------
-
     /** Evaluate a single point. Returns a scalar (outDim == 1) or a typed array. */
     eval(x: number | number[] | FloatArray): number | FloatArray {
         return this.fn.evalOne(this.toInput(x, this.dim));
@@ -157,8 +155,6 @@ export class Treeweave {
     [Symbol.dispose](): void {
         this.free();
     }
-
-    // ---- internal ---------------------------------------------------------
 
     /** Coerce input to a contiguous typed array of this fit's dtype. */
     private toInput(x: number | number[] | FloatArray, expectLen?: number): FloatArray {

@@ -38,22 +38,8 @@ variable, or point ``LIBTREEWEAVE_C`` at a local build.
 Minimal example
 ---------------
 
-.. code-block:: julia
-
-   using Treeweave
-
-   N = 1000                            # zeta_N(s) = sum_{k=1..N} k^-s
-   f = s -> sum(k -> k^(-s), 1:N)      # expensive; fit once, eval a polynomial
-   approx = fit(f, 2.0, 10.0, 1e-10)
-   println(approx)   # show() prints dtype, dim, out_dim and bytes
-
-   y = approx(3.5)                     # single point
-
-   # Batch eval — the handle is called directly. The fit domain is [a, b);
-   # evaluating exactly at the upper corner b is allowed (returns the boundary
-   # value), so the endpoint can be kept.
-   xs = collect(range(2.0, 10.0; length = 1001))
-   ys = approx(xs)
+.. literalinclude:: ../../bindings/julia/Treeweave/examples/example_1d.jl
+   :language: julia
 
 ``fit`` infers the dimensions from the callable, so the common case is
 ``fit(f, a, b, tol)``. The fitted object is called directly for a point or a
@@ -97,8 +83,47 @@ scalar or a length-``out_dim`` tuple:
    approx(X)                         # batch -> 100×3 Matrix
    approx(X; transposed = true)      # batch -> 3×100 Matrix
 
-Build / test against a local library
-------------------------------------
+Options
+-------
+
+Pass a ``TreeweaveOptions`` as the fifth argument to ``fit``:
+
+.. code-block:: julia
+
+   using Treeweave
+   opts = TreeweaveOptions(tol_kind="absolute_max", max_depth=30, max_memory_mib=64)
+   approx = fit(f, 2.0, 10.0, 1e-10, opts)
+
+Available fields (all keyword-only, all have defaults):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 15 57
+
+   * - Field
+     - Default
+     - Meaning
+   * - ``tol_kind``
+     - ``"relative_max"``
+     - Tolerance interpretation. One of ``"relative_max"``, ``"absolute_max"``,
+       ``"relative_l2"``, ``"absolute_l2"``, ``"relative_tail"``, ``"absolute_tail"``.
+   * - ``max_depth``
+     - ``50``
+     - Tree-depth ceiling.
+   * - ``max_memory_mib``
+     - ``-1`` (auto)
+     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
+   * - ``allow_max_depth_leaves``
+     - ``false``
+     - Keep non-converged panels at max depth instead of throwing.
+   * - ``min_uniform_depth``
+     - ``0``
+     - Force uniform refinement to this depth before adaptivity.
+
+See :doc:`options` for a full description of each option and the tolerance kinds.
+
+Further
+-------
 
 .. code-block:: bash
 

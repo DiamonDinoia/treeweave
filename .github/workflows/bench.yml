@@ -1,7 +1,7 @@
 name: Benchmarks
 
 # On every push to the default branch, build and run the stable CI benchmark
-# (examples/c++/treeweave_ci_bench), then feed its results to
+# (benchmarks/treeweave_ci_bench.cpp), then feed its results to
 # benchmark-action/github-action-benchmark. History accumulates under
 # dev/bench/ on the gh-pages branch (served alongside the Doxygen site, see
 # docs.yml) and a regression past the alert threshold posts a commit comment.

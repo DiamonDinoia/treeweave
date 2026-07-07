@@ -135,7 +135,6 @@ contains
         end if
     end subroutine check
 
-    ! 1-D scalar fit; closed-form accuracy at interior points.
     subroutine test_1d_scalar(failures)
         integer, intent(inout) :: failures
         type(c_ptr)    :: h
@@ -163,7 +162,6 @@ contains
         call check(.not. c_associated(h), "treeweave_free returns NULL", failures)
     end subroutine test_1d_scalar
 
-    ! 2-D -> 1 fit; accuracy at an interior point.
     subroutine test_2d_to_1(failures)
         integer, intent(inout) :: failures
         type(c_ptr)    :: h
@@ -181,7 +179,6 @@ contains
         h = treeweave_free(h)
     end subroutine test_2d_to_1
 
-    ! 1-D -> 2 vector-valued fit.
     subroutine test_vector_output(failures)
         integer, intent(inout) :: failures
         type(c_ptr)    :: h
@@ -229,7 +226,6 @@ contains
         h = treeweave_free(h)
     end subroutine test_batch_scalar_parity
 
-    ! float32 path: treeweavef_fit / treeweavef_eval.
     subroutine test_float32(failures)
         integer, intent(inout) :: failures
         type(c_ptr)   :: h
@@ -246,7 +242,6 @@ contains
         h = treeweave_free(h)
     end subroutine test_float32
 
-    ! context pointer forwarded to the callback.
     subroutine test_context(failures)
         integer, intent(inout) :: failures
         type(c_ptr)            :: h
@@ -320,14 +315,11 @@ contains
             return
         end if
         call check(treeweave_output_dim(h) == 2, "transposed-SoA out_dim == 2", failures)
-        ! Fill 64 random-ish interior points.
         do i = 1, 64
             xs(2*i - 1) = 0.1_c_double + 0.8_c_double * real(i - 1, c_double) / 63.0_c_double
             xs(2*i)     = 0.9_c_double - 0.8_c_double * real(i - 1, c_double) / 63.0_c_double
         end do
-        ! AoS reference.
         call treeweave_batch(h, xs, res_aos, int(64, c_size_t))
-        ! SoA (transposed) path.
         soa_ptrs(1) = c_loc(soa0(1))
         soa_ptrs(2) = c_loc(soa1(1))
         call treeweave_transposed(h, xs, soa_ptrs, int(64, c_size_t))
@@ -353,7 +345,6 @@ contains
             call check(.false., "print_stats fit returns a handle", failures)
             return
         end if
-        ! Smoke-test: must not crash or set an error.
         call treeweave_print_stats(h)
         call check(.true., "treeweave_print_stats (smoke-test, no crash)", failures)
         ! NULL handle: must be a no-op.
@@ -362,7 +353,6 @@ contains
         h = treeweave_free(h)
     end subroutine test_print_stats
 
-    ! by-value scalar-eval: treeweave_eval_1d/2d/3d + treeweavef_eval_1d/2d/3d.
     subroutine test_scalar_eval_byvalue(failures)
         integer, intent(inout) :: failures
         type(c_ptr)    :: h64, h64_2d, h64_3d
@@ -372,7 +362,6 @@ contains
         real(c_double) :: y64, exact64
         real(c_float)  :: y32, exact32
 
-        ! --- 1-D f64 ---
         a1(1) = 0.0_c_double; b1(1) = 1.0_c_double
         h64 = treeweave_fit(c_funloc(k_1d), 1_c_int, 1_c_int, a1, b1, 1.0e-9_c_double, &
                          c_null_ptr, c_null_ptr)
@@ -384,7 +373,6 @@ contains
             h64 = treeweave_free(h64)
         end if
 
-        ! --- 2-D f64 ---
         a2 = [0.0_c_double, 0.0_c_double]
         b2 = [1.0_c_double, 1.0_c_double]
         h64_2d = treeweave_fit(c_funloc(k_2d1), 2_c_int, 1_c_int, a2, b2, 1.0e-7_c_double, &
@@ -397,7 +385,6 @@ contains
             h64_2d = treeweave_free(h64_2d)
         end if
 
-        ! --- 3-D f64 ---
         a3 = [0.0_c_double, 0.0_c_double, 0.0_c_double]
         b3 = [1.0_c_double, 1.0_c_double, 1.0_c_double]
         h64_3d = treeweave_fit(c_funloc(k_3d1), 3_c_int, 1_c_int, a3, b3, 1.0e-7_c_double, &
@@ -410,7 +397,6 @@ contains
             h64_3d = treeweave_free(h64_3d)
         end if
 
-        ! --- 1-D f32 ---
         af1(1) = 0.0_c_float; bf1(1) = 1.0_c_float
         hf32 = treeweavef_fit(c_funloc(k_1d_f32), 1_c_int, 1_c_int, af1, bf1, 1.0e-4_c_double, &
                            c_null_ptr, c_null_ptr)
@@ -422,7 +408,6 @@ contains
             hf32 = treeweave_free(hf32)
         end if
 
-        ! --- 2-D f32 ---
         af2 = [0.0_c_float, 0.0_c_float]
         bf2 = [1.0_c_float, 1.0_c_float]
         hf32_2d = treeweavef_fit(c_funloc(k_2d1_f32), 2_c_int, 1_c_int, af2, bf2, 1.0e-4_c_double, &
@@ -435,7 +420,6 @@ contains
             hf32_2d = treeweave_free(hf32_2d)
         end if
 
-        ! --- 3-D f32 ---
         af3 = [0.0_c_float, 0.0_c_float, 0.0_c_float]
         bf3 = [1.0_c_float, 1.0_c_float, 1.0_c_float]
         hf32_3d = treeweavef_fit(c_funloc(k_3d1_f32), 3_c_int, 1_c_int, af3, bf3, 1.0e-3_c_double, &

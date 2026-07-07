@@ -132,8 +132,7 @@
       "cacheVariables": {
         "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
         "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" },
-        "TREEWEAVE_ENABLE_CLANG_TIDY": { "type": "BOOL", "value": "ON" },
-        "TREEWEAVE_ENABLE_CPPCHECK": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_ENABLE_STATIC_ANALYSIS": { "type": "BOOL", "value": "ON" },
         "CMAKE_DISABLE_PRECOMPILE_HEADERS": { "type": "BOOL", "value": "ON" }
       }
     },

@@ -1,40 +1,13 @@
 // c_binding_detail.hpp — heavy, internal-linkage half of the C binding.
 //
-// Deliberately has NO include guard, NO #includes, and NO namespace of its
-// own. It is meant to be textually included *inside* an anonymous namespace
-// nested in `treeweave::capi` by each per-arch variant TU:
-//
-//     namespace treeweave::capi {
-//     namespace {
-//     #include <treeweave/detail/c_binding_detail.hpp>
-//     }  // namespace
-//     ...
-//     }
-//
-// That gives `EvalImpl` / `EvalFactory` / `wrap_callback` internal linkage, so
-// the linker keeps one copy per object file instead of COMDAT-folding the four
-// per-`-march` variants onto a single architecture's codegen. All names it
-// uses (`IEval`, `c_func_t`, `set_last_error`, `treeweave::Function`,
-// `treeweave::fit`, `treeweave::options`, `EvalPolicy`) resolve from the enclosing
-// `treeweave::capi` / `treeweave` scopes, which c_binding.hpp has already declared.
-//
-// COMDAT-dedup fix (Bug #2): the two ArchTaggedCallable helper types
-// (ArchTaggedScalar<Arch,T> for 1D→1D, ArchTaggedND<Arch,T,IN,OUT> for ND)
-// carry the xsimd Arch type as a phantom template parameter. This makes
-// poly_eval::FuncEval<ArchTaggedScalar<Arch,...>,...> and
-// poly_eval::FuncEvalND<ArchTaggedND<Arch,...>,...> distinct types per -march
-// level, so all downstream COMDAT kernel bodies have different mangled names
-// per arch and the linker cannot fold them. No inline namespace is required;
-// the type system solves the problem cleanly.
-// Accepted limitation: only eval-path poly_eval types are arch-tagged; the
-// fit-time single-point horner_nd_impl lambda remains COMDAT-folded to the
-// baseline scalar variant (no crash, no eval-throughput impact — fit-time only).
+// NO include guard / #includes / namespace by design: textually included
+// inside an anonymous namespace in each per-arch variant TU so EvalImpl /
+// EvalFactory / wrap_callback get internal linkage and avoid COMDAT folding.
+// ArchTagged* carry Arch as a phantom param to make every poly_eval type
+// arch-distinct in its mangled name.
 
 // ---- Arch-tagged callable wrappers -----------------------------------------
-// Each carries `Arch` as a phantom so that downstream poly_eval instantiations
-// are arch-distinct in their mangled names. Polyfit inspects the callable's
-// `operator()` signature via FunctionTraits<decltype(&Callable::operator())>`
-// — so each variant must have exactly ONE non-template operator().
+// Arch phantom → arch-distinct poly_eval mangled names; exactly one non-template operator().
 
 /// Scalar (1D→1D) arch-tagged callable: T(T).
 template <class Arch, class T>

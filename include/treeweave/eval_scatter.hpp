@@ -45,6 +45,7 @@ namespace treeweave {
 /// trick), scalar histogram/placement (SIMD scatter to `counts` loses
 /// to duplicate-bin serialisation; clang dead-store-eliminates any
 /// xsimd round-trip wrapper anyway).
+// double-only today; template on value_type if float scatter is ever needed.
 template <std::size_t Degree, class Func>
 auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, std::span<const std::uint32_t> fit_ids,
                          std::span<const double> xs, std::span<double> ys, std::uint32_t n_fits,

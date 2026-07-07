@@ -1,23 +1,29 @@
 include_guard(GLOBAL)
 
-# ==============================================================================
-# TREEWEAVE Development Helpers
-# ==============================================================================
-# This file provides CMake helper functions and targets for TREEWEAVE development:
-# - Compiler warnings configuration (treeweave_enable_warnings)
-# - Sanitizers (ASan/UBSan via StableCoder/cmake-scripts, applied globally)
-# - Static analysis (clang-tidy/cppcheck via CMAKE_CXX_CLANG_TIDY/CPPCHECK)
-# - Documentation generation (doxygen, sphinx, docs targets)
-# - Code coverage reporting (coverage target)
-#
-# These helpers are only used for development/testing builds and are not
-# required when using TREEWEAVE as a header-only library.
-# ==============================================================================
+# Development helpers: warnings, sanitizers, static analysis, docs, coverage.
+# Not needed when using treeweave as a library.
 
-# Prepare CPM (CMake Package Manager) for fetching dependencies. Only fetched
-# when a feature that needs it (sanitizers) is actually enabled, so the default
-# treeweave build does not touch the network.
 include(FetchContent)
+
+include(CheckCXXCompilerFlag)
+set(_tw_additional_warnings_candidates
+    -Wduplicated-cond
+    -Wlogical-op
+    -Wuseless-cast
+    -Winit-self
+    -Wmissing-include-dirs
+    -Wredundant-decls
+)
+set(_tw_additional_warnings_supported)
+foreach(_f IN LISTS _tw_additional_warnings_candidates)
+    string(MAKE_C_IDENTIFIER "${_f}" _flagvar)
+    check_cxx_compiler_flag("${_f}" CXX_HAS_${_flagvar})
+    if(CXX_HAS_${_flagvar})
+        list(APPEND _tw_additional_warnings_supported ${_f})
+    endif()
+endforeach()
+unset(_f)
+unset(_flagvar)
 
 function(_treeweave_ensure_cpm)
     get_property(_done GLOBAL PROPERTY _treeweave_cpm_ready SET)
@@ -34,24 +40,14 @@ function(_treeweave_ensure_cpm)
         DOWNLOAD_NO_EXTRACT TRUE
     )
     FetchContent_MakeAvailable(CPM)
-    # Resolve the source dir via the documented accessor rather than the
-    # original-case `${CPM_SOURCE_DIR}`: FetchContent only re-populates the
-    # lowercased `cpm_SOURCE_DIR` on a reconfigure (the `_treeweave_cpm_ready`
-    # global property does not persist across configure runs, so this function
-    # re-enters and `FetchContent_MakeAvailable` early-returns without setting
-    # the original-case variable). GetProperties works in both cases.
+    # Use GetProperties, not ${CPM_SOURCE_DIR}: lowercased variant isn't set on
+    # reconfigure when FetchContent early-returns without repopulating it.
     FetchContent_GetProperties(CPM SOURCE_DIR _treeweave_cpm_src)
     include(${_treeweave_cpm_src}/CPM.cmake)
 
     set_property(GLOBAL PROPERTY _treeweave_cpm_ready TRUE)
 endfunction()
 
-# -------------------------
-# Warnings helper (from PoetWarnings.cmake)
-# -------------------------
-# Enable comprehensive compiler warnings for a target
-# Supports GCC, Clang, AppleClang, and MSVC compilers
-# Applies warnings with PRIVATE scope for regular targets, INTERFACE scope for interface libraries
 function(treeweave_enable_warnings target)
     if(NOT TARGET "${target}")
         message(
@@ -60,9 +56,6 @@ function(treeweave_enable_warnings target)
         )
     endif()
 
-    # Determine the appropriate scope for applying warnings
-    # INTERFACE scope for interface libraries (warnings propagate to consumers)
-    # PRIVATE scope for other targets (warnings only apply to this target's sources)
     get_target_property(_target_type "${target}" TYPE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
         set(_scope INTERFACE)
@@ -70,7 +63,6 @@ function(treeweave_enable_warnings target)
         set(_scope PRIVATE)
     endif()
 
-    # Generator expressions for compiler detection (evaluated at build time)
     set(_clang_like
         $<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>
     )
@@ -97,26 +89,7 @@ function(treeweave_enable_warnings target)
         -Wformat=2
     )
 
-    # Additional curated warnings that are checked for compiler support before enabling
-    # These are only added if the compiler supports them (GCC-specific flags)
-    set(_additional_warnings
-        -Wduplicated-cond
-        -Wlogical-op
-        -Wuseless-cast
-        -Winit-self
-        -Wmissing-include-dirs
-        -Wredundant-decls
-    )
-
-    # Check which additional warnings are supported by the current compiler and add them
-    include(CheckCXXCompilerFlag)
-    foreach(_f IN LISTS _additional_warnings)
-        string(MAKE_C_IDENTIFIER "${_f}" _flagvar)
-        check_cxx_compiler_flag("${_f}" CXX_HAS_${_flagvar})
-        if(CXX_HAS_${_flagvar})
-            list(APPEND _warnings_clang_like ${_f})
-        endif()
-    endforeach()
+    list(APPEND _warnings_clang_like ${_tw_additional_warnings_supported})
 
     set(_warnings_gnu_only -Wmisleading-indentation -Wsuggest-override)
 
@@ -150,8 +123,6 @@ function(treeweave_enable_warnings target)
         /wd4702
     )
 
-    # Build compiler-specific warning flags using generator expressions
-    # Flags are only applied when compiling C++ code with the matching compiler
     set(_compile_options)
     foreach(flag IN LISTS _warnings_clang_like)
         list(
@@ -166,7 +137,6 @@ function(treeweave_enable_warnings target)
         list(APPEND _compile_options $<$<AND:${_lang_is_cxx},${_msvc}>:${flag}>)
     endforeach()
 
-    # Add -Werror / /WX if treating warnings as errors
     if(TREEWEAVE_WARNINGS_AS_ERRORS)
         list(
             APPEND _compile_options
@@ -178,12 +148,7 @@ function(treeweave_enable_warnings target)
     target_compile_options(${target} ${_scope} ${_compile_options})
 endfunction()
 
-# -------------------------
-# Sanitizers: ASan + UBSan via StableCoder/cmake-scripts, fetched with CPM.
-# Driven by TREEWEAVE_ENABLE_SANITIZERS (declared in the top-level CMakeLists).
-# add_sanitizer_support() applies the flags to every target defined afterwards,
-# which is why dev_helpers is included before the library/test/example targets.
-# -------------------------
+# Must run before library/test targets so sanitizer flags apply globally.
 if(TREEWEAVE_ENABLE_SANITIZERS)
     _treeweave_ensure_cpm()
     cpmaddpackage(
@@ -196,20 +161,10 @@ if(TREEWEAVE_ENABLE_SANITIZERS)
     add_sanitizer_support(address undefined)
 endif()
 
-# -------------------------
-# Coverage instrumentation, driven by TREEWEAVE_ENABLE_COVERAGE (declared in the
-# top-level CMakeLists). Like the sanitizer block above, this must run before the
-# library/test targets are defined: add_compile_options/add_link_options apply to
-# every target created afterwards, so the headers (instantiated in the test TUs)
-# and the C-ABI library all emit .gcno/.gcda for the `coverage` target to collect.
-# Without this the option was inert: the build stayed uninstrumented, ctest passed,
-# and lcov aborted with "no .gcda files found".
-# -------------------------
+# Must run before library/test targets (ordering constraint).
 if(TREEWEAVE_ENABLE_COVERAGE)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        # --coverage == -fprofile-arcs -ftest-coverage (+ links libgcov). The
-        # batch evaluator runs leaf kernels on multiple threads, so atomic
-        # profile updates avoid counter races corrupting the .gcda.
+        # -fprofile-update=atomic: batch evaluator uses threads; avoids .gcda races.
         add_compile_options(--coverage -fprofile-update=atomic)
         add_link_options(--coverage)
         message(
@@ -225,12 +180,6 @@ if(TREEWEAVE_ENABLE_COVERAGE)
     endif()
 endif()
 
-# -------------------------
-# Static analysis: clang-tidy / cppcheck via CMake's built-in driver. Report-
-# only (no -warnings-as-errors yet); clang-tidy reads .clang-tidy from the tree
-# and only reports on our own headers. Tools are looked up on PATH and skipped
-# with a warning if absent. Defaults follow TREEWEAVE_ENABLE_STATIC_ANALYSIS.
-# -------------------------
 option(
     TREEWEAVE_ENABLE_CLANG_TIDY
     "Run clang-tidy on C++ targets"
@@ -247,10 +196,8 @@ if(TREEWEAVE_ENABLE_CLANG_TIDY)
     if(TREEWEAVE_CLANG_TIDY_EXE)
         set(CMAKE_CXX_CLANG_TIDY
             "${TREEWEAVE_CLANG_TIDY_EXE}"
-            # Trailing slash on include/treeweave/ is deliberate: it scopes the
-            # filter to the C++ headers in that directory and excludes the
-            # sibling C ABI header include/treeweave.h (which must stay valid C —
-            # clang-tidy's C++ fixes would corrupt it).
+            # Trailing slash scopes filter to include/treeweave/ only, excluding
+            # the C ABI header include/treeweave.h (must stay valid C).
             "-header-filter=^${PROJECT_SOURCE_DIR}/(include/treeweave/|src)"
             "--extra-arg=-fsyntax-only"
         )
@@ -269,23 +216,11 @@ if(TREEWEAVE_ENABLE_CPPCHECK)
             "${TREEWEAVE_CPPCHECK_EXE}"
             "--inline-suppr"
             "--enable=warning,style,performance,portability"
-            # Suppress two opinionated `style` checks that conflict with this
-            # library's deliberate design (newer cppcheck on CI enables them; the
-            # version used for local verification did not):
-            #   - noExplicitConstructor: detail::Value's single-arg ctors are
-            #     intentionally implicit (scalar/array/pointer construction is
-            #     ergonomic and used pervasively in the eval pipeline); making
-            #     them explicit would be an API/behaviour change.
-            #   - useStlAlgorithm: the flagged sites are hot-path raw loops in a
-            #     SIMD library; rewriting them as std::accumulate/all_of/copy
-            #     would obscure intent for no measured gain (and risk codegen
-            #     regressions). We keep the obvious loop, matching the existing
-            #     NOLINT pattern for clang-tidy checks the project rejects.
+            # noExplicitConstructor: detail::Value's single-arg ctors are
+            # intentionally implicit; making them explicit is an API change.
             "--suppress=noExplicitConstructor"
+            # useStlAlgorithm: hot-path raw loops; rewriting would obscure intent.
             "--suppress=useStlAlgorithm"
-            # Fail the build on any other cppcheck finding so regressions are
-            # caught in CI rather than scrolling past. The library is
-            # cppcheck-clean today; tests and fetched deps are excluded.
             "--error-exitcode=1"
         )
     else()
@@ -296,9 +231,6 @@ if(TREEWEAVE_ENABLE_CPPCHECK)
     endif()
 endif()
 
-# -------------------------
-# Docs helper (from PoetDocs.cmake)
-# -------------------------
 option(
     TREEWEAVE_GENERATE_DOCS
     "Generate documentation using Doxygen + Sphinx pipeline"
@@ -306,14 +238,10 @@ option(
 )
 
 if(TREEWEAVE_GENERATE_DOCS)
-    # Require Doxygen for API documentation extraction
     find_package(Doxygen REQUIRED)
-    # Require Sphinx for generating HTML documentation
     find_program(SPHINX_BUILD_EXECUTABLE NAMES sphinx-build REQUIRED)
-    # Require Python for Sphinx and its extensions
     find_package(Python COMPONENTS Interpreter REQUIRED)
 
-    # Check if required Python packages (breathe, exhale) are installed
     execute_process(
         COMMAND ${Python_EXECUTABLE} -c "import breathe, exhale"
         RESULT_VARIABLE DOCS_DEPS_CHECK_RESULT
@@ -328,34 +256,30 @@ if(TREEWEAVE_GENERATE_DOCS)
         )
     endif()
 
-    # Generate Doxyfile from template
     configure_file(
-        ${CMAKE_SOURCE_DIR}/docs/Doxyfile.in
-        ${CMAKE_BINARY_DIR}/docs/Doxyfile
+        ${PROJECT_SOURCE_DIR}/docs/Doxyfile.in
+        ${PROJECT_BINARY_DIR}/docs/Doxyfile
         @ONLY
     )
 
-    # Target: Generate Doxygen XML output from source code
     add_custom_target(
         doxygen
-        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/docs/Doxyfile
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/docs/Doxyfile
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/docs
         COMMENT "Generating API documentation with Doxygen"
     )
 
-    # Target: Generate HTML documentation from Doxygen XML using Sphinx
     add_custom_target(
         sphinx
         DEPENDS doxygen
         COMMAND
             ${CMAKE_COMMAND} -E env
-            DOXYGEN_XML_OUTPUT=${CMAKE_BINARY_DIR}/docs/xml
-            ${SPHINX_BUILD_EXECUTABLE} -b html ${CMAKE_SOURCE_DIR}/docs
-            ${CMAKE_BINARY_DIR}/docs/_build/html
+            DOXYGEN_XML_OUTPUT=${PROJECT_BINARY_DIR}/docs/xml
+            ${SPHINX_BUILD_EXECUTABLE} -b html ${PROJECT_SOURCE_DIR}/docs
+            ${PROJECT_BINARY_DIR}/docs/_build/html
         COMMENT "Generating HTML documentation with Sphinx"
     )
 
-    # Target: Complete documentation build (alias for sphinx target)
     add_custom_target(docs DEPENDS sphinx)
     message(
         STATUS
@@ -363,22 +287,10 @@ if(TREEWEAVE_GENERATE_DOCS)
     )
 endif()
 
-# -------------------------
-# Coverage target (moved from top-level)
-# -------------------------
-# Creates a `coverage` custom target that:
-# 1. Builds all test executables
-# 2. Runs the test suite using CTest
-# 3. Collects code coverage data
-# 4. Generates an HTML coverage report
-#
-# Prefers lcov+genhtml (more robust), falls back to gcovr if unavailable
 find_program(GCOVR_EXECUTABLE gcovr)
 find_program(LCOV_EXECUTABLE lcov)
 find_program(GENHTML_EXECUTABLE genhtml)
 
-# Prefer lcov+genhtml when available (generally more robust and handles complex build trees better)
-# Falls back to gcovr if lcov/genhtml are not found
 if(LCOV_EXECUTABLE AND GENHTML_EXECUTABLE)
     set(LCOV_INFO ${CMAKE_BINARY_DIR}/coverage.info)
     set(LCOV_FILTERED ${CMAKE_BINARY_DIR}/coverage.filtered.info)
@@ -393,17 +305,12 @@ if(LCOV_EXECUTABLE AND GENHTML_EXECUTABLE)
             ${LCOV_EXECUTABLE} --capture --directory ${CMAKE_BINARY_DIR}
             --output-file ${LCOV_INFO} --ignore-errors
             inconsistent,unused,source,gcov,mismatch
-        # Keep ONLY treeweave's own sources (the header library + the C-ABI
-        # implementation) so the coverage % is reliable: this allowlist drops
-        # system headers (/usr/*), fetched dependencies (*/_deps/*), the Catch2
-        # test framework, and the test/example/benchmark sources in one stroke,
-        # none of which should count toward the library's coverage.
+        # Allowlist treeweave sources only; drops deps/system/test sources.
         COMMAND
             ${LCOV_EXECUTABLE} --extract ${LCOV_INFO} "*/include/treeweave*"
             "*/src/capi/*" --output-file ${LCOV_FILTERED} --ignore-errors
             inconsistent,unused
-        # genhtml may still reference a source file it cannot open (e.g. a
-        # generated/relocated dependency header); skip those rather than abort.
+        # --ignore-errors source: genhtml may not find generated/relocated headers.
         COMMAND
             ${GENHTML_EXECUTABLE} -o ${COVERAGE_DIR} ${LCOV_FILTERED}
             --ignore-errors source
@@ -413,13 +320,11 @@ if(LCOV_EXECUTABLE AND GENHTML_EXECUTABLE)
         VERBATIM
     )
 elseif(GCOVR_EXECUTABLE)
-    # Fallback to gcovr if lcov/genhtml aren't available
     add_custom_target(
         coverage
         COMMAND
             ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR}
             --output-on-failure
-        # Filter to project sources (include/treeweave and tests), excluding external dependencies and system headers
         COMMAND
             ${GCOVR_EXECUTABLE} -r ${CMAKE_SOURCE_DIR} --filter
             "include/treeweave/|tests/" --exclude ".*/_deps/.*" --exclude
@@ -443,8 +348,4 @@ else()
     )
 endif()
 
-# The coverage target runs CTest, so it must build the test executables first.
-# Those targets are defined later in tests/CMakeLists.txt (added after this
-# include), so the dependency wiring lives there: it appends each test target to
-# the global TREEWEAVE_TEST_TARGETS property and add_dependencies(coverage ...)
-# on them once the suite is defined.
+# Test-target dependencies wired in tests/CMakeLists.txt via TREEWEAVE_TEST_TARGETS.

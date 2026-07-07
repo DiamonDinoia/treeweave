@@ -20,7 +20,6 @@ class Value {
     using storage_t = std::conditional_t<N == 1, T, std::array<T, N>>;
     storage_t data_{};
 
-    /// Apply binary `op` elementwise against another `Value`.
     template <class Op>
     [[nodiscard]] constexpr auto apply(const Value &rhs, Op op) const -> Value {
         if constexpr (N == 1) {
@@ -33,7 +32,6 @@ class Value {
         }
     }
 
-    /// Apply binary `op` against a broadcast scalar.
     template <class Op>
     [[nodiscard]] constexpr auto apply_scalar(const T &rhs, Op op) const -> Value {
         if constexpr (N == 1) {
@@ -54,11 +52,11 @@ class Value {
     // compiler, so suppress modernize-use-constraints for just these two ctors.
     // NOLINTBEGIN(modernize-use-constraints)
     template <std::size_t M = N, typename = std::enable_if_t<M == 1>>
-    Value(const T &val) : data_(val) {}
-    Value(const std::array<T, 1> &arr) : data_(arr[0]) {}
+    constexpr Value(const T &val) : data_(val) {}
+    constexpr Value(const std::array<T, 1> &arr) : data_(arr[0]) {}
 
     template <std::size_t M = N, typename = std::enable_if_t<M != 1>>
-    Value(const std::array<T, N> &arr) : data_(arr) {}
+    constexpr Value(const std::array<T, N> &arr) : data_(arr) {}
     // NOLINTEND(modernize-use-constraints)
     Value()                                      = default;
     Value(const Value &)                         = default;
@@ -78,29 +76,29 @@ class Value {
         }
     }
 
-    auto operator+(const Value &rhs) const -> Value {
+    constexpr auto operator+(const Value &rhs) const -> Value {
         return apply(rhs, [](T a, T b) -> T { return a + b; });
     }
-    auto operator-(const Value &rhs) const -> Value {
+    constexpr auto operator-(const Value &rhs) const -> Value {
         return apply(rhs, [](T a, T b) -> T { return a - b; });
     }
-    auto operator*(const Value &rhs) const -> Value {
+    constexpr auto operator*(const Value &rhs) const -> Value {
         return apply(rhs, [](T a, T b) -> T { return a * b; });
     }
-    auto operator/(const Value &rhs) const -> Value {
+    constexpr auto operator/(const Value &rhs) const -> Value {
         return apply(rhs, [](T a, T b) -> T { return a / b; });
     }
 
-    auto operator+(const T &rhs) const -> Value {
+    constexpr auto operator+(const T &rhs) const -> Value {
         return apply_scalar(rhs, [](T a, T b) -> T { return a + b; });
     }
-    auto operator-(const T &rhs) const -> Value {
+    constexpr auto operator-(const T &rhs) const -> Value {
         return apply_scalar(rhs, [](T a, T b) -> T { return a - b; });
     }
-    auto operator*(const T &rhs) const -> Value {
+    constexpr auto operator*(const T &rhs) const -> Value {
         return apply_scalar(rhs, [](T a, T b) -> T { return a * b; });
     }
-    auto operator/(const T &rhs) const -> Value {
+    constexpr auto operator/(const T &rhs) const -> Value {
         return apply_scalar(rhs, [](T a, T b) -> T { return a / b; });
     }
 
@@ -147,7 +145,7 @@ class Value {
             return data_.data() + N;
     }
 
-    [[nodiscard]] auto prod() const -> T {
+    [[nodiscard]] constexpr auto prod() const -> T {
         if constexpr (N == 1) {
             return data_;
         } else {
@@ -158,12 +156,12 @@ class Value {
         }
     }
 
-    operator T() const {
+    constexpr operator T() const {
         static_assert(N == 1, "Can only cast to scalar if N == 1");
         return data_;
     }
 
-    operator std::array<T, N>() const {
+    constexpr operator std::array<T, N>() const {
         if constexpr (N == 1)
             return std::array<T, 1>{data_};
         else
@@ -173,7 +171,7 @@ class Value {
     /// Always-array view: useful for passing the underlying coordinates to
     /// generic vector-of-double sinks (e.g. exception ctors) without
     /// branching on `N` at the call site.
-    [[nodiscard]] auto as_array() const -> std::array<T, N> {
+    [[nodiscard]] constexpr auto as_array() const -> std::array<T, N> {
         if constexpr (N == 1) {
             return std::array<T, N>{data_};
         } else {

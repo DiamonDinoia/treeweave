@@ -58,11 +58,7 @@ void hammer(const char *label, Fn &&fn, std::array<double, Dim> a, std::array<do
 
 int main(int argc, char **argv) {
     double secs = (argc > 1) ? std::atof(argv[1]) : 15.0;
-    // Optional 2nd argv: comma-separated dim list, e.g. "1d", "1d,2d",
-    // "all" (default). Skipped scenarios are silently omitted;
-    // parse_paired.py treats missing scenarios as no-data per scenario
-    // (it only drops a run when an explicit "SKIPPED" line is printed,
-    // which we avoid).
+    // argv[2]: comma-separated dim filter ("1d","2d","3d","all"); missing dims silently omitted.
     const std::string filter   = (argc > 2) ? argv[2] : "all";
     auto              contains = [&](std::string_view tag) {
         if (filter == "all")

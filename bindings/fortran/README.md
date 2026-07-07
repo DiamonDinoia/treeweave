@@ -28,11 +28,6 @@ the same name, so the mapping is one-to-one and explicit.
 > the CMake-selected `f95` symlink resolves to gfortran 8, which miscompiles
 > Fortran 2018 constructs used here.
 
-Unlike the Python / Julia / MATLAB wrappers, this binding is deliberately
-*faithful* rather than ergonomic: there is no call operator, no keyword
-arguments, and no dimension inference. The caller passes `input_dim` /
-`output_dim` explicitly, exactly as a C consumer would.
-
 ## Using it
 
 ```fortran
@@ -58,7 +53,8 @@ use treeweave
    twins use `real(c_float)` for `x`/`y`.
 
 2. Fit, passing `c_funloc(kernel)`. Pass `c_null_ptr` for `opts` to use
-   `treeweave_default_opts`, or `c_loc(my_opts)` with a `target` `treeweave_opts`:
+   defaults, or pass `c_loc(my_opts)` with a `target` `treeweave_opts` initialized
+   by `treeweave_default_opts()`:
 
    ```fortran
    real(c_double) :: a(1) = [0.0_c_double], b(1) = [1.0_c_double]

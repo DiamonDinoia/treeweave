@@ -42,27 +42,6 @@ inline auto format_domain(std::ostringstream &os, const std::vector<double> &a, 
 /// singularity in the function that sampling alone cannot resolve.
 class MaxDepthExceeded : public std::exception {
   public:
-    MaxDepthExceeded() = default;
-
-    template <class VecC, class VecH>
-    MaxDepthExceeded(std::size_t depth, const VecC &center_in, const VecH &half_length_in) : depth_(depth) {
-        auto cit = center_in.begin();
-        auto hit = half_length_in.begin();
-        for (; cit != center_in.end() && hit != half_length_in.end(); ++cit, ++hit) {
-            // Panel bounds are reported in double regardless of the fit's
-            // value_type; cast explicitly so a float fit does not trip
-            // -Wdouble-promotion under -Werror.
-            a_.push_back(static_cast<double>(*cit - *hit));
-            b_.push_back(static_cast<double>(*cit + *hit));
-        }
-        std::ostringstream os;
-        os << "Treeweave fit error: tree depth exceeded max allowed input depth (" << depth_ << ") on panel ";
-        detail::format_domain(os, a_, b_);
-        os << " — likely a singularity in this interval; "
-              "subdivide manually away from the singularity or raise options.max_depth.";
-        msg_ = os.str();
-    }
-
     /// Construct from a list of unconverged panels (the aggregate path).
     /// `panels` must be non-empty; the first entry's bounds are mirrored into
     /// the legacy single-panel accessors `a()/b()` for backwards compatibility.
@@ -106,8 +85,6 @@ class MaxDepthExceeded : public std::exception {
 /// — so callers can either raise the budget or excise the singular region.
 class MemoryBudgetExceeded : public std::exception {
   public:
-    MemoryBudgetExceeded() = default;
-
     template <class VecC, class VecH>
     MemoryBudgetExceeded(std::size_t used_bytes, std::size_t budget_bytes, const VecC &center_in,
                          const VecH &half_length_in)

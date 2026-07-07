@@ -1,36 +1,9 @@
-# treeweave_generate_version.cmake
-#
-# Composes TREEWEAVE_VERSION_FULL from the tracked VERSION file plus git state
-# and writes include/treeweave_version.h from include/treeweave_version.h.in.
-# The header lives inside the source include/ tree (committed), so every consumer
-# that already adds include/ to its path finds <treeweave_version.h> — there is
-# no separate generated-include dir to propagate to each target.
-#
-# Usage
-# -----
-# - From the main project: include(cmake/treeweave_generate_version.cmake)
-#   during configure (right after project()).
-# - Standalone (pre-commit hook): cmake -P cmake/treeweave_generate_version.cmake
-#   With -DCHECK=ON, exits 1 if the generated file would change — the hook then
-#   re-stages the newly regenerated file.
-#
-# Version composition
-# -------------------
-# Let BASE = contents of ./VERSION (e.g. 0.0.0). Let TAG = `git describe
-# --exact-match --tags HEAD` (stripped of a leading `v`). If TAG == BASE we are
-# on an exact release commit and TREEWEAVE_VERSION_FULL = BASE. Otherwise the
-# suffix is `-dev.N` where N = `git rev-list --count <v-tag>..HEAD` if a
-# `v<BASE>` tag exists, else `git rev-list --count HEAD`.
-#
-# N is derived from committed history only — `git rev-list --count HEAD` ignores
-# the staged index and the working tree, so during pre-commit the count is
-# stable across retries of the same commit (HEAD hasn't moved). The count only
-# advances when a new commit actually lands.
+# treeweave_generate_version.cmake — composes TREEWEAVE_VERSION_FULL from
+# VERSION + git state; writes include/treeweave_version.h (committed, in-tree).
+# Script mode: cmake -P ...; -DCHECK=ON exits 1 if header would change.
 
 cmake_minimum_required(VERSION 3.20)
 
-# Resolve project source dir — works both inside a CMake configure and under
-# `cmake -P` (script mode).
 if(CMAKE_SOURCE_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/VERSION")
     set(_tw_src "${CMAKE_SOURCE_DIR}")
 else()
@@ -40,16 +13,31 @@ endif()
 file(READ "${_tw_src}/VERSION" TREEWEAVE_VERSION_STRING)
 string(STRIP "${TREEWEAVE_VERSION_STRING}" TREEWEAVE_VERSION_STRING)
 
-# Release override: when TREEWEAVE_RELEASE_VERSION is set non-empty (the release
-# workflow passes -DTREEWEAVE_RELEASE_VERSION=<version>), pin every version field
-# to that exact value and skip the git/dev-suffix logic. This keeps shipped
-# C/C++ headers at the clean X.Y.Z even though artifacts are built before the tag
-# is pushed; everyday main/dev builds (no override) still get -dev.N.
+# Release workflow passes -DTREEWEAVE_RELEASE_VERSION=<ver> to pin headers at
+# clean X.Y.Z before the tag is pushed.
 if(
     DEFINED TREEWEAVE_RELEASE_VERSION
     AND NOT TREEWEAVE_RELEASE_VERSION STREQUAL ""
 )
     set(TREEWEAVE_VERSION_STRING "${TREEWEAVE_RELEASE_VERSION}")
+    if(NOT TREEWEAVE_VERSION_STRING MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
+        message(
+            FATAL_ERROR
+            "VERSION must be MAJOR.MINOR.PATCH, got: ${TREEWEAVE_VERSION_STRING}"
+        )
+    endif()
+    set(TREEWEAVE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    set(TREEWEAVE_VERSION_MINOR "${CMAKE_MATCH_2}")
+    set(TREEWEAVE_VERSION_PATCH "${CMAKE_MATCH_3}")
+    set(TREEWEAVE_VERSION_FULL "${TREEWEAVE_VERSION_STRING}")
+    set(_out "${_tw_src}/include/treeweave_version.h")
+    set(_in "${_tw_src}/include/treeweave_version.h.in")
+    configure_file("${_in}" "${_out}" @ONLY)
+    message(
+        STATUS
+        "treeweave version (release override): ${TREEWEAVE_VERSION_FULL}"
+    )
+    return()
 endif()
 
 if(NOT TREEWEAVE_VERSION_STRING MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
@@ -62,33 +50,13 @@ set(TREEWEAVE_VERSION_MAJOR "${CMAKE_MATCH_1}")
 set(TREEWEAVE_VERSION_MINOR "${CMAKE_MATCH_2}")
 set(TREEWEAVE_VERSION_PATCH "${CMAKE_MATCH_3}")
 
-# With the release override active, FULL == STRING and there is no git query.
-if(
-    DEFINED TREEWEAVE_RELEASE_VERSION
-    AND NOT TREEWEAVE_RELEASE_VERSION STREQUAL ""
-)
-    set(TREEWEAVE_VERSION_FULL "${TREEWEAVE_VERSION_STRING}")
-    set(_out "${_tw_src}/include/treeweave_version.h")
-    set(_in "${_tw_src}/include/treeweave_version.h.in")
-    configure_file("${_in}" "${_out}" @ONLY)
-    message(
-        STATUS
-        "treeweave version (release override): ${TREEWEAVE_VERSION_FULL}"
-    )
-    return()
-endif()
-
 find_package(Git QUIET)
 
 set(_on_exact_tag FALSE)
 set(_commit_count 0)
 set(_shallow FALSE)
 
-# A shallow clone (CI's default fetch-depth 1) only has HEAD, so the commit
-# count is wrong — `rev-list --count HEAD` would yield 1 regardless of real
-# history. In that case trust the committed header verbatim: don't rewrite it
-# (configure) and don't fail the check (pre-commit hook). The committed value
-# was produced by a full clone at commit time.
+# Shallow clone (CI fetch-depth:1): trust committed header verbatim.
 if(Git_FOUND AND EXISTS "${_tw_src}/.git")
     execute_process(
         COMMAND

@@ -20,8 +20,6 @@ if(NOT Python_FOUND)
     return()
 endif()
 
-# Shared module definition (also used by the pip wheel build) — locates nanobind
-# (interpreter or FetchContent) and defines the `_treeweave` target.
 include("${CMAKE_CURRENT_SOURCE_DIR}/treeweave_python.cmake")
 treeweave_add_python_module(treeweave::treeweave_c_static)
 
@@ -40,7 +38,11 @@ set_target_properties(
 )
 # Stage the pure-Python sources next to the extension (re-copied on reconfigure
 # if they change, via the configure_file input dependency).
-file(GLOB _treeweave_py "${CMAKE_CURRENT_SOURCE_DIR}/treeweave/*.py")
+file(
+    GLOB _treeweave_py
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/treeweave/*.py"
+)
 foreach(_f IN LISTS _treeweave_py)
     get_filename_component(_n "${_f}" NAME)
     configure_file("${_f}" "${_treeweave_pypkg}/treeweave/${_n}" COPYONLY)
@@ -55,6 +57,24 @@ set_tests_properties(
     python_treeweave
     PROPERTIES ENVIRONMENT "PYTHONPATH=${_treeweave_pypkg}"
 )
+
+# One ctest per example script (each script exits nonzero on bad error).
+foreach(
+    _example
+    IN
+    ITEMS float32_fit simple_1d simple_2d sorted_1d vector_output_2d
+)
+    add_test(
+        NAME "python_example_${_example}"
+        COMMAND
+            "${Python_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/examples/${_example}.py"
+    )
+    set_tests_properties(
+        "python_example_${_example}"
+        PROPERTIES ENVIRONMENT "PYTHONPATH=${_treeweave_pypkg}"
+    )
+endforeach()
 message(
     STATUS
     "treeweave[python]: extension + pytest 'python_treeweave' registered "

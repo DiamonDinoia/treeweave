@@ -38,7 +38,10 @@ node_modules/
 *.wasm
 # Prebuilt per-platform N-API addons, assembled in CI from the build matrix
 prebuilds/
+# ctest output directory
+Testing/
 # Scratch / throwaway sources — keep local-only, never commit
 *scratch*
 *.scratch
 scratch/
+devel/*

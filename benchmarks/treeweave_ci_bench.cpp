@@ -1,16 +1,5 @@
-// treeweave_ci_bench — a small, stable benchmark for continuous regression
-// tracking in CI. Unlike the exploratory benches in this directory, it runs a
-// fixed handful of representative batch-eval cases (the production hot path)
-// and renders the results as the JSON that
-// benchmark-action/github-action-benchmark consumes in `customSmallerIsBetter`
-// mode: a flat array of {name, unit, value} where value is the wall time of one
-// batch-eval call (smaller is better). Pass an output path as argv[1] (default:
-// stdout).
-//
-//   treeweave_ci_bench bench.json
-//
-// Keep the case set stable across commits so the published history stays
-// comparable; add cases rather than renaming, since the name is the series key.
+// CI regression bench: fixed representative batch-eval cases rendered as JSON for
+// benchmark-action/github-action-benchmark (customSmallerIsBetter).
 
 #include <treeweave/treeweave.hpp>
 
@@ -29,12 +18,8 @@
 
 namespace {
 
-// github-action-benchmark customSmallerIsBetter: one object per nanobench
-// result. `value` is the median wall time of one batch-eval call (nanobench's
-// per-iteration `elapsed`, in seconds); each call evaluates kBatch points, so
-// the per-point cost is value/kBatch. We track the per-call time directly —
-// mustache has no arithmetic, and the constant kBatch factor leaves the trend
-// unchanged. MdAPE (measurement noise) rides along in `extra`.
+// JSON template: value = median wall time per batch call; mustache lacks arithmetic so per-call time is tracked
+// directly.
 constexpr char kGabJsonTemplate[] = R"TPL([
 {{#result}}  {
     "name": "{{name}}",
@@ -54,11 +39,7 @@ auto random_points(std::size_t n, double lo, double hi, unsigned seed) -> std::v
     return v;
 }
 
-// Deep uniform tree -> large (2^(K*depth)-entry) leaf table, exercising the
-// fast-path lookup at a leaf count that spills L1/L2 — the regime small-leaf
-// cases miss. Depths sit at/just under the 64K-entry per-subtree table cap
-// (K*depth <= 16): 1D->14 (16384), 2D->8 (65536), 3D->5 (32768). Mirrors
-// treeweave_codspeed_bench.
+// kDeep*: depth pins that spill the leaf table past L1/L2 (1D:14=16384, 2D:8=65536, 3D:5=32768 entries, <= 64K cap).
 constexpr int kDeep1D = 14;
 constexpr int kDeep2D = 8;
 constexpr int kDeep3D = 5;
@@ -71,7 +52,6 @@ int main(int argc, char **argv) {
     ankerl::nanobench::Bench bench;
     bench.title("treeweave batch eval").unit("eval").batch(static_cast<double>(N)).relative(true).minEpochIterations(8);
 
-    // 1D — Runge function.
     {
         auto fn  = treeweave::fit([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10);
         auto xs  = random_points(N, -0.999, 0.999, 1);
@@ -106,7 +86,6 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 2D -> 1D — Gaussian bump.
     {
         auto fn = treeweave::fit(
             [](std::array<double, 2> x) -> std::array<double, 1> {
@@ -121,7 +100,6 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 3D -> 1D — smooth product.
     {
         auto fn = treeweave::fit(
             [](std::array<double, 3> x) -> std::array<double, 1> {

@@ -79,6 +79,14 @@ class Function {
     using box_t       = detail::Box<value_type, input_dim>;
     using dim_array_t = detail::Value<value_type, input_dim>;
 
+    // Batch-path tuning knobs, shared by eval_batch_tile / eval_batch_tile_soa.
+    /// Points below this threshold skip counting-sort and evaluate point-at-a-time.
+    static constexpr std::size_t kSortThreshold = 32;
+    /// Minimum expected points per leaf; sets the adaptive tile-size floor.
+    static constexpr std::size_t kMinPtsPerLeaf = 32;
+    /// Prefetch distance in the inverse-permutation writeback stage.
+    static constexpr std::size_t kLookahead = 32;
+
     /// Approximate resident bytes — including subtree node arrays and the
     /// shared polyfit coefficient store. Useful for budget validation in
     /// callers that build many Functions.
@@ -103,15 +111,8 @@ class Function {
         return std::ranges::all_of(subtrees_, [](const auto &st) -> bool { return st.has_leaf_table(); });
     }
 
-    /// Leaf id the bin sort assigns to `x`: the index into the panel store
-    /// (`< num_leaves()`) whose polynomial evaluates `x`, or the out-of-domain
-    /// sentinel `num_leaves()`. Resolves through the leaf-table fast path when
-    /// live, else tree descent. This is the scalar twin of one `leaf_ids` lane
-    /// and shares its quantize/OOD-wrap semantics exactly — including flagging
-    /// NaN/±Inf as OOD (the leaf-table wrap test catches them, where the bare
-    /// `operator()(x)` domain pre-check would let a NaN through to a panel and
-    /// evaluate to NaN). It is the parity oracle the quantize tests assert the
-    /// vectorized `leaf_ids` stream against.
+    /// Leaf-table index for `x`, or `num_leaves()` sentinel when OOD/NaN/±Inf.
+    /// Scalar twin of one `leaf_ids` SIMD lane; parity oracle for quantize tests.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_id(const input_type &x) const -> std::uint32_t {
         const auto                                 ood_id = static_cast<std::uint32_t>(polyfits_.size());
         const bool                                 table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
@@ -119,11 +120,8 @@ class Function {
         return leaf_id_of(xi, ood_id, table);
     }
 
-    /// Batch leaf-id assignment: write each of the `n` points' `leaf_id` into
-    /// `out`. Streams through the same vectorized quantize the batch evaluator
-    /// uses (1D leaf-table fast path -> `for_each_leaf_id_batch`; otherwise the
-    /// per-point resolve), so this is the binning stage of `operator()(xp,res,n)`
-    /// exposed on its own. `xp` is AoS (`input_dim` coords per point).
+    /// Write per-point leaf ids into `out[0..n)`. Same vectorized quantize as
+    /// the batch evaluator; exposes the binning stage standalone. AoS input.
     auto leaf_ids(const value_type *xp, std::uint32_t *out, std::size_t n) const -> void {
         const auto ood_id = static_cast<std::uint32_t>(polyfits_.size());
         const bool table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
@@ -190,10 +188,10 @@ class Function {
     ///                            `allow_max_depth_leaves == false`).
     /// @throws MemoryBudgetExceeded  if accumulated leaf storage crosses
     ///                            `input.max_memory_mib` MiB.
-    Function(const detail::TreeInput &input, const input_type center, const input_type half_width_in, const Func &func)
-        : input_(input), box_(dim_array_t{center}, dim_array_t{half_width_in}),
-          tol_(static_cast<value_type>(input.tol)) {
-        const auto t_start = std::chrono::steady_clock::now();
+    Function(const detail::TreeInput &input, const input_type center, const input_type half_width_in,
+             const Func &func) {
+        const box_t box_{dim_array_t{center}, dim_array_t{half_width_in}};
+        const auto  t_start = std::chrono::steady_clock::now();
 
         // Surface a coarse memory-cost guard when the user opts into a
         // deep uniform grid. `2^(K*D) * sizeof(uint32_t)` is the per-
@@ -227,12 +225,12 @@ class Function {
 
         q.push(box_t(center, lvec));
 
-        // Half-width of next children
         dim_array_t half_width = lvec * value_type{0.5};
 
         // Breadth-first search through the tree, testing each level; we exit
         // as soon as a level is not entirely parent nodes, so we can jump
         // straight to the subtree roots on evaluation.
+        std::vector<poly_eval_type> dummy;
         while (!q.empty()) {
             const std::size_t n_next = q.size();
 
@@ -257,9 +255,9 @@ class Function {
                 q.pop();
 
                 nodes.emplace_back();
-                auto                       &node = nodes.back();
-                std::vector<poly_eval_type> dummy;
-                node.fit(input, func, current_box.center, current_box.half_length, {}, dummy);
+                auto &node = nodes.back();
+                dummy.clear();
+                node.fit(input, func, current_box.center, current_box.half_length, dummy);
                 if (node.poly_eval_id() != 0u)
                     node.set_poly_eval_id(0);
 
@@ -409,22 +407,10 @@ class Function {
     static constexpr std::size_t kDefaultTileK = 65536;
 
   private:
-    /// Internal scratch for the unsorted batch path. Constructed
-    /// stack-local inside each batch call (the public API does not
-    /// expose this type) and parametrised on the caller's allocator so
-    /// arena / pool / pinned-memory allocators reuse storage without
-    /// treeweave having to hold any state across calls.
-    ///
-    /// Leaf ids are not materialised — they are recomputed during
-    /// scatter from the same SIMD quantize that drove the histogram
-    /// (FINUFFT bin-sort recon, spread.hpp:421). One quantize per W
-    /// points is cheaper than the u16/u32 read/write stream the
-    /// materialised `leaf_ids[]` array would push through L1d.
-    ///
-    /// `counts` doubles as the histogram, the exclusive-scan output,
-    /// and the scatter cursor — after scatter, `counts[k]` is the
-    /// one-past-end of leaf k's packed slice (Reinecke's trick),
-    /// removing the need for a separate `offsets` array.
+    /// Per-call scratch for the unsorted batch path (allocator-parametrised).
+    /// Leaf ids not materialised — re-quantize is cheaper than the extra L1d
+    /// traffic. `counts` serves as histogram, scan output, and scatter cursor
+    /// (Reinecke's trick).
     template <class Allocator = std::allocator<value_type>>
     class Scratch {
         using ATraits = std::allocator_traits<Allocator>;
@@ -482,7 +468,7 @@ class Function {
 
         void reserve(const Function &fn, std::size_t n_max) {
             const auto        n_leaves = static_cast<std::uint32_t>(fn.polyfits_.size());
-            const std::size_t want     = std::min(n_max, std::max(kDefaultTileK, fn.polyfits_.size() * 32));
+            const std::size_t want     = std::min(n_max, std::max(kDefaultTileK, fn.polyfits_.size() * kMinPtsPerLeaf));
             // Grow-only on the per-tile cap. The SoA reinterpretation
             // of `out_packed_` indexes off `tile_cap_`, so quietly
             // lowering it would alias the per-component spans onto the
@@ -528,58 +514,11 @@ class Function {
     };
 
   public:
-    /// Batch evaluation: `n_trg` points written into `res`.
-    ///
-    /// Pipeline (unsorted, the general path):
-    ///
-    ///   1. **Leaf-id traversal.** For each input point, look up the owning
-    ///      leaf index (the `polyfits_` slot that holds its Horner
-    ///      coefficients). When the Function has a single subtree with a
-    ///      precomputed leaf-table the lookup is a quantize + u32 load and
-    ///      folds OOD detection into the same unsigned wrap test. Otherwise,
-    ///      we descend the tree per point. Out-of-domain points are tagged
-    ///      with the sentinel id `n_leaves` and counted in their own bucket.
-    ///   2. **Counting sort + in-place exclusive scan.** Histogram leaf
-    ///      populations into `counts[0..n_leaves]`, then exclusive-scan
-    ///      `counts` in place. After scatter (next stage) consumes `counts`
-    ///      as a cursor, `counts[k]` equals the one-past-end of leaf k's
-    ///      slice — enough to recover `(off, cnt)` for the per-leaf dispatch
-    ///      by walking ids with a running `prev_end` (Reinecke's trick).
-    ///   3. **Scatter to packed layout.** Walk points in input order; for
-    ///      each, append its coordinates to `xp_packed` at its leaf's cursor
-    ///      (`counts[id]++`) and record the inverse mapping in
-    ///      `perm[dst] = i`. Result: points sharing a leaf land contiguously
-    ///      and in lock-step between `xp_packed` and the soon-to-be-filled
-    ///      `out_packed`.
-    ///   4. **Per-leaf SIMD batch eval.** For each non-empty leaf, hand its
-    ///      contiguous slice of `xp_packed` to polyfit's SIMD batch kernel
-    ///      once and write into the same slice of `out_packed`. This is the
-    ///      whole point of the sort: one fixed coefficient set, one SIMD
-    ///      Horner stream, no per-point branch on which leaf to evaluate.
-    ///      The OOD bucket is filled with NaN instead of evaluated.
-    ///   5. **Permute back to caller order.** For each `dst`, copy
-    ///      `out_packed[dst]` into `res[perm[dst] * output_dim]`. The store
-    ///      address is random in `res`, so we prefetch ahead by `LOOKAHEAD`
-    ///      to hide the RFO latency that otherwise dominates 1D throughput.
-    ///
-    /// Tiny batches (`n_trg < kSortThreshold`) skip stages 2–5 and just
-    /// loop point-at-a-time — the counting sort can't amortize its setup
-    /// at that size. Large batches are tiled (`kDefaultTileK`, lifted by an
-    /// adaptive floor for high-leaf-count Functions) so the packed buffers
-    /// fit in L1d/L2.
-    ///
-    /// For 1D, callers who can promise sortedness should prefer
-    /// `sorted(xp, res, n)` — it skips stages 2, 3, 5 entirely and
-    /// runs ~3–4× faster.
-    ///
-    /// Thread-safe: a single Function may be called concurrently from
-    /// multiple threads provided each call's `xp` and `res` slices do not
-    /// overlap with another thread's. Scratch buffers are allocated
-    /// (via `allocator`, default `std::allocator<value_type>`) on entry
-    /// and freed on return — no state is carried between calls. Callers
-    /// that want pooled reuse should pass a stateful allocator (e.g.
-    /// `std::pmr::polymorphic_allocator` over a monotonic buffer).
-    /// Pinned by `tests/test_threadsafe.cpp`.
+    /// Batch evaluation: `n_trg` points into `res`. Five-stage counting-sort
+    /// pipeline (leaf-id → histogram → scatter → per-leaf SIMD eval → permute
+    /// back). Tiny batches (<kSortThreshold) loop point-at-a-time. For sorted
+    /// 1D input prefer `sorted()` (~3-4x faster). Thread-safe: per-call scratch
+    /// allocated/freed via `allocator`; no shared state.
     /// @param xp         `n_trg * input_dim` packed input coordinates.
     /// @param res        `n_trg * output_dim` output buffer.
     /// @param n_trg      number of points to evaluate.
@@ -628,7 +567,6 @@ class Function {
             return;
         }
 
-        constexpr std::size_t kSortThreshold = 32;
         if (n_trg < kSortThreshold) {
             for (std::size_t i_trg = 0; i_trg < n_trg; ++i_trg) {
                 const detail::Value<value_type, input_dim>  xi(xp + (input_dim * i_trg));
@@ -641,8 +579,7 @@ class Function {
             return;
         }
 
-        constexpr std::size_t kMinPtsPerLeaf = 32;
-        const std::size_t     tile_K         = std::max(kDefaultTileK, polyfits_.size() * kMinPtsPerLeaf);
+        const std::size_t tile_K = std::max(kDefaultTileK, polyfits_.size() * kMinPtsPerLeaf);
 
         s.reserve(*this, std::min(n_trg, tile_K));
 
@@ -675,7 +612,6 @@ class Function {
 
         // Below this point the counting-sort overhead likely exceeds the
         // SIMD gain — fall through to scalar per-point.
-        constexpr std::size_t kSortThreshold = 32;
         if (n_trg < kSortThreshold) {
             for (std::size_t i_trg = 0; i_trg < n_trg; ++i_trg) {
                 const detail::Value<value_type, input_dim>  xi(xp + (input_dim * i_trg));
@@ -690,8 +626,7 @@ class Function {
         // populated enough to amortise the polyfit batch kernel's
         // per-call setup — high-leaf-count Functions (e.g. 2D bump,
         // ~7700 leaves) regress sharply at a hard 64 K tile.
-        constexpr std::size_t kMinPtsPerLeaf = 32;
-        const std::size_t     tile_K         = std::max(kDefaultTileK, polyfits_.size() * kMinPtsPerLeaf);
+        const std::size_t tile_K = std::max(kDefaultTileK, polyfits_.size() * kMinPtsPerLeaf);
 
         // Scratch is grown to one tile (idempotent if already sized) and
         // reused across tiles. Only `counts` needs zeroing between tiles;
@@ -766,28 +701,6 @@ class Function {
         const std::uint32_t ood_id   = n_leaves;
         const bool          fast     = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
 
-        auto x_in = [&](std::size_t i) -> input_type {
-            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
-                return input_type{xp[i]};
-            else
-                return xp[i];
-        };
-
-        auto leaf_id_at = [&](std::size_t i) -> std::uint32_t {
-            if (fast)
-                return subtrees_.front().find_leaf_id_with_ood(x_in(i), ood_id);
-            const value_type xv = xp[i];
-            // Inclusive high bound for the closed upper endpoint: `x == upper`
-            // flows into the (clamped) leaf lookup; finite `x > upper`, OOD-low,
-            // and NaN (all NaN comparisons are false, so the positive-logic guard
-            // `xv >= lo && xv <= hi` rejects NaN, preventing descent into a valid
-            // leaf on aarch64 where NaN descends left at every branch node).
-            if (!(xv >= lower_left_[0] && xv <= upper_right_[0]))
-                return ood_id;
-            const auto x = x_in(i);
-            return subtrees_[get_linear_bin(x)].find_leaf_id(x);
-        };
-
         std::size_t i = 0;
         while (i < n && xp[i] < lower_left_[0]) {
             write_nan(i);
@@ -798,7 +711,7 @@ class Function {
             // `>` not `>=`: the closed upper endpoint `x == upper` is evaluated
             // (clamped to the last leaf); the OOD-high suffix starts strictly
             // above it. NaN fails this check (NaN > hi is false) so NaN falls
-            // through to `leaf_id_at`, which rejects it via the positive-logic guard.
+            // through to `sorted_leaf_id_at`, which rejects it via the positive-logic guard.
             if (xp[i] > upper_right_[0]) [[unlikely]] {
                 do {
                     write_nan(i);
@@ -806,14 +719,14 @@ class Function {
                 } while (i < n);
                 break;
             }
-            const std::uint32_t id = leaf_id_at(i);
+            const std::uint32_t id = sorted_leaf_id_at(xp, i, ood_id, fast);
             if (id == ood_id) [[unlikely]] {
                 write_nan(i);
                 ++i;
                 continue;
             }
             std::size_t j = i + 1;
-            while (j < n && leaf_id_at(j) == id)
+            while (j < n && sorted_leaf_id_at(xp, j, ood_id, fast) == id)
                 ++j;
 
             if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
@@ -848,26 +761,6 @@ class Function {
         const std::uint32_t ood_id   = n_leaves;
         const bool          fast     = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
 
-        auto x_in = [&](std::size_t i) -> input_type {
-            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
-                return input_type{xp[i]};
-            else
-                return xp[i];
-        };
-
-        auto leaf_id_at = [&](std::size_t i) -> std::uint32_t {
-            if (fast)
-                return subtrees_.front().find_leaf_id_with_ood(x_in(i), ood_id);
-            const value_type xv = xp[i];
-            // Positive-logic guard: NaN fails both arms so the negation rejects
-            // it, preventing descent to a valid leaf (NaN < lo and NaN > hi are
-            // both false, so the old disjunctive check let NaN through on all ISAs).
-            if (!(xv >= lower_left_[0] && xv <= upper_right_[0]))
-                return ood_id;
-            const auto x = x_in(i);
-            return subtrees_[get_linear_bin(x)].find_leaf_id(x);
-        };
-
         std::size_t i = 0;
         // OOD prefix: sorted input means anything below lower_left_[0]
         // is contiguous at the front.
@@ -888,7 +781,7 @@ class Function {
                 } while (i < n);
                 break;
             }
-            const std::uint32_t id = leaf_id_at(i);
+            const std::uint32_t id = sorted_leaf_id_at(xp, i, ood_id, fast);
             if (id == ood_id) [[unlikely]] {
                 // Fast-path quantize wrap can flag points slightly above
                 // the upper bound that survived the explicit prefix
@@ -898,7 +791,7 @@ class Function {
                 continue;
             }
             std::size_t j = i + 1;
-            while (j < n && leaf_id_at(j) == id)
+            while (j < n && sorted_leaf_id_at(xp, j, ood_id, fast) == id)
                 ++j;
             // Array-spelled 1D goes through polyfit's FuncEvalND, whose
             // batch overload takes (CanonicalInput*, CanonicalOutput*, n).
@@ -924,11 +817,6 @@ class Function {
     /// invariant, passed in so the per-point loop never re-derives it.
     /// ALWAYS_INLINE so every call site folds back to the open-coded lookup
     /// (codegen verified).
-    ///
-    /// The `sorted` paths deliberately do NOT call this: their bespoke scalar
-    /// early-return OOD check compiles to a tighter 1D loop than this generic
-    /// flag+ternary form, and unifying them was shown (objdump) to grow and
-    /// reorder the `sorted` hot loop. Keep the two forms separate.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_id_of(const detail::Value<value_type, input_dim> &xi,
                                                           std::uint32_t ood_id, bool table) const -> std::uint32_t {
         if (table)
@@ -945,39 +833,31 @@ class Function {
         return in_domain ? subtrees_[get_linear_bin(xi)].find_leaf_id(xi) : ood_id;
     }
 
-    /// Stages 1–3 of the unsorted tile pipeline, shared (byte-identical)
-    /// between the AoS and SoA tile bodies: zero `counts`, histogram leaf
-    /// populations, exclusive-scan into slice starts, then scatter each
-    /// point's coords into `xp_packed` while recording the inverse
-    /// permutation in `perm_inv`. On return `counts[k]` is leaf k's
-    /// one-past-end cursor (Reinecke) — enough to recover (off, cnt) per leaf
-    /// in the dispatch walk.
-    ///
-    /// Leaf-id materialisation is path-dependent. The 1D leaf-table fast path
-    /// amortises the quantize over an xsimd batch (`for_each_leaf_id_batch`,
-    /// FINUFFT bin-sort recon, spread.hpp:421) and re-quantizes in pass 2
-    /// rather than materialising the ids. The descent (`!table`) path is the
-    /// opposite: each lookup is a full `get_node_index` tree walk, far dearer
-    /// than a u32 load, so pass 1 stores ids into `leaf_ids_` and pass 2 reads
-    /// them back — halving the descents per point (measured ~1.6×
-    /// full-throughput on deep no-leaf-table 1D fits, depth 17–18; see
-    /// bench/binsort_phase0.md).
-    ///
-    /// Why the 1D table path keeps re-quantizing (re-measured 2026-06-25, SPR
-    /// w5-3435X, paired-interleaved). An asm sweep flagged the pass-2 quantize
-    /// cast (`vcvttpd2qq`/`vcvttps2dq`) as ~34% of the 1D kernel at N=1e6, so we
-    /// tried materialising the id in pass 1 and reading it in pass 2 (one cast,
-    /// not two). It is a win *only at small leaf counts*: deg-8 smooth fits
-    /// (32–64 leaves) gained ~+15%, and the deg-3 bin-sort microbench gained
-    /// ~+10% at depth 4–6. But from ~256 leaves up it *regresses* — −9%→−26%
-    /// (f64) and up to −37% (f32) by depth 16 — because at high leaf counts the
-    /// scatter is bound on the random `counts[]` RMW, the re-quantize overlaps
-    /// those stalls for free, and the extra `leaf_id_buf` round-trip is pure
-    /// added traffic. Re-quantize is therefore the right default across the
-    /// whole leaf-count range; a leaf-count gate would just reintroduce the
-    /// kind of fragile cache-size threshold the 2-level-radix attempt was
-    /// reverted for. Stretch follow-up: narrow the single remaining cast to
-    /// `vcvttpd2dq` (lat 1c vs 4c) instead of removing the second sweep.
+    /// Per-point leaf-id for sorted 1D paths. Separate from `leaf_id_of`:
+    /// unifying was shown (objdump) to grow/reorder the hot loop.
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto sorted_leaf_id_at(const value_type *xp, std::size_t i,
+                                                                 std::uint32_t ood_id, bool fast) const -> std::uint32_t
+        requires(input_dim == 1)
+    {
+        auto x_in = [&](std::size_t j) -> input_type {
+            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
+                return input_type{xp[j]};
+            else
+                return xp[j];
+        };
+        if (fast)
+            return subtrees_.front().find_leaf_id_with_ood(x_in(i), ood_id);
+        const value_type xv = xp[i];
+        if (!(xv >= lower_left_[0] && xv <= upper_right_[0]))
+            return ood_id;
+        const auto x = x_in(i);
+        return subtrees_[get_linear_bin(x)].find_leaf_id(x);
+    }
+
+    /// Stages 1-3 (histogram → exclusive-scan → scatter into xp_packed + perm_inv).
+    /// 1D table path re-quantizes in pass 2 (not materialise): materialise wins
+    /// only <256 leaves (+15%) but regresses -9% to -37% above that (scatter bound
+    /// on counts[] RMW; re-quantize overlaps stalls for free).
     template <class Allocator>
     TREEWEAVE_ALWAYS_INLINE auto partition_into_leaves(const value_type *xp, std::size_t n_trg, Scratch<Allocator> &s,
                                                        std::uint32_t ood_id) const -> void {
@@ -1119,13 +999,9 @@ class Function {
     }
 #endif // TREEWEAVE_BENCH_PARTITION_HOOK
 
-    /// Stage 4 skeleton, shared between the tile bodies. Walk the packed leaf
-    /// slices in id order (recovering each `(off, cnt)` from the Reinecke
-    /// cursor in `counts`), speculatively prefetch the next non-empty leaf's
-    /// coefficient store, and invoke `eval_run(id, off, cnt)` on every
-    /// non-empty leaf. Returns the one-past-end of the last real leaf's slice
-    /// (== the OOD bucket's offset). Only the per-run polyfit dispatch (the
-    /// `eval_run` callable) differs between the AoS and SoA layouts.
+    /// Stage 4: walk leaves in id order, prefetch next leaf's coefficients, call
+    /// `eval_run(id, off, cnt)` per non-empty leaf. Shared by AoS and SoA tiles.
+    /// Returns OOD bucket offset.
     template <class EvalRun>
     TREEWEAVE_ALWAYS_INLINE auto dispatch_packed_leaves(const std::uint32_t *counts, std::uint32_t n_leaves,
                                                         EvalRun eval_run) const -> std::uint32_t {
@@ -1202,10 +1078,9 @@ class Function {
         // Inverse-permutation form: sequential write to `res`, random read
         // from `out_packed`. Sequential stores coalesce (no RFO); random
         // loads are easily prefetched.
-        constexpr std::size_t LOOKAHEAD = 32;
         for (std::size_t i = 0; i < n_trg; ++i) {
-            if (i + LOOKAHEAD < n_trg) {
-                const std::uint32_t pf = perm_inv[i + LOOKAHEAD];
+            if (i + kLookahead < n_trg) {
+                const std::uint32_t pf = perm_inv[i + kLookahead];
                 detail::prefetch</*locality=*/0>(out_packed + (output_dim * pf));
             }
             const std::uint32_t src  = perm_inv[i];
@@ -1282,10 +1157,9 @@ class Function {
 
         // Permute outputs back to caller order — per-component stride-1
         // stores into `soa_out[d]`.
-        constexpr std::size_t LOOKAHEAD = 32;
         for (std::size_t i = 0; i < n_trg; ++i) {
-            if (i + LOOKAHEAD < n_trg) {
-                const std::uint32_t pf = perm_inv[i + LOOKAHEAD];
+            if (i + kLookahead < n_trg) {
+                const std::uint32_t pf = perm_inv[i + kLookahead];
                 poet::static_for<output_dim>([&](auto D) -> void {
                     constexpr std::size_t d = D;
                     detail::prefetch</*locality=*/0>(out_soa_packed[d] + pf);
@@ -1360,47 +1234,15 @@ class Function {
         return std::make_pair(lower_left_, upper_right_);
     }
 
-    /// True iff every subtree built a leaf-id lookup table. When false,
-    /// at least one subtree falls through to the descent path inside
-    /// `find_leaf_id` — measurably slower per eval. Exposed so tests can
-    /// pin the leaf-table threshold behavior.
-    [[nodiscard]] auto all_subtrees_have_leaf_table() const noexcept -> bool {
-        for (const auto &st : subtrees_)
-            if (!st.has_leaf_table())
-                return false;
-        return !subtrees_.empty();
-    }
-
     /// Read-only access to the subtree array. Useful for tests and
     /// downstream introspection (leaf counts, table state, max depth).
     [[nodiscard]] auto get_subtrees() const noexcept -> const std::vector<detail::PolyTree<Degree, Func, Policy>> & {
         return subtrees_;
     }
 
-    /// Compile-time-N batch point evaluation (1D scalar inputs/outputs).
-    ///
-    /// Provided so consumers with a small fixed-size pack of evaluations
-    /// can express intent at the call site without an ad-hoc loop. Three
-    /// regimes by `N`:
-    ///
-    ///   * `N <= 16` (small): poet::static_for fully unrolls the
-    ///     scalar fan-out. operator() is TREEWEAVE_ALWAYS_INLINE so the
-    ///     N FMA chains run on independent registers — best ILP at
-    ///     small N.
-    ///   * `16 < N < kBatchPathFloor` (medium): plain for-loop. The
-    ///     compile-time N still lets the compiler unroll partially,
-    ///     and each operator() is inlined, so this matches the
-    ///     hand-rolled scalar_loop baseline. Avoids both poet's
-    ///     fully-unrolled code bloat at large N and the batch path's
-    ///     fixed setup overhead (counts/perm scratch).
-    ///   * `N >= kBatchPathFloor` (large): delegate to the SIMD-batched
-    ///     `operator()(xp, ys, n)`. The batch-path leaf dispatch
-    ///     amortises its fixed overhead only at high N.
-    ///
-    /// kBatchPathFloor = 1024 picked from the bench_pack_scatter
-    /// crossover sweep (1d_runge deg=8, SPR, taskset -c 2). The
-    /// 32→1024 bump is commit `3939d75 perf(eval_pack): raise
-    /// batch-path floor from 32 to 1024`.
+    /// Fixed-N 1D scalar eval. Regimes: N<=16 static_for (best ILP);
+    /// 16<N<1024 plain loop; N>=1024 SIMD batch path. kBatchPathFloor=1024
+    /// from bench_pack_scatter crossover (SPR).
     template <std::size_t N>
     [[nodiscard]] TREEWEAVE_FLATTEN auto eval_pack(const std::array<value_type, N> &xs) const
         -> std::array<value_type, N>
@@ -1425,11 +1267,8 @@ class Function {
     }
 
   private:
-    detail::TreeInput input_;
-    box_t             box_;
-    value_type        tol_;
-    dim_array_t       lower_left_{};
-    dim_array_t       upper_right_{};
+    dim_array_t lower_left_{};
+    dim_array_t upper_right_{};
 
     std::vector<detail::PolyTree<Degree, Func, Policy>> subtrees_;
     detail::Value<std::size_t, input_dim>               n_subtrees_{};

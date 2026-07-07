@@ -86,36 +86,48 @@ else()
                 "const p=require('path');process.stdout.write(p.join(p.dirname(process.execPath),'..','include','node'))"
             OUTPUT_VARIABLE _node_inc
             OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE _node_res
         )
-        add_library(treeweave_node MODULE "${_js_dir}/src/treeweave_napi.cpp")
-        target_include_directories(
-            treeweave_node
-            PRIVATE "${_napi_inc}" "${_node_inc}"
-        )
-        target_link_libraries(treeweave_node PRIVATE treeweave_c_static)
-        target_compile_definitions(
-            treeweave_node
-            PRIVATE NAPI_VERSION=8 NAPI_CPP_EXCEPTIONS
-        )
-        set_target_properties(
-            treeweave_node
-            PROPERTIES
-                PREFIX ""
-                SUFFIX ".node"
-                OUTPUT_NAME treeweave
-                LIBRARY_OUTPUT_DIRECTORY "${_js_dist}"
-        )
-        if(APPLE)
-            # node resolves the napi_* symbols at load time on macOS.
-            target_link_options(
+        if(NOT _node_res EQUAL 0 OR NOT EXISTS "${_node_inc}")
+            message(
+                WARNING
+                "treeweave[js]: could not resolve node include dir — skipping native addon."
+            )
+        else()
+            add_library(
                 treeweave_node
-                PRIVATE -undefined dynamic_lookup
+                MODULE
+                "${_js_dir}/src/treeweave_napi.cpp"
+            )
+            target_include_directories(
+                treeweave_node
+                PRIVATE "${_napi_inc}" "${_node_inc}"
+            )
+            target_link_libraries(treeweave_node PRIVATE treeweave_c_static)
+            target_compile_definitions(
+                treeweave_node
+                PRIVATE NAPI_VERSION=8 NAPI_CPP_EXCEPTIONS
+            )
+            set_target_properties(
+                treeweave_node
+                PROPERTIES
+                    PREFIX ""
+                    SUFFIX ".node"
+                    OUTPUT_NAME treeweave
+                    LIBRARY_OUTPUT_DIRECTORY "${_js_dist}"
+            )
+            if(APPLE)
+                # node resolves the napi_* symbols at load time on macOS.
+                target_link_options(
+                    treeweave_node
+                    PRIVATE -undefined dynamic_lookup
+                )
+            endif()
+            message(
+                STATUS
+                "treeweave[js]: native addon -> ${_js_dist}/treeweave.node"
             )
         endif()
-        message(
-            STATUS
-            "treeweave[js]: native addon -> ${_js_dist}/treeweave.node"
-        )
     endif()
 endif()
 

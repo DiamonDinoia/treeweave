@@ -5,47 +5,24 @@ The Fortran binding is a thin ``iso_c_binding`` module (``treeweave``) over the 
 ABI. Callbacks are ``bind(C)`` procedures; ``c_funloc`` yields the C-callable
 pointer and ``context`` carries runtime parameters via ``c_loc`` / ``c_f_pointer``.
 
+Install
+-------
+
+Build from source using the CMake preset:
+
+.. code-block:: bash
+
+   git clone https://github.com/DiamonDinoia/treeweave.git
+   cmake --preset bindings-fortran
+   cmake --build build/bindings-fortran -j
+
+A missing Fortran compiler is skipped gracefully. The ``treeweave`` module is generated in the build tree.
+
 Minimal example
 ---------------
 
-.. code-block:: fortran
-
-   module kernels
-       use, intrinsic :: iso_c_binding
-       implicit none
-   contains
-       ! zeta_N(s) = sum_{k=1..N} k^-s — expensive; fit once, eval a polynomial.
-       subroutine kernel_zeta(x, y, context) bind(C)
-           real(c_double), intent(in)  :: x(*)
-           real(c_double), intent(out) :: y(*)
-           type(c_ptr),    value       :: context
-           integer :: k
-           y(1) = 0.0_c_double
-           do k = 1, 1000
-               y(1) = y(1) + real(k, c_double)**(-x(1))
-           end do
-       end subroutine kernel_zeta
-   end module kernels
-
-   program demo
-       use, intrinsic :: iso_c_binding
-       use treeweave
-       use kernels
-       implicit none
-       type(c_ptr)    :: h
-       real(c_double) :: a(1), b(1), x(1), y(1)
-
-       a(1) = 2.0_c_double
-       b(1) = 10.0_c_double
-       h = treeweave_fit(c_funloc(kernel_zeta), 1_c_int, 1_c_int, a, b, &
-                         1.0e-10_c_double, c_null_ptr, c_null_ptr)
-       if (.not. c_associated(h)) error stop treeweave_error_message()
-
-       x(1) = 3.5_c_double
-       call treeweave_eval(h, x, y)
-       write (*, '(A,F0.12)') "zeta_N(3.5) ~= ", y(1)
-       h = treeweave_free(h)
-   end program demo
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
 
 Carrying parameters through ``context``:
 
@@ -60,8 +37,37 @@ Carrying parameters through ``context``:
    y(1) = p%amplitude * sin(p%frequency * x(1))
    ! ... at the call site: pass c_loc(params) as the context argument.
 
-Build
------
+Batch & sorted eval
+-------------------
+
+.. code-block:: fortran
+
+   real(c_double) :: xs(1000), res(1000)
+   integer(c_size_t) :: n = 1000_c_size_t
+   call treeweave_batch(h, xs, res, n)    ! batch: many points, any order
+   call treeweave_sorted(h, xs, res, n)   ! promise xs(i) <= xs(i+1), 1-D; ~3-4x faster
+
+``treeweave_sorted`` requires 1-D input (``input_dim == 1``). The caller promises ascending order; treeweave does not verify it.
+
+Options
+-------
+
+Pass an options struct via the last argument (or ``c_null_ptr`` for defaults):
+
+.. code-block:: fortran
+
+   use treeweave
+   type(treeweave_opts_t) :: opts
+   opts = treeweave_default_opts()
+   opts%tol_kind       = TREEWEAVE_ABSOLUTE_MAX
+   opts%max_memory_mib = 64
+   h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
+                     c_null_ptr, c_loc(opts))
+
+See :doc:`options` for the full description of each field and tolerance kind.
+
+Further
+-------
 
 .. code-block:: bash
 

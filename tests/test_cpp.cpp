@@ -73,6 +73,16 @@ TEST_CASE("1D smooth sin on [0, 2pi], compile-time degree 8", "[treeweave][smoot
     REQUIRE(max_rel_err_1d(f, fn, a + 1e-6, b - 1e-6, N_SAMPLE) < 1e-6);
 }
 
+TEST_CASE("1D tail-tolerance convergence (AbsoluteTail)", "[treeweave][smooth][tail]") {
+    // Exercises the 1D-only tail-coefficient error path (tail_error_exceeds_tol).
+    auto         f = [](double x) { return std::sin(5.0 * x); };
+    const double a = 0.0;
+    const double b = 2.0 * std::numbers::pi_v<double>;
+
+    auto fn = fit<8>(f, a, b, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteTail});
+    REQUIRE(max_rel_err_1d(f, fn, a + 1e-6, b - 1e-6, N_SAMPLE) < 1e-6);
+}
+
 TEST_CASE("2D smooth polynomial, compile-time degree 8", "[treeweave][smooth][2d]") {
     // polyfit's FuncEvalND requires a tuple-like output even for a single
     // scalar; wrap in std::array<double, 1>.
@@ -200,7 +210,6 @@ TEST_CASE("2D anisotropic gaussian bump", "[treeweave][2d][bump]") {
 
 TEST_CASE("sqrt|x - 0.5| -- not C^1, max_depth guards runaway", "[treeweave][sharp]") {
     auto f = [](double x) { return std::sqrt(std::abs(x - 0.5)); };
-    // Low max_depth — the fit will hit the ceiling at the singularity.
     REQUIRE_THROWS_AS(
         fit<8>(f, 0.0, 1.0, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4}),
         treeweave::MaxDepthExceeded);
@@ -255,13 +264,10 @@ TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batc
 
         std::vector<double> xs;
         xs.reserve(N);
-        // OOD prefix (below lower).
         for (std::size_t i = 0; i < N_OOD_LO; ++i)
             xs.push_back(a - 1.0 - 0.1 * static_cast<double>(i));
-        // In-domain.
         for (std::size_t i = 0; i < N_IN; ++i)
             xs.push_back(d(gen));
-        // OOD suffix (above upper).
         for (std::size_t i = 0; i < N_OOD_HI; ++i)
             xs.push_back(b + 1.0 + 0.1 * static_cast<double>(i));
 
@@ -287,12 +293,7 @@ TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batc
                 const double scalar = fn(xs[i]);
                 REQUIRE(std::abs(scalar - sorted_out[i]) <= 8.0 * ulp * std::max(1.0, std::abs(scalar)));
             } else {
-                // Above b: finite x > b is out-of-domain and returns NaN on
-                // *every* path, identical to the scalar operator(). The
-                // leaf-table fast path used to clamp x>b to the last leaf and
-                // extrapolate a finite value; it no longer does, so the batch
-                // and sorted APIs are now byte-identical to the scalar API
-                // here. (x == b is the closed upper endpoint, handled above.)
+                // Above b: OOD NaN on every path; leaf-table no longer clamps x>b to last leaf.
                 REQUIRE(std::isnan(sorted_out[i]));
                 REQUIRE(std::isnan(batch_out[i]));
                 REQUIRE(std::isnan(fn(xs[i])));
@@ -307,7 +308,7 @@ TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batc
         // fit of a smooth fn can land at depth 0-1 and skip the table).
         auto f  = [](double x) { return std::cos(x); };
         auto fn = fit<8>(f, 0.0, 1.0, /*tol=*/1e-8, options{.min_uniform_depth = 4});
-        REQUIRE(fn.all_subtrees_have_leaf_table());
+        REQUIRE(fn.has_fast_quantize());
         run(fn, 0.0, 1.0);
     }
 
@@ -349,12 +350,7 @@ TEST_CASE("Batch vs single evaluation agree -- 2D vector output", "[treeweave][b
     }
 }
 
-// C1 — batch path no longer materialises a `leaf_ids[]` buffer; the
-// scatter loop recomputes the leaf id via `PolyTree::quantize_one`.
-// Pin the result of that recompute path: 1D input, output_dim=2,
-// 1000 deterministic random points must match per-point scalar
-// evaluation. Tightens the existing 2D-in coverage to the 1D batch
-// path that owns the SIMD quantize fast path.
+// Pins recompute path after leaf_ids[] removal; 1D-in 2D-out matches scalar oracle.
 TEST_CASE("Batch (1D in, 2D out) matches per-point scalar after leaf_ids drop", "[treeweave][batch][1d][c1]") {
     // treeweave requires array-input for vector-output fits; spell the
     // 1D input as std::array<double, 1> to route through polyfit's
@@ -383,12 +379,7 @@ TEST_CASE("Batch (1D in, 2D out) matches per-point scalar after leaf_ids drop", 
     }
 }
 
-// SoA batch overload: same Function, same inputs — assert that
-// aos_out[2*k + d] == soa[d][k] bitwise across both the unsorted and
-// sorted 1D paths. The two paths share the per-leaf polyfit kernel
-// (FuncEvalND P2 AoS vs P2 SoA respectively, both walking the same
-// coefficients with the same arithmetic), so the math is identical and
-// only the store layout differs.
+// SoA overload: aos_out[2*k+d] == soa[d][k] bitwise.
 TEST_CASE("SoA batch overload matches AoS bitwise (1D in, 2D out)", "[treeweave][batch][soa]") {
     auto f = [](std::array<double, 1> x) -> std::array<double, 2> {
         return {std::sin(3.0 * x[0]), std::cos(2.5 * x[0] + 0.1)};
@@ -557,9 +548,6 @@ TEST_CASE("allow_max_depth_leaves accepts unconverged panels", "[treeweave][maxd
 
 TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][large-domain]") {
     // Slow oscillation so the tree stays shallow even on a wide domain.
-    // Verifies that adaptive subdivision and OOD checks behave correctly
-    // when |x| dwarfs the unit interval the evaluator's algebra is
-    // typically validated on.
     const double a = -1.0e6;
     const double b = 1.0e6;
     auto         f = [](double x) { return std::sin(1e-5 * x) + 0.25 * std::cos(3e-6 * x); };
@@ -572,13 +560,8 @@ TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][la
 }
 
 TEST_CASE("1D smooth fit on far-shifted domain centred at 1e6", "[treeweave][large-domain][shifted]") {
-    // The action lives in a unit-width interval translated by 1e6. This
-    // catches places where the implementation accidentally relies on the
-    // domain being centred near zero (e.g. computing `b - a` losing
-    // precision, or assuming small magnitudes of `x` in the leaf-table
-    // quantize). The shift consumes ~6 digits of relative input
-    // precision, so the achievable tolerance and the verification
-    // tolerance reflect that floor.
+    // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, leaf-table quantize at large x); ~6 digits
+    // lost so tols reflect that floor.
     const double centre = 1.0e6;
     const double a      = centre;
     const double b      = centre + 1.0;
@@ -604,11 +587,7 @@ TEST_CASE("2D smooth fit on large asymmetric domain", "[treeweave][large-domain]
 }
 
 TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][memory-budget]") {
-    // Two cheap checks that together cover the budget guard without the slow
-    // ~33 MiB fit the old version built (157 s at -O0; >1500 s under MSVC
-    // checked iterators / coverage). First, pin the dimension-scaled auto
-    // default at compile time — no fit, zero cost — so an unintentional tree
-    // blow-up still hits a small guardrail by default.
+    // Budget guard split into two checks to avoid the ~33 MiB/157 s old fit.
     REQUIRE(treeweave::detail::auto_memory_budget_mib(1) == 4);  // 1D
     REQUIRE(treeweave::detail::auto_memory_budget_mib(2) == 8);  // 2D
     REQUIRE(treeweave::detail::auto_memory_budget_mib(3) == 16); // 3D
@@ -624,7 +603,6 @@ TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][mem
     REQUIRE_THROWS_AS(fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
                              /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 1}),
                       treeweave::MemoryBudgetExceeded);
-    // Same fit succeeds with an explicit, larger budget — the opt-in path.
     auto fn = fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
                      /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 8});
     REQUIRE(std::isfinite(fn(std::array{1.0, 1.0, 1.0})[0]));
@@ -716,12 +694,11 @@ TEST_CASE("eval_pack<N> parity sweep matches scalar operator()", "[treeweave][pa
     auto fn = fit<8>(f, -1.0, 1.0, /*tol=*/1e-10);
 
     auto check = [&](auto N_const) {
-        constexpr std::size_t N = decltype(N_const)::value;
-        std::array<double, N> xs{};
-        for (std::size_t i = 0; i < N; ++i)
-            xs[i] = -1.0 + (2.0 * static_cast<double>(i) + 1.0) / (2.0 * static_cast<double>(N));
+        std::array<double, N_const()> xs{};
+        for (std::size_t i = 0; i < N_const; ++i)
+            xs[i] = -1.0 + (2.0 * static_cast<double>(i) + 1.0) / (2.0 * static_cast<double>(N_const));
         const auto ys = fn.eval_pack(xs);
-        for (std::size_t i = 0; i < N; ++i)
+        for (std::size_t i = 0; i < N_const; ++i)
             REQUIRE(ys[i] == Catch::Approx(fn(xs[i])).margin(1e-14));
     };
     // Cover both branches: scalar fan-out (< 32) and SIMD batch path (>= 32).
@@ -775,7 +752,6 @@ TEST_CASE("eval_scatter_sorted counting-sort matches per-pair scalar", "[treewea
     check({0, 15, 0, 15, 0, 15, 0},            // sparse-use ids 0, 15
           {0.1, 0.9, 0.2, 0.8, 0.3, 0.7, 0.4});
 
-    // Random dense workload at the bench shape.
     std::uniform_int_distribution<std::uint32_t> di(0, R - 1);
     std::uniform_real_distribution<double>       dx(0.0 + 1e-6, 1.0 - 1e-6);
     std::mt19937                                 ig(42);
@@ -797,18 +773,14 @@ TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table
     // tanh500 at tol=1e-12 deg=6 lands at depth ~16; the table threshold
     // must cover that depth.
     auto fn = fit<6>([](double x) { return std::tanh(500.0 * x); }, -1.0, 1.0, /*tol=*/1e-12);
-    REQUIRE(fn.all_subtrees_have_leaf_table());
+    REQUIRE(fn.has_fast_quantize());
 
     // Sanity at the previously-supported depth too — must not regress.
     auto shallow = fit<8>([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10);
-    REQUIRE(shallow.all_subtrees_have_leaf_table());
+    REQUIRE(shallow.has_fast_quantize());
 }
 
-// D1 — `min_uniform_depth` forces uniform refinement so the leaf-table
-// fast path can be driven deliberately on smooth functions (where
-// tol-based refinement would otherwise stop at depth 1-2 and skip the
-// table). With min_uniform_depth=2 on a near-trivial 1D fit the tree
-// has at least 2^2=4 leaves and the table is live.
+// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2 and skips it.
 TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
           "[treeweave][min_uniform_depth][leaf-table]") {
     auto f  = [](double x) { return std::cos(x); };
@@ -816,7 +788,7 @@ TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
 
     // Leaf table is live — driving condition for the SIMD-quantize
     // fast path in the batch eval pipeline.
-    REQUIRE(fn.all_subtrees_have_leaf_table());
+    REQUIRE(fn.has_fast_quantize());
 
     // Total leaves >= 2^min_uniform_depth = 4 across all subtrees.
     auto count_leaves = [&]() {
@@ -871,14 +843,7 @@ TEST_CASE("eval_scatter_sorted edge cases", "[treeweave][scatter][edge]") {
     run({0, 1, 0, 1, 0, 1, 0}, {0.1, 0.9, 0.2, 0.8, 0.3, 0.7, 0.4});
 }
 
-// TST1 / COV-G3: float (f32) parity and sorted coverage.
-//
-// Comparison tolerance: tol_f * 100.  A flat 1e-3 is too loose (masks
-// regressions on functions where the approximation error is much smaller);
-// tol_f * 100 tracks the actual fit quality and is tight for 1e-5 fits
-// but relaxes proportionally when the caller requests a looser tol.
-//
-// The sorted section covers COV-G3 ("f32 `sorted` untested anywhere").
+// TST1 / COV-G3: f32 parity + sorted path; tol_f*100 tracks fit quality tightly.
 TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[treeweave][f32]") {
     constexpr float  tol_f = 1e-5F;
     constexpr double tol_d = 1e-5; // same value, double — passed to fit<>(tol)
@@ -894,22 +859,19 @@ TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[tr
     for (auto &x : xs)
         x = d(gen);
 
-    // --- scalar parity ---
     for (std::size_t i = 0; i < N; ++i) {
         const float approx = fn(xs[i]);
         const float exact  = func_exact(xs[i]);
         REQUIRE(std::abs(approx - exact) < 100.0F * tol_f * std::max(1.0F, std::abs(exact)));
     }
 
-    // --- batch parity: batch must agree with per-point scalar ---
     std::vector<float> batch(N);
     fn(xs.data(), batch.data(), N);
     constexpr float ulp_f = std::numeric_limits<float>::epsilon();
     for (std::size_t i = 0; i < N; ++i)
         REQUIRE(std::abs(fn(xs[i]) - batch[i]) <= 8.0F * ulp_f * std::max(1.0F, std::abs(fn(xs[i]))));
 
-    // --- sorted path (COV G3): OOD-low (NaN), in-domain, above-b (finite
-    //     extrapolation on leaf-table path, matching batch behaviour) ---
+    // Sorted path (COV-G3): OOD-low (NaN), in-domain, above-b (leaf-table may extrapolate finite, matching batch).
     constexpr std::size_t N_OOD_LO = 3, N_OOD_HI = 4;
     std::vector<float>    sxs;
     sxs.reserve(N + N_OOD_LO + N_OOD_HI);

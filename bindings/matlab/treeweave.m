@@ -108,7 +108,6 @@ classdef treeweave < handle
             od  = obj.output_dim_;
             X   = double(X);
 
-            % Validate shape and normalize to N×dim (column for dim==1).
             if dim == 1
                 if ~isvector(X)
                     error('treeweave:eval', 'for dim == 1, X must be a vector; got size [%s].', num2str(size(X)));
@@ -129,7 +128,7 @@ classdef treeweave < handle
                 end
                 % tw_eval_sorted returns Yflat as out_dim×N.
                 Yflat = tw_eval_sorted(obj, X, od, N);
-                y = Yflat';                       % N×out_dim
+                y = Yflat';
                 return;
             end
 
@@ -141,12 +140,11 @@ classdef treeweave < handle
                 % tw_eval_soa (the treeweave_transposed C path) returns N×out_dim
                 % with column d = component d; transpose for the SoA layout.
                 Ysoa = tw_eval_soa(obj, Xflat(:), od, N);
-                y = Ysoa';                         % out_dim×N
+                y = Ysoa';
                 return;
             end
 
             if N == 1
-                % Single-point fast path. y comes back out_dim×1.
                 y = tw_eval1(obj, X(1, :), od);
                 y = reshape(y, 1, od);
             else
@@ -155,7 +153,7 @@ classdef treeweave < handle
                 Xflat = X';                        % dim×N, point-major
                 % tw_eval_multi returns Yflat as out_dim×N.
                 Yflat = tw_eval_multi(obj, Xflat(:), od, N);
-                y = Yflat';                        % N×out_dim
+                y = Yflat';
             end
         end
 

@@ -75,7 +75,6 @@ typedef enum {
     TREEWEAVE_ABSOLUTE_L2   = 5  /* sample-based, L2 absolute error         */
 } treeweave_tol_kind_t;
 
-/* Value type carried by a handle. */
 typedef enum { TREEWEAVE_F64 = 0, TREEWEAVE_F32 = 1 } treeweave_dtype_t;
 
 /* Fit knobs — mirrors treeweave::options. `int` is used for the bool field so
@@ -84,7 +83,7 @@ typedef struct {
     treeweave_tol_kind_t tol_kind;
     int                  max_depth;
     /* Leaf-storage cap during the fit, in MiB. Tri-state: <0 (the default in
-     * treeweave_default_opts) auto-selects a small, dimension-scaled budget
+     * treeweave_default_opts(&opts)) auto-selects a small, dimension-scaled budget
      * (4/8/16 MiB for input_dim 1/2/3); 0 disables the cap; >0 is an explicit
      * cap. Crossing it makes the fit return NULL with treeweave_last_error()
      * naming the offending panel. */
@@ -93,8 +92,8 @@ typedef struct {
     int min_uniform_depth;
 } treeweave_opts;
 
-/* Defaults matching treeweave::options{}. Pass NULL for `opts` to use these. */
-extern TREEWEAVE_EXPORT const treeweave_opts treeweave_default_opts;
+/* Write defaults matching treeweave::options{} into `opts`. NULL is a no-op. */
+TREEWEAVE_EXPORT void treeweave_default_opts(treeweave_opts *opts);
 
 /* Opaque, dtype-tagged handle. */
 typedef struct treeweave_function *treeweave_t;
@@ -108,14 +107,14 @@ typedef void (*treeweavef_func_t)(const float *x, float *y, void *context);
 /**
  * @brief Fit a function over a box domain and return an evaluable handle.
  *
- * @param f          User callback evaluating the target (see @ref treeweave_func_t).
+ * @param f          User callback evaluating the target (see `treeweave_func_t`).
  * @param input_dim  Domain dimension; supported values are 1, 2, 3.
  * @param output_dim Number of output components; supported values are 1, 2, 3.
  * @param a          Domain lower corner, @p input_dim elements.
  * @param b          Domain upper corner, @p input_dim elements.
  * @param tol        Target accuracy, interpreted per @c opts->tol_kind.
  * @param context    Opaque pointer forwarded to every @p f invocation (may be NULL).
- * @param opts       Fit knobs, or NULL for @ref treeweave_default_opts.
+ * @param opts       Fit knobs, or NULL for defaults.
  * @return A handle on success, or NULL with treeweave_last_error() set when the
  *         (dtype, input_dim, output_dim) tuple is unsupported, the arguments
  *         are invalid, or the fit throws (MaxDepthExceeded / MemoryBudgetExceeded).

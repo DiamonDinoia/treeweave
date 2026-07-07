@@ -1,11 +1,5 @@
-// Microbench harness driven by martinus/nanobench: handles warmup, MdAPE
-// stability checks, TSC-frequency calibration, and produces machine-readable
-// output (including JSON / CSV via Bench::output(...) if needed).
-//
-// Sweeps {1D, 2D, 3D} × scientific-kernel × {deg 6, 8, 10} × N ∈ {1, 32, 1024,
-// 10⁶}. Pin the process to one core (e.g. `taskset -c 2 ./treeweave_microbench`)
-// for stable numbers — nanobench reports MdAPE, so unstable measurements
-// surface as a high error percentage rather than silent noise.
+// nanobench harness sweeping {1D, 2D, 3D} × kernels × {deg 6,8,10} × N ∈ {1,32,1024,1e6}.
+// Pin to one core for stable numbers.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
@@ -33,11 +27,7 @@ auto make_runge1d() {
 auto make_erf1d() {
     return [](double x) { return std::erf(x); };
 }
-// libc++ (Apple clang) does not implement the C++17 special functions in
-// `<cmath>`, so `std::cyl_bessel_j` is unavailable there. Skip that
-// kernel on libc++; the rest of the suite still runs. The placeholder
-// `make_j0_1d` keeps the call site below well-formed under `if
-// constexpr (false)` discard.
+// cyl_bessel_j unavailable on libc++ (Apple clang); kHasCylBesselJ gates the kernel at the call site.
 #if defined(_LIBCPP_VERSION)
 inline constexpr bool kHasCylBesselJ = false;
 [[maybe_unused]] auto make_j0_1d() {
@@ -89,15 +79,12 @@ auto make_imq3d() {
     };
 }
 
-// Scale a nanobench Bench so the per-cell sample volume matches the cost
-// of `n_pts` work per call. nanobench's auto-tuning targets ~1 s total
-// runtime and uses MdAPE to flag instability.
 ankerl::nanobench::Bench make_bench(std::size_t n_pts) {
     ankerl::nanobench::Bench b;
     b.title("treeweave eval pipeline")
-        .unit("eval") // 1 unit = one f(x) evaluation
+        .unit("eval")
         .batch(static_cast<double>(n_pts))
-        .relative(true) // print MEvals/s relative to the first sample
+        .relative(true)
         .warmup(3)
         .minEpochIterations(1);
     if (n_pts >= 1'000'000)
@@ -194,11 +181,7 @@ void sweep_nd(ankerl::nanobench::Bench &b, const char *label, Fmaker make_f, std
     }
 }
 
-// Multi-fit scattered-access case modelled on the TRIQS/diagmc bench_chebfun
-// workload: R independent 1D fits over [0, beta], evaluated at scattered
-// (r_idx, tau) pairs. Exercises the scalar `Function::operator()` (NOT the
-// batched fn(xs, out, n) path), which is what production callers in TRIQS/
-// diagmc hit when filling Wick matrices or Green-function lookups.
+// Scattered multi-fit case modelling TRIQS/diagmc bench_chebfun: scalar operator() over R fits (not batched path).
 template <std::size_t Deg>
 void sweep_multi_fit_1d(ankerl::nanobench::Bench &b, const char *label, std::size_t R, double beta) {
     std::mt19937 cgen(11);
@@ -274,7 +257,6 @@ int main() {
 
     auto b = make_bench(1);
 
-    // 1D suite
     sweep_1d<6>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_1d<8>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_1d<10>(b, "1d_runge", make_runge1d, -1.0, 1.0);
@@ -287,14 +269,12 @@ int main() {
     // Multi-fit scattered-access case (TRIQS/diagmc bench_chebfun shape).
     sweep_multi_fit_1d<8>(b, "1d_multi_fit", /*R=*/16, /*beta=*/10.0);
 
-    // 2D suite
     sweep_nd<6, 2>(b, "2d_bump", make_bump2d, {0.0, 0.0}, {1.0, 1.0});
     sweep_nd<8, 2>(b, "2d_bump", make_bump2d, {0.0, 0.0}, {1.0, 1.0});
     sweep_nd<10, 2>(b, "2d_bump", make_bump2d, {0.0, 0.0}, {1.0, 1.0});
     sweep_nd<8, 2>(b, "2d_osc", make_osc2d, {-1.0, -1.0}, {1.0, 1.0});
     sweep_nd<8, 2>(b, "2d_mq", make_mq2d, {-1.0, -1.0}, {1.0, 1.0});
 
-    // 3D suite
     sweep_nd<6, 3>(b, "3d_gauss", make_gauss3d, {-1.0, -1.0, -1.0}, {1.0, 1.0, 1.0});
     sweep_nd<8, 3>(b, "3d_gauss", make_gauss3d, {-1.0, -1.0, -1.0}, {1.0, 1.0, 1.0});
     sweep_nd<10, 3>(b, "3d_gauss", make_gauss3d, {-1.0, -1.0, -1.0}, {1.0, 1.0, 1.0});

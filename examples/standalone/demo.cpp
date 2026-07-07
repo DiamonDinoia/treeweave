@@ -7,9 +7,8 @@
 //   tar xzf treeweave-cxx-headers.tar.gz              # -> ./include/...
 //   make                                              # or the g++ line in the README
 //
-// ponytail: body kept byte-for-byte in sync with examples/c++/simple1d.cpp on
-// purpose — a standalone example can't #include the repo's example, so the two
-// are deliberate duplicates. Change one, change the other.
+// Body kept byte-for-byte in sync with examples/c++/simple1d.cpp on purpose:
+// a standalone example can't include the repo's example. Change both together.
 
 #include <treeweave/treeweave.hpp>
 

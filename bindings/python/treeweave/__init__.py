@@ -17,7 +17,7 @@ TreeweaveFunction
 from __future__ import annotations
 
 from typing import Callable
-import numpy as _np  # cached reference — used inside hot paths
+import numpy as _np
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
 from . import _treeweave  # compiled extension
@@ -29,10 +29,6 @@ except PackageNotFoundError:  # running from a source tree, not installed
 
 __all__ = ["fit", "TreeweaveFunction", "__version__"]
 
-# ---------------------------------------------------------------------------
-# String → integer maps used by fit()
-# ---------------------------------------------------------------------------
-
 _TOL_KIND = {
     "relative_tail": 0,
     "absolute_tail": 1,
@@ -42,10 +38,6 @@ _TOL_KIND = {
     "absolute_l2":   5,
 }
 
-
-# ---------------------------------------------------------------------------
-# Public TreeweaveFunction wrapper
-# ---------------------------------------------------------------------------
 
 class TreeweaveFunction:
     """Callable evaluator for a fitted treeweave approximation.
@@ -58,8 +50,6 @@ class TreeweaveFunction:
 
     def __init__(self, inner: _treeweave.TreeweaveFunction) -> None:
         self._inner = inner
-
-    # ---- properties -------------------------------------------------------
 
     @property
     def dim(self) -> int:
@@ -80,8 +70,6 @@ class TreeweaveFunction:
     def dtype(self) -> str:
         """Value type: ``'f64'`` or ``'f32'``."""
         return self._inner.dtype
-
-    # ---- evaluation -------------------------------------------------------
 
     def __call__(self, x, *, sorted: bool = False, transposed: bool = False, out=None):
         """Evaluate at *x*.
@@ -131,7 +119,6 @@ class TreeweaveFunction:
         dtype = _np.float32 if self.dtype == "f32" else _np.float64
         x = _np.asarray(x, dtype=dtype)
 
-        # ---- batch-only modes selected by a flag ----
         if use_sorted:
             if self.dim != 1:
                 raise ValueError(f"sorted=True requires dim == 1; this fit has dim={self.dim}")
@@ -143,7 +130,6 @@ class TreeweaveFunction:
             soa = self._inner.eval_multi_soa(self._coerce_batch(x))
             return _np.stack(soa, axis=0)  # (out_dim, N)
 
-        # ---- point vs batch dispatch ----
         if x.ndim == 0:
             if self.dim != 1:
                 raise ValueError(f"a scalar is only a valid point for dim == 1; this fit has dim={self.dim}")
@@ -183,8 +169,6 @@ class TreeweaveFunction:
             f"dtype={self.dtype!r}, memory={self.memory_usage} B)"
         )
 
-    # ---- internal ---------------------------------------------------------
-
     def _coerce_batch(self, x: _np.ndarray) -> _np.ndarray:
         """Validate *x* as a batch and return a contiguous ``(N,)``/``(N, dim)`` array."""
         x = _np.ascontiguousarray(x)
@@ -198,10 +182,6 @@ class TreeweaveFunction:
             raise ValueError(f"a batch must be (N, {self.dim}); got shape {x.shape}")
         return x
 
-
-# ---------------------------------------------------------------------------
-# fit() — main entry point
-# ---------------------------------------------------------------------------
 
 def fit(
     f: Callable,
@@ -264,7 +244,6 @@ def fit(
         If the fit fails (MaxDepthExceeded, MemoryBudgetExceeded, …) or if the
         callback *f* raises (in which case the original exception propagates).
     """
-    # ---- infer / validate dim -------------------------------------------
     try:
         a_seq = list(a)
     except TypeError:
@@ -283,7 +262,6 @@ def fit(
     elif dim != inferred_dim:
         raise ValueError(f"dim={dim} but len(a)={inferred_dim}; they must agree")
 
-    # ---- infer out_dim by probing f at the box midpoint -----------------
     if out_dim is None:
         midpoint = _np.array(
             [(float(av) + float(bv)) * 0.5 for av, bv in zip(a_seq, b_seq)],
@@ -292,7 +270,6 @@ def fit(
         probe = f(midpoint)
         out_dim = int(_np.asarray(probe).size)
 
-    # ---- validate choices -----------------------------------------------
     if out_dim < 1 or out_dim > 3:
         raise ValueError(f"out_dim must be 1-3; got {out_dim}")
     if dim < 1 or dim > 3:
@@ -304,7 +281,6 @@ def fit(
     if tol_kind_int is None:
         raise ValueError(f"Unknown tol_kind {tol_kind!r}; choose from {list(_TOL_KIND)}")
 
-    # ---- dispatch to the typed C-level fit ------------------------------
     common_kw = dict(
         input_dim=dim, output_dim=out_dim,
         tol=float(tol),

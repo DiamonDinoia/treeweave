@@ -29,7 +29,8 @@ enable_language(Fortran)
 # expression, which the integer literal satisfies, but the non-constant-expr
 # form and the negative-stop-code behaviour are 2018). Declare 2018 so that
 # compilers emit the correct diagnostics when the standard is violated.
-# This is set per-target below via the Fortran_STANDARD target property.
+set(CMAKE_Fortran_STANDARD 2018)
+set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
 # Compile the binding module once into a small static library; both the test and
 # the example link it. (Compiling treeweave.f90 in two targets would make
@@ -41,47 +42,30 @@ add_library(
     "${CMAKE_CURRENT_SOURCE_DIR}/treeweave.f90"
 )
 target_link_libraries(treeweave_fortran PUBLIC treeweave_c)
-set_target_properties(
-    treeweave_fortran
-    PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
-)
 
 add_executable(
     treeweave_fortran_test
     "${CMAKE_CURRENT_SOURCE_DIR}/test_treeweave.f90"
 )
 target_link_libraries(treeweave_fortran_test PRIVATE treeweave_fortran)
-set_target_properties(
-    treeweave_fortran_test
-    PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
-)
 
 add_executable(
     treeweave_fortran_example
     "${CMAKE_CURRENT_SOURCE_DIR}/example.f90"
 )
 target_link_libraries(treeweave_fortran_example PRIVATE treeweave_fortran)
-set_target_properties(
-    treeweave_fortran_example
-    PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
-)
 
-# zeta benchmark (treeweave vs a brute-force Riemann-zeta partial sum);
-# self-checks accuracy with `error stop`, so it doubles as a ctest.
 add_executable(
     treeweave_fortran_zeta_bench
-    "${CMAKE_CURRENT_SOURCE_DIR}/zeta_bench.f90"
+    "${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/zeta_bench.f90"
 )
 target_link_libraries(treeweave_fortran_zeta_bench PRIVATE treeweave_fortran)
-set_target_properties(
-    treeweave_fortran_zeta_bench
-    PROPERTIES Fortran_STANDARD 2018 Fortran_STANDARD_REQUIRED ON
-)
 
 add_test(NAME fortran_treeweave COMMAND treeweave_fortran_test)
+add_test(NAME fortran_example COMMAND treeweave_fortran_example)
 add_test(NAME fortran_zeta_bench COMMAND treeweave_fortran_zeta_bench)
 message(
     STATUS
-    "treeweave[fortran]: test 'fortran_treeweave' + example registered "
+    "treeweave[fortran]: tests 'fortran_treeweave', 'fortran_example', 'fortran_zeta_bench' registered "
     "(${CMAKE_Fortran_COMPILER})."
 )

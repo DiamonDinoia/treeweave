@@ -1,18 +1,5 @@
-// Focused A/B microbench for the 1D sorted-input batch path:
-//   Function::sorted(const value_type* xp, value_type* res, size_t n)
-//
-// `sorted()` is the perf-critical presorted-1D surface (the unsorted batch
-// `operator()(xp,res,n)` is covered by treeweave_microbench / pack_scatter).
-// No other bench exercises it, so this is its canonical A/B harness — used
-// to decide whether sharing the AoS/SoA `sorted` scan skeleton is
-// perf-neutral.
-//
-// Stable measurement on a powersave/turbo machine: pin to a P-core and warm
-// it first so the governor has ramped to its sustained ceiling before timing.
-// High `minEpochTime` keeps each cell's MdAPE < ~1%.
-//
-//   taskset -c 2 ./treeweave_bench_sorted > /tmp/sorted_after.txt
-//   ./bench/compare_nb.py /tmp/sorted_before.txt /tmp/sorted_after.txt
+// A/B microbench for Function::sorted() — the only bench exercising the sorted 1D path.
+// Used to verify AoS/SoA skeleton sharing is perf-neutral.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>

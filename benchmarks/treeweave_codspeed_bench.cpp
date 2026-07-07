@@ -1,16 +1,4 @@
-// treeweave_codspeed_bench — the CI regression bench rendered for CodSpeed.io.
-//
-// This is the Google Benchmark twin of treeweave_ci_bench (nanobench). CodSpeed
-// C++ supports only Google Benchmark, so we mirror the exact same four
-// representative batch-eval cases here — same case names, seeds, and N = 1<<16
-// batch — so the CodSpeed (instruction-count) dashboard lines up with the
-// nanobench → gh-pages (wall-time) dashboard. The two are complementary views
-// of the same hot path; keep the cases in sync when either changes.
-//
-// CodSpeed runs this binary once under a simulated CPU (CODSPEED_MODE=simulation,
-// passed by codspeed.yml); locally it is a plain Google Benchmark. As in the
-// nanobench bench, each treeweave::fit(...) is done once outside the timed loop
-// and only the batch eval is measured.
+// Google Benchmark twin of treeweave_ci_bench for CodSpeed.io (instruction-count); same case names, seeds, and N.
 
 #include <treeweave/treeweave.hpp>
 
@@ -36,17 +24,11 @@ auto random_points(std::size_t n, double lo, double hi, unsigned seed) -> std::v
     return v;
 }
 
-// Force a uniformly-refined deep tree -> a large (2^(K*depth)-entry) leaf table,
-// so the bench exercises the leaf-table fast path at a leaf count that spills
-// L1/L2 — the regime where index-cast/lookup changes (e.g. a vectorized gather)
-// can regress while the small-leaf cases stay green. Depths sit at/just under
-// the 64K-entry (256 KiB) per-subtree table cap (K*depth <= 16): 1D->14 (16384),
-// 2D->8 (65536), 3D->5 (32768).
+// kDeep*: depth pins that spill the leaf table past L1/L2 (1D:14, 2D:8, 3D:5 — at/below 64K-entry cap).
 constexpr int kDeep1D = 14;
 constexpr int kDeep2D = 8;
 constexpr int kDeep3D = 5;
 
-// 1D — Runge function.
 void eval_1d_runge_f64(benchmark::State &state) {
     auto fn  = treeweave::fit([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10);
     auto xs  = random_points(N, -0.999, 0.999, 1);
@@ -81,7 +63,6 @@ void eval_1d_runge_deep_f32(benchmark::State &state) {
     }
 }
 
-// 2D -> 1D — Gaussian bump.
 void eval_2d_bump_f64(benchmark::State &state) {
     auto fn = treeweave::fit(
         [](std::array<double, 2> x) -> std::array<double, 1> {
@@ -96,7 +77,6 @@ void eval_2d_bump_f64(benchmark::State &state) {
     }
 }
 
-// 3D -> 1D — smooth product.
 void eval_3d_smooth_f64(benchmark::State &state) {
     auto fn = treeweave::fit(
         [](std::array<double, 3> x) -> std::array<double, 1> {

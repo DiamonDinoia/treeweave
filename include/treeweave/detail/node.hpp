@@ -52,11 +52,7 @@ class Node {
     /// poly_eval_id into polyfits and returns true. Center/half_length are
     /// passed in (the runtime Node no longer carries `center`).
     auto fit(const TreeInput &input, const Func &func, const Value<value_type, input_dim> &center,
-             const Value<value_type, input_dim> &half_length, const std::vector<value_type> &samples,
-             std::vector<poly_eval_type> &polyfits) -> bool {
-        if (!samples.empty())
-            throw std::runtime_error("Treeweave fit error: sample points not yet supported");
-
+             const Value<value_type, input_dim> &half_length, std::vector<poly_eval_type> &polyfits) -> bool {
         const auto       n_polyfit_before = polyfits.size();
         const input_type lb               = center - half_length;
         const input_type ub               = center + half_length;
@@ -79,10 +75,10 @@ class Node {
         const bool wants_tail = input.tol_kind == TolKind::RelativeTail || input.tol_kind == TolKind::AbsoluteTail;
         if constexpr (kTailErrorSupported) {
             if (wants_tail) {
-                if (tail_error_below_tolerance(input.tol_kind, input.tol, polyfit))
+                if (tail_error_exceeds_tol(input.tol, polyfit))
                     return rollback_and_fail();
-            } else if (sample_error_below_tolerance(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length,
-                                                    func, polyfit)) {
+            } else if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
+                                                polyfit)) {
                 return rollback_and_fail();
             }
         } else {
@@ -90,8 +86,8 @@ class Node {
                 throw std::runtime_error("Treeweave fit error: TolKind::RelativeTail / AbsoluteTail "
                                          "is only supported for 1D scalar→scalar fits; use a "
                                          "sample-based TolKind for array-valued or ND fits");
-            if (sample_error_below_tolerance(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
-                                             polyfit))
+            if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
+                                         polyfit))
                 return rollback_and_fail();
         }
 
@@ -108,8 +104,6 @@ class Node {
         polyfits.emplace_back(func, lb, ub);
         poly_eval_id_ = static_cast<std::uint32_t>(polyfits.size() - 1);
     }
-
-    [[nodiscard]] auto memory_usage() const -> std::size_t { return sizeof(*this); }
 
   private:
     std::uint32_t first_child_idx_ = kLeafSentinel;

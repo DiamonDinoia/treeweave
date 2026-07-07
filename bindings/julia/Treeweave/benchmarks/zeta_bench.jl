@@ -49,7 +49,6 @@ n_native = 256         # brute-force sample (<=160 powers each)
 xs        = a .+ (b - a) .* rand(n)
 xs_sorted = sort(xs)
 
-# --- accuracy vs the brute-force sum, on the n_native sample -----------------
 xs_native = xs[1:n_native]
 yhat    = fn(xs_native)
 yref    = zeta_partial.(xs_native)
@@ -57,34 +56,29 @@ max_rel = maximum(abs.(yhat .- yref) ./ abs.(yref))
 
 mevals(count, seconds) = count / (seconds * 1e6)
 
-# --- native rate: brute-force sum over the small sample (mode-independent) ---
 scalar_sum(zeta_partial, xs_native)                                # warm-up (compile)
 t0 = time_ns(); s_nat = scalar_sum(zeta_partial, xs_native); t1 = time_ns()
 nat_s    = (t1 - t0) / 1e9
 nat_rate = mevals(n_native, nat_s)                                 # Mevals/s, all modes
 @assert isfinite(s_nat)
 
-# --- single-eval: the scalar API, one point at a time ------------------------
 xs_scalar = xs[1:n_scalar]
 scalar_sum(fn, xs_scalar)                                      # warm-up (compile)
 t0 = time_ns(); s_tw = scalar_sum(fn, xs_scalar); t1 = time_ns()
 tw_single_s = (t1 - t0) / 1e9
 @assert isfinite(s_tw)
 
-# --- multi-eval: the unsorted batch (in place, allocation-free) --------------
 tw_buf = similar(xs)
 fn(xs; out=tw_buf)                                             # warm-up
 t0 = time_ns(); fn(xs; out=tw_buf); t1 = time_ns()
 tw_multi_s = (t1 - t0) / 1e9
 @assert isfinite(sum(tw_buf))
 
-# --- sorted-eval: the 1-D ascending fast path --------------------------------
 fn(xs_sorted; sorted=true, out=tw_buf)                        # warm-up
 t0 = time_ns(); fn(xs_sorted; sorted=true, out=tw_buf); t1 = time_ns()
 tw_sorted_s = (t1 - t0) / 1e9
 @assert isfinite(sum(tw_buf))
 
-# --- throughput (Mevals/s) and speedup per mode ------------------------------
 tw_single = mevals(n_scalar, tw_single_s)
 tw_multi  = mevals(n, tw_multi_s)
 tw_sorted = mevals(n, tw_sorted_s)
@@ -96,7 +90,6 @@ tw_sorted = mevals(n, tw_sorted_s)
 @printf("  multi-eval   treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_multi, nat_rate, tw_multi / nat_rate)
 @printf("  sorted-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_sorted, nat_rate, tw_sorted / nat_rate)
 
-# --- machine-readable YAML (optional) ----------------------------------------
 yaml_path = get(ENV, "TREEWEAVE_BENCH_YAML", "")
 if !isempty(yaml_path)
     open(yaml_path, "w") do io

@@ -89,7 +89,7 @@ jobs:
           - { os: ubuntu-24.04,     pattern: '*linux-x86_64.tar.gz',  compiler: gcc }
           - { os: ubuntu-24.04-arm, pattern: '*linux-aarch64.tar.gz', compiler: gcc }
           - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   compiler: llvm }
-          - { os: windows-2022,     pattern: '*windows-x64.tar.gz',   compiler: msvc }
+          - { os: windows-2022,     pattern: '*windows-x64.zip',      compiler: msvc }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -116,11 +116,20 @@ jobs:
           ls -l pkg
 
       - name: Extract to a prefix
+        id: c_abi_pkg
         shell: bash
         run: |
           mkdir -p _prefix
-          tar -C _prefix -xzf pkg/${{ matrix.pattern }}
-          ls -R _prefix | head -40
+          # The glob can match a sibling asset (the treeweave-matlab-* bundle
+          # shares the -macos-arm64 suffix); take the C-ABI package. Windows
+          # ships a .zip, the rest a .tar.gz.
+          pkgfile=$(ls pkg/${{ matrix.pattern }} | grep -v -- -matlab- | head -1)
+          case "$pkgfile" in
+            *.zip) unzip -q "$pkgfile" -d _prefix ;;
+            *)     tar -C _prefix -xzf "$pkgfile" ;;
+          esac
+          echo "pkgfile=$pkgfile" >> "$GITHUB_OUTPUT"
+          ls -R _prefix | head -40 || true  # head closes the pipe under pipefail
 
       - name: find_package(treeweave) + link treeweave_c + run
         shell: bash
@@ -129,6 +138,15 @@ jobs:
           # runtime. Harmless on linux/macOS (loader uses RPATH, not PATH).
           export PATH="$PWD/_prefix/bin:$PWD/_prefix/lib:$PATH"
           bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
+
+      - name: C guide command (-Iinclude -Llib)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          direct="$(mktemp -d)"
+          tar -C "$direct" -xzf "${{ steps.c_abi_pkg.outputs.pkgfile }}"
+          gcc examples/C/simple.c -I"$direct/include" -L"$direct/lib" -ltreeweave_c -lm -o simple
+          LD_LIBRARY_PATH="$direct/lib" ./simple
 
   cxx-headers-from-release:
     name: C++ headers from Release (-Iinclude, no CMake)
@@ -170,10 +188,6 @@ jobs:
     name: npm install (registry) — ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    # The npm publish is best-effort in release.yml (continue-on-error) and the
-    # package may not be on the registry yet. Keep this soft until npm is live;
-    # tighten to a hard failure once @flatironinstitute/treeweave is published.
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
