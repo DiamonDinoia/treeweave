@@ -1,5 +1,4 @@
 // operator() thread-safety tests.
-// Contract, strategy, and ULP-drift rationale in devel/agents/build-notes.md § tests/test_threadsafe.cpp.
 
 #include <algorithm>
 #include <cstdint>

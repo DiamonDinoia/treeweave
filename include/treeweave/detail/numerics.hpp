@@ -72,7 +72,7 @@ auto tail_error_exceeds_tol(double tol, const Polyfit &polyfit) -> bool {
                                   "use a sample-based tol_type for array-valued or ND fits");
     static_assert(output_dim == 1, "tail_error only implemented for single output in 1D");
 
-    // ponytail: tail tolerance is absolute today; RelativeTail scaling never implemented.
+    // Tail tolerance is absolute today; RelativeTail scaling was never implemented.
     T maxcoeff{0.0};
 
     const auto &coeffs = polyfit.coeffs();

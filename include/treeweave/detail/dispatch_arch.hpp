@@ -5,8 +5,6 @@
 // dispatcher walks. Mirrors simdrng's include/random/dispatch_arch.hpp.
 // Compiled at each family's baseline -march; xsimd::dispatch + available_architectures().has
 // picks the widest host-supported variant at runtime.
-// Per-family rationale (SVE exclusion, MSVC /arch: gap, rvv128): see
-// devel/agents/perf-notes.md — "dispatch_arch.hpp — arch_list and family selection".
 
 #include <type_traits>
 

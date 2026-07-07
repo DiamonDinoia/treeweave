@@ -1,5 +1,5 @@
 /* _treeweave.cpp — nanobind bindings for the treeweave C ABI.
- * GIL/callback trampoline + TreeweaveFunction handle; see devel/agents/build-notes.md.
+ * GIL/callback trampoline + TreeweaveFunction handle.
  */
 
 #include <nanobind/nanobind.h>
@@ -315,7 +315,8 @@ static nb::object fit_impl(nb::object callable, int input_dim, int output_dim, s
     st.input_dim  = input_dim;
     st.output_dim = output_dim;
 
-    treeweave_opts opts         = treeweave_default_opts;
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
     opts.tol_kind               = (treeweave_tol_kind_t)tol_kind_int;
     opts.max_depth              = max_depth;
     opts.max_memory_mib         = max_memory_mib;

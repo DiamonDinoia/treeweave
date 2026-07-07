@@ -6,8 +6,7 @@
 // so the fit runs outside xsimd::dispatch's noexcept context and exceptions
 // propagate to treeweave.cpp's catch block. Uses available_architectures().has
 // (not Arch::available(), which is constexpr-true and would SIGILL non-AVX512
-// hosts). Arch_list: see dispatch_arch.hpp. Rationale for factory-pointer
-// design: see devel/agents/perf-notes.md — "arch_dispatch.cpp".
+// hosts). Arch_list: see dispatch_arch.hpp.
 
 #include <cstdlib>
 #include <string_view>

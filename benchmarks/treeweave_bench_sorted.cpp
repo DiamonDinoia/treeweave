@@ -1,5 +1,5 @@
 // A/B microbench for Function::sorted() — the only bench exercising the sorted 1D path.
-// Used to verify AoS/SoA skeleton sharing is perf-neutral. (see devel/agents/build-notes.md)
+// Used to verify AoS/SoA skeleton sharing is perf-neutral.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>

@@ -17,8 +17,9 @@
 ! and must be a `bind(C)` procedure; pass `c_funloc(f)` as the `f` argument.
 ! `context` is forwarded untouched to every invocation — the C stand-in for a
 ! closure's captures (recover it with `c_f_pointer`); pass `c_null_ptr` when
-! unused. Pass `c_null_ptr` for `opts` to use `treeweave_default_opts`, or
-! `c_loc(my_opts)` with a `target` `treeweave_opts` variable.
+! unused. Pass `c_null_ptr` for `opts` to use the default options, or
+! initialize a `target` `treeweave_opts` with `treeweave_default_opts()`
+! and pass `c_loc(my_opts)`.
 module treeweave
     use, intrinsic :: iso_c_binding
     implicit none
@@ -38,7 +39,7 @@ module treeweave
 
     ! ---- fit knobs — interoperable mirror of `treeweave_opts` ---------------
     ! Pass c_loc() of a `target` instance as the `opts` argument, or c_null_ptr
-    ! to fall back to treeweave_default_opts.
+    ! to fall back to default options.
     type, bind(C) :: treeweave_opts
         integer(c_int) :: tol_kind
         integer(c_int) :: max_depth
@@ -238,6 +239,17 @@ module treeweave
     end interface
 
 contains
+
+    function treeweave_default_opts() result(opts)
+        type(treeweave_opts) :: opts
+        interface
+            subroutine treeweave_default_opts_c(opts) bind(C, name="treeweave_default_opts")
+                import :: treeweave_opts
+                type(treeweave_opts), intent(out) :: opts
+            end subroutine treeweave_default_opts_c
+        end interface
+        call treeweave_default_opts_c(opts)
+    end function treeweave_default_opts
 
     ! Return the thread-local treeweave_last_error() text as a Fortran string
     ! (empty when there is no message).

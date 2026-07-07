@@ -1,5 +1,5 @@
 // nanobench harness sweeping {1D, 2D, 3D} × kernels × {deg 6,8,10} × N ∈ {1,32,1024,1e6}.
-// Pin to one core for stable numbers. (see devel/agents/build-notes.md)
+// Pin to one core for stable numbers.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>
@@ -28,7 +28,6 @@ auto make_erf1d() {
     return [](double x) { return std::erf(x); };
 }
 // cyl_bessel_j unavailable on libc++ (Apple clang); kHasCylBesselJ gates the kernel at the call site.
-// (see devel/agents/build-notes.md)
 #if defined(_LIBCPP_VERSION)
 inline constexpr bool kHasCylBesselJ = false;
 [[maybe_unused]] auto make_j0_1d() {
@@ -183,7 +182,6 @@ void sweep_nd(ankerl::nanobench::Bench &b, const char *label, Fmaker make_f, std
 }
 
 // Scattered multi-fit case modelling TRIQS/diagmc bench_chebfun: scalar operator() over R fits (not batched path).
-// (see devel/agents/build-notes.md)
 template <std::size_t Deg>
 void sweep_multi_fit_1d(ankerl::nanobench::Bench &b, const char *label, std::size_t R, double beta) {
     std::mt19937 cgen(11);

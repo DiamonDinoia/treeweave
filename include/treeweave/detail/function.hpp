@@ -113,7 +113,6 @@ class Function {
 
     /// Leaf-table index for `x`, or `num_leaves()` sentinel when OOD/NaN/±Inf.
     /// Scalar twin of one `leaf_ids` SIMD lane; parity oracle for quantize tests.
-    /// (see devel/agents/perf-notes.md)
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_id(const input_type &x) const -> std::uint32_t {
         const auto                                 ood_id = static_cast<std::uint32_t>(polyfits_.size());
         const bool                                 table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
@@ -411,7 +410,7 @@ class Function {
     /// Per-call scratch for the unsorted batch path (allocator-parametrised).
     /// Leaf ids not materialised — re-quantize is cheaper than the extra L1d
     /// traffic. `counts` serves as histogram, scan output, and scatter cursor
-    /// (Reinecke's trick). (see devel/agents/perf-notes.md)
+    /// (Reinecke's trick).
     template <class Allocator = std::allocator<value_type>>
     class Scratch {
         using ATraits = std::allocator_traits<Allocator>;
@@ -519,7 +518,7 @@ class Function {
     /// pipeline (leaf-id → histogram → scatter → per-leaf SIMD eval → permute
     /// back). Tiny batches (<kSortThreshold) loop point-at-a-time. For sorted
     /// 1D input prefer `sorted()` (~3-4x faster). Thread-safe: per-call scratch
-    /// allocated/freed via `allocator`; no shared state. (see devel/agents/perf-notes.md)
+    /// allocated/freed via `allocator`; no shared state.
     /// @param xp         `n_trg * input_dim` packed input coordinates.
     /// @param res        `n_trg * output_dim` output buffer.
     /// @param n_trg      number of points to evaluate.
@@ -835,7 +834,7 @@ class Function {
     }
 
     /// Per-point leaf-id for sorted 1D paths. Separate from `leaf_id_of`:
-    /// unifying was shown (objdump) to grow/reorder the hot loop. (see devel/agents/perf-notes.md)
+    /// unifying was shown (objdump) to grow/reorder the hot loop.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto sorted_leaf_id_at(const value_type *xp, std::size_t i,
                                                                  std::uint32_t ood_id, bool fast) const -> std::uint32_t
         requires(input_dim == 1)
@@ -858,7 +857,7 @@ class Function {
     /// Stages 1-3 (histogram → exclusive-scan → scatter into xp_packed + perm_inv).
     /// 1D table path re-quantizes in pass 2 (not materialise): materialise wins
     /// only <256 leaves (+15%) but regresses -9% to -37% above that (scatter bound
-    /// on counts[] RMW; re-quantize overlaps stalls for free). (see devel/agents/perf-notes.md)
+    /// on counts[] RMW; re-quantize overlaps stalls for free).
     template <class Allocator>
     TREEWEAVE_ALWAYS_INLINE auto partition_into_leaves(const value_type *xp, std::size_t n_trg, Scratch<Allocator> &s,
                                                        std::uint32_t ood_id) const -> void {
@@ -1002,7 +1001,7 @@ class Function {
 
     /// Stage 4: walk leaves in id order, prefetch next leaf's coefficients, call
     /// `eval_run(id, off, cnt)` per non-empty leaf. Shared by AoS and SoA tiles.
-    /// Returns OOD bucket offset. (see devel/agents/perf-notes.md)
+    /// Returns OOD bucket offset.
     template <class EvalRun>
     TREEWEAVE_ALWAYS_INLINE auto dispatch_packed_leaves(const std::uint32_t *counts, std::uint32_t n_leaves,
                                                         EvalRun eval_run) const -> std::uint32_t {
@@ -1243,7 +1242,7 @@ class Function {
 
     /// Fixed-N 1D scalar eval. Regimes: N<=16 static_for (best ILP);
     /// 16<N<1024 plain loop; N>=1024 SIMD batch path. kBatchPathFloor=1024
-    /// from bench_pack_scatter crossover (SPR). (see devel/agents/perf-notes.md)
+    /// from bench_pack_scatter crossover (SPR).
     template <std::size_t N>
     [[nodiscard]] TREEWEAVE_FLATTEN auto eval_pack(const std::array<value_type, N> &xs) const
         -> std::array<value_type, N>

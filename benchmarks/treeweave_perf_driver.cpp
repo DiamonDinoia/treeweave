@@ -59,7 +59,6 @@ void hammer(const char *label, Fn &&fn, std::array<double, Dim> a, std::array<do
 int main(int argc, char **argv) {
     double secs = (argc > 1) ? std::atof(argv[1]) : 15.0;
     // argv[2]: comma-separated dim filter ("1d","2d","3d","all"); missing dims silently omitted.
-    // (see devel/agents/build-notes.md)
     const std::string filter   = (argc > 2) ? argv[2] : "all";
     auto              contains = [&](std::string_view tag) {
         if (filter == "all")

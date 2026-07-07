@@ -165,28 +165,6 @@ jobs:
       - name: Run simple_1d example
         run: node bindings/js/examples/simple_1d.mjs
 
-  c-binary:
-    name: C binary install (docs verbatim)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Install wget gcc
-        run: sudo apt-get update && sudo apt-get install -y wget gcc
-
-      - name: Download, compile, and run (mirrors c.rst Install commands)
-        run: |
-          VER=$(curl -fsSL https://api.github.com/repos/DiamonDinoia/treeweave/releases/latest \
-                | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'][1:])")
-          echo "Testing release: v${VER}"
-          wget "https://github.com/DiamonDinoia/treeweave/releases/download/v${VER}/treeweave-${VER}-linux-x86_64.tar.gz"
-          tar xzf "treeweave-${VER}-linux-x86_64.tar.gz"
-          gcc examples/C/simple.c -Iinclude -Llib -ltreeweave_c -lm -o simple
-          LD_LIBRARY_PATH=lib ./simple
-
   octave:
     name: Octave examples
     runs-on: ubuntu-latest

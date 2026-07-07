@@ -1,5 +1,5 @@
 // Bin-sort optimization harness: Phase 1 (f32 int32 quantize) and Phase 2 (descent leaf-id
-// materialization) shipped; Phase 3 (radix) reverted 2–5× slower on 2 MiB-L2. (see devel/agents/build-notes.md)
+// materialization) shipped; Phase 3 (radix) reverted 2–5× slower on 2 MiB-L2.
 
 // The per-phase split uses the x86 cycle counter (__rdtsc), so this benchmark
 // is x86-only; on other architectures it compiles to a no-op skip.
@@ -116,7 +116,6 @@ void run_dtype(const char *tag) {
 }
 
 // run_descent: times unsorted batch on no-leaf-table fits (depth > 16 -> descent fallback, double tree-walk cost).
-// (see devel/agents/build-notes.md)
 template <class T>
 void run_descent(const char *tag) {
     std::mt19937                           gen(7);

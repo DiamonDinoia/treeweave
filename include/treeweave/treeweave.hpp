@@ -116,14 +116,14 @@ concept Fittable = requires(F f, Domain x) { f(x); };
 namespace detail {
 
 // Auto memory budget (MiB): 4/8/16 for 1D/2D/3D (doubles per dim — flat cap
-// is too tight in 3D). (see devel/agents/perf-notes.md)
+// is too tight in 3D).
 constexpr auto auto_memory_budget_mib(int input_dim) -> int {
     const unsigned d = input_dim < 1 ? 1U : static_cast<unsigned>(input_dim);
     return static_cast<int>(4U << (d - 1U));
 }
 
 // Default leaf degree: 7 wins/ties every (arch, dtype, dim) cell in the
-// C-ABI campaign; also spill-free in wide SIMD cells. (see devel/agents/perf-notes.md)
+// C-ABI campaign; also spill-free in wide SIMD cells.
 inline constexpr std::size_t kDefaultDegree = 7;
 
 inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &opts) -> TreeInput {

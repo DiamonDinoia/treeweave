@@ -328,8 +328,10 @@ TEST_CASE("C API: error handling", "[c][errors]") {
         REQUIRE(std::strlen(treeweave_last_error()) > 0);
     }
     SECTION("default options struct is sane") {
-        REQUIRE(treeweave_default_opts.max_depth == 50);
-        REQUIRE(treeweave_default_opts.tol_kind == TREEWEAVE_RELATIVE_MAX);
+        treeweave_opts opts;
+        treeweave_default_opts(&opts);
+        REQUIRE(opts.max_depth == 50);
+        REQUIRE(opts.tol_kind == TREEWEAVE_RELATIVE_MAX);
     }
     SECTION("free(NULL) and eval(NULL) are safe") {
         REQUIRE(treeweave_free(nullptr) == nullptr);
@@ -340,8 +342,7 @@ TEST_CASE("C API: error handling", "[c][errors]") {
 }
 
 TEST_CASE("C API: treeweave_last_error is thread-local", "[c][errors][thread]") {
-    // Error state is thread_local; relocated from pure-C test (Apple SDK omits C11 <threads.h>) (see
-    // devel/agents/build-notes.md).
+    // Apple SDK omits C11 <threads.h>, so this C ABI check lives in C++.
     std::atomic<bool> err_ok{false};
     std::atomic<bool> clean_ok{false};
 

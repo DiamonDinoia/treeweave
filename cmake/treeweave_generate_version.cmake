@@ -1,7 +1,6 @@
 # treeweave_generate_version.cmake — composes TREEWEAVE_VERSION_FULL from
 # VERSION + git state; writes include/treeweave_version.h (committed, in-tree).
 # Script mode: cmake -P ...; -DCHECK=ON exits 1 if header would change.
-# (see devel/agents/build-notes.md — "Version composition logic")
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -15,7 +14,7 @@ file(READ "${_tw_src}/VERSION" TREEWEAVE_VERSION_STRING)
 string(STRIP "${TREEWEAVE_VERSION_STRING}" TREEWEAVE_VERSION_STRING)
 
 # Release workflow passes -DTREEWEAVE_RELEASE_VERSION=<ver> to pin headers at
-# clean X.Y.Z before the tag is pushed. (see devel/agents/build-notes.md)
+# clean X.Y.Z before the tag is pushed.
 if(
     DEFINED TREEWEAVE_RELEASE_VERSION
     AND NOT TREEWEAVE_RELEASE_VERSION STREQUAL ""
@@ -58,7 +57,6 @@ set(_commit_count 0)
 set(_shallow FALSE)
 
 # Shallow clone (CI fetch-depth:1): trust committed header verbatim.
-# (see devel/agents/build-notes.md — "Shallow clone behavior")
 if(Git_FOUND AND EXISTS "${_tw_src}/.git")
     execute_process(
         COMMAND

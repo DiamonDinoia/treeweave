@@ -142,7 +142,6 @@ struct PolyTree {
 
         // Build a quantize-to-leaf table for shallow subtrees (cap: 64 K uint32
         // entries, 256 KiB). Replaces per-level descent (~3x slower at depth 15-16).
-        // (see devel/agents/perf-notes.md)
         constexpr std::size_t kTableMaxEntries = std::size_t{1} << 16; // 256 KiB / 4 B
         if (max_depth_ > 0) {
             const std::size_t total_bits = input_dim * max_depth_;
@@ -224,14 +223,14 @@ struct PolyTree {
 
     /// Quantize `x` to its leaf-table index. Positive-logic domain gate
     /// `!(x >= lo && x <= hi)` rejects NaN/±Inf/OOD without UB (no non-finite
-    /// cast); closed upper endpoint clamped to last leaf. (see devel/agents/perf-notes.md)
+    /// cast); closed upper endpoint clamped to last leaf.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto quantize_one(const input_type &x, std::uint32_t ood_id) const noexcept
         -> std::uint32_t {
         const std::size_t bits   = leaf_table_depth_;
         const auto        mask_i = static_cast<std::int64_t>((std::size_t{1} << bits) - 1);
         if constexpr (!poly_eval::detail::hasTupleSize_v<input_type>) {
             // Positive-logic gate: rejects OOD-low, finite OOD-high, NaN and ±Inf;
-            // proves `x` finite and in range so the cast is UB-free. (see devel/agents/perf-notes.md)
+            // proves `x` finite and in range so the cast is UB-free.
             if (!(x >= lower_[0] && x <= upper_[0])) [[unlikely]]
                 return ood_id;
             const auto fq0 = std::floor((x - lower_[0]) * inv_span_bins_[0]);
@@ -253,7 +252,7 @@ struct PolyTree {
 
     /// double→int32: vcvttpd2dq (7c lat/1CPI on SKX, half-width ymm) via direct
     /// intrinsic — xsimd has no lane-matched double→int32 cast. Stub declared on
-    /// non-AVX2 so discarded if-constexpr arms still compile. (see devel/agents/perf-notes.md)
+    /// non-AVX2 so discarded if-constexpr arms still compile.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE static auto
     narrow_trunc_to_u32([[maybe_unused]] xsimd::batch<double> fq) noexcept {
 #ifdef __AVX512F__
@@ -267,7 +266,7 @@ struct PolyTree {
 
     /// SIMD quantize over batch lanes + scalar `on_id` callback per lane.
     /// Gather/scatter to shared counters serialises (bank conflicts, FINUFFT
-    /// spread.hpp:454); hence scalar callback, not vector scatter. (see devel/agents/perf-notes.md)
+    /// spread.hpp:454); hence scalar callback, not vector scatter.
     template <class OnId>
     TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const value_type *xp, std::uint32_t ood_id, std::size_t n,
                                                         OnId on_id) const -> void
@@ -279,7 +278,7 @@ struct PolyTree {
 
         // Conversion strategy: f32→vcvttps2dq (lane-matched, no ISA gate, xsimd
         // emulates below SSE2); f64→vcvttpd2dq+scalar loads on AVX2/AVX-512 (narrowing
-        // lat 1c vs 4c for int64; vpgatherdd rejected >256 leaves, see perf-notes.md).
+        // lat 1c vs 4c for int64; vpgatherdd rejected >256 leaves).
 #if defined(__AVX512F__) || defined(__AVX2__)
         constexpr bool kFastGatherF64 = std::is_same_v<value_type, double>;
 #else
@@ -294,7 +293,6 @@ struct PolyTree {
 
         // Branchless OOD select: `lane_ood` (from positive-logic SIMD mask) decides;
         // `qi` clamped unsigned so OOD/aarch64 saturating lanes stay in table bounds.
-        // (see devel/agents/perf-notes.md)
         auto resolve = [&](auto qi, bool lane_ood) -> std::uint32_t {
             using U      = std::make_unsigned_t<decltype(qi)>;
             const auto q = std::min(static_cast<U>(qi), static_cast<U>(mask));
@@ -317,7 +315,7 @@ struct PolyTree {
         if constexpr (kFastInt32) {
             // f32: vpgatherdd of W ids (no ISA gate; xsimd scalar-loop below AVX2
             // still beats per-lane sweep ~1.7x). Consumer stays scalar — cross-lane
-            // RMW can't scatter. (see devel/agents/perf-notes.md)
+            // RMW can't scatter.
             const auto mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
             const auto ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
             alignas(aligned) std::array<std::uint32_t, lanes> id_arr{};
@@ -329,7 +327,7 @@ struct PolyTree {
         } else if constexpr (kFastGatherF64) {
             // f64 AVX2/AVX-512: vcvttpd2dq (lat 1c) → scalar table loads. No
             // vpgatherdd: measured -9% at d8 to -24% at d16 vs scalar (table
-            // spills L1 at high leaf counts). (see devel/agents/perf-notes.md)
+            // spills L1 at high leaf counts).
             using idx_batch_t = decltype(narrow_trunc_to_u32(std::declval<batch_t>()));
             static_assert(idx_batch_t::size == lanes, "narrowed index batch must be lane-matched to the value batch");
             const auto mask_v = idx_batch_t::broadcast(static_cast<std::uint32_t>(mask));
@@ -433,7 +431,7 @@ struct PolyTree {
 
     /// Tree descent: recomputes mid = 0.5*(lo+hi) each level (no per-node center
     /// field; not load-bound). Bit-exactness at boundaries not guaranteed vs fit-time
-    /// chained halving — tests assert relative tolerance. (see devel/agents/perf-notes.md)
+    /// chained halving — tests assert relative tolerance.
     [[nodiscard]] auto get_node_index(const input_type &x) const -> std::size_t {
         dim_array_t lo         = lower_;
         dim_array_t hi         = upper_;

@@ -24,8 +24,9 @@ int main(void) {
     const double b = 5.0;
 
     /* Start from the documented defaults, then override a few knobs. Copying
-     * treeweave_default_opts keeps any field we do not set at its default. */
-    treeweave_opts opts    = treeweave_default_opts;
+     * treeweave_default_opts() keeps any field we do not set at its default. */
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
     opts.tol_kind          = TREEWEAVE_ABSOLUTE_MAX;
     opts.max_depth         = 50;
     opts.min_uniform_depth = 2;
@@ -51,9 +52,10 @@ int main(void) {
 
     /* Now force a failure: the same kernel cannot be resolved to 1e-8 with a
      * max_depth of only 4, so the fit returns NULL and sets last_error. */
-    treeweave_opts shallow = treeweave_default_opts;
-    shallow.max_depth      = 4;
-    treeweave_t bad        = treeweave_fit(kernel, 1, 1, &a, &b, 1e-8, NULL, &shallow);
+    treeweave_opts shallow;
+    treeweave_default_opts(&shallow);
+    shallow.max_depth = 4;
+    treeweave_t bad   = treeweave_fit(kernel, 1, 1, &a, &b, 1e-8, NULL, &shallow);
     if (bad != NULL) {
         fprintf(stderr, "expected the shallow fit to fail, but it succeeded\n");
         treeweave_free(bad);

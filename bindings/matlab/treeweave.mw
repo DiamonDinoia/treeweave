@@ -119,7 +119,8 @@ static treeweave_function *tw_fit_w(const mxArray *fh,
         mexErrMsgIdAndTxt("treeweave:badarg",
                           "First argument to fit must be a function_handle");
 
-    treeweave_opts opts            = treeweave_default_opts;
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
     opts.tol_kind               = (treeweave_tol_kind_t)tol_kind;
     opts.max_depth              = max_depth;
     opts.max_memory_mib         = max_memory_mib;

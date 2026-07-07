@@ -1,6 +1,5 @@
 # treeweave_bindings.cmake — optional language wrappers over the C ABI.
 # Each guarded by its own option (default OFF); missing toolchain → STATUS + skip.
-# (see devel/agents/build-notes.md — "Bindings overview")
 
 include_guard(GLOBAL)
 

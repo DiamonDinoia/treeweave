@@ -1,5 +1,5 @@
 /* Zeta bench (C ABI): treeweave vs adaptive-stop Riemann-zeta (<=160 terms, rel 1e-10); times
- * single/batch/sorted modes. TREEWEAVE_BENCH_YAML=path emits YAML. (see devel/agents/build-notes.md) */
+ * single/batch/sorted modes. TREEWEAVE_BENCH_YAML=path emits YAML. */
 
 #include <math.h>
 #include <stdio.h>

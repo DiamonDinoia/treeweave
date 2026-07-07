@@ -60,7 +60,8 @@ Pass a ``treeweave_opts*`` as the last argument (or ``NULL`` for defaults):
 
 .. code-block:: c
 
-   treeweave_opts opts = treeweave_default_opts();
+   treeweave_opts opts;
+   treeweave_default_opts(&opts);
    opts.tol_kind       = TREEWEAVE_ABSOLUTE_MAX;
    opts.max_memory_mib = 64;
    treeweave_t fn = treeweave_fit(kernel, 1, 1, &a, &b, 1e-10, NULL, &opts);

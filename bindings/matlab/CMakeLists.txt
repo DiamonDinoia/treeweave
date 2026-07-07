@@ -1,7 +1,6 @@
 # bindings/matlab — MATLAB/Octave MEX binding. Pregenerated gateway by default
 # (TREEWEAVE_MATLAB_USE_PREGENERATED=ON); set OFF to fetch+run mwrap via CPM.
 # Backend auto-detected: mkoctfile (license-free) or MATLAB; both if present.
-# (see devel/agents/build-notes.md — MATLAB pregenerated gateway section)
 
 find_program(TREEWEAVE_MKOCTFILE_EXECUTABLE mkoctfile)
 find_program(TREEWEAVE_OCTAVE_EXECUTABLE NAMES octave-cli octave)

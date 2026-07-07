@@ -1,5 +1,4 @@
 // Leaf-id quantize parity tests (double and float, 1D and 2D).
-// Invariants and design notes in devel/agents/build-notes.md § tests/test_quantize.cpp.
 
 #include <cstddef>
 #include <treeweave/treeweave.hpp>
@@ -108,8 +107,7 @@ void check_2d() {
     }
 }
 
-// Large-n_leaves counting-sort path (2^13 = 8192 leaves). Design and oracle
-// boundary rationale in devel/agents/build-notes.md § check_large_leaves design notes.
+// Large-n_leaves counting-sort path (2^13 = 8192 leaves).
 template <class T>
 void check_large_leaves() {
     constexpr int      depth = 13; // 2^13 = 8192 leaves
@@ -127,7 +125,7 @@ void check_large_leaves() {
     for (auto &x : xs)
         x = static_cast<T>(d(gen));
     // NaN and -Inf route OOD → NaN on every target. +Inf omitted: float→int is
-    // arch-dependent under the clamp (see build-notes.md § check_large_leaves design notes).
+    // arch-dependent under the clamp.
     xs[7]     = std::numeric_limits<T>::quiet_NaN();
     xs[N - 3] = -std::numeric_limits<T>::infinity();
 

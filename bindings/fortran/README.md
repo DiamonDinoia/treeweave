@@ -53,7 +53,8 @@ use treeweave
    twins use `real(c_float)` for `x`/`y`.
 
 2. Fit, passing `c_funloc(kernel)`. Pass `c_null_ptr` for `opts` to use
-   `treeweave_default_opts`, or `c_loc(my_opts)` with a `target` `treeweave_opts`:
+   defaults, or pass `c_loc(my_opts)` with a `target` `treeweave_opts` initialized
+   by `treeweave_default_opts()`:
 
    ```fortran
    real(c_double) :: a(1) = [0.0_c_double], b(1) = [1.0_c_double]

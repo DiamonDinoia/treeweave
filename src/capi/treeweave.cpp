@@ -67,13 +67,17 @@ auto with_typed_impl(treeweave_t f, Fn &&fn) -> decltype(auto) {
 
 extern "C" {
 
-const treeweave_opts treeweave_default_opts = {
-    .tol_kind               = TREEWEAVE_RELATIVE_MAX,
-    .max_depth              = 50,
-    .max_memory_mib         = -1, // auto: dimension-scaled (4/8/16 MiB)
-    .allow_max_depth_leaves = 0,
-    .min_uniform_depth      = 0,
-};
+void treeweave_default_opts(treeweave_opts *opts) {
+    if (opts == nullptr)
+        return;
+    *opts = {
+        .tol_kind               = TREEWEAVE_RELATIVE_MAX,
+        .max_depth              = 50,
+        .max_memory_mib         = -1, // auto: dimension-scaled (4/8/16 MiB)
+        .allow_max_depth_leaves = 0,
+        .min_uniform_depth      = 0,
+    };
+}
 
 auto treeweave_fit(treeweave_func_t f, int input_dim, int output_dim, const double *a, const double *b, double tol,
                    void *context, const treeweave_opts *opts) -> treeweave_t {

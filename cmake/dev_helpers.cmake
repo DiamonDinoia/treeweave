@@ -162,7 +162,6 @@ if(TREEWEAVE_ENABLE_SANITIZERS)
 endif()
 
 # Must run before library/test targets (ordering constraint).
-# (see devel/agents/build-notes.md — "Coverage block ordering constraint")
 if(TREEWEAVE_ENABLE_COVERAGE)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         # -fprofile-update=atomic: batch evaluator uses threads; avoids .gcda races.

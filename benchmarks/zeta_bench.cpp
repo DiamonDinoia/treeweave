@@ -1,5 +1,5 @@
 // Zeta bench (C++): treeweave vs adaptive-stop Riemann-zeta baseline (<=160 terms); single/batch/sorted.
-// Cross-language family member. TREEWEAVE_BENCH_YAML=path emits YAML. (see devel/agents/build-notes.md)
+// Cross-language family member. TREEWEAVE_BENCH_YAML=path emits YAML.
 
 // std::getenv trips MSVC's C4996 "may be unsafe" (fatal under /WX); it is the
 // portable, correct call here. Must precede any (transitive) <cstdlib> include.
@@ -29,7 +29,6 @@ auto elapsed_s(clock_type::time_point t0) -> double {
 }
 
 // Fair baseline: adaptive-stop sum (rel eps=1e-10, cap 160 terms), not a fixed-iteration strawman.
-// (see devel/agents/build-notes.md)
 constexpr double      kEps      = 1e-10;
 constexpr std::size_t kMaxTerms = 160;
 

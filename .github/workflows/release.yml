@@ -333,7 +333,7 @@ jobs:
         run: |
           mkdir -p _prefix
           tar -C _prefix -xzf pkg/treeweave-${{ inputs.version }}-linux-x86_64.tar.gz
-          ls -R _prefix | head -40 || true  # ponytail: guard broken-pipe exit under pipefail
+          ls -R _prefix | head -40 || true  # head closes the pipe under pipefail
 
       - name: C — find_package(treeweave) + link treeweave_c
         run: bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
@@ -597,20 +597,16 @@ jobs:
               artifacts/*
           fi
 
-  # Publish the WASM JS package to npm. Best-effort (continue-on-error) so it
-  # never blocks the release — the .tgz attached to the GitHub Release is the
-  # guaranteed artifact. Auth: NODE_AUTH_TOKEN (NPM_TOKEN secret) when present —
-  # required for the FIRST publish of a brand-new package name; once the package
-  # exists, configure OIDC trusted publishing (id-token: write is already set)
-  # and the token can be removed. Gated after publish-and-tag so npm only goes
-  # out once PyPI did.
+  # Publish the WASM JS package to npm. The package exists, so npm publishing is
+  # a hard release gate alongside the PyPI and GitHub Release artifacts. Auth:
+  # NODE_AUTH_TOKEN (NPM_TOKEN secret) is still accepted; OIDC trusted publishing
+  # is enabled via id-token: write.
   publish-npm:
     name: Publish JS/WASM to npm
     needs: [build-js, publish-and-tag]
     if: ${{ !inputs.dry_run }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    continue-on-error: true
     permissions:
       id-token: write   # npm OIDC trusted publishing (once the package exists)
       contents: read

@@ -135,7 +135,7 @@ const TREEWEAVE_F32 = Cint(1)
 Mirror of the C `treeweave_opts` struct.  All fields are `Cint` so the struct
 is blittable for `ccall`.
 
-Defaults match `treeweave_default_opts` = {RELATIVE_MAX, 50, -1, 0, 0}.
+Defaults match `treeweave_default_opts()` = {RELATIVE_MAX, 50, -1, 0, 0}.
 `max_memory_mib = -1` lets the C layer pick automatically (4/8/16 MiB by dim).
 """
 struct TreeweaveOptions

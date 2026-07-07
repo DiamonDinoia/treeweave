@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # No C++20 modules → disable Ninja's per-TU scan (CMake 3.28+). Prevents
-# clang-scan-deps/PCH mismatch on CI. (see devel/agents/build-notes.md)
+# clang-scan-deps/PCH mismatch on CI.
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -24,7 +24,7 @@ include(GNUInstallDirs)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
 # Skip IPO on gcc (ICE on heavy templates) and Emscripten (link-time cost,
-# no eval-throughput gain). (see devel/agents/build-notes.md)
+# no eval-throughput gain).
 if(
     _ipo_supported
     AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
@@ -36,14 +36,14 @@ elseif(NOT _ipo_supported)
 endif()
 
 # -march=native is required for FMA codegen; profiling showed ~50% of hot-path
-# in libm fma() without it. (see devel/agents/build-notes.md)
+# in libm fma() without it.
 set(TREEWEAVE_ARCH
     "native"
     CACHE STRING
     "CPU target for -march (e.g. native, x86-64-v3)"
 )
 # -mtune accepts CPU names, not arch names; x86-64-v*/armv* baselines fall back
-# to 'generic'. (see devel/agents/build-notes.md)
+# to 'generic'.
 if(
     TREEWEAVE_ARCH MATCHES "^x86-64(-v[0-9]+)?$"
     OR TREEWEAVE_ARCH MATCHES "^armv"
@@ -77,7 +77,6 @@ else()
 endif()
 # -ffp-contract=fast only; broader fast-math omitted (measured: no gain on FMA-
 # bound path). Skipped on MSVC (clang-cl rejects the GCC flag under -Werror).
-# (see devel/agents/build-notes.md)
 if(MSVC)
     set(_treeweave_fp_flags "")
 else()

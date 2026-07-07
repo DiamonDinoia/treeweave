@@ -1,6 +1,6 @@
 // treeweave_napi.cpp — Node-API (node-addon-api) native backend.
 // JS exceptions from the fit callback are caught in the trampoline (not unwound through C ABI); eval batches are
-// zero-copy through Node's ArrayBuffer backing store. (see devel/agents/build-notes.md)
+// zero-copy through Node's ArrayBuffer backing store.
 
 #include <napi.h>
 

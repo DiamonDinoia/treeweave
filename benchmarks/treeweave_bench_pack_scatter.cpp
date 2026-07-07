@@ -1,6 +1,6 @@
-// Microbench for eval_pack<N> (compile-time-N pack eval, three regimes) and eval_scatter_sorted (counting-sort
-// scatter). Each surface vs a hand-rolled scalar baseline; output consumed by bench/compare_nb.py. (see
-// devel/agents/build-notes.md)
+// Microbench for eval_pack<N> (compile-time-N pack eval, three regimes) and
+// eval_scatter_sorted (counting-sort scatter). Each surface is compared with a
+// hand-rolled scalar baseline; output is consumed by bench/compare_nb.py.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
 #include <nanobench.h>

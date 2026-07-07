@@ -1,5 +1,4 @@
 # treeweave_c_api.cmake — C ABI (libtreeweave_c) for the new fit/options surface.
-#
 # Builds a shared and a static library from src/capi/*.cpp (each per-(dtype,
 # input_dim) dispatch TU compiles in parallel) plus the extern "C" shim, and
 # wires the C smoke example. The global -march/-ffp-contract flags from the
@@ -8,7 +7,6 @@
 include_guard(GLOBAL)
 
 # In-tree only; NOT in the installed export set (deps are FetchContent-only).
-# (see devel/agents/build-notes.md — "treeweave_headers INTERFACE target not installed")
 add_library(treeweave_headers INTERFACE)
 add_library(treeweave::treeweave ALIAS treeweave_headers)
 target_include_directories(

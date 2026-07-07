@@ -45,7 +45,3 @@ Testing/
 *.scratch
 scratch/
 devel/*
-!devel/agents/
-devel/agents/*
-!devel/agents/perf-notes.md
-!devel/agents/build-notes.md

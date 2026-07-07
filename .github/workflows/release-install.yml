@@ -116,6 +116,7 @@ jobs:
           ls -l pkg
 
       - name: Extract to a prefix
+        id: c_abi_pkg
         shell: bash
         run: |
           mkdir -p _prefix
@@ -127,7 +128,8 @@ jobs:
             *.zip) unzip -q "$pkgfile" -d _prefix ;;
             *)     tar -C _prefix -xzf "$pkgfile" ;;
           esac
-          ls -R _prefix | head -40 || true  # ponytail: log peek; head closes the pipe, guard the broken-pipe exit under pipefail
+          echo "pkgfile=$pkgfile" >> "$GITHUB_OUTPUT"
+          ls -R _prefix | head -40 || true  # head closes the pipe under pipefail
 
       - name: find_package(treeweave) + link treeweave_c + run
         shell: bash
@@ -136,6 +138,15 @@ jobs:
           # runtime. Harmless on linux/macOS (loader uses RPATH, not PATH).
           export PATH="$PWD/_prefix/bin:$PWD/_prefix/lib:$PATH"
           bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
+
+      - name: C guide command (-Iinclude -Llib)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          direct="$(mktemp -d)"
+          tar -C "$direct" -xzf "${{ steps.c_abi_pkg.outputs.pkgfile }}"
+          gcc examples/C/simple.c -I"$direct/include" -L"$direct/lib" -ltreeweave_c -lm -o simple
+          LD_LIBRARY_PATH="$direct/lib" ./simple
 
   cxx-headers-from-release:
     name: C++ headers from Release (-Iinclude, no CMake)
@@ -177,10 +188,6 @@ jobs:
     name: npm install (registry) — ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    # The npm publish is best-effort in release.yml (continue-on-error) and the
-    # package may not be on the registry yet. Keep this soft until npm is live;
-    # tighten to a hard failure once @flatironinstitute/treeweave is published.
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:

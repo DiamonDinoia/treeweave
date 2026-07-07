@@ -1,6 +1,5 @@
 # treeweave_bundle.cmake — merge all C++ API headers into one include tree so
 # non-CMake users get `g++ -I<build>/include`. Top-level only.
-# (see devel/agents/build-notes.md — "Bundle overview")
 
 include_guard(GLOBAL)
 

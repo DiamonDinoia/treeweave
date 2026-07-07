@@ -1,5 +1,4 @@
 // test_greens.cpp — Green's function / layer-potential kernels.
-// File overview in devel/agents/build-notes.md § tests/test_greens.cpp.
 
 #include "treeweave/detail/errors.hpp"
 #include "treeweave/detail/tol_kind.hpp"

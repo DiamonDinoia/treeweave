@@ -5,7 +5,7 @@ include_guard(GLOBAL)
 include(FetchContent)
 
 # Override polyfit's CPM-pinned xsimd (14.0.0) with 14.2.0 via a local clone;
-# SHA verified at configure time to detect tag-move. (see devel/agents/build-notes.md)
+# SHA verified at configure time to detect tag-move.
 set(_treeweave_xsimd_src "${PROJECT_BINARY_DIR}/_deps_external/xsimd")
 if(NOT EXISTS "${_treeweave_xsimd_src}/.git")
     message(
@@ -42,7 +42,6 @@ set(CPM_xsimd_SOURCE "${_treeweave_xsimd_src}" CACHE PATH "" FORCE)
 
 # Stash analysis vars and arch/FP directory flags before fetching deps so they
 # don't inherit our -Werror/-march settings. Restored at bottom of file.
-# (see devel/agents/build-notes.md — "Suppressing analysis and arch flags")
 set(_treeweave_saved_clang_tidy "${CMAKE_CXX_CLANG_TIDY}")
 set(_treeweave_saved_cppcheck "${CMAKE_CXX_CPPCHECK}")
 unset(CMAKE_CXX_CLANG_TIDY)
@@ -112,7 +111,7 @@ endif()
 
 if(TREEWEAVE_BUILD_CODSPEED)
     # CodSpeedHQ/codspeed-cpp wraps Google Benchmark; swaps in instrumented
-    # runtime when CODSPEED_MODE is set. (see devel/agents/build-notes.md)
+    # runtime when CODSPEED_MODE is set.
     FetchContent_Declare(
         google_benchmark
         GIT_REPOSITORY https://github.com/CodSpeedHQ/codspeed-cpp.git

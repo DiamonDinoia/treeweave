@@ -1,7 +1,6 @@
 # treeweave_c_dispatch.cmake — C-ABI TU generation and per-arch fan-out.
 # 6 (dtype×dim) variant TUs; degree baked to 7. Multi-arch: 6×4=24 TUs on x86.
 # COMDAT dedup via phantom Arch template param on wrappers.
-# (see devel/agents/build-notes.md — treeweave_c_dispatch.cmake section)
 
 include_guard(GLOBAL)
 include(CheckCXXCompilerFlag)
@@ -37,7 +36,6 @@ check_cxx_compiler_flag("-Wno-template-body" _treeweave_has_wno_template_body)
 
 # TREEWEAVE_C_BUILD switches TREEWEAVE_EXPORT to dllexport/visibility("default");
 # objects are hidden-by-default so only the C ABI surface escapes the DSO.
-# (see devel/agents/build-notes.md — "Visibility setup for C-ABI object libraries")
 function(_treeweave_configure_c_object tgt)
     target_include_directories(
         ${tgt}
@@ -81,7 +79,6 @@ function(_treeweave_configure_c_object tgt)
     endif()
     # Exclude dispatch TUs from sanitizers: compile/memory cost + UBSan vptr
     # symbols break C linkers. Valgrind covers this path instead.
-    # (see devel/agents/build-notes.md — "Sanitizer exclusion for dispatch TUs")
     if(TREEWEAVE_ENABLE_SANITIZERS)
         target_compile_options(${tgt} PRIVATE -fno-sanitize=address,undefined)
     endif()
@@ -112,7 +109,6 @@ endif()
 
 # Multi-arch fan-out: x86 (any compiler) or non-MSVC/non-Apple aarch64/riscv64.
 # Apple clang rejects -march=armv8-a; MSVC non-x86 has no /arch: ladder.
-# (see devel/agents/build-notes.md — "Multi-arch family and fan-out design")
 set(_treeweave_multiarch_family FALSE)
 if(
     TREEWEAVE_C_MULTIARCH

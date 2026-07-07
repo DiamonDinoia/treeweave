@@ -4,8 +4,7 @@
 // inside an anonymous namespace in each per-arch variant TU so EvalImpl /
 // EvalFactory / wrap_callback get internal linkage and avoid COMDAT folding.
 // ArchTagged* carry Arch as a phantom param to make every poly_eval type
-// arch-distinct in its mangled name (COMDAT-dedup fix, Bug #2).
-// See devel/agents/perf-notes.md — "c_binding_detail.hpp — no include guard".
+// arch-distinct in its mangled name.
 
 // ---- Arch-tagged callable wrappers -----------------------------------------
 // Arch phantom → arch-distinct poly_eval mangled names; exactly one non-template operator().

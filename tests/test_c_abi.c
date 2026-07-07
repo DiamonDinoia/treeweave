@@ -446,14 +446,17 @@ static void test_out_of_domain_nan(void) {
 /* ---- introspection / defaults --------------------------------------- */
 
 static void test_introspection_and_defaults(void) {
-    /* treeweave_default_opts must match treeweave::options{} (verified in the
+    /* treeweave_default_opts() must match treeweave::options{} (verified in the
      * C++ surface; mirrored here as concrete values). */
-    CHECK(treeweave_default_opts.tol_kind == TREEWEAVE_RELATIVE_MAX);
-    CHECK(treeweave_default_opts.max_depth == 50);
+    treeweave_opts defaults;
+    treeweave_default_opts(&defaults);
+    treeweave_default_opts(NULL);
+    CHECK(defaults.tol_kind == TREEWEAVE_RELATIVE_MAX);
+    CHECK(defaults.max_depth == 50);
     /* <0 = auto: a dimension-scaled budget resolved at fit time. */
-    CHECK(treeweave_default_opts.max_memory_mib < 0);
-    CHECK(treeweave_default_opts.allow_max_depth_leaves == 0);
-    CHECK(treeweave_default_opts.min_uniform_depth == 0);
+    CHECK(defaults.max_memory_mib < 0);
+    CHECK(defaults.allow_max_depth_leaves == 0);
+    CHECK(defaults.min_uniform_depth == 0);
 
     /* NULL opts path must succeed (it selects the defaults). */
     const double a = 0.0, b = 1.0;
@@ -805,8 +808,9 @@ static void test_nan_input_2d_3d(void) {
 /* ---- G10: AbsoluteMax tol_kind through the C ABI ----------------------- */
 
 static void test_absolute_max_tol(void) {
-    treeweave_opts opts = treeweave_default_opts;
-    opts.tol_kind       = TREEWEAVE_ABSOLUTE_MAX;
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
+    opts.tol_kind = TREEWEAVE_ABSOLUTE_MAX;
 
     const double tol = 1e-6;
     const double a = 0.0, b = 1.0;
@@ -841,7 +845,8 @@ static void k_rough(const double *x, double *y, void *d) {
 }
 
 static void test_allow_max_depth_leaves(void) {
-    treeweave_opts opts         = treeweave_default_opts;
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
     opts.max_depth              = 5; /* very shallow — will hit the cap */
     opts.allow_max_depth_leaves = 1;
 
@@ -866,7 +871,8 @@ static void test_allow_max_depth_leaves(void) {
  * MemoryBudgetExceeded error on a simple function. */
 
 static void test_max_memory_mib_zero(void) {
-    treeweave_opts opts = treeweave_default_opts;
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
     opts.max_memory_mib = 0; /* no cap */
 
     const double a = 0.0, b = 1.0;

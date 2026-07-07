@@ -1,5 +1,5 @@
 # deps/build.jl — locate libtreeweave_c: env var → sibling CMake build → GitHub Release download.
-# No Artifacts.toml by design; build failure must not block precompilation. (see devel/agents/build-notes.md)
+# No Artifacts.toml by design; build failure must not block precompilation.
 
 using Libdl
 using Downloads

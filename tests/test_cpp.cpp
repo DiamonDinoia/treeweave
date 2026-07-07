@@ -293,8 +293,7 @@ TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batc
                 const double scalar = fn(xs[i]);
                 REQUIRE(std::abs(scalar - sorted_out[i]) <= 8.0 * ulp * std::max(1.0, std::abs(scalar)));
             } else {
-                // Above b: OOD NaN on every path; leaf-table no longer clamps x>b to last leaf (see
-                // devel/agents/build-notes.md).
+                // Above b: OOD NaN on every path; leaf-table no longer clamps x>b to last leaf.
                 REQUIRE(std::isnan(sorted_out[i]));
                 REQUIRE(std::isnan(batch_out[i]));
                 REQUIRE(std::isnan(fn(xs[i])));
@@ -351,8 +350,7 @@ TEST_CASE("Batch vs single evaluation agree -- 2D vector output", "[treeweave][b
     }
 }
 
-// C1 — pins recompute path after leaf_ids[] removal; 1D-in 2D-out matches scalar oracle (see
-// devel/agents/build-notes.md).
+// Pins recompute path after leaf_ids[] removal; 1D-in 2D-out matches scalar oracle.
 TEST_CASE("Batch (1D in, 2D out) matches per-point scalar after leaf_ids drop", "[treeweave][batch][1d][c1]") {
     // treeweave requires array-input for vector-output fits; spell the
     // 1D input as std::array<double, 1> to route through polyfit's
@@ -381,8 +379,7 @@ TEST_CASE("Batch (1D in, 2D out) matches per-point scalar after leaf_ids drop", 
     }
 }
 
-// SoA overload: aos_out[2*k+d] == soa[d][k] bitwise (same kernel, only store layout differs; see
-// devel/agents/build-notes.md).
+// SoA overload: aos_out[2*k+d] == soa[d][k] bitwise.
 TEST_CASE("SoA batch overload matches AoS bitwise (1D in, 2D out)", "[treeweave][batch][soa]") {
     auto f = [](std::array<double, 1> x) -> std::array<double, 2> {
         return {std::sin(3.0 * x[0]), std::cos(2.5 * x[0] + 0.1)};
@@ -564,7 +561,7 @@ TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][la
 
 TEST_CASE("1D smooth fit on far-shifted domain centred at 1e6", "[treeweave][large-domain][shifted]") {
     // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, leaf-table quantize at large x); ~6 digits
-    // lost so tols reflect that floor (see devel/agents/build-notes.md).
+    // lost so tols reflect that floor.
     const double centre = 1.0e6;
     const double a      = centre;
     const double b      = centre + 1.0;
@@ -590,7 +587,7 @@ TEST_CASE("2D smooth fit on large asymmetric domain", "[treeweave][large-domain]
 }
 
 TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][memory-budget]") {
-    // Budget guard split into two checks to avoid the ~33 MiB/157 s old fit (see devel/agents/build-notes.md).
+    // Budget guard split into two checks to avoid the ~33 MiB/157 s old fit.
     REQUIRE(treeweave::detail::auto_memory_budget_mib(1) == 4);  // 1D
     REQUIRE(treeweave::detail::auto_memory_budget_mib(2) == 8);  // 2D
     REQUIRE(treeweave::detail::auto_memory_budget_mib(3) == 16); // 3D
@@ -783,8 +780,7 @@ TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table
     REQUIRE(shallow.has_fast_quantize());
 }
 
-// D1 — min_uniform_depth forces leaf-table live on smooth fns (tol-based stops at depth 1-2 and skips it; see
-// devel/agents/build-notes.md).
+// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2 and skips it.
 TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
           "[treeweave][min_uniform_depth][leaf-table]") {
     auto f  = [](double x) { return std::cos(x); };
@@ -847,7 +843,7 @@ TEST_CASE("eval_scatter_sorted edge cases", "[treeweave][scatter][edge]") {
     run({0, 1, 0, 1, 0, 1, 0}, {0.1, 0.9, 0.2, 0.8, 0.3, 0.7, 0.4});
 }
 
-// TST1 / COV-G3: f32 parity + sorted path; tol_f*100 tracks fit quality tightly (see devel/agents/build-notes.md).
+// TST1 / COV-G3: f32 parity + sorted path; tol_f*100 tracks fit quality tightly.
 TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[treeweave][f32]") {
     constexpr float  tol_f = 1e-5F;
     constexpr double tol_d = 1e-5; // same value, double — passed to fit<>(tol)

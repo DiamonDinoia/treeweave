@@ -1,5 +1,5 @@
 // CI regression bench: fixed representative batch-eval cases rendered as JSON for
-// benchmark-action/github-action-benchmark (customSmallerIsBetter). (see devel/agents/build-notes.md)
+// benchmark-action/github-action-benchmark (customSmallerIsBetter).
 
 #include <treeweave/treeweave.hpp>
 
@@ -19,7 +19,7 @@
 namespace {
 
 // JSON template: value = median wall time per batch call; mustache lacks arithmetic so per-call time is tracked
-// directly. (see devel/agents/build-notes.md)
+// directly.
 constexpr char kGabJsonTemplate[] = R"TPL([
 {{#result}}  {
     "name": "{{name}}",
@@ -40,7 +40,6 @@ auto random_points(std::size_t n, double lo, double hi, unsigned seed) -> std::v
 }
 
 // kDeep*: depth pins that spill the leaf table past L1/L2 (1D:14=16384, 2D:8=65536, 3D:5=32768 entries, <= 64K cap).
-// (see devel/agents/build-notes.md)
 constexpr int kDeep1D = 14;
 constexpr int kDeep2D = 8;
 constexpr int kDeep3D = 5;
