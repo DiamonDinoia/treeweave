@@ -1,20 +1,5 @@
 /* _treeweave.cpp — nanobind bindings for the treeweave C ABI.
- *
- * Architecture:
- *   - A typed trampoline (f64 and f32 variants) bridges the C callback into
- *     a Python callable. The trampoline is always called on the thread that
- *     called Python, which already holds the GIL; we re-acquire it
- *     defensively with nb::gil_scoped_acquire (re-entrant, effectively a
- *     no-op when the GIL is already held by this thread).
- *   - On callback failure we latch the error flag, stash the live Python
- *     exception, fill y[] with NaN, and short-circuit all subsequent
- *     invocations so the C fit drains quickly without touching Python again.
- *   - After treeweave_fit_* returns we re-raise the stashed exception (via
- *     nb::raise_python_error) so the original Python exception propagates
- *     intact to the caller.
- *   - TreeweaveFunction wraps a treeweave_t handle and exposes eval / eval_multi /
- *     sorted / eval_multi_soa methods plus introspection properties. The C++
- *     destructor calls treeweave_free, so Python GC suffices for cleanup.
+ * GIL/callback trampoline + TreeweaveFunction handle; see devel/agents/build-notes.md.
  */
 
 #include <nanobind/nanobind.h>
@@ -34,41 +19,82 @@
 namespace nb = nanobind;
 using namespace nb::literals;
 
-// ---------------------------------------------------------------------------
+template <typename T>
+struct Traits;
+
+template <>
+struct Traits<double> {
+    using func_t                             = treeweave_func_t;
+    static constexpr double      kNaN        = std::numeric_limits<double>::quiet_NaN();
+    static constexpr const char *numpy_dtype = "float64";
+    static constexpr const char *fit_name    = "treeweave_fit";
+
+    static treeweave_t fit(func_t f, int id, int od, const double *a, const double *b, double tol, void *ctx,
+                           const treeweave_opts *opts) {
+        return treeweave_fit(f, id, od, a, b, tol, ctx, opts);
+    }
+    static void eval(treeweave_t h, const double *x, double *y) { treeweave_eval(h, x, y); }
+    static void batch(treeweave_t h, const double *x, double *y, size_t n) { treeweave_batch(h, x, y, n); }
+    static void sorted(treeweave_t h, const double *x, double *y, size_t n) { treeweave_sorted(h, x, y, n); }
+    static void transposed(treeweave_t h, const double *x, double *const *soa, size_t n) {
+        treeweave_transposed(h, x, soa, n);
+    }
+};
+
+template <>
+struct Traits<float> {
+    using func_t                             = treeweavef_func_t;
+    static constexpr float       kNaN        = std::numeric_limits<float>::quiet_NaN();
+    static constexpr const char *numpy_dtype = "float32";
+    static constexpr const char *fit_name    = "treeweavef_fit";
+
+    static treeweave_t fit(func_t f, int id, int od, const float *a, const float *b, double tol, void *ctx,
+                           const treeweave_opts *opts) {
+        return treeweavef_fit(f, id, od, a, b, tol, ctx, opts);
+    }
+    static void eval(treeweave_t h, const float *x, float *y) { treeweavef_eval(h, x, y); }
+    static void batch(treeweave_t h, const float *x, float *y, size_t n) { treeweavef_batch(h, x, y, n); }
+    static void sorted(treeweave_t h, const float *x, float *y, size_t n) { treeweavef_sorted(h, x, y, n); }
+    static void transposed(treeweave_t h, const float *x, float *const *soa, size_t n) {
+        treeweavef_transposed(h, x, soa, n);
+    }
+};
+
 // Trampoline state (one per treeweave_fit_* call)
-// ---------------------------------------------------------------------------
-
-struct TrampolineState64 {
+template <typename T>
+struct TrampolineState {
     nb::object callable;
     int        input_dim;
     int        output_dim;
     bool       errored = false;
-    // Stash for the Python exception: we save/restore via PyErr_GetRaisedException
+    // Stash for the Python exception: saved/restored via PyErr_GetRaisedException
     // (Python 3.12+) or the older PyErr_Fetch/Restore on 3.9-3.11.
-    PyObject *exc = nullptr; // borrowed reference stored as owned
+    PyObject *exc = nullptr; // owned reference
 };
 
-struct TrampolineState32 {
-    nb::object callable;
-    int        input_dim;
-    int        output_dim;
-    bool       errored = false;
-    PyObject  *exc     = nullptr;
-};
+template <typename T>
+static void stash_exception(TrampolineState<T> *st) {
+#if PY_VERSION_HEX >= 0x030c0000
+    st->exc = PyErr_GetRaisedException(); // steals reference
+#else
+    PyObject *tp = nullptr, *val = nullptr, *tb = nullptr;
+    PyErr_Fetch(&tp, &val, &tb);
+    PyErr_NormalizeException(&tp, &val, &tb);
+    if (tb)
+        PyException_SetTraceback(val, tb);
+    Py_XDECREF(tp);
+    Py_XDECREF(tb);
+    st->exc = val; // own the ref
+#endif
+}
 
-static constexpr double kNaN64 = std::numeric_limits<double>::quiet_NaN();
-static constexpr float  kNaN32 = std::numeric_limits<float>::quiet_NaN();
+template <typename T>
+static void trampoline(const T *x, T *y, void *data) {
+    TrampolineState<T> *st = static_cast<TrampolineState<T> *>(data);
 
-// ---------------------------------------------------------------------------
-// f64 trampoline
-// ---------------------------------------------------------------------------
-static void trampoline_f64(const double *x, double *y, void *data) {
-    TrampolineState64 *st = static_cast<TrampolineState64 *>(data);
-
-    // Short-circuit: a previous callback already failed.
     if (st->errored) {
         for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN64;
+            y[i] = Traits<T>::kNaN;
         return;
     }
 
@@ -76,132 +102,40 @@ static void trampoline_f64(const double *x, double *y, void *data) {
 
     try {
         // Wrap x as a (input_dim,) NumPy view — zero-copy, read-only.
-        // nb::ndarray with shape: the array does NOT own the data.
-        nb::ndarray<const double, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> xarr(
-            const_cast<double *>(x), {(size_t)st->input_dim});
-
-        nb::object result = st->callable(xarr);
+        nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> xarr(const_cast<T *>(x),
+                                                                                           {(size_t)st->input_dim});
+        nb::object                                                                    result = st->callable(xarr);
 
         if (st->output_dim == 1) {
-            // Scalar or 0-d array
-            y[0] = nb::cast<double>(result);
+            y[0] = nb::cast<T>(result);
         } else {
-            // Expect a sequence of length output_dim
-            nb::ndarray<const double, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> rarr =
-                nb::cast<nb::ndarray<const double, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu>>(result);
+            nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> rarr =
+                nb::cast<nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu>>(result);
             if ((int)rarr.shape(0) != st->output_dim)
                 throw std::runtime_error("callback returned wrong number of outputs");
-            const double *rp = rarr.data();
+            const T *rp = rarr.data();
             for (int i = 0; i < st->output_dim; ++i)
                 y[i] = rp[i];
         }
     } catch (nb::python_error &e) {
         st->errored = true;
         e.restore(); // put exception back into interpreter state
-#if PY_VERSION_HEX >= 0x030c0000
-        st->exc = PyErr_GetRaisedException(); // steals reference
-#else
-        PyObject *tp = nullptr, *val = nullptr, *tb = nullptr;
-        PyErr_Fetch(&tp, &val, &tb);
-        PyErr_NormalizeException(&tp, &val, &tb);
-        if (tb)
-            PyException_SetTraceback(val, tb);
-        Py_XDECREF(tp);
-        Py_XDECREF(tb);
-        st->exc = val; // own the ref
-#endif
+        stash_exception(st);
         for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN64;
+            y[i] = Traits<T>::kNaN;
     } catch (std::exception &e) {
         st->errored = true;
         // Convert to a Python RuntimeError and stash it.
         PyErr_SetString(PyExc_RuntimeError, e.what());
-#if PY_VERSION_HEX >= 0x030c0000
-        st->exc = PyErr_GetRaisedException();
-#else
-        PyObject *tp = nullptr, *val = nullptr, *tb = nullptr;
-        PyErr_Fetch(&tp, &val, &tb);
-        PyErr_NormalizeException(&tp, &val, &tb);
-        Py_XDECREF(tp);
-        Py_XDECREF(tb);
-        st->exc = val;
-#endif
+        stash_exception(st);
         for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN64;
+            y[i] = Traits<T>::kNaN;
     }
 }
 
-// ---------------------------------------------------------------------------
-// f32 trampoline
-// ---------------------------------------------------------------------------
-static void trampoline_f32(const float *x, float *y, void *data) {
-    TrampolineState32 *st = static_cast<TrampolineState32 *>(data);
-
-    if (st->errored) {
-        for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN32;
-        return;
-    }
-
-    nb::gil_scoped_acquire gil;
-
-    try {
-        nb::ndarray<const float, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> xarr(const_cast<float *>(x),
-                                                                                               {(size_t)st->input_dim});
-
-        nb::object result = st->callable(xarr);
-
-        if (st->output_dim == 1) {
-            y[0] = nb::cast<float>(result);
-        } else {
-            nb::ndarray<const float, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> rarr =
-                nb::cast<nb::ndarray<const float, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu>>(result);
-            if ((int)rarr.shape(0) != st->output_dim)
-                throw std::runtime_error("callback returned wrong number of outputs");
-            const float *rp = rarr.data();
-            for (int i = 0; i < st->output_dim; ++i)
-                y[i] = rp[i];
-        }
-    } catch (nb::python_error &e) {
-        st->errored = true;
-        e.restore();
-#if PY_VERSION_HEX >= 0x030c0000
-        st->exc = PyErr_GetRaisedException();
-#else
-        PyObject *tp = nullptr, *val = nullptr, *tb = nullptr;
-        PyErr_Fetch(&tp, &val, &tb);
-        PyErr_NormalizeException(&tp, &val, &tb);
-        if (tb)
-            PyException_SetTraceback(val, tb);
-        Py_XDECREF(tp);
-        Py_XDECREF(tb);
-        st->exc = val;
-#endif
-        for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN32;
-    } catch (std::exception &e) {
-        st->errored = true;
-        PyErr_SetString(PyExc_RuntimeError, e.what());
-#if PY_VERSION_HEX >= 0x030c0000
-        st->exc = PyErr_GetRaisedException();
-#else
-        PyObject *tp = nullptr, *val = nullptr, *tb = nullptr;
-        PyErr_Fetch(&tp, &val, &tb);
-        PyErr_NormalizeException(&tp, &val, &tb);
-        Py_XDECREF(tp);
-        Py_XDECREF(tb);
-        st->exc = val;
-#endif
-        for (int i = 0; i < st->output_dim; ++i)
-            y[i] = kNaN32;
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Helper: raise the stashed exception (called after fit returns on error).
 // The stashed exc object is consumed (reference stolen by PyErr_SetRaisedException
 // / PyErr_Restore).
-// ---------------------------------------------------------------------------
 [[noreturn]] static void raise_stashed(PyObject *exc) {
 #if PY_VERSION_HEX >= 0x030c0000
     PyErr_SetRaisedException(exc); // steals reference
@@ -215,9 +149,6 @@ static void trampoline_f32(const float *x, float *y, void *data) {
     throw nb::python_error();
 }
 
-// ---------------------------------------------------------------------------
-// TreeweaveFunction — bound C++ class holding a treeweave_t handle.
-// ---------------------------------------------------------------------------
 class TreeweaveFunction {
   public:
     // Takes ownership of the handle; destructor calls treeweave_free.
@@ -228,11 +159,9 @@ class TreeweaveFunction {
             handle_ = treeweave_free(handle_);
     }
 
-    // Non-copyable, moveable.
     TreeweaveFunction(const TreeweaveFunction &)            = delete;
     TreeweaveFunction &operator=(const TreeweaveFunction &) = delete;
 
-    // ---- introspection ---------------------------------------------------
     int         input_dim() const { return treeweave_input_dim(handle_); }
     int         output_dim() const { return treeweave_output_dim(handle_); }
     size_t      memory_usage() const { return treeweave_memory_usage(handle_); }
@@ -240,241 +169,148 @@ class TreeweaveFunction {
     std::string dtype_str() const { return (treeweave_dtype(handle_) == TREEWEAVE_F64) ? "f64" : "f32"; }
     void        print_stats() const { treeweave_print_stats(handle_); }
 
-    // ---- scalar eval (1 point) ------------------------------------------
     nb::object eval_one(nb::object x_obj) const {
-        const int id     = input_dim();
-        const int od     = output_dim();
-        bool      is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
-
-        if (is_f32) {
-            std::vector<float> xv(id), yv(od);
-            _fill_x_f32(x_obj, xv.data(), id);
-            treeweavef_eval(handle_, xv.data(), yv.data());
-            if (od == 1)
-                return nb::cast(yv[0]);
-            return _make_f32_array(yv.data(), od);
-        } else {
-            std::vector<double> xv(id), yv(od);
-            _fill_x_f64(x_obj, xv.data(), id);
-            treeweave_eval(handle_, xv.data(), yv.data());
-            if (od == 1)
-                return nb::cast(yv[0]);
-            return _make_f64_array(yv.data(), od);
-        }
+        const int id = input_dim(), od = output_dim();
+        if (treeweave_dtype(handle_) == TREEWEAVE_F32)
+            return _eval_one<float>(x_obj, id, od);
+        return _eval_one<double>(x_obj, id, od);
     }
 
-    // ---- AoS batch eval --------------------------------------------------
     // x: (N, input_dim) or (N,) for 1D. Returns (N, output_dim) or (N,) for
     // od==1. The result array is allocated up front (or supplied via `out`) and
     // the C eval writes straight into its buffer — no intermediate copy.
     nb::object eval_multi_py(nb::object x_obj, nb::object out_obj) const {
-        const int  id     = input_dim();
-        const int  od     = output_dim();
-        const bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
-
-        if (is_f32) {
-            auto         x_arr = _coerce_input_f32(x_obj, id);
-            const size_t n     = x_arr.shape(0);
-            auto [arr, dst]    = _output_buffer_f32(out_obj, n, od);
-            { // pure-C eval: release the GIL so other threads can run
-                nb::gil_scoped_release nogil;
-                treeweavef_batch(handle_, x_arr.data(), dst, n);
-            }
-            return arr;
-        } else {
-            auto         x_arr = _coerce_input_f64(x_obj, id);
-            const size_t n     = x_arr.shape(0);
-            auto [arr, dst]    = _output_buffer_f64(out_obj, n, od);
-            {
-                nb::gil_scoped_release nogil;
-                treeweave_batch(handle_, x_arr.data(), dst, n);
-            }
-            return arr;
-        }
+        const int id = input_dim(), od = output_dim();
+        if (treeweave_dtype(handle_) == TREEWEAVE_F32)
+            return _eval_batch<float, &Traits<float>::batch>(x_obj, out_obj, id, od);
+        return _eval_batch<double, &Traits<double>::batch>(x_obj, out_obj, id, od);
     }
 
-    // ---- sorted 1D eval --------------------------------------------------
     nb::object eval_sorted_py(nb::object x_obj, nb::object out_obj) const {
-        const int id = input_dim();
-        const int od = output_dim();
-        if (id != 1)
+        if (input_dim() != 1)
             throw std::runtime_error("eval_sorted requires input_dim == 1");
-
-        const bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
-
-        if (is_f32) {
-            auto         x_arr = _coerce_input_f32(x_obj, 1);
-            const size_t n     = x_arr.shape(0);
-            auto [arr, dst]    = _output_buffer_f32(out_obj, n, od);
-            {
-                nb::gil_scoped_release nogil;
-                treeweavef_sorted(handle_, x_arr.data(), dst, n);
-            }
-            return arr;
-        } else {
-            auto         x_arr = _coerce_input_f64(x_obj, 1);
-            const size_t n     = x_arr.shape(0);
-            auto [arr, dst]    = _output_buffer_f64(out_obj, n, od);
-            {
-                nb::gil_scoped_release nogil;
-                treeweave_sorted(handle_, x_arr.data(), dst, n);
-            }
-            return arr;
-        }
+        const int od = output_dim();
+        if (treeweave_dtype(handle_) == TREEWEAVE_F32)
+            return _eval_batch<float, &Traits<float>::sorted>(x_obj, out_obj, 1, od);
+        return _eval_batch<double, &Traits<double>::sorted>(x_obj, out_obj, 1, od);
     }
 
-    // ---- SoA batch eval --------------------------------------------------
-    // Returns a list of (N,) arrays, one per output component.
     nb::object eval_multi_soa_py(nb::object x_obj) const {
-        const int id = input_dim();
-        const int od = output_dim();
-        if (od < 2)
+        if (output_dim() < 2)
             throw std::runtime_error("eval_multi_soa requires output_dim >= 2");
-
-        bool is_f32 = (treeweave_dtype(handle_) == TREEWEAVE_F32);
-
-        if (is_f32) {
-            auto   x_arr = _coerce_input_f32(x_obj, id);
-            size_t n     = x_arr.shape(0);
-            // Allocate component buffers
-            std::vector<std::vector<float>> comps(od, std::vector<float>(n));
-            std::vector<float *>            soa(od);
-            for (int d = 0; d < od; ++d)
-                soa[d] = comps[d].data();
-            {
-                nb::gil_scoped_release nogil;
-                treeweavef_transposed(handle_, x_arr.data(), soa.data(), n);
-            }
-            nb::list out;
-            for (int d = 0; d < od; ++d)
-                out.append(_make_f32_array(comps[d].data(), (int)n));
-            return out;
-        } else {
-            auto                             x_arr = _coerce_input_f64(x_obj, id);
-            size_t                           n     = x_arr.shape(0);
-            std::vector<std::vector<double>> comps(od, std::vector<double>(n));
-            std::vector<double *>            soa(od);
-            for (int d = 0; d < od; ++d)
-                soa[d] = comps[d].data();
-            {
-                nb::gil_scoped_release nogil;
-                treeweave_transposed(handle_, x_arr.data(), soa.data(), n);
-            }
-            nb::list out;
-            for (int d = 0; d < od; ++d)
-                out.append(_make_f64_array(comps[d].data(), (int)n));
-            return out;
-        }
+        const int id = input_dim(), od = output_dim();
+        if (treeweave_dtype(handle_) == TREEWEAVE_F32)
+            return _eval_soa<float>(x_obj, id, od);
+        return _eval_soa<double>(x_obj, id, od);
     }
 
   private:
     treeweave_t handle_;
 
-    // ---- helpers: coerce input to contiguous C-order float/double array --
+    template <typename T>
+    using Array = nb::ndarray<const T, nb::numpy, nb::c_contig, nb::device::cpu>;
+    template <typename T>
+    using ArrayMut = nb::ndarray<T, nb::numpy, nb::c_contig, nb::device::cpu>;
 
-    using F64Array = nb::ndarray<const double, nb::numpy, nb::c_contig, nb::device::cpu>;
-    using F32Array = nb::ndarray<const float, nb::numpy, nb::c_contig, nb::device::cpu>;
-    // Mutable views, used when writing into a freshly-allocated output array.
-    using F64ArrayMut = nb::ndarray<double, nb::numpy, nb::c_contig, nb::device::cpu>;
-    using F32ArrayMut = nb::ndarray<float, nb::numpy, nb::c_contig, nb::device::cpu>;
-
-    static F64Array _coerce_input_f64(nb::object x_obj, int id) {
-        // Accept any array-like; ndim may be 1 (for id==1) or 2 (for id>1).
-        return nb::cast<F64Array>(nb::module_::import_("numpy").attr("ascontiguousarray")(
-            x_obj, nb::module_::import_("numpy").attr("float64")));
+    // Accept any array-like; ndim may be 1 (for id==1) or 2 (for id>1).
+    template <typename T>
+    static Array<T> _coerce_input(nb::object x_obj) {
+        auto np = nb::module_::import_("numpy");
+        return nb::cast<Array<T>>(np.attr("ascontiguousarray")(x_obj, np.attr(Traits<T>::numpy_dtype)));
     }
 
-    static F32Array _coerce_input_f32(nb::object x_obj, int id) {
-        return nb::cast<F32Array>(nb::module_::import_("numpy").attr("ascontiguousarray")(
-            x_obj, nb::module_::import_("numpy").attr("float32")));
-    }
-
-    // Fill a plain C array of `id` doubles from a Python scalar or 1-D sequence.
-    static void _fill_x_f64(nb::object x, double *out, int id) {
+    template <typename T>
+    static void _fill_x(nb::object x, T *out, int id) {
         if (id == 1) {
-            out[0] = nb::cast<double>(x);
+            out[0] = nb::cast<T>(x);
         } else {
-            auto arr = nb::cast<F64Array>(
-                nb::module_::import_("numpy").attr("asarray")(x, nb::module_::import_("numpy").attr("float64")));
-            for (int i = 0; i < id; ++i)
-                out[i] = arr.data()[i];
-        }
-    }
-    static void _fill_x_f32(nb::object x, float *out, int id) {
-        if (id == 1) {
-            out[0] = nb::cast<float>(x);
-        } else {
-            auto arr = nb::cast<F32Array>(
-                nb::module_::import_("numpy").attr("asarray")(x, nb::module_::import_("numpy").attr("float32")));
+            auto np  = nb::module_::import_("numpy");
+            auto arr = nb::cast<Array<T>>(np.attr("asarray")(x, np.attr(Traits<T>::numpy_dtype)));
             for (int i = 0; i < id; ++i)
                 out[i] = arr.data()[i];
         }
     }
 
-    // ---- helpers: wrap raw buffer as a NumPy array ----------------------
-
-    // 1-D array of n doubles (owned copy).
-    static nb::object _make_f64_array(const double *data, int n) {
+    template <typename T>
+    static nb::object _make_array(const T *data, int n) {
         auto       np  = nb::module_::import_("numpy");
-        nb::object arr = np.attr("empty")(n, "dtype"_a = np.attr("float64"));
-        double    *dst = nb::cast<F64ArrayMut>(arr).data();
-        std::memcpy(dst, data, n * sizeof(double));
-        return arr;
-    }
-    static nb::object _make_f32_array(const float *data, int n) {
-        auto       np  = nb::module_::import_("numpy");
-        nb::object arr = np.attr("empty")(n, "dtype"_a = np.attr("float32"));
-        float     *dst = nb::cast<F32ArrayMut>(arr).data();
-        std::memcpy(dst, data, n * sizeof(float));
+        nb::object arr = np.attr("empty")(n, "dtype"_a = np.attr(Traits<T>::numpy_dtype));
+        T         *dst = nb::cast<ArrayMut<T>>(arr).data();
+        std::memcpy(dst, data, n * sizeof(T));
         return arr;
     }
 
     // Resolve the output array for a batch/sorted eval: allocate a fresh (N,) /
     // (N, od) array, or validate and reuse a caller-supplied `out`. Returns the
     // array (kept alive by the caller) and a raw pointer the C eval writes into
-    // directly — there is no intermediate buffer or copy.
-    static std::pair<nb::object, double *> _output_buffer_f64(nb::object out_obj, size_t n, int od) {
+    // directly — no intermediate buffer or copy.
+    template <typename T>
+    static std::pair<nb::object, T *> _output_buffer(nb::object out_obj, size_t n, int od) {
         if (out_obj.is_none()) {
-            auto       np = nb::module_::import_("numpy");
-            nb::object arr =
-                (od == 1) ? np.attr("empty")(n, "dtype"_a = np.attr("float64"))
-                          : np.attr("empty")(nb::make_tuple(static_cast<int>(n), od), "dtype"_a = np.attr("float64"));
-            return {arr, nb::cast<F64ArrayMut>(arr).data()};
+            auto       np  = nb::module_::import_("numpy");
+            nb::object arr = (od == 1) ? np.attr("empty")(n, "dtype"_a = np.attr(Traits<T>::numpy_dtype))
+                                       : np.attr("empty")(nb::make_tuple(static_cast<int>(n), od),
+                                                          "dtype"_a = np.attr(Traits<T>::numpy_dtype));
+            return {arr, nb::cast<ArrayMut<T>>(arr).data()};
         }
         // out= must already be the right type/layout: convert=false so we never
         // silently write into a throwaway converted copy instead of the caller's.
-        F64ArrayMut arr;
-        if (!nb::try_cast<F64ArrayMut>(out_obj, arr, /*convert=*/false))
-            throw std::invalid_argument("out= must be a contiguous, C-ordered float64 NumPy array");
+        ArrayMut<T> arr;
+        if (!nb::try_cast<ArrayMut<T>>(out_obj, arr, /*convert=*/false))
+            throw std::invalid_argument(std::string("out= must be a contiguous, C-ordered ") + Traits<T>::numpy_dtype +
+                                        " NumPy array");
         if (arr.size() != n * static_cast<size_t>(od))
             throw std::invalid_argument("out= has the wrong number of elements for this batch");
         return {out_obj, arr.data()};
     }
-    static std::pair<nb::object, float *> _output_buffer_f32(nb::object out_obj, size_t n, int od) {
-        if (out_obj.is_none()) {
-            auto       np = nb::module_::import_("numpy");
-            nb::object arr =
-                (od == 1) ? np.attr("empty")(n, "dtype"_a = np.attr("float32"))
-                          : np.attr("empty")(nb::make_tuple(static_cast<int>(n), od), "dtype"_a = np.attr("float32"));
-            return {arr, nb::cast<F32ArrayMut>(arr).data()};
+
+    template <typename T>
+    nb::object _eval_one(nb::object x_obj, int id, int od) const {
+        std::vector<T> xv(id), yv(od);
+        _fill_x<T>(x_obj, xv.data(), id);
+        Traits<T>::eval(handle_, xv.data(), yv.data());
+        if (od == 1)
+            return nb::cast(yv[0]);
+        return _make_array<T>(yv.data(), od);
+    }
+
+    // Shared impl for batch and sorted (they share the same signature).
+    template <typename T, void (*BatchFn)(treeweave_t, const T *, T *, size_t)>
+    nb::object _eval_batch(nb::object x_obj, nb::object out_obj, int /*id*/, int od) const {
+        auto         x_arr = _coerce_input<T>(x_obj);
+        const size_t n     = x_arr.shape(0);
+        auto [arr, dst]    = _output_buffer<T>(out_obj, n, od);
+        { // pure-C eval: release the GIL so other threads can run
+            nb::gil_scoped_release nogil;
+            BatchFn(handle_, x_arr.data(), dst, n);
         }
-        F32ArrayMut arr;
-        if (!nb::try_cast<F32ArrayMut>(out_obj, arr, /*convert=*/false))
-            throw std::invalid_argument("out= must be a contiguous, C-ordered float32 NumPy array");
-        if (arr.size() != n * static_cast<size_t>(od))
-            throw std::invalid_argument("out= has the wrong number of elements for this batch");
-        return {out_obj, arr.data()};
+        return arr;
+    }
+
+    template <typename T>
+    nb::object _eval_soa(nb::object x_obj, int id, int od) const {
+        auto                        x_arr = _coerce_input<T>(x_obj);
+        size_t                      n     = x_arr.shape(0);
+        std::vector<std::vector<T>> comps(od, std::vector<T>(n));
+        std::vector<T *>            soa(od);
+        for (int d = 0; d < od; ++d)
+            soa[d] = comps[d].data();
+        {
+            nb::gil_scoped_release nogil;
+            Traits<T>::transposed(handle_, x_arr.data(), soa.data(), n);
+        }
+        nb::list out;
+        for (int d = 0; d < od; ++d)
+            out.append(_make_array<T>(comps[d].data(), (int)n));
+        return out;
     }
 };
 
-// ---------------------------------------------------------------------------
-// fit_f64 / fit_f32 — called from Python's treeweave.fit()
-// ---------------------------------------------------------------------------
-
-static nb::object fit_f64(nb::object callable, int input_dim, int output_dim, std::vector<double> a,
-                          std::vector<double> b, double tol, int tol_kind_int, int max_depth, int max_memory_mib,
-                          int allow_max_depth_leaves, int min_uniform_depth) {
-    TrampolineState64 st;
+template <typename T>
+static nb::object fit_impl(nb::object callable, int input_dim, int output_dim, std::vector<T> a, std::vector<T> b,
+                           double tol, int tol_kind_int, int max_depth, int max_memory_mib, int allow_max_depth_leaves,
+                           int min_uniform_depth) {
+    TrampolineState<T> st;
     st.callable   = callable;
     st.input_dim  = input_dim;
     st.output_dim = output_dim;
@@ -487,9 +323,8 @@ static nb::object fit_f64(nb::object callable, int input_dim, int output_dim, st
     opts.min_uniform_depth      = min_uniform_depth;
 
     // Python carries state in the trampoline's &st context; opts trails last.
-    treeweave_t handle = treeweave_fit(trampoline_f64, input_dim, output_dim, a.data(), b.data(), tol, &st, &opts);
+    treeweave_t handle = Traits<T>::fit(&trampoline<T>, input_dim, output_dim, a.data(), b.data(), tol, &st, &opts);
 
-    // Handle callback exception first (takes priority).
     if (st.errored) {
         if (handle)
             handle = treeweave_free(handle); // shouldn't happen but be safe
@@ -500,50 +335,26 @@ static nb::object fit_f64(nb::object callable, int input_dim, int output_dim, st
 
     if (!handle) {
         const char *msg = treeweave_last_error();
-        throw std::runtime_error(msg && *msg ? msg : "treeweave_fit returned NULL");
+        throw std::runtime_error(msg && *msg ? msg : std::string(Traits<T>::fit_name) + " returned NULL");
     }
 
     return nb::cast(new TreeweaveFunction(handle), nb::rv_policy::take_ownership);
+}
+
+static nb::object fit_f64(nb::object callable, int input_dim, int output_dim, std::vector<double> a,
+                          std::vector<double> b, double tol, int tol_kind_int, int max_depth, int max_memory_mib,
+                          int allow_max_depth_leaves, int min_uniform_depth) {
+    return fit_impl<double>(callable, input_dim, output_dim, std::move(a), std::move(b), tol, tol_kind_int, max_depth,
+                            max_memory_mib, allow_max_depth_leaves, min_uniform_depth);
 }
 
 static nb::object fit_f32(nb::object callable, int input_dim, int output_dim, std::vector<float> a,
                           std::vector<float> b, double tol, int tol_kind_int, int max_depth, int max_memory_mib,
                           int allow_max_depth_leaves, int min_uniform_depth) {
-    TrampolineState32 st;
-    st.callable   = callable;
-    st.input_dim  = input_dim;
-    st.output_dim = output_dim;
-
-    treeweave_opts opts         = treeweave_default_opts;
-    opts.tol_kind               = (treeweave_tol_kind_t)tol_kind_int;
-    opts.max_depth              = max_depth;
-    opts.max_memory_mib         = max_memory_mib;
-    opts.allow_max_depth_leaves = allow_max_depth_leaves;
-    opts.min_uniform_depth      = min_uniform_depth;
-
-    // Python carries state in the trampoline's &st context; opts trails last.
-    // a and b are already std::vector<float> — use them directly.
-    treeweave_t handle = treeweavef_fit(trampoline_f32, input_dim, output_dim, a.data(), b.data(), tol, &st, &opts);
-
-    if (st.errored) {
-        if (handle)
-            handle = treeweave_free(handle);
-        if (st.exc)
-            raise_stashed(st.exc);
-        throw std::runtime_error("treeweave callback failed (no exception stashed)");
-    }
-
-    if (!handle) {
-        const char *msg = treeweave_last_error();
-        throw std::runtime_error(msg && *msg ? msg : "treeweavef_fit returned NULL");
-    }
-
-    return nb::cast(new TreeweaveFunction(handle), nb::rv_policy::take_ownership);
+    return fit_impl<float>(callable, input_dim, output_dim, std::move(a), std::move(b), tol, tol_kind_int, max_depth,
+                           max_memory_mib, allow_max_depth_leaves, min_uniform_depth);
 }
 
-// ---------------------------------------------------------------------------
-// Module definition
-// ---------------------------------------------------------------------------
 NB_MODULE(_treeweave, m) {
     m.doc() = "Low-level nanobind bindings for the treeweave C ABI.";
 

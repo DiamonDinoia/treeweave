@@ -1,24 +1,6 @@
-// treeweave_napi.cpp — Node-API (node-addon-api) addon over the treeweave C ABI.
-//
-// This is the *native* backend of the JS binding: a `.node` addon that links
-// treeweave_c_static (exactly like the Python nanobind extension). The browser
-// backend is a separate Emscripten/WASM build of the same C ABI (see
-// wasm_glue.cpp); the TypeScript layer (src/backend.ts) picks one at runtime.
-//
-// Architecture mirrors the Python binding (bindings/python/src/_treeweave.cpp):
-//   * `fit` runs the C fit with a typed trampoline that calls the user's JS
-//     callback synchronously on the calling thread — treeweave_fit invokes the
-//     callback inline, so a plain Function::Call works (no ThreadSafeFunction).
-//   * A JS exception thrown inside the callback must not unwind through the C
-//     ABI: the trampoline catches it, latches an error flag, NaN-fills y[], and
-//     short-circuits the remaining probes; fit() rethrows it afterwards.
-//   * `fit` returns a plain JS object whose eval methods are closures over a
-//     shared FnState that owns the treeweave_t handle. The handle is freed by
-//     ~FnState (when the last closure is GC'd) or eagerly by free().
-//
-// Eval batches are zero-copy: the C eval reads/writes straight through the JS
-// TypedArray's backing store (Node never moves ArrayBuffer storage during a
-// synchronous call), and an `out` array is written in place and returned as-is.
+// treeweave_napi.cpp — Node-API (node-addon-api) native backend.
+// JS exceptions from the fit callback are caught in the trampoline (not unwound through C ABI); eval batches are
+// zero-copy through Node's ArrayBuffer backing store. (see devel/agents/build-notes.md)
 
 #include <napi.h>
 
@@ -35,9 +17,7 @@ namespace {
 constexpr double kNaN64 = std::numeric_limits<double>::quiet_NaN();
 constexpr float  kNaN32 = std::numeric_limits<float>::quiet_NaN();
 
-// ---------------------------------------------------------------------------
 // Trampoline state (one per fit call; lives on the stack for the fit's span).
-// ---------------------------------------------------------------------------
 template <typename T>
 struct FitState {
     Napi::Env      env;
@@ -99,9 +79,7 @@ extern "C" void trampoline_f32(const float *x, float *y, void *ctx) {
     trampoline<float, Napi::Float32Array>(x, y, ctx, kNaN32);
 }
 
-// ---------------------------------------------------------------------------
 // Fitted-function state — owns the handle; freed when the last closure dies.
-// ---------------------------------------------------------------------------
 struct FnState {
     treeweave_t h;
     int         input_dim;
@@ -123,8 +101,6 @@ struct FnState {
     const char *msg = treeweave_last_error();
     throw Napi::Error::New(env, (msg && *msg) ? msg : fallback);
 }
-
-// ---- eval method bodies (shared by both dtypes via templates) -------------
 
 template <typename T, typename Arr>
 Napi::Value eval_one_impl(const std::shared_ptr<FnState> &st, const Napi::CallbackInfo &info,
@@ -183,9 +159,7 @@ Napi::Value transposed_impl(const std::shared_ptr<FnState> &st, const Napi::Call
     return result;
 }
 
-// ---------------------------------------------------------------------------
 // fit(callback, inputDim, outputDim, a, b, tol, optsInt32[5], dtype) -> object
-// ---------------------------------------------------------------------------
 Napi::Value Fit(const Napi::CallbackInfo &info) {
     Napi::Env        env        = info.Env();
     Napi::Function   cb         = info[0].As<Napi::Function>();

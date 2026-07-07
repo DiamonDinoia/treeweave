@@ -28,11 +28,6 @@ the same name, so the mapping is one-to-one and explicit.
 > the CMake-selected `f95` symlink resolves to gfortran 8, which miscompiles
 > Fortran 2018 constructs used here.
 
-Unlike the Python / Julia / MATLAB wrappers, this binding is deliberately
-*faithful* rather than ergonomic: there is no call operator, no keyword
-arguments, and no dimension inference. The caller passes `input_dim` /
-`output_dim` explicitly, exactly as a C consumer would.
-
 ## Using it
 
 ```fortran

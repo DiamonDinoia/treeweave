@@ -7,14 +7,7 @@ axis-aligned box domains in 1–3 dimensions.
 ## Requirements
 
 - Julia 1.9+
-- `libtreeweave_c` (the C ABI layer over the C++ library). For a released
-  version it is **downloaded automatically** at build time — no committed
-  `Artifacts.toml`, no manual step. `Pkg.add` runs `deps/build.jl`, which
-  resolves `libtreeweave_c` in order: the `LIBTREEWEAVE_C` environment variable
-  (explicit override) → a sibling CMake `build*/libtreeweave_c.<ext>` (in-repo
-  developers) → the prebuilt release binary matching the package version,
-  downloaded from the GitHub Release and cached under `deps/usr/`. The result
-  is baked into `deps/deps.jl`, which `using Treeweave` reads at load time.
+- `libtreeweave_c` (the C ABI layer over the C++ library). For a released version, `Pkg.add` downloads the matching prebuilt from the GitHub Release automatically (`LIBTREEWEAVE_C` env var overrides; in-repo developers get the sibling `build*/libtreeweave_c.<ext>` automatically).
 
 ### Installing
 
@@ -25,11 +18,6 @@ using Pkg
 Pkg.add(url = "https://github.com/DiamonDinoia/treeweave",
         subdir = "bindings/julia/Treeweave")
 ```
-
-`Pkg.add` triggers `deps/build.jl`, which downloads the prebuilt `libtreeweave_c`
-for your platform from the matching release. Developers working in the repo
-instead get the sibling CMake-`build*/` library automatically, or can point
-`LIBTREEWEAVE_C` at any build.
 
 ## Quick start
 
@@ -69,8 +57,6 @@ r  = b(xs; sorted=true)      # Vector{Float64}
 | `out_dim`  | `Int`, inferred      | output dimension (1–3); probed from `f` when omitted |
 | `dtype`    | `Float64`            | element type (`Float64` or `Float32`)           |
 | `options`  | `TreeweaveOptions()`    | advanced knobs (depth, memory budget, …)        |
-
-The C ABI auto-selects a register-optimal leaf polynomial degree per detected CPU. Accuracy is controlled entirely by `tol`.
 
 ### User-function calling convention
 

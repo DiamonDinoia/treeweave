@@ -59,9 +59,7 @@ module Treeweave
 
 using Libdl
 
-# ---------------------------------------------------------------------------
 # Library path
-# ---------------------------------------------------------------------------
 
 # Walk up from `start`, returning the first `build*/libtreeweave_c.<dlext>` found
 # (the canonical location of an in-repo CMake build), or `nothing`.
@@ -82,7 +80,6 @@ function _find_in_build_tree(start::AbstractString)
 end
 
 function _resolve_libtreeweave()
-    # 1. explicit override
     env = get(ENV, "LIBTREEWEAVE_C", "")
     isempty(env) || return env
 
@@ -94,7 +91,6 @@ function _resolve_libtreeweave()
         path isa AbstractString && isfile(path) && return path
     end
 
-    # 3. the loader search path
     found = Libdl.find_library(["libtreeweave_c", "treeweave_c"])
     isempty(found) || return found
 
@@ -117,9 +113,7 @@ function __init__()
     end
 end
 
-# ---------------------------------------------------------------------------
 # Enumerations (mirrored as Cint constants)
-# ---------------------------------------------------------------------------
 
 # treeweave_tol_kind_t
 const TREEWEAVE_RELATIVE_TAIL  = Cint(0)
@@ -133,9 +127,7 @@ const TREEWEAVE_ABSOLUTE_L2    = Cint(5)
 const TREEWEAVE_F64 = Cint(0)
 const TREEWEAVE_F32 = Cint(1)
 
-# ---------------------------------------------------------------------------
 # Options struct (maps directly to treeweave_opts)
-# ---------------------------------------------------------------------------
 
 """
     TreeweaveOptions(; tol_kind, max_depth, max_memory_mib, allow_max_depth_leaves, min_uniform_depth)
@@ -164,9 +156,7 @@ function TreeweaveOptions(;
                   Cint(allow_max_depth_leaves), Cint(min_uniform_depth))
 end
 
-# ---------------------------------------------------------------------------
 # Treeweave handle struct
-# ---------------------------------------------------------------------------
 
 """
     Treeweave{T}
@@ -187,18 +177,12 @@ mutable struct TreeweaveFn{T}
     _cfun   :: Any
 end
 
-# ---------------------------------------------------------------------------
 # Internal helpers
-# ---------------------------------------------------------------------------
 
 @inline function _last_error()::String
     ptr = ccall((:treeweave_last_error, LIBTREEWEAVE), Cstring, ())
     ptr == C_NULL ? "(no error message)" : unsafe_string(ptr)
 end
-
-# ---------------------------------------------------------------------------
-# fit
-# ---------------------------------------------------------------------------
 
 """
     fit(f, a, b, tol; dim=length(a), out_dim=1, dtype=Float64,
@@ -228,7 +212,6 @@ function fit(f, a, b, tol::Real;
     T   = (dtype == Float32 ? Float32 : Float64)
     CT  = (T == Float64 ? Cdouble : Cfloat)
 
-    # Coerce corners to same-type vectors.
     av  = a isa AbstractVector ? CT[CT(x) for x in a] : CT[CT(a)]
     bv  = b isa AbstractVector ? CT[CT(x) for x in b] : CT[CT(b)]
     @assert length(av) == dim && length(bv) == dim
@@ -242,9 +225,6 @@ function fit(f, a, b, tol::Real;
         out_dim = length(probe)
     end
 
-    # -----------------------------------------------------------------------
-    # Build the trampoline closure.
-    # -----------------------------------------------------------------------
     err = Ref{Any}(nothing)
 
     # Capture `dim` and `out_dim` by value through closure.
@@ -345,9 +325,7 @@ function fit(f, a, b, tol::Real;
     return handle
 end
 
-# ---------------------------------------------------------------------------
 # Evaluation — the fitted handle is *called*
-# ---------------------------------------------------------------------------
 
 """
     (b::TreeweaveFn)(x; sorted=false, transposed=false)
@@ -494,9 +472,7 @@ end
     return permutedims(buf)   # out_dim × n
 end
 
-# ---------------------------------------------------------------------------
 # Introspection
-# ---------------------------------------------------------------------------
 
 """
     memory_usage(b::TreeweaveFn) -> Int
@@ -519,11 +495,8 @@ function Base.show(io::IO, b::TreeweaveFn{T}) where T
     print(io, "TreeweaveFn{$T}(dim=$(b.dim), out_dim=$(b.out_dim), $(bytes) bytes)")
 end
 
-# ---------------------------------------------------------------------------
 # Internal utility helpers
-# ---------------------------------------------------------------------------
 
-# Coerce a user-supplied point to a Vector{T} of length dim.
 function _coerce_x(x, dim::Int, ::Type{T}) where T
     if dim == 1
         return T[T(x isa AbstractVector ? x[1] : x)]
@@ -547,7 +520,6 @@ function _pack_x(X, dim::Int, ::Type{T}) where T
         # X[i,j] is the j-th coordinate of the i-th point.
         n, d = size(X)
         d == dim || error("Matrix has $d columns but dim=$dim")
-        # Build row-major flat buffer explicitly.
         buf = Vector{T}(undef, n * dim)
         for i in 1:n
             for j in 1:dim
@@ -577,9 +549,7 @@ function _unpack_y(res::Vector{T}, n::Int, out_dim::Int) where T
     end
 end
 
-# ---------------------------------------------------------------------------
 # Exports
-# ---------------------------------------------------------------------------
 
 export TreeweaveOptions, TreeweaveFn, fit, memory_usage, print_stats
 export TREEWEAVE_RELATIVE_TAIL, TREEWEAVE_ABSOLUTE_TAIL, TREEWEAVE_RELATIVE_MAX

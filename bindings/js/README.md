@@ -9,36 +9,78 @@ adaptive piecewise-polynomial function approximation over the treeweave C ABI.
 npm install @flatironinstitute/treeweave
 ```
 
-The package ships **prebuilt native N-API binaries** (`prebuilds/<platform>-<arch>/`,
-resolved by [`node-gyp-build`](https://github.com/prebuild/node-gyp-build)) for
-Linux x64/arm64, macOS arm64/x64, and Windows x64 — picked up automatically under
-Node for full speed — plus a bundled **WASM** build that runs in the browser and
-acts as the fallback on any host without a matching prebuild. No native toolchain
-is required: N-API is ABI-stable, so one binary per platform covers every Node
-version. (`backend.ts` prefers the native addon under Node and falls back to WASM;
-force one with `Treeweave.fit(..., { backend: "native" | "wasm" })`.)
+Prebuilt native N-API binaries for Linux x64/arm64, macOS arm64/x64, and Windows x64 ship in `prebuilds/` (resolved by [`node-gyp-build`](https://github.com/prebuild/node-gyp-build)); a bundled WASM build serves browsers and hosts without a matching prebuild. N-API is ABI-stable — one binary per platform covers every Node version. Force a backend with `{ backend: "native" | "wasm" }`.
 
-A local `cmake --preset bindings-js` build drops `treeweave.node` straight into
-`dist/`; the loader falls back to it when no `prebuilds/` directory is present
-(the development case — `prebuilds/` is assembled only in CI).
+A local `cmake --preset bindings-js` build drops `treeweave.node` into `dist/` (the development case — `prebuilds/` is assembled only in CI).
 
 ## Usage
 
-```ts
-import { Treeweave } from "@flatironinstitute/treeweave";
+```js
+// simple_1d.mjs — minimal 1D fit and evaluation (smoke test).
+// Fits Math.sin on [0, 1], evals a single point and a batch, checks accuracy.
+// Exits nonzero if max abs error > 1e-6.
 
-// Async: the WASM backend loads on demand.
-const approx = await Treeweave.fit((x) => x[0] * x[0], 0.0, 2.0, 1e-8);
+import { Treeweave } from "../dist/index.js";
 
-approx.eval(1.5);                                    // single point -> 2.25
-const xs = Float64Array.from({ length: 1000 }, (_, i) => (i / 1000) * 2);
-approx.batch(xs);                                    // batch: many points, any order
-approx.sorted(xs);                                   // promise xs is non-decreasing (1-D); ~3-4x faster
-approx.free();                                       // or: using approx = await Treeweave.fit(...)
+const fn = await Treeweave.fit((x) => Math.sin(x[0]), 0.0, 1.0, 1e-10, {
+    backend: "native",
+});
+
+// Single-point eval.
+const single = fn.eval(0.5);
+const singleExact = Math.sin(0.5);
+console.log(`sin(0.5) approx=${single.toFixed(12)} exact=${singleExact.toFixed(12)}`);
+
+// Batch eval over 11 points.
+const xs = new Float64Array(11);
+for (let i = 0; i < 11; ++i) xs[i] = i / 10;
+const ys = fn.batch(xs);
+let maxErr = 0;
+for (let i = 0; i < 11; ++i)
+    maxErr = Math.max(maxErr, Math.abs(ys[i] - Math.sin(xs[i])));
+console.log(`max |approx - sin| over 11 points: ${maxErr.toExponential(3)}`);
+
+fn.free();
+
+if (maxErr > 1e-6) {
+    console.error(`error too large: ${maxErr}`);
+    process.exit(1);
+}
+console.log("OK");
 ```
+
+See [`examples/simple_1d.mjs`](examples/simple_1d.mjs) for a complete runnable example.
 
 See the top-level [README](../../README.md) and the
 [guides](https://diamondinoia.github.io/treeweave/) for the full API.
+
+## Options
+
+Pass a `FitOptions` object as the fifth argument to `Treeweave.fit`:
+
+```ts
+const approx = await Treeweave.fit(f, 0.0, 10.0, 1e-10, {
+    tolKind: "absolute_max",
+    maxDepth: 30,
+    maxMemoryMib: 64,
+});
+```
+
+`FitOptions` fields (all optional):
+
+| Field | Default | Meaning |
+|-------|---------|---------|
+| `dim` | inferred | Input dimension; inferred from `a`/`b` length. |
+| `outDim` | inferred | Output dimension; inferred by probing `f` at the box midpoint. |
+| `dtype` | `"f64"` | Floating-point precision: `"f64"` or `"f32"`. |
+| `tolKind` | `"relative_max"` | Tolerance interpretation. One of `"relative_max"`, `"absolute_max"`, `"relative_l2"`, `"absolute_l2"`, `"relative_tail"`, `"absolute_tail"`. |
+| `maxDepth` | `50` | Tree-depth ceiling. |
+| `maxMemoryMib` | `-1` (auto) | Memory budget in MiB. `-1` = auto (4/8/16 MiB for dim 1/2/3); `0` = no cap. |
+| `allowMaxDepthLeaves` | `false` | Keep non-converged panels at max depth instead of throwing. |
+| `minUniformDepth` | `0` | Force uniform refinement to this depth before adaptivity. |
+| `backend` | `"auto"` | Force `"native"` or `"wasm"` backend (default: native under Node, WASM in browser). |
+
+See the [guides](https://diamondinoia.github.io/treeweave/) for the full API reference.
 
 ## Publishing (maintainers)
 

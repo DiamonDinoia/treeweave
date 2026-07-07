@@ -47,8 +47,6 @@ Fits callable `f` and returns a callable `TreeweaveFunction`.
   box midpoint (`np.asarray(f(mid)).size`, scalar ⇒ 1) when omitted.
 - `dtype`: `"f64"` (default) or `"f32"`.
 
-The C ABI auto-selects a register-optimal leaf polynomial degree per detected CPU; accuracy is controlled entirely by `tol`.
-
 ### `TreeweaveFunction`
 
 The fitted object is **called** — there are no named eval methods. A point

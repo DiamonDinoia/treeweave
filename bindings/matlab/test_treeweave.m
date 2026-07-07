@@ -22,9 +22,6 @@ failed = 0;
         tf = ~isempty(strfind(s, sub)); %#ok<STREMP>
     end
 
-% ================================================================== %
-% 1. 1-D scalar fit: exp(0.5*x)+sin(3*x) on [0,1]
-% ================================================================== %
 f1   = @(x) exp(0.5*x(1)) + sin(3*x(1));
 obj1 = treeweave(f1, [0], [1], 1e-8, 'dim', 1, 'out_dim', 1);
 
@@ -48,11 +45,7 @@ check(abs(y1 - yref1) < 1e-5, '1D single-point eval');
 
 delete(obj1);
 
-% ================================================================== %
-% 2. 2-D -> 3-D vector fit
-% ================================================================== %
 f2   = @(x) [sin(x(1)+x(2)); cos(x(1)-x(2)); x(1)*x(2)];
-% out_dim omitted -> inferred by probing f2 at the box midpoint.
 obj2 = treeweave(f2, [-1,-1], [1,1], 1e-6, 'dim', 2, 'max_memory_mib', 64);
 check(obj2.output_dim() == 3, '2D->3D out_dim inferred == 3');
 
@@ -68,25 +61,18 @@ check(err2 < 1e-4, sprintf('2D->3D accuracy (max err = %.2e)', err2));
 check(size(Ygrid,1)==2500 && size(Ygrid,2)==3, '2D->3D output shape 2500x3');
 check(obj2.memory_usage() > 0, '2D->3D memory_usage > 0');
 
-% Transposed (SoA) layout: out_dim×N, equal to the AoS result transposed.
 Yt = obj2(Xgrid, 'transposed', true);
 check(size(Yt,1)==3 && size(Yt,2)==2500, 'transposed shape 3x2500');
 check(max(max(abs(Yt' - Ygrid))) < 1e-12, 'transposed == AoS (transposed)');
 
 delete(obj2);
 
-% ================================================================== %
-% 3. NaN out-of-domain
-% ================================================================== %
 f3   = @(x) sin(x(1));
 obj3 = treeweave(f3, [0], [1], 1e-8);
 y_out = obj3.eval([-5]);
 check(isnan(y_out), 'Out-of-domain returns NaN');
 delete(obj3);
 
-% ================================================================== %
-% 4. Erroring callback is caught and surfaced (no crash/segfault)
-% ================================================================== %
 f_bad  = @(x) error('boom: intentional test error');
 caught = false;
 msg_ok = false;
@@ -103,9 +89,6 @@ end
 check(caught,  'Erroring callback: constructor threw');
 check(msg_ok,  'Erroring callback: message surfaced');
 
-% ================================================================== %
-% 5. Too-tight tol + low max_depth -> fit error
-% ================================================================== %
 f5      = @(x) sin(100*x(1));
 caught5 = false;
 msg5_ok = false;
@@ -124,9 +107,6 @@ end
 check(caught5,  'Tight-tol/low-depth: error thrown');
 check(msg5_ok,  'Tight-tol/low-depth: message mentions MaxDepth/MemoryBudget or treeweave:fit');
 
-% ================================================================== %
-% 6. sorted == general batch for 1-D (bit-exact on sorted input)
-% ================================================================== %
 f6   = @(x) sin(x(1)) .* exp(-0.2*x(1));
 obj6 = treeweave(f6, [0], [5], 1e-9, 'dim', 1, 'out_dim', 1);
 xs6  = sort(rand(256,1) * 5);
@@ -135,9 +115,6 @@ ysort  = obj6(xs6, 'sorted', true);
 check(isequal(ybatch, ysort), 'sorted == general batch (bit-exact)');
 delete(obj6);
 
-% ================================================================== %
-% 7. Strict size / flag validation
-% ================================================================== %
 f7a = @(x) exp(x(1));
 o1  = treeweave(f7a, [0], [1], 1e-6, 'dim', 1, 'out_dim', 1);          % dim1 out1
 f7b = @(x) sin(x(1)+x(2));
@@ -185,9 +162,6 @@ check(ok, 'both flags errors');
 
 delete(o1); delete(o2);
 
-% ================================================================== %
-% Summary
-% ================================================================== %
 fprintf('\n--- Results: %d passed, %d failed ---\n', passed, failed);
 if failed > 0
     error('test_treeweave:failures', '%d test(s) failed.', failed);

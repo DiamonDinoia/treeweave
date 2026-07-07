@@ -1,17 +1,5 @@
-# deps/build.jl — locate libtreeweave_c and bake its path into deps/deps.jl.
-#
-# Run automatically by `Pkg.build("Treeweave")` (which `Pkg.add` triggers).
-# Resolution order:
-#   1. the LIBTREEWEAVE_C environment variable (explicit path);
-#   2. a sibling CMake `build*/libtreeweave_c.<ext>` (in-repo developers);
-#   3. the prebuilt C-ABI release binary matching this package's version,
-#      downloaded from the GitHub Release and cached under deps/usr/.
-#
-# This keeps prebuilt-binary installs working WITHOUT a committed Artifacts.toml
-# — so cutting a release adds no commits to the default branch. If nothing is
-# found we still write a deps.jl (empty path) so the runtime resolver in
-# src/Treeweave.jl falls through to its own search; a build failure must never
-# block precompilation.
+# deps/build.jl — locate libtreeweave_c: env var → sibling CMake build → GitHub Release download.
+# No Artifacts.toml by design; build failure must not block precompilation. (see devel/agents/build-notes.md)
 
 using Libdl
 using Downloads
@@ -67,7 +55,6 @@ function find_lib(root::AbstractString)
     return nothing
 end
 
-# Download + extract the prebuilt release binary for this package version.
 function download_prebuilt()
     suffix = host_asset_suffix()
     suffix === nothing && return ""
