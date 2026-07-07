@@ -1,13 +1,6 @@
-# treeweave_install.cmake — install rules + a relocatable find_package(treeweave)
-# package for the C ABI.
-#
-# The installed package ships the C ABI (`treeweave::treeweave_c` /
-# `treeweave::treeweave_c_static`) — self-contained, links polyfit/POET privately.
-# It also ships the header-only C++ API: the consolidated bundle
-# (treeweave_bundle.cmake) installs treeweave's headers alongside the polyfit /
-# POET / xsimd / mdspan trees it instantiates against, so `-I<prefix>/include`
-# is enough. find_package still exposes only the C-ABI CMake targets; the C++
-# headers are consumed by include path (see treeweave_c_api.cmake and the README).
+# treeweave_install.cmake — install rules + relocatable find_package package.
+# Ships C ABI targets + consolidated header bundle. C++ consumed by include path.
+# (see devel/agents/build-notes.md — "Install overview")
 
 include_guard(GLOBAL)
 include(CMakePackageConfigHelpers)
@@ -36,7 +29,6 @@ if(_install_targets)
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     )
 
     install(
@@ -65,13 +57,8 @@ if(_install_targets)
     )
 endif()
 
-# Ship the consolidated header bundle (treeweave_bundle.cmake): treeweave's own
-# headers plus the vendored polyfit/POET/xsimd/mdspan trees. This makes the
-# header-only C++ API consumable from the install prefix with a single
-# `-I<prefix>/include` (or none, for a standard prefix), the same as the build
-# tree. Falls back to the source include/ if the bundle wasn't built (e.g. a
-# non-top-level configure). The generated treeweave_version.h ships; its .in
-# template does not.
+# Consolidated bundle: treeweave + dep headers in one tree (-I<prefix>/include).
+# Falls back to source include/ if bundle wasn't built (non-top-level configure).
 if(
     TREEWEAVE_BUNDLE_INCLUDE_DIR
     AND IS_DIRECTORY "${TREEWEAVE_BUNDLE_INCLUDE_DIR}"

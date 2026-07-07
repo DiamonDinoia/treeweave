@@ -1,30 +1,8 @@
-# bindings/matlab — MATLAB/Octave (MEX) binding, built entirely from CMake.
-# Added by cmake/treeweave_bindings.cmake when TREEWEAVE_BUILD_MATLAB=ON.
-#
-# treeweave.mw is the mwrap source of truth. mwrap's output is platform-
-# independent, so it is generated once and committed to generated/
-# (treeweave_mex_gen.cpp + tw_*.m). By default the build just compiles those
-# checked-in files (TREEWEAVE_MATLAB_USE_PREGENERATED=ON): no CPM, no mwrap, no
-# bison/flex/m4. Set it OFF to fetch+run mwrap (zgimbutas/mwrap, via CPM) and
-# refresh generated/ with the treeweave_mw_regen target after a treeweave.mw edit.
-#
-# mwrap's helper generates and (optionally) compiles, but it does not link an
-# external static library into the MEX, so we own the final compile/link step:
-#   * MATLAB  → matlab_add_mex() + link treeweave_c_static (license required);
-#   * Octave  → mkoctfile --mex … treeweave_c_static (license-free, the CI path).
-# A missing toolchain degrades to a STATUS message and a skipped test.
-#
-# Backend selection (MEX M2 note): there is no separate CMake option for Octave.
-# Both CMake presets (bindings-matlab and bindings-octave) set the same flag
-# TREEWEAVE_BUILD_MATLAB=ON. Backend selection is driven purely by toolchain
-# discovery below: if mkoctfile is on PATH the Octave MEX is built; if MATLAB
-# is found the MATLAB MEX is built; if both are present both are built. The
-# bindings-octave preset is the recommended entry point when no MATLAB license
-# is available (CI path) — ensure mkoctfile is on PATH before configuring.
+# bindings/matlab — MATLAB/Octave MEX binding. Pregenerated gateway by default
+# (TREEWEAVE_MATLAB_USE_PREGENERATED=ON); set OFF to fetch+run mwrap via CPM.
+# Backend auto-detected: mkoctfile (license-free) or MATLAB; both if present.
+# (see devel/agents/build-notes.md — MATLAB pregenerated gateway section)
 
-# ---------------------------------------------------------------------------
-# Toolchain discovery — at least one MEX backend must be present.
-# ---------------------------------------------------------------------------
 find_program(TREEWEAVE_MKOCTFILE_EXECUTABLE mkoctfile)
 find_program(TREEWEAVE_OCTAVE_EXECUTABLE NAMES octave-cli octave)
 find_package(Matlab QUIET COMPONENTS MAIN_PROGRAM MEX_COMPILER MX_LIBRARY)
@@ -37,16 +15,6 @@ if(NOT TREEWEAVE_MKOCTFILE_EXECUTABLE AND NOT Matlab_FOUND)
     return()
 endif()
 
-# ---------------------------------------------------------------------------
-# mwrap output: checked-in by default, regenerated only on request.
-# ---------------------------------------------------------------------------
-# mwrap's output (treeweave_mex_gen.cpp + tw_*.m) is platform-independent — a
-# textual codegen from treeweave.mw with no arch/OS flags — so we generate it
-# once and commit it to generated/. The default build just compiles those
-# checked-in files: no CPM, no mwrap, no bison/flex/m4, and (crucially) no MSVC
-# link of mwrap's flex/bison globals, which never resolved (the Windows blocker).
-# Set TREEWEAVE_MATLAB_USE_PREGENERATED=OFF to fetch+run mwrap and refresh
-# generated/ via the treeweave_mw_regen target after editing treeweave.mw.
 option(
     TREEWEAVE_MATLAB_USE_PREGENERATED
     "Compile the checked-in mwrap gateway (generated/) instead of running mwrap"
@@ -62,9 +30,8 @@ option(
 set(_treeweave_inc "${PROJECT_SOURCE_DIR}/include")
 
 if(TREEWEAVE_MATLAB_USE_PREGENERATED)
-    # Stage the checked-in tw_*.m into a build dir alongside where the MEX will
-    # land, so a single addpath imports the binding (same layout as the regen
-    # path), and the source tree never gets a compiled MEX written into it.
+    # Stage tw_*.m into build dir so a single addpath imports the binding;
+    # source tree never gets a compiled MEX written into it.
     set(_treeweave_mex_src
         "${CMAKE_CURRENT_SOURCE_DIR}/generated/treeweave_mex_gen.cpp"
     )
@@ -77,9 +44,7 @@ if(TREEWEAVE_MATLAB_USE_PREGENERATED)
     )
     set(_treeweave_mw_dep "") # no generator target
 else()
-    # Regen path: fetch+build the mwrap generator via CPM (MWRAP_COMPILE_MEX OFF
-    # — mwrap would otherwise find_package(Matlab/Octave) REQUIRED itself; we
-    # drive the compile/link below).
+    # Regen path: MWRAP_COMPILE_MEX OFF so we drive compile/link ourselves.
     _treeweave_ensure_cpm()
     cpmaddpackage(
         NAME mwrap
@@ -132,11 +97,6 @@ else()
     )
 endif()
 
-# ---------------------------------------------------------------------------
-# MATLAB backend — matlab_add_mex() + our include/define/link. -DR2008OO selects
-# mwrap's classdef/mwptr object-pointer path. Static libstdc++/libgcc so the
-# .mexa64 doesn't depend on a newer GLIBCXX than MATLAB's bundled libstdc++.
-# ---------------------------------------------------------------------------
 if(Matlab_FOUND)
     matlab_add_mex(
         NAME treeweave_mex_matlab
@@ -148,14 +108,10 @@ if(Matlab_FOUND)
     endif()
     target_include_directories(treeweave_mex_matlab PRIVATE "${_treeweave_inc}")
     target_compile_definitions(treeweave_mex_matlab PRIVATE R2008OO)
-    # matlab_add_mex() already linked the MATLAB libs with the *plain*
-    # target_link_libraries signature, so this one must be plain too (CMake
-    # forbids mixing the keyword and plain signatures on one target).
+    # matlab_add_mex() uses the plain TLL signature; must match to avoid CMake error.
     target_link_libraries(treeweave_mex_matlab treeweave_c_static)
-    # Static-link the C++ runtime (NOT glibc) so the shipped .mexa64 doesn't need
-    # a newer GLIBCXX than MATLAB's bundled libstdc++ — the standard portable-MEX
-    # fix. Default ON (release bundles need it); dev can link dynamically with
-    # -DTREEWEAVE_MATLAB_STATIC_LIBSTDCXX=OFF.
+    # -static-libstdc++/-static-libgcc: .mexa64 must not need a newer GLIBCXX than
+    # MATLAB's bundled libstdc++. Standard portable-MEX fix.
     if(
         CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
         AND TREEWEAVE_MATLAB_STATIC_LIBSTDCXX
@@ -165,8 +121,6 @@ if(Matlab_FOUND)
             PRIVATE -static-libstdc++ -static-libgcc
         )
     endif()
-    # Drop the .mexa64 next to the generated tw_*.m stubs so a single addpath
-    # makes the whole binding importable.
     set_target_properties(
         treeweave_mex_matlab
         PROPERTIES
@@ -175,12 +129,7 @@ if(Matlab_FOUND)
     )
 endif()
 
-# ---------------------------------------------------------------------------
-# Octave backend — mkoctfile compiles + links against Octave's own mex API. The
-# octave_compat/ shim satisfies mwrap's `#include <matrix.h>` (MATLAB-only;
-# Octave's mex.h is self-contained and ships no matrix.h). The static C archive
-# is passed as a positional input so mkoctfile links it.
-# ---------------------------------------------------------------------------
+# octave_compat/ shim satisfies mwrap's #include <matrix.h> (MATLAB-only header).
 if(TREEWEAVE_MKOCTFILE_EXECUTABLE)
     set(_treeweave_oct_mex "${_treeweave_gen_dir}/treeweave_mex.mex")
     add_custom_command(
@@ -198,11 +147,6 @@ if(TREEWEAVE_MKOCTFILE_EXECUTABLE)
     add_custom_target(treeweave_mex_octave ALL DEPENDS "${_treeweave_oct_mex}")
 endif()
 
-# ---------------------------------------------------------------------------
-# Test — run test_treeweave.m headless. Prefer Octave (license-free, the CI
-# path); fall back to MATLAB. Both need the source dir (treeweave.m class +
-# test_treeweave.m) and the generated dir (tw_*.m + the compiled MEX) on path.
-# ---------------------------------------------------------------------------
 if(TREEWEAVE_MKOCTFILE_EXECUTABLE AND TREEWEAVE_OCTAVE_EXECUTABLE)
     add_test(
         NAME matlab_treeweave
@@ -210,6 +154,14 @@ if(TREEWEAVE_MKOCTFILE_EXECUTABLE AND TREEWEAVE_OCTAVE_EXECUTABLE)
             "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval
             "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); test_treeweave"
     )
+    foreach(_example IN ITEMS example_1d example_2d example_vector)
+        add_test(
+            NAME "octave_example_${_example}"
+            COMMAND
+                "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval
+                "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); run('${CMAKE_CURRENT_SOURCE_DIR}/examples/${_example}.m')"
+        )
+    endforeach()
     message(
         STATUS
         "treeweave[matlab]: test 'matlab_treeweave' registered (Octave: ${TREEWEAVE_OCTAVE_EXECUTABLE})."

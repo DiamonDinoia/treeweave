@@ -7,16 +7,8 @@
 
 include_guard(GLOBAL)
 
-# ---------------------------------------------------------------------------
-# Header-only C++ template API.
-#
-# `treeweave::treeweave` carries the `include/` tree plus the transitive polyfit /
-# POET headers it instantiates against. Those deps are FetchContent-only (not
-# separately installable), so this target is for in-tree consumers
-# (add_subdirectory / FetchContent) — it is deliberately NOT part of the
-# installed `find_package(treeweave)` export set. The installed package ships the
-# self-contained C ABI (`treeweave::treeweave_c`) instead. See treeweave_install.cmake.
-# ---------------------------------------------------------------------------
+# In-tree only; NOT in the installed export set (deps are FetchContent-only).
+# (see devel/agents/build-notes.md — "treeweave_headers INTERFACE target not installed")
 add_library(treeweave_headers INTERFACE)
 add_library(treeweave::treeweave ALIAS treeweave_headers)
 target_include_directories(
@@ -32,11 +24,7 @@ if(NOT TREEWEAVE_BUILD_C_API)
     return()
 endif()
 
-# The C-ABI translation units (generation + per-arch fan-out) are owned by
-# treeweave_c_dispatch.cmake, which compiles them into OBJECT libraries and
-# publishes their object-file generator expressions on TREEWEAVE_C_OBJECT_EXPRS.
-# Both libraries below are assembled from that one object set, so every TU is
-# compiled exactly once and shared between the shared and static libraries.
+# Object files compiled once in treeweave_c_dispatch, shared by both libraries.
 include(treeweave_c_dispatch)
 get_property(_treeweave_c_objects GLOBAL PROPERTY TREEWEAVE_C_OBJECT_EXPRS)
 
@@ -50,9 +38,7 @@ function(_treeweave_configure_c_target tgt)
     set_property(TARGET ${tgt} PROPERTY POSITION_INDEPENDENT_CODE ON)
 endfunction()
 
-# The shared library is skipped where the platform has no dynamic linking
-# (Emscripten/WASM: the JS binding links treeweave_c_static and exports the C
-# ABI symbols directly). add_library(... SHARED) is a hard error there.
+# Emscripten has no dynamic linking; JS binding uses treeweave_c_static instead.
 get_property(_tw_shared_ok GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
 if(_tw_shared_ok)
     add_library(treeweave_c SHARED ${_treeweave_c_objects})
@@ -68,12 +54,7 @@ endif()
 add_library(treeweave_c_static STATIC ${_treeweave_c_objects})
 add_library(treeweave::treeweave_c_static ALIAS treeweave_c_static)
 _treeweave_configure_c_target(treeweave_c_static)
-# On Unix the shared (libtreeweave_c.so) and static (libtreeweave_c.a) archives differ
-# by extension, so both can be named treeweave_c. On Windows the shared library's
-# *import* library is also treeweave_c.lib, which would collide with the static
-# archive's treeweave_c.lib in the same output directory — and the clobbered file
-# breaks consumers (they link the static archive but expect the DLL's __imp_
-# symbols). Keep the static archive's basename distinct there.
+# On Windows the import .lib collides with the static .lib; use distinct basename.
 if(WIN32)
     set_target_properties(
         treeweave_c_static
@@ -91,21 +72,13 @@ set_property(
     PROPERTY TREEWEAVE_INSTALL_TARGETS treeweave_c_static
 )
 
-# The C examples and the pure-C conformance test are compiled with a C (not
-# C++) compiler against the installed-shape header, proving the surface is
-# C-clean and that nothing throws across the boundary. `add_test` below needs
-# CTest enabled; this include runs before treeweave_tests.cmake (the C lib must
-# exist before test_c links it), so enable testing here. enable_testing() is
-# idempotent with the later include(CTest) in treeweave_tests.cmake.
+# enable_testing() here is idempotent with treeweave_tests.cmake; needed early
+# because C examples register as ctests before that module runs.
 if(TREEWEAVE_BUILD_EXAMPLES OR TREEWEAVE_BUILD_TESTS)
     enable_language(C)
     enable_testing()
-    # C TUs call exp()/fabs()/etc.: C, unlike C++, needs libm linked explicitly.
-    find_library(TREEWEAVE_LIBM m)
+    find_library(TREEWEAVE_LIBM m) # C needs libm explicitly, unlike C++
 
-    # Build a C11 executable linking treeweave_c (+ libm). Deliberately no
-    # treeweave_enable_warnings: that profile is C++-oriented (-Wold-style-cast,
-    # etc.) and these are C translation units.
     function(_treeweave_add_c_program name source)
         add_executable(${name} ${source})
         set_target_properties(
@@ -123,8 +96,6 @@ if(TREEWEAVE_BUILD_EXAMPLES OR TREEWEAVE_BUILD_TESTS)
     endfunction()
 endif()
 
-# C examples: each self-checks and returns EXIT_FAILURE on a bad result, so it
-# doubles as a ctest.
 if(TREEWEAVE_BUILD_EXAMPLES)
     foreach(
         _ex
@@ -136,12 +107,9 @@ if(TREEWEAVE_BUILD_EXAMPLES)
         with_options
         with_context
         float32
-        zeta_bench
     )
         _treeweave_add_c_program(treeweave_c_${_ex} examples/C/${_ex}.c)
         add_test(NAME c_example_${_ex} COMMAND treeweave_c_${_ex})
-        # Register with the test-target list so the coverage target builds these
-        # CTest executables before it runs CTest (see tests/CMakeLists.txt).
         set_property(
             GLOBAL
             APPEND
@@ -150,12 +118,9 @@ if(TREEWEAVE_BUILD_EXAMPLES)
     endforeach()
 endif()
 
-# Pure-C ABI conformance test (+ an optional valgrind run proving treeweave_free
-# is leak-clean, registered only when valgrind is available).
 if(TREEWEAVE_BUILD_TESTS)
     _treeweave_add_c_program(test_c_abi tests/test_c_abi.c)
     add_test(NAME test_c_abi COMMAND test_c_abi)
-    # See above: let the coverage target build this C executable before CTest.
     set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS test_c_abi)
 
     # Skip valgrind under sanitizers: valgrind cannot run an ASan/UBSan-

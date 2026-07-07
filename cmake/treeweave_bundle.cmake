@@ -1,13 +1,6 @@
-# treeweave_bundle.cmake — consolidate the header-only C++ API and its deps
-# (polyfit, POET, xsimd, mdspan) into ONE include tree so non-CMake users get an
-# xsimd-style single-flag build: `g++ ... -I<build>/include`. The deps live
-# wherever FetchContent / the CPM cache put them and land in disjoint subdirs
-# (polyfit/, poet/, xsimd/, experimental/), so copy_directory merges them
-# without collision. This same tree is what install() ships (see
-# treeweave_install.cmake), so the installed prefix works the same way.
-#
-# Built at configure time; re-run cmake to refresh after a dep bump. Only useful
-# top-level (a consumer via find_package / add_subdirectory resolves deps itself).
+# treeweave_bundle.cmake — merge all C++ API headers into one include tree so
+# non-CMake users get `g++ -I<build>/include`. Top-level only.
+# (see devel/agents/build-notes.md — "Bundle overview")
 
 include_guard(GLOBAL)
 
