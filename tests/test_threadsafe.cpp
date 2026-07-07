@@ -1,18 +1,5 @@
-// Phase 8a — pin down the operator() thread-safety contract.
-//
-// Contract: a single Function built once and not mutated may be called
-// concurrently from many threads provided each thread's xp/res slices do
-// not overlap with another thread's.
-//
-// Test strategy: race-free behaviour is asserted by *bit-exact* equality
-// of the threaded output across many repeats with the same chunking. Any
-// race on shared state would surface as flapping bits between repeats.
-//
-// We also compare against a serial reference, but only within a tight
-// relative tolerance: changing the chunking changes per-leaf counts,
-// which changes the SIMD-batch vs scalar-tail mix in polyfit's
-// `FuncEvalND::operator()` — a deterministic but path-dependent ~1 ULP
-// drift. That drift is NOT a race; it is non-associative FP.
+// operator() thread-safety tests.
+// Contract, strategy, and ULP-drift rationale in devel/agents/build-notes.md § tests/test_threadsafe.cpp.
 
 #include <algorithm>
 #include <cstdint>
@@ -177,9 +164,6 @@ TEST_CASE("operator() is thread-safe -- 3d_gauss deg=8", "[treeweave][threadsafe
     run_threadsafe_check<3>(fn, xp, res_ref);
 }
 
-// TST1: add 1D f64 and 1D f32 thread-safety coverage (previously only 2D/3D
-// f64 were exercised).
-
 TEST_CASE("operator() is thread-safe -- 1d_sin deg=8", "[treeweave][threadsafe]") {
     // 1D scalar-input fit: exercises the 1D leaf-table quantize fast path and
     // the 1D batch counting-sort pipeline under concurrent access.
@@ -191,10 +175,6 @@ TEST_CASE("operator() is thread-safe -- 1d_sin deg=8", "[treeweave][threadsafe]"
 }
 
 TEST_CASE("operator() is thread-safe -- 1d_f32 deg=7", "[treeweave][threadsafe][f32]") {
-    // 1D f32 fit: same race-detection strategy as the f64 tests but in
-    // single precision.  kRepeats bit-exact comparisons catch any data race
-    // on shared coefficient storage; the relative-tolerance check against the
-    // serial reference bounds legitimate FMA non-associativity.
     auto fn = treeweave::fit<7>([](float x) { return std::exp(0.5F * x) + std::sin(3.0F * x); }, 0.0F, 1.0F, 1e-5);
     auto xp = make_inputs_1d_f32(0.0F, 1.0F, kN, 19u);
     std::vector<float> res_ref(kN);

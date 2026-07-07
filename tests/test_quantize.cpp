@@ -1,24 +1,5 @@
-// Leaf-id quantize parity tests.
-//
-// The batch evaluator bins each point to a leaf id via a vectorized quantize
-// (`PolyTree::for_each_leaf_id_batch`), exposed here as `Function::leaf_ids`.
-// Two invariants must hold for every input, and are the gate for the Phase 1
-// int32 quantize rework (`bench/binsort_phase0.md`):
-//
-//   1. PARITY (bit-exact, all inputs): the vectorized `leaf_ids` stream equals
-//      the scalar `leaf_id` oracle point-for-point — in-domain, on exact cell
-//      boundaries, out-of-domain on both sides, and for NaN / +-Inf. This is
-//      what guards the SIMD truncate (int64 today, int32 for f32 after Phase 1)
-//      against the scalar quantize: same formula, same OOD-wrap classification.
-//
-//   2. DESCENT (at cell centers): the quantize-then-table-lookup id equals the
-//      tree-descent id (`find_node(x).poly_eval_id()`). Cell centers are the
-//      points the leaf table was built from, so this verifies the quantize
-//      addresses the table correctly. (Bit-exact descent parity is NOT claimed
-//      at exact cell boundaries — `PolyTree::get_node_index` recomputes mids by
-//      a different chain than the table build, see polytree.hpp:388.)
-//
-// Covered for double and float, 1D and 2D.
+// Leaf-id quantize parity tests (double and float, 1D and 2D).
+// Invariants and design notes in devel/agents/build-notes.md § tests/test_quantize.cpp.
 
 #include <cstddef>
 #include <treeweave/treeweave.hpp>
@@ -48,8 +29,7 @@ void check_1d() {
     const T    span     = hi - lo;
     const T    cell     = span / static_cast<T>(std::size_t{1} << depth);
 
-    std::vector<T> xs;
-    // Random interior points.
+    std::vector<T>                         xs;
     std::mt19937                           gen(20240603);
     std::uniform_real_distribution<double> d(-1.0 + 1e-6, 1.0 - 1e-6);
     xs.reserve(20000);
@@ -60,7 +40,6 @@ void check_1d() {
         xs.push_back(lo + static_cast<T>(k) * cell);
     for (std::size_t k = 0; k < (std::size_t{1} << depth); ++k)
         xs.push_back(lo + (static_cast<T>(k) + T{0.5}) * cell);
-    // Domain edges and out-of-domain on both sides.
     xs.push_back(lo);
     xs.push_back(hi);                     // closed upper endpoint: clamps to the last leaf
     xs.push_back(std::nextafter(hi, lo)); // just inside the top
@@ -68,7 +47,6 @@ void check_1d() {
     xs.push_back(hi + T{0.5}); // finite high-OOD: clamps to the last leaf too
     xs.push_back(lo - static_cast<T>(1e30));
     xs.push_back(hi + static_cast<T>(1e30));
-    // Non-finite.
     xs.push_back(std::numeric_limits<T>::quiet_NaN());
     xs.push_back(std::numeric_limits<T>::infinity());
     xs.push_back(-std::numeric_limits<T>::infinity());
@@ -78,14 +56,12 @@ void check_1d() {
     fn.leaf_ids(xs.data(), vec.data(), n);
 
     for (std::size_t i = 0; i < n; ++i) {
-        // (1) Vectorized batch id == scalar oracle id, bit-exact.
         const std::uint32_t scalar = fn.leaf_id(xs[i]);
         REQUIRE(vec[i] == scalar);
         // All ids are a valid leaf or the OOD sentinel.
         REQUIRE(vec[i] <= n_leaves);
     }
 
-    // (2) Cell centers: quantize id == descent id, by construction.
     for (std::size_t k = 0; k < (std::size_t{1} << depth); ++k) {
         const T xc = lo + (static_cast<T>(k) + T{0.5}) * cell;
         REQUIRE(fn.leaf_id(xc) == fn.find_node(xc).poly_eval_id());
@@ -116,7 +92,6 @@ void check_2d() {
         flat.push_back(p[0]);
         flat.push_back(p[1]);
     }
-    // Some OOD / non-finite corners.
     for (P p :
          std::vector<P>{{T{-1}, T{0.5}}, {T{0.5}, T{2}}, {T{1}, T{1}}, {std::numeric_limits<T>::quiet_NaN(), T{0.5}}}) {
         pts.push_back(p);
@@ -133,28 +108,8 @@ void check_2d() {
     }
 }
 
-// Large-n_leaves counting-sort path. With many leaves (here 2^13 = 8192) the
-// flat counting sort's counts[] histogram and the random xp_packed scatter
-// stress the caches; this guards the sort's distinct failure modes — wrong
-// counts[] boundaries, a bad perm_inv, or a dropped/duplicated point — each of
-// which routes a point's slot to a *different* point's value (a large, O(1)
-// error) or to garbage/NaN. The quantize itself is already pinned by the parity
-// tests above.
-//
-// The batch quantize and the scalar `operator()` classify identically over the
-// region this draws from — in-domain, OOD-low, and NaN/-Inf — so the check is
-// direct: scalar `single = fn(xs[i])` is the oracle and we assert
-//   * isnan(batch[i]) == isnan(single)            (same OOD/NaN classification)
-//   * finite: |single - batch[i]| <= tol          (same leaf, Horner rounding)
-// The draw is deliberately capped at the upper bound `hi` (no *finite* high-OOD):
-// with the closed upper endpoint the batch quantize clamps finite x > hi to the
-// last leaf (returns a value) while scalar `operator()` keeps its inclusive
-// `<=` guard (returns NaN), so the two paths diverge there by design. That
-// finite-high-OOD clamp parity is pinned by the quantize-parity test
-// (`check_1d`, which compares the two quantize paths, not operator()); here we
-// keep the elegant operator() oracle by staying out of that one region. NaN and
-// -Inf still agree (both classify OOD -> NaN); +Inf is not injected because its
-// float->int convert is arch-dependent under the clamp (see the body comment).
+// Large-n_leaves counting-sort path (2^13 = 8192 leaves). Design and oracle
+// boundary rationale in devel/agents/build-notes.md § check_large_leaves design notes.
 template <class T>
 void check_large_leaves() {
     constexpr int      depth = 13; // 2^13 = 8192 leaves
@@ -171,13 +126,8 @@ void check_large_leaves() {
     std::vector<T>                         xs(N);
     for (auto &x : xs)
         x = static_cast<T>(d(gen));
-    // NaN and -Inf classify OOD -> NaN on every target (NaN propagates through
-    // the leaf polynomial; -Inf's float->int convert lands at INT_MIN, below the
-    // clamp, so it still wraps). +Inf is deliberately NOT injected: its
-    // float->int convert is arch-dependent (x86 -> INT_MIN -> OOD/NaN; ARM
-    // saturates to INT_MAX, which the closed-endpoint clamp routes to the last
-    // leaf -> a finite extrapolation), an accepted high-side divergence that the
-    // scalar operator() oracle does not share.
+    // NaN and -Inf route OOD → NaN on every target. +Inf omitted: float→int is
+    // arch-dependent under the clamp (see build-notes.md § check_large_leaves design notes).
     xs[7]     = std::numeric_limits<T>::quiet_NaN();
     xs[N - 3] = -std::numeric_limits<T>::infinity();
 

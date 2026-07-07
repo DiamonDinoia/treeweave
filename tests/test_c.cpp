@@ -340,12 +340,8 @@ TEST_CASE("C API: error handling", "[c][errors]") {
 }
 
 TEST_CASE("C API: treeweave_last_error is thread-local", "[c][errors][thread]") {
-    // The C ABI keeps its message in a `thread_local std::string`
-    // (src/capi/treeweave.cpp), so an error raised on one thread must be
-    // invisible on another. Run two threads concurrently: one forces an error
-    // (unsupported input_dim -> NULL), the other does a clean fit; each must
-    // observe only its own thread's error state. (Relocated here from the
-    // pure-C test, which needed C11 <threads.h> -- a header Apple's SDK omits.)
+    // Error state is thread_local; relocated from pure-C test (Apple SDK omits C11 <threads.h>) (see
+    // devel/agents/build-notes.md).
     std::atomic<bool> err_ok{false};
     std::atomic<bool> clean_ok{false};
 
@@ -364,8 +360,8 @@ TEST_CASE("C API: treeweave_last_error is thread-local", "[c][errors][thread]") 
     err_thread.join();
     clean_thread.join();
 
-    REQUIRE(err_ok);   // error thread saw its own non-empty error
-    REQUIRE(clean_ok); // clean thread saw an empty error
+    REQUIRE(err_ok);
+    REQUIRE(clean_ok);
 }
 
 // NOLINTEND(cert-msc51-cpp,cert-msc32-c)

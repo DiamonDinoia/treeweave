@@ -50,22 +50,22 @@ TEST_CASE("batch path routes through caller-supplied allocator", "[treeweave][ba
     for (auto &x : xs)
         x = d(gen);
 
-    fn(xs.data(), ref.data(), N); // default allocator → ref output
+    fn(xs.data(), ref.data(), N);
 
     g_alloc_bytes = 0;
     g_alloc_calls = 0;
     fn(xs.data(), out.data(), N, CountingAllocator<double>{});
 
-    // Custom allocator saw the scratch allocations.
     REQUIRE(g_alloc_calls.load() > 0);
     REQUIRE(g_alloc_bytes.load() > 0);
 
-    // And produced identical output.
     for (std::size_t i = 0; i < N; ++i)
         REQUIRE(out[i] == ref[i]);
 }
 
 TEST_CASE("default-allocator batch path matches custom-allocator path", "[treeweave][batch][allocator]") {
+    g_alloc_bytes = 0;
+    g_alloc_calls = 0;
     // Vector output: exercises the SoA overload too.
     auto fn = treeweave::fit<8>(
         [](std::array<double, 2> x) -> std::array<double, 2> {
