@@ -12,9 +12,9 @@ namespace treeweave {
 
 /// Compile-time eval-strategy knob on `Function<Degree, Func, Policy>`.
 ///
-/// Three modes trading single-point latency against batch throughput. Today
-/// all three route the scalar path through `ScalarKernel::Horner`; see the
-/// rev-2 note below for why.
+/// Three policy values; today all three are identical: every policy routes
+/// the scalar path through `ScalarKernel::Horner`. The distinctions are
+/// reserved for future tuning (see the per-enumerator notes below).
 ///
 /// - `Latency`   : reserved for a future Hybrid mapping. The rev-1 K-sweep
 ///                 on Meteor Lake showed `HybridK<2>` (the formula's pick at

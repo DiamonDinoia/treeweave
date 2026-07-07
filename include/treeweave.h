@@ -75,7 +75,6 @@ typedef enum {
     TREEWEAVE_ABSOLUTE_L2   = 5  /* sample-based, L2 absolute error         */
 } treeweave_tol_kind_t;
 
-/* Value type carried by a handle. */
 typedef enum { TREEWEAVE_F64 = 0, TREEWEAVE_F32 = 1 } treeweave_dtype_t;
 
 /* Fit knobs — mirrors treeweave::options. `int` is used for the bool field so

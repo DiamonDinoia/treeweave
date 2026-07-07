@@ -1,35 +1,13 @@
 // arch_dispatch.cpp — runtime multi-architecture C-ABI entry points.
 //
-// Selected by CMake when TREEWEAVE_C_MULTIARCH is ON and the target is a family
-// with a runtime variant fan-out (x86 ladder / aarch64 neon64 / riscv rvv).
-// Compiled at the family baseline `-march` (x86-64 / armv8-a / rv64gcv) — it
-// emits no SIMD itself, only a CPU-feature probe and indirect calls. Each entry
-// point asks `xsimd::dispatch` for the widest arch the host CPU actually
-// supports, then runs the fit through the `make_eval_for<Arch, …>` external for
-// that arch — the declared-only symbols the linker binds to the matching
-// per-`-march` variant object.
-//
-// Why `xsimd::dispatch` returns a *factory pointer* rather than the fitted
-// object: `xsimd::dispatch(...)` and its `operator()` are `noexcept`, but the
-// fit can throw (invalid tol, MaxDepthExceeded, …) and must reach the catch
-// block in treeweave.cpp. So the dispatch functor only *selects* — it returns the
-// address of `make_eval_for<Arch,…>` (no fit, no throw) — and we invoke that
-// pointer afterwards, outside the noexcept dispatch, where exceptions propagate
-// normally. Runtime arch selection itself is xsimd's
-// `available_architectures().has(Arch)` (NOT `Arch::available()`, which is a
-// constexpr `true` for every real arch and would blindly pick the widest
-// *compiled* arch on every CPU and #UD on hosts lacking it).
-//
-// The arch_list is family-selected at compile time (see dispatch_arch.hpp):
-// on x86 it is the fixed four-type ladder, each entry equal to the `best_arch`
-// selected at the corresponding `-march` (sse2 ⇐ x86-64, sse4_2 ⇐ x86-64-v2,
-// fma3<avx2> ⇐ x86-64-v3, avx512bw ⇐ x86-64-v4); on aarch64 it is the single
-// neon64; on riscv the single rvv128. Each entry must match a `make_eval_for`
-// symbol the variant TUs emit, else it surfaces as a clean undefined-symbol
-// link error.
-//
-// Degree is baked to `chosen_degree<Arch,T,IN>` (= 7 everywhere); these entry
-// points carry no degree argument.
+// Selected by CMake when TREEWEAVE_C_MULTIARCH is ON. Compiled at the family
+// baseline -march; emits no SIMD itself, only a CPU-feature probe + indirect
+// call. Dispatch functor returns a *factory pointer* (not the fitted object)
+// so the fit runs outside xsimd::dispatch's noexcept context and exceptions
+// propagate to treeweave.cpp's catch block. Uses available_architectures().has
+// (not Arch::available(), which is constexpr-true and would SIGILL non-AVX512
+// hosts). Arch_list: see dispatch_arch.hpp. Rationale for factory-pointer
+// design: see devel/agents/perf-notes.md — "arch_dispatch.cpp".
 
 #include <cstdlib>
 #include <string_view>
@@ -42,12 +20,9 @@
 namespace treeweave::capi {
 namespace {
 
-/// Testing-only override: if TREEWEAVE_FORCE_ARCH names a ladder arch the host
-/// actually supports (runtime-checked via available_architectures().has — a
-/// level at or below the host's widest), return that arch's make_eval_for
-/// pointer so a single capable box can exercise every fallback edge.
-/// Unset / unknown / unsupported → nullptr, and the caller falls back to the
-/// normal xsimd::dispatch selection.
+/// Testing-only: if TREEWEAVE_FORCE_ARCH names a supported ladder arch, return
+/// its make_eval_for pointer so one capable host can exercise every fallback.
+/// Unset / unknown / unsupported → nullptr (caller falls back to xsimd::dispatch).
 template <class T, std::size_t IN>
 auto force_select(std::string_view want) -> make_eval_fn_t<T> {
     const auto        archs = xsimd::available_architectures();
@@ -63,11 +38,8 @@ auto force_select(std::string_view want) -> make_eval_fn_t<T> {
     return out;
 }
 
-/// Pick the per-arch `make_eval_for` factory for this (T, IN): the optional
-/// TREEWEAVE_FORCE_ARCH test override first, otherwise xsimd::dispatch walks
-/// `dispatch_arch_list` high→low and returns the widest host-supported arch's
-/// factory pointer. The returned pointer is invoked by the caller (so the fit
-/// runs outside xsimd::dispatch's noexcept context).
+/// TREEWEAVE_FORCE_ARCH override first; otherwise xsimd::dispatch picks the
+/// widest host-supported arch. Returned pointer invoked by caller (outside noexcept).
 template <class T, std::size_t IN>
 auto select_make_eval() -> make_eval_fn_t<T> {
     if (const char *want = std::getenv("TREEWEAVE_FORCE_ARCH")) {

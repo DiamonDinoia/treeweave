@@ -58,9 +58,9 @@ struct Box {
 /// True when the leading-coefficient tail estimate of `polyfit` exceeds
 /// `tol` for the given relative/absolute kind. 1D-only — the tail estimate
 /// is read off the first/last Chebyshev coefficients, which generalise
-/// poorly to ND. Sample-based kinds dispatch to `sample_error_below_tolerance`.
+/// poorly to ND. Sample-based kinds dispatch to `sample_error_exceeds_tol`.
 template <class Polyfit>
-auto tail_error_below_tolerance(TolKind tol_type, double tol, const Polyfit &polyfit) -> bool {
+auto tail_error_exceeds_tol(double tol, const Polyfit &polyfit) -> bool {
     constexpr std::size_t input_dim  = value_dim_v<typename Polyfit::InputType>;
     constexpr std::size_t output_dim = value_dim_v<typename Polyfit::OutputType>;
     using T                          = poly_eval::detail::value_type_or_t<typename Polyfit::InputType>;
@@ -72,17 +72,13 @@ auto tail_error_below_tolerance(TolKind tol_type, double tol, const Polyfit &pol
                                   "use a sample-based tol_type for array-valued or ND fits");
     static_assert(output_dim == 1, "tail_error only implemented for single output in 1D");
 
+    // ponytail: tail tolerance is absolute today; RelativeTail scaling never implemented.
     T maxcoeff{0.0};
-    T scaling_factor{1.0};
 
-    const auto           &coeffs = polyfit.coeffs();
-    constexpr std::size_t N      = Polyfit::NCOEFFS;
+    const auto &coeffs = polyfit.coeffs();
     for (std::size_t i = 0; i < 2; ++i)
         maxcoeff = std::max(std::abs(coeffs[i]), maxcoeff);
-    scaling_factor = std::max(scaling_factor, std::abs(coeffs[N - 1]));
 
-    if (tol_type == TolKind::RelativeL2 || tol_type == TolKind::RelativeMax)
-        return static_cast<double>(maxcoeff / scaling_factor) > tol;
     return static_cast<double>(maxcoeff) > tol;
 }
 
@@ -90,10 +86,10 @@ auto tail_error_below_tolerance(TolKind tol_type, double tol, const Polyfit &pol
 /// `n_sample_1d`-per-axis grid exceeds `tol`. The chosen `tol_type`
 /// selects between max-abs vs. L2 and relative vs. absolute.
 template <class Func, class Polyfit>
-inline auto sample_error_below_tolerance(int n_sample_1d, TolKind tol_type, double tol,
-                                         const typename Polyfit::InputType &center_in,
-                                         const typename Polyfit::InputType &half_length_in, const Func &func,
-                                         const Polyfit &polyfit) -> bool {
+inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double tol,
+                                     const typename Polyfit::InputType &center_in,
+                                     const typename Polyfit::InputType &half_length_in, const Func &func,
+                                     const Polyfit &polyfit) -> bool {
     constexpr std::size_t input_dim  = value_dim_v<typename Polyfit::InputType>;
     constexpr std::size_t output_dim = value_dim_v<typename Polyfit::OutputType>;
     // Sample in the fit's own value type so a `float` fit never silently

@@ -115,21 +115,15 @@ concept Fittable = requires(F f, Domain x) { f(x); };
 
 namespace detail {
 
-// Auto memory budget (MiB) used when `options.max_memory_mib` is left
-// negative. Leaf storage grows ~geometrically with input_dim, so a flat cap
-// reasonable in 1D is far too tight in 3D; doubling per dimension keeps the
-// default a small guardrail (4 / 8 / 16 MiB for 1D / 2D / 3D) while still
-// forcing an explicit opt-in for genuinely large tables.
+// Auto memory budget (MiB): 4/8/16 for 1D/2D/3D (doubles per dim — flat cap
+// is too tight in 3D). (see devel/agents/perf-notes.md)
 constexpr auto auto_memory_budget_mib(int input_dim) -> int {
     const unsigned d = input_dim < 1 ? 1U : static_cast<unsigned>(input_dim);
     return static_cast<int>(4U << (d - 1U));
 }
 
-// Default leaf degree. The C-ABI tuning campaign (see arch_degree_table.hpp)
-// found degree 7 wins or ties in every (arch, dtype, input_dim) cell — within
-// ~1% in 1D and 2-10x in 2D/3D, and the only spill-free degree in the
-// register-pressured wide cells — so the C++ template default matches the
-// baked C-ABI value. Override per call via the `Degree` template parameter.
+// Default leaf degree: 7 wins/ties every (arch, dtype, dim) cell in the
+// C-ABI campaign; also spill-free in wide SIMD cells. (see devel/agents/perf-notes.md)
 inline constexpr std::size_t kDefaultDegree = 7;
 
 inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &opts) -> TreeInput {
@@ -147,7 +141,7 @@ inline auto make_input(int input_dim, int output_dim, int degree, double tol, co
 }
 
 template <class Domain>
-inline auto midpoint(const Domain &a, const Domain &b) -> Domain {
+constexpr auto midpoint(const Domain &a, const Domain &b) -> Domain {
     // Scale by the domain's own element type so `float` corners stay in
     // float arithmetic (a literal `0.5` would promote them to double).
     if constexpr (std::is_arithmetic_v<Domain>) {
@@ -162,7 +156,7 @@ inline auto midpoint(const Domain &a, const Domain &b) -> Domain {
 }
 
 template <class Domain>
-inline auto half_length(const Domain &a, const Domain &b) -> Domain {
+constexpr auto half_length(const Domain &a, const Domain &b) -> Domain {
     if constexpr (std::is_arithmetic_v<Domain>) {
         return static_cast<Domain>(0.5) * (b - a);
     } else {
@@ -226,16 +220,18 @@ struct CanonicalFn {
     using canon_out = canonical_output_t<result_t>;
 
     auto operator()(const canon_in &xi) const -> canon_out {
-        const result_t r = [&]() -> result_t {
+        if constexpr (is_complex_v<result_t>) {
+            result_t r;
             if constexpr (std::is_arithmetic_v<Domain>)
-                return f(xi[0]);
+                r = f(xi[0]);
             else
-                return f(xi);
-        }();
-        if constexpr (is_complex_v<result_t>)
+                r = f(xi);
             return {r.real(), r.imag()};
-        else
-            return r;
+        } else if constexpr (std::is_arithmetic_v<Domain>) {
+            return f(xi[0]);
+        } else {
+            return f(xi);
+        }
     }
 };
 

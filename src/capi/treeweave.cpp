@@ -55,6 +55,16 @@ struct treeweave_function {
     int               output_dim;
 };
 
+/// Cast `f->impl` to the correct typed IEval and invoke `fn` on it.
+namespace {
+template <class Fn>
+auto with_typed_impl(treeweave_t f, Fn &&fn) -> decltype(auto) {
+    if (f->dtype == TREEWEAVE_F64)
+        return std::forward<Fn>(fn)(static_cast<treeweave::capi::IEval<double> *>(f->impl));
+    return std::forward<Fn>(fn)(static_cast<treeweave::capi::IEval<float> *>(f->impl));
+}
+} // namespace
+
 extern "C" {
 
 const treeweave_opts treeweave_default_opts = {
@@ -211,10 +221,8 @@ void treeweavef_transposed(treeweave_t f, const float *x, float *const *soa, siz
         impl->eval_multi_soa(x, soa, n);
 }
 
-/// By-value scalar eval. Validate arity/scalar-output here (before delegating,
-/// since treeweave_eval clears the error buffer), then forward to the pointer
-/// API. `y` is pre-seeded with NaN so a null-handle or dtype-mismatch no-op in
-/// treeweave_eval/treeweavef_eval surfaces as NaN, matching the OOD convention.
+/// By-value scalar eval shims. Arity guard before delegating (treeweave_eval
+/// clears the buffer); y pre-seeded with NaN so mismatches surface as NaN.
 auto treeweave_eval_1d(treeweave_t f, double x0) -> double {
     constexpr double nan = std::numeric_limits<double>::quiet_NaN();
     if (f != nullptr && (f->input_dim != 1 || f->output_dim != 1)) {
@@ -307,27 +315,19 @@ auto treeweave_output_dim(treeweave_t f) -> int {
 auto treeweave_memory_usage(treeweave_t f) -> size_t {
     if (f == nullptr)
         return 0;
-    if (f->dtype == TREEWEAVE_F64)
-        return static_cast<treeweave::capi::IEval<double> *>(f->impl)->memory_usage();
-    return static_cast<treeweave::capi::IEval<float> *>(f->impl)->memory_usage();
+    return with_typed_impl(f, [](auto *p) -> std::size_t { return p->memory_usage(); });
 }
 
 void treeweave_print_stats(treeweave_t f) {
     if (f == nullptr)
         return;
-    if (f->dtype == TREEWEAVE_F64)
-        static_cast<treeweave::capi::IEval<double> *>(f->impl)->print_stats();
-    else
-        static_cast<treeweave::capi::IEval<float> *>(f->impl)->print_stats();
+    with_typed_impl(f, [](auto *p) -> void { p->print_stats(); });
 }
 
 auto treeweave_free(treeweave_t f) -> treeweave_t {
     if (f == nullptr)
         return nullptr;
-    if (f->dtype == TREEWEAVE_F64)
-        delete static_cast<treeweave::capi::IEval<double> *>(f->impl);
-    else
-        delete static_cast<treeweave::capi::IEval<float> *>(f->impl);
+    with_typed_impl(f, [](auto *p) -> void { delete p; });
     delete f;
     return nullptr;
 }
