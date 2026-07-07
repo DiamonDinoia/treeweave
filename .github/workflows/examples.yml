@@ -1,0 +1,213 @@
+name: Examples
+
+# Builds and runs ALL examples across every language. Intended as a quick
+# smoke-test that the public-facing example scripts and binaries work end-to-end.
+# The full test suites live in the per-language workflows (python.yml, julia.yml,
+# fortran.yml, octave.yml, js.yml) and in ci.yml.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cpp-c:
+    name: C++ and C examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+
+      - name: Configure
+        run: |
+          cmake -S . -B build/examples -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTREEWEAVE_BUILD_EXAMPLES=ON \
+            -DTREEWEAVE_BUILD_TESTS=OFF
+
+      - name: Build
+        run: cmake --build build/examples -j
+
+      - name: Run C++ and C examples
+        run: ctest --test-dir build/examples -R '^(c_example_|cpp_example_)' --output-on-failure --no-tests=error
+
+  python:
+    name: Python examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python deps
+        run: python -m pip install --upgrade pip numpy "nanobind>=2.0"
+
+      - name: Configure + build
+        run: |
+          cmake --preset bindings-python
+          cmake --build build/bindings-python -j
+
+      - name: Run Python examples
+        run: ctest --test-dir build/bindings-python -R '^python_example_' --output-on-failure --no-tests=error
+
+  julia:
+    name: Julia examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Configure + build libtreeweave_c
+        run: |
+          cmake --preset bindings-julia
+          cmake --build build/bindings-julia -j --target treeweave_c
+
+      - name: Run Julia examples
+        run: ctest --test-dir build/bindings-julia -R '^julia_example_' --output-on-failure --no-tests=error
+
+  fortran:
+    name: Fortran example
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - name: Install gfortran
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - name: Configure + build
+        run: |
+          cmake --preset bindings-fortran
+          cmake --build build/bindings-fortran -j
+
+      - name: Run Fortran example
+        run: ctest --test-dir build/bindings-fortran -R '^fortran_example$' --output-on-failure --no-tests=error
+
+  js:
+    name: JavaScript example
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install npm deps
+        run: npm ci
+        working-directory: bindings/js
+
+      - name: Configure + build native backend
+        run: |
+          cmake --preset bindings-js
+          cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts
+
+      - name: Run simple_1d example
+        run: node bindings/js/examples/simple_1d.mjs
+
+  c-binary:
+    name: C binary install (docs verbatim)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install wget gcc
+        run: sudo apt-get update && sudo apt-get install -y wget gcc
+
+      - name: Download, compile, and run (mirrors c.rst Install commands)
+        run: |
+          VER=$(curl -fsSL https://api.github.com/repos/DiamonDinoia/treeweave/releases/latest \
+                | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'][1:])")
+          echo "Testing release: v${VER}"
+          wget "https://github.com/DiamonDinoia/treeweave/releases/download/v${VER}/treeweave-${VER}-linux-x86_64.tar.gz"
+          tar xzf "treeweave-${VER}-linux-x86_64.tar.gz"
+          gcc examples/C/simple.c -Iinclude -Llib -ltreeweave_c -lm -o simple
+          LD_LIBRARY_PATH=lib ./simple
+
+  octave:
+    name: Octave examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # octave-dev pulls octave + mkoctfile + headers. cmake/ninja/g++ are
+      # preinstalled on the GitHub-hosted runner; cmake+ninja are listed here
+      # explicitly so the job also runs under act.
+      - name: Install Octave
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev cmake ninja-build g++
+
+      - name: Configure + build Octave MEX
+        run: |
+          cmake --preset bindings-octave
+          cmake --build build/bindings-octave -j
+
+      - name: Run Octave examples
+        run: ctest --test-dir build/bindings-octave -R '^octave_example_' --output-on-failure --no-tests=error

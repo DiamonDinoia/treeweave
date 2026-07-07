@@ -7,11 +7,13 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 
 function(_treeweave_add_cpp_example name source)
-    add_executable(${name} ${source})
+    add_executable(${name} "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
     # treeweave::treeweave carries include/ (which holds the generated
     # <treeweave_version.h>), polyfit/poet, and cxx_std_20.
     target_link_libraries(${name} PRIVATE treeweave::treeweave)
     treeweave_enable_warnings(${name})
+    add_test(NAME cpp_example_${name} COMMAND ${name})
+    set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS ${name})
 endfunction()
 
 # FINUFFT-style make.inc for `make` in c++/: a single -I into the consolidated
@@ -26,51 +28,9 @@ TREEWEAVE_INC = -I${TREEWEAVE_BUNDLE_INCLUDE_DIR}
 "
 )
 
-# A benchmark is an example that also links nanobench.
-function(_treeweave_add_benchmark name source)
-    _treeweave_add_cpp_example(${name} "${source}")
-    target_link_libraries(${name} PRIVATE nanobench)
-endfunction()
-
-# Lightweight API examples — fast to compile, always built.
-_treeweave_add_cpp_example(treeweave_timing_cpp c++/treeweave_timing.cpp)
 _treeweave_add_cpp_example(simple1d c++/simple1d.cpp)
 _treeweave_add_cpp_example(simple2d c++/simple2d.cpp)
 _treeweave_add_cpp_example(simple3d c++/simple3d.cpp)
 _treeweave_add_cpp_example(with_options c++/with_options.cpp)
 _treeweave_add_cpp_example(vector_output c++/vector_output.cpp)
 _treeweave_add_cpp_example(hankel c++/hankel.cpp)
-_treeweave_add_cpp_example(zeta_bench c++/zeta_bench.cpp)
-
-# Performance benchmarks — heavily-templated, slow-to-compile nanobench/perf
-# drivers. Gated by TREEWEAVE_BUILD_BENCHMARKS (OFF in the CI test presets,
-# which only compile and never run these; the bench workflow leaves it ON).
-if(TREEWEAVE_BUILD_BENCHMARKS)
-    _treeweave_add_benchmark(treeweave_microbench c++/treeweave_microbench.cpp)
-    _treeweave_add_benchmark(
-        treeweave_bench_pack_scatter
-        c++/treeweave_bench_pack_scatter.cpp
-    )
-    _treeweave_add_benchmark(treeweave_bench_sorted c++/treeweave_bench_sorted.cpp)
-    _treeweave_add_benchmark(treeweave_bench_binsort c++/treeweave_bench_binsort.cpp)
-    _treeweave_add_benchmark(treeweave_ci_bench c++/treeweave_ci_bench.cpp)
-    # perf_driver is a hand-rolled timing harness; it does not use nanobench.
-    _treeweave_add_cpp_example(treeweave_perf_driver c++/treeweave_perf_driver.cpp)
-endif()
-
-# CodSpeed benchmark — Google Benchmark driver for the CodSpeed CI dashboard
-# (codspeed.yml). Gated by TREEWEAVE_BUILD_CODSPEED so a normal build never
-# fetches/links Google Benchmark. The Google Benchmark / codspeed-cpp headers
-# are third-party, so we do NOT apply treeweave_enable_warnings (-Werror); the
-# include dir below mirrors _treeweave_add_cpp_example without it.
-if(TREEWEAVE_BUILD_CODSPEED)
-    add_executable(treeweave_codspeed_bench c++/treeweave_codspeed_bench.cpp)
-    target_include_directories(
-        treeweave_codspeed_bench
-        PRIVATE ${PROJECT_SOURCE_DIR}/include
-    )
-    target_link_libraries(
-        treeweave_codspeed_bench
-        PRIVATE polyfit::polyfit poet::poet benchmark::benchmark
-    )
-endif()
