@@ -12,9 +12,11 @@
 #include <complex>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <numbers>
 #include <random>
 #include <span>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 
@@ -127,6 +129,17 @@ TEST_CASE("Out-of-domain returns NaN; closed upper endpoint returns a value", "[
     REQUIRE(yb == Catch::Approx(f(b)).epsilon(1e-6));
     // Scalar operator() admits only the exact endpoint: x > b stays NaN.
     REQUIRE(std::isnan(fn(b + 0.5)));
+}
+
+TEST_CASE("print_stats reports descent-only leaf tables", "[treeweave][stats]") {
+    auto fn = fit<8>([](double x) { return x * x; }, 0.0, 1.0, /*tol=*/1e-12);
+    REQUIRE_FALSE(fn.has_fast_quantize());
+
+    std::ostringstream out;
+    auto              *old = std::cout.rdbuf(out.rdbuf());
+    fn.print_stats();
+    std::cout.rdbuf(old);
+    REQUIRE(out.str().find("Leaf table: descent-only") != std::string::npos);
 }
 
 TEST_CASE("Rejects non-positive tolerance", "[treeweave][errors]") {
