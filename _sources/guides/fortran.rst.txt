@@ -8,15 +8,34 @@ pointer and ``context`` carries runtime parameters via ``c_loc`` / ``c_f_pointer
 Install
 -------
 
-Build from source using the CMake preset:
+Prebuilt C ABI
+^^^^^^^^^^^^^^
+
+Fortran calls the C ABI, so the release C archive is enough when you already
+have your own Fortran wrapper or build setup:
+
+.. code-block:: bash
+
+   VER=stable
+   PLATFORM=linux-x86_64
+   URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-${VER}-${PLATFORM}.tar.gz"
+   curl -fLO "$URL" || wget "$URL"
+   tar xzf "treeweave-${VER}-${PLATFORM}.tar.gz"
+
+Source build
+^^^^^^^^^^^^
+
+Build the ``treeweave_fortran`` target using the CMake preset:
 
 .. code-block:: bash
 
    git clone https://github.com/DiamonDinoia/treeweave.git
+   cd treeweave
    cmake --preset bindings-fortran
    cmake --build build/bindings-fortran -j
 
-A missing Fortran compiler is skipped gracefully. The ``treeweave`` module is generated in the build tree.
+A missing Fortran compiler is skipped gracefully. The ``treeweave`` module is
+generated in the build tree.
 
 Minimal example
 ---------------

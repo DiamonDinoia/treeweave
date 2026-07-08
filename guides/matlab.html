@@ -49,9 +49,15 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#id1">C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#julia">Julia</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#matlab">MATLAB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#octave">Octave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#fortran">Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#javascript-typescript">JavaScript / TypeScript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#cmake">CMake</a></li>
 </ul>
 </li>
 </ul>
@@ -76,8 +82,9 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">MATLAB / Octave</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#install-matlab-prebuilt-mex">Install (MATLAB) — prebuilt MEX</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-from-source-octave-or-matlab-without-the-prebuilt-bundle">Build from source (Octave, or MATLAB without the prebuilt bundle)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-matlab">Install (MATLAB)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-octave">Install (Octave)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-from-source">Build from source</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
@@ -95,27 +102,62 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#direct-tarball">Direct tarball</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#cmake-package">CMake package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#fit">Fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#evaluate">Evaluate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#by-value-scalar-eval">By-value scalar eval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#introspection-and-teardown">Introspection and teardown</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#prebuilt-c-abi">Prebuilt C ABI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="js.html">JavaScript / TypeScript</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="js.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#source-build">Source build</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="options.html#common-fit-options">Common fit options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="options.html#language-specific-options">Language-specific options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cmake.html">CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#vendored-c">Vendored C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#targets">Targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#installed-package">Installed package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#source-build">Source build</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
@@ -132,18 +174,6 @@
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
@@ -256,20 +286,48 @@
 binding is generated by <a class="reference external" href="https://github.com/zgimbutas/mwrap">mwrap</a> from a
 single <code class="docutils literal notranslate"><span class="pre">treeweave.mw</span></code> source; the user-facing <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> is a thin
 <code class="docutils literal notranslate"><span class="pre">classdef</span></code> holding the opaque C handle.</p>
-<section id="install-matlab-prebuilt-mex">
-<h2>Install (MATLAB) — prebuilt MEX<a class="headerlink" href="#install-matlab-prebuilt-mex" title="Link to this heading"></a></h2>
-<p>MATLAB users do not need to build. Each release attaches a self-contained
+<section id="install-matlab">
+<h2>Install (MATLAB)<a class="headerlink" href="#install-matlab" title="Link to this heading"></a></h2>
+<p>With <a class="reference external" href="https://mip.sh/">mip</a> after <code class="docutils literal notranslate"><span class="pre">treeweave</span></code> is published to a mip channel:</p>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="n">mip</span><span class="w"> </span><span class="s">install</span><span class="w"> </span><span class="s">treeweave</span>
+<span class="n">mip</span><span class="w"> </span><span class="s">load</span><span class="w"> </span><span class="s">treeweave</span>
+</pre></div>
+</div>
+<p>Or download the bundle directly. Each release attaches a self-contained
 <code class="docutils literal notranslate"><span class="pre">treeweave-matlab-&lt;version&gt;-&lt;platform&gt;</span></code> bundle (<code class="docutils literal notranslate"><span class="pre">linux-x64</span></code>, <code class="docutils literal notranslate"><span class="pre">windows-x64</span></code>,
 <code class="docutils literal notranslate"><span class="pre">macos-arm64</span></code>, <code class="docutils literal notranslate"><span class="pre">macos-x64</span></code>) on the <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases page</a>. The MEX statically links
 the C ABI, so there are no runtime dependencies — download, extract, and
 <code class="docutils literal notranslate"><span class="pre">addpath</span></code> the extracted directory (which holds <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code>, the generated
 <code class="docutils literal notranslate"><span class="pre">tw_*.m</span></code> stubs, and <code class="docutils literal notranslate"><span class="pre">treeweave_mex.&lt;ext&gt;</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VER</span><span class="o">=</span>stable
+<span class="nv">PLATFORM</span><span class="o">=</span>linux-x64
+<span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;https://github.com/DiamonDinoia/treeweave/releases/download/</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">/treeweave-matlab-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-</span><span class="si">${</span><span class="nv">PLATFORM</span><span class="si">}</span><span class="s2">.tar.gz&quot;</span>
+curl<span class="w"> </span>-fLO<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>wget<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span>
+tar<span class="w"> </span>xzf<span class="w"> </span><span class="s2">&quot;treeweave-matlab-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-</span><span class="si">${</span><span class="nv">PLATFORM</span><span class="si">}</span><span class="s2">.tar.gz&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="nb">addpath</span><span class="p">(</span><span class="s">&#39;treeweave-matlab-stable-linux-x64&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
-<section id="build-from-source-octave-or-matlab-without-the-prebuilt-bundle">
-<h2>Build from source (Octave, or MATLAB without the prebuilt bundle)<a class="headerlink" href="#build-from-source-octave-or-matlab-without-the-prebuilt-bundle" title="Link to this heading"></a></h2>
-<p>Octave has no stable MEX ABI across versions, so there is no prebuilt Octave MEX
-— the Octave binding is always built from source. Building is an opt-in CMake
-option, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_MATLAB</span></code>. With <code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code> (or MATLAB) on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>,
+<section id="install-octave">
+<h2>Install (Octave)<a class="headerlink" href="#install-octave" title="Link to this heading"></a></h2>
+<p>Octave has no stable MEX ABI across versions, so there is no prebuilt Octave
+MEX. Download the source release and build against your local Octave:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VER</span><span class="o">=</span>stable
+<span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;https://github.com/DiamonDinoia/treeweave/archive/refs/tags/</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">.tar.gz&quot;</span>
+curl<span class="w"> </span>-fL<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span><span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;treeweave-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-source.tar.gz&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>wget<span class="w"> </span>-O<span class="w"> </span><span class="s2">&quot;treeweave-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-source.tar.gz&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span>
+tar<span class="w"> </span>xzf<span class="w"> </span><span class="s2">&quot;treeweave-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-source.tar.gz&quot;</span>
+<span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;treeweave-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">&quot;</span>
+cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-octave
+cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-octave<span class="w"> </span>-j
+</pre></div>
+</div>
+</section>
+<section id="build-from-source">
+<h2>Build from source<a class="headerlink" href="#build-from-source" title="Link to this heading"></a></h2>
+<p>Building is an opt-in CMake option, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_MATLAB</span></code>. With
+<code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code> (or MATLAB) on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>,
 CMake fetches the mwrap generator, generates the gateway + <code class="docutils literal notranslate"><span class="pre">tw_*.m</span></code> stubs, and
 compiles the MEX:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-octave<span class="w">      </span><span class="c1"># or bindings-matlab if building against MATLAB</span>
@@ -293,9 +351,12 @@ path, then fit and evaluate:</p>
 <span class="nb">addpath</span><span class="p">(</span><span class="nb">fileparts</span><span class="p">(</span><span class="nb">fileparts</span><span class="p">(</span><span class="nb">mfilename</span><span class="p">(</span><span class="s">&#39;fullpath&#39;</span><span class="p">))));</span><span class="w">   </span><span class="c">% add bindings/matlab/ (treeweave.m)</span>
 
 <span class="n">f</span><span class="w">   </span><span class="p">=</span><span class="w"> </span><span class="p">@(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sin</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="c">% Fit f(x) on [0, 1] syntax is</span>
+<span class="c">% treeweave(callback, lower_bound, upper_bound, tolerance, name/value options).</span>
 <span class="n">obj</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">treeweave</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;dim&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s">&#39;out_dim&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
 
 <span class="n">Xtest</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nb">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">500</span><span class="p">)</span><span class="o">&#39;</span><span class="p">;</span>
+<span class="c">% Evaluate obj on 500 points and print the maximum error.</span>
 <span class="n">Yhat</span><span class="w">  </span><span class="p">=</span><span class="w"> </span><span class="n">obj</span><span class="p">.</span><span class="n">eval</span><span class="p">(</span><span class="n">Xtest</span><span class="p">);</span>
 <span class="n">Yref</span><span class="w">  </span><span class="p">=</span><span class="w"> </span><span class="nb">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">Xtest</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nb">sin</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">Xtest</span><span class="p">);</span>
 <span class="nb">fprintf</span><span class="p">(</span><span class="s">&#39;1D max abs error: %.3e\n&#39;</span><span class="p">,</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">Yhat</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Yref</span><span class="p">)));</span>

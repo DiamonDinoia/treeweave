@@ -51,9 +51,15 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#prebuilt-binaries">Prebuilt binaries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#building-from-source">Building from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#id1">C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#julia">Julia</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#matlab">MATLAB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#octave">Octave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#fortran">Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#javascript-typescript">JavaScript / TypeScript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#cmake">CMake</a></li>
 </ul>
 </li>
 </ul>
@@ -78,8 +84,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/matlab.html">MATLAB / Octave</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#install-matlab-prebuilt-mex">Install (MATLAB) — prebuilt MEX</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#build-from-source-octave-or-matlab-without-the-prebuilt-bundle">Build from source (Octave, or MATLAB without the prebuilt bundle)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#install-matlab">Install (MATLAB)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#install-octave">Install (Octave)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#build-from-source">Build from source</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
@@ -97,27 +104,62 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#direct-tarball">Direct tarball</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#cmake-package">CMake package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#evaluation-entry-points">Evaluation entry points</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#fit">Fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#evaluate">Evaluate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#by-value-scalar-eval">By-value scalar eval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/c.html#introspection-and-teardown">Introspection and teardown</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/c.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guides/fortran.html#prebuilt-c-abi">Prebuilt C ABI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="guides/fortran.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/fortran.html#further">Further</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="guides/js.html">JavaScript / TypeScript</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/js.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/js.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/js.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/js.html#source-build">Source build</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="guides/options.html">Fit options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/options.html#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/options.html#common-fit-options">Common fit options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/options.html#language-specific-options">Language-specific options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="guides/cmake.html">CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#vendored-c">Vendored C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#targets">Targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#installed-package">Installed package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cmake.html#source-build">Source build</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/performance.html">Performance</a><ul>
@@ -134,18 +176,6 @@
 <li class="toctree-l3"><a class="reference internal" href="guides/performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="guides/c-abi.html">C ABI reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#evaluate">Evaluate</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="guides/c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="guides/c-abi.html#thread-safety">Thread safety</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/dispatch.html">Runtime ISA dispatch</a><ul>
@@ -500,7 +530,7 @@ degree argument. Instead it picks a register-optimal, spill-free degree at
 runtime based on the detected CPU vector width. The multi-arch dispatch path —
 enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code> — selects among
 compiled-in ISA variants so the best leaf size for the host CPU is used
-automatically: on x86 a SSE2/SSE4.2/AVX2/AVX-512 ladder, on aarch64 the single
+automatically: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
 mandatory NEON64 variant, and on RISC-V an <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (best-effort,
 untested). See the <a class="reference internal" href="guides/dispatch.html"><span class="std std-doc">Runtime ISA dispatch</span></a> guide for the
 full family selection and the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> override. Accuracy is driven entirely by the
@@ -520,6 +550,8 @@ Mathematics, October 2025.
 <a class="reference external" href="https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf">slides (PDF)</a> ·
 <a class="reference external" href="https://gist.github.com/ahbarnett">code demos</a></p>
 </div></blockquote>
+<p>For broader HPC context around the surrounding numerical-computing work, see
+Marco Barbone’s <a class="reference external" href="https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1">Practical HPC NUFFTs</a>.</p>
 <p>That talk surveys the exact recipe treeweave automates — “break the domain into
 panels, use a fixed-degree interpolant on each, and recursively split panels
 until the local error meets the user’s tolerance” — and lists

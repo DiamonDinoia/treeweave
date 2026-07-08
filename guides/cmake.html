@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>C++ &mdash; treeweave  documentation</title>
+  <title>CMake &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="C" href="c.html" />
-    <link rel="prev" title="MATLAB / Octave" href="matlab.html" /> 
+    <link rel="next" title="Performance" href="performance.html" />
+    <link rel="prev" title="Fit options" href="options.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -62,7 +62,7 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="python.html">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="python.html#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
@@ -92,13 +92,13 @@
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#d-fit">1-D fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fit">Multi-dimensional fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#thread-safety">Thread safety</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-from-source">Build from source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-from-source">Build from source</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
@@ -144,20 +144,20 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="options.html#common-fit-options">Common fit options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#language-specific-options">Language-specific options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cmake.html">CMake</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#vendored-c">Vendored C++</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#targets">Targets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#profiles">Profiles</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#options">Options</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#installed-package">Installed package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cmake.html#source-build">Source build</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#vendored-c">Vendored C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#targets">Targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installed-package">Installed package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source-build">Source build</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
@@ -270,9 +270,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">C++</li>
+      <li class="breadcrumb-item active">CMake</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/cpp.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/cmake.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -280,138 +280,200 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="c">
-<h1>C++<a class="headerlink" href="#c" title="Link to this heading"></a></h1>
-<p>treeweave’s C++ API is header-only — include <code class="docutils literal notranslate"><span class="pre">treeweave/treeweave.hpp</span></code> and call
-<code class="docutils literal notranslate"><span class="pre">treeweave::fit</span></code>.</p>
-<section id="install">
-<h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
-<p><strong>Download headers (no CMake):</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
-tar<span class="w"> </span>xzf<span class="w"> </span>treeweave-cxx-headers.tar.gz<span class="w">   </span><span class="c1"># -&gt; ./include/treeweave/, ./include/polyfit/, ...</span>
-g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Iinclude<span class="w"> </span>-o<span class="w"> </span>simple1d
-./simple1d
-</pre></div>
-</div>
-<p>The floating URL always resolves to the newest release; use
-<code class="docutils literal notranslate"><span class="pre">.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz</span></code> to pin a version.</p>
-<p><strong>CMake — FetchContent:</strong></p>
-<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">FetchContent</span><span class="p">)</span>
-<span class="nb">FetchContent_Declare</span><span class="p">(</span><span class="s">treeweave</span>
-<span class="w">  </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s">https://github.com/DiamonDinoia/treeweave.git</span>
-<span class="w">  </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s">stable</span><span class="p">)</span>
-<span class="nb">FetchContent_MakeAvailable</span><span class="p">(</span><span class="s">treeweave</span><span class="p">)</span>
-<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>CMake — CPM:</strong></p>
+  <section id="cmake">
+<h1>CMake<a class="headerlink" href="#cmake" title="Link to this heading"></a></h1>
+<p>Prefer presets for local source builds, and use CPM or FetchContent when
+vendoring treeweave into another project.</p>
+<section id="vendored-c">
+<h2>Vendored C++<a class="headerlink" href="#vendored-c" title="Link to this heading"></a></h2>
+<p>CPM.cmake:</p>
 <div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">CPMAddPackage</span><span class="p">(</span><span class="s2">&quot;gh:DiamonDinoia/treeweave@stable&quot;</span><span class="p">)</span>
+<span class="nb">add_executable</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">example.cpp</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>FetchContent:</p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="s">FetchContent</span><span class="p">)</span>
+<span class="nb">FetchContent_Declare</span><span class="p">(</span>
+<span class="w">    </span><span class="s">treeweave</span>
+<span class="w">    </span><span class="s">GIT_REPOSITORY</span><span class="w"> </span><span class="s">https://github.com/DiamonDinoia/treeweave.git</span>
+<span class="w">    </span><span class="s">GIT_TAG</span><span class="w"> </span><span class="s">stable</span>
+<span class="p">)</span>
+
+<span class="nb">FetchContent_MakeAvailable</span><span class="p">(</span><span class="s">treeweave</span><span class="p">)</span>
+<span class="nb">add_executable</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">example.cpp</span><span class="p">)</span>
 <span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="d-fit">
-<h2>1-D fit<a class="headerlink" href="#d-fit" title="Link to this heading"></a></h2>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// simple1d — the smallest treeweave demo: fit an expensive 1-D function once,</span>
-<span class="c1">// then evaluate its fast polynomial approximant. Runs in a fraction of a second.</span>
-<span class="c1">//</span>
-<span class="c1">// Set the project up with CMake once; it fetches the deps (polyfit, POET, xsimd,</span>
-<span class="c1">// mdspan) and consolidates every header into a single &lt;build&gt;/include tree:</span>
-<span class="c1">//</span>
-<span class="c1">//   git clone https://github.com/DiamonDinoia/treeweave.git</span>
-<span class="c1">//   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON</span>
-<span class="c1">//   cmake --build build</span>
-<span class="c1">//</span>
-<span class="c1">// Then compile this file without CMake — one include flag, like xsimd. Which -I</span>
-<span class="c1">// you pass depends only on whether you installed:</span>
-<span class="c1">//</span>
-<span class="c1">//   * built, NOT installed:      -Ibuild/include      (the tree CMake just merged)</span>
-<span class="c1">//   * after `cmake --install`:   -I&lt;prefix&gt;/include   (or nothing, standard prefix)</span>
-<span class="c1">//</span>
-<span class="c1">//   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d</span>
-<span class="c1">//</span>
-<span class="c1">// Simpler still: `cd examples/c++ &amp;&amp; make` (uses the generated build/make.inc;</span>
-<span class="c1">// `make -n simple1d` prints the exact command). Inside a CMake project, just</span>
-<span class="c1">// `target_link_libraries(app PRIVATE treeweave::treeweave)` — no -I at all.</span>
-<span class="c1">// For a throughput benchmark (single / batched / sorted eval), see zeta_bench.cpp.</span>
-
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;treeweave/treeweave.hpp&gt;</span>
-
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iomanip&gt;</span>
-<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
-
-<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// zeta_N(s) = sum_{k=1..1000} k^-s — hundreds of pow() calls per evaluation.</span>
-<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">zeta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="kt">double</span><span class="w"> </span><span class="n">s</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
-<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span>
-<span class="w">            </span><span class="n">a</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">pow</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="n">s</span><span class="p">);</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
-<span class="w">    </span><span class="p">};</span>
-
-<span class="w">    </span><span class="c1">// Fit zeta(s) on [2, 10] syntax is fit(callback, lower_bound, upper_bound, tolerance).</span>
-<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-10</span><span class="p">);</span>
-
-<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3.5</span><span class="p">;</span>
-<span class="w">    </span><span class="c1">// Evaluate f on (3.5) and print the result.</span>
-<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="w">           </span><span class="c1">//</span>
-<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;zeta(x) = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="w"> </span><span class="c1">//</span>
-<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;f(x)    = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="w">    </span><span class="c1">//</span>
-<span class="w">              </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;rel err = &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">abs</span><span class="p">(</span><span class="n">zeta</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
-<span class="p">}</span>
-</pre></div>
-</div>
+<section id="targets">
+<h2>Targets<a class="headerlink" href="#targets" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16.0%" />
+<col style="width: 32.0%" />
+<col style="width: 52.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Language</p></th>
+<th class="head"><p>CMake target</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>C++</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">treeweave::treeweave</span></code></p></td>
+<td><p>Header/interface target for <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&lt;treeweave/treeweave.hpp&gt;</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>C</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">treeweave::treeweave_c</span></code></p></td>
+<td><p>Shared C ABI, enabled by <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_C_API=ON</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p>C</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">treeweave::treeweave_c_static</span></code></p></td>
+<td><p>Static C ABI, enabled by <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_C_API=ON</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Fortran</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">treeweave_fortran</span></code></p></td>
+<td><p>Local target when <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_FORTRAN=ON</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="multi-dimensional-fit">
-<h2>Multi-dimensional fit<a class="headerlink" href="#multi-dimensional-fit" title="Link to this heading"></a></h2>
-<p>Inputs and outputs are <code class="docutils literal notranslate"><span class="pre">std::array</span></code>; dimensions are deduced from the callable:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">bump</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[](</span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="o">&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">double</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="n">std</span><span class="o">::</span><span class="n">exp</span><span class="p">(</span><span class="mf">-100.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span>
-<span class="w">                            </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">0.5</span><span class="p">))};</span>
-<span class="p">};</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">bump</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="p">{</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">},</span>
-<span class="w">                         </span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="p">{</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">},</span><span class="w"> </span><span class="cm">/*tol=*/</span><span class="mf">1e-8</span><span class="p">);</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">y</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">fn</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="p">{</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.6</span><span class="p">});</span><span class="w">   </span><span class="c1">// std::array&lt;double, 1&gt;</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">float</span></code> works the same — use <code class="docutils literal notranslate"><span class="pre">float</span></code> corners and a <code class="docutils literal notranslate"><span class="pre">float</span></code>-returning callable.</p>
+<section id="profiles">
+<h2>Profiles<a class="headerlink" href="#profiles" title="Link to this heading"></a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--preset</span> <span class="pre">&lt;name&gt;</span></code> from a treeweave checkout:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 24.0%" />
+<col style="width: 76.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Preset</p></th>
+<th class="head"><p>What it sets</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dev-release</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Release</span></code> build, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH=native</span></code>; examples/tests use their top-level defaults.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dev-debug</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Debug</span></code> build with <code class="docutils literal notranslate"><span class="pre">-Og</span> <span class="pre">-g</span></code> and <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH=native</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">multiarch</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_C_MULTIARCH=ON</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH=x86-64</span></code>; examples off.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">multiarch-arm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_C_MULTIARCH=ON</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH=armv8-a</span></code>; examples off.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bindings-matlab</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_MATLAB=ON</span></code>; examples/tests off via <code class="docutils literal notranslate"><span class="pre">lib-release</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bindings-octave</span></code></p></td>
+<td><p>Same CMake options as <code class="docutils literal notranslate"><span class="pre">bindings-matlab</span></code>; intended for <code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code>/Octave builds.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bindings-fortran</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_BUILD_FORTRAN=ON</span></code>; examples/tests off via <code class="docutils literal notranslate"><span class="pre">lib-release</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
-<p>Pass a <a class="reference internal" href="options.html"><span class="doc">treeweave::options</span></a> as the trailing argument:</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">treeweave</span><span class="o">::</span><span class="n">options</span><span class="w"> </span><span class="n">opts</span><span class="p">;</span>
-<span class="n">opts</span><span class="p">.</span><span class="n">tol_kind</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">TolKind</span><span class="o">::</span><span class="n">AbsoluteMax</span><span class="p">;</span>
-<span class="n">opts</span><span class="p">.</span><span class="n">max_memory_mib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">;</span>
-<span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p">);</span>
-</pre></div>
-</div>
-<p>The leaf polynomial degree is a template parameter (default 7):</p>
-<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">);</span><span class="w">  </span><span class="c1">// degree-5 leaves</span>
+<p>These are the user-facing CMake cache options:</p>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="c"># Build example programs. Defaults ON for a direct treeweave checkout so</span>
+<span class="c"># developers can run examples immediately; defaults OFF for FetchContent and</span>
+<span class="c"># add_subdirectory consumers so vendoring treeweave stays small.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_EXAMPLES</span><span class="w"> </span><span class="s2">&quot;Build C++ examples&quot;</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
+<span class="c"># Build the C++/C test suites. Defaults ON only for a direct treeweave checkout;</span>
+<span class="c"># consumers opt in explicitly when they want to test the vendored dependency.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_TESTS</span><span class="w"> </span><span class="s2">&quot;Build tests&quot;</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
+<span class="c"># Build the C ABI libraries. This provides treeweave::treeweave_c</span>
+<span class="c"># (shared, when the platform supports shared libraries) and</span>
+<span class="c"># treeweave::treeweave_c_static. Most non-C++ bindings link through this ABI.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_C_API</span><span class="w"> </span><span class="s2">&quot;Build C ABI&quot;</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
+<span class="c"># Build the Python nanobind extension and register the pytest smoke/parity</span>
+<span class="c"># target. Normal Python users should prefer the PyPI wheel.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_PYTHON</span><span class="w"> </span><span class="s2">&quot;Build Python binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Register the Julia binding test suite against the C ABI. Normal Julia users</span>
+<span class="c"># should prefer Pkg.add, which downloads the release C ABI automatically.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JULIA</span><span class="w"> </span><span class="s2">&quot;Build Julia tests&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build the MATLAB/Octave MEX binding and register its smoke test. The</span>
+<span class="c"># bindings-matlab and bindings-octave presets are the preferred entry points.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_MATLAB</span><span class="w"> </span><span class="s2">&quot;Build MATLAB/Octave MEX&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build the Fortran iso_c_binding module plus its example and tests. Requires a</span>
+<span class="c"># modern Fortran compiler on PATH or CMAKE_Fortran_COMPILER set explicitly.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_FORTRAN</span><span class="w"> </span><span class="s2">&quot;Build Fortran binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build the JavaScript/TypeScript binding. With a normal compiler this builds</span>
+<span class="c"># the native N-API addon; with the Emscripten preset it builds the WASM backend.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JS</span><span class="w"> </span><span class="s2">&quot;Build JS/TS binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build local performance benchmark executables. OFF by default: the benchmark</span>
+<span class="c"># sources are not clang-tidy clean, so a top-level default would drag them into</span>
+<span class="c"># the analysis preset. Turn on via the bench preset.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_BENCHMARKS</span><span class="w"> </span><span class="s2">&quot;Build benchmarks&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build the CodSpeed benchmark used by CI. Prefer the codspeed preset.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_CODSPEED</span><span class="w"> </span><span class="s2">&quot;Build CodSpeed benchmark&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Add documentation targets: doxygen, sphinx, and docs. Requires Doxygen,</span>
+<span class="c"># sphinx-build, and the Python packages from docs/requirements.txt.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_GENERATE_DOCS</span><span class="w"> </span><span class="s2">&quot;Build docs targets&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build the C ABI with runtime ISA dispatch where the platform supports it. On</span>
+<span class="c"># x86 this builds a portable baseline plus wider variants and selects at runtime</span>
+<span class="c"># (GCC/Clang: SSE2/SSE4.2/AVX2/AVX-512; MSVC ABI: SSE2/AVX/AVX2/AVX-512). On</span>
+<span class="c"># unsupported platforms it falls back to the normal single-arch C ABI build.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_C_MULTIARCH</span><span class="w"> </span><span class="s2">&quot;Runtime ISA dispatch&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Treat project warnings as errors. Dependency warnings are kept out of this</span>
+<span class="c"># policy; this is intended to keep treeweave&#39;s own code clean.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_WARNINGS_AS_ERRORS</span><span class="w"> </span><span class="s2">&quot;Treat warnings as errors&quot;</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
+<span class="c"># Enable ASan/UBSan for project targets. Prefer sanitizer presets where</span>
+<span class="c"># available because they pick compiler/build settings known to fit CI memory.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_SANITIZERS</span><span class="w"> </span><span class="s2">&quot;Enable ASan/UBSan&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Run clang-tidy/cppcheck. OFF by default: as a global CMAKE_CXX_CLANG_TIDY it</span>
+<span class="c"># would also lint vendored deps configured outside the FetchContent guard (e.g.</span>
+<span class="c"># nanobind in the Python preset). Turn on via the analysis preset.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_STATIC_ANALYSIS</span><span class="w"> </span><span class="s2">&quot;Run static analysis&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Build with coverage instrumentation. Prefer the coverage preset.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_COVERAGE</span><span class="w"> </span><span class="s2">&quot;Build coverage&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="thread-safety">
-<h2>Thread safety<a class="headerlink" href="#thread-safety" title="Link to this heading"></a></h2>
-<p>A fitted <code class="docutils literal notranslate"><span class="pre">Function</span></code> is immutable; <code class="docutils literal notranslate"><span class="pre">operator()</span></code> is safe to call concurrently
-from many threads. treeweave does not parallelize internally.</p>
+<section id="installed-package">
+<h2>Installed package<a class="headerlink" href="#installed-package" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>dev-release
+cmake<span class="w"> </span>--build<span class="w"> </span>build/dev-release<span class="w"> </span>--parallel
+cmake<span class="w"> </span>--install<span class="w"> </span>build/dev-release<span class="w"> </span>--prefix<span class="w"> </span>/your/prefix
+</pre></div>
+</div>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">find_package</span><span class="p">(</span><span class="s">treeweave</span><span class="w"> </span><span class="s">REQUIRED</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave_c</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The header-only C++ API is not part of the installed
+<code class="docutils literal notranslate"><span class="pre">find_package(treeweave)</span></code> package because it depends on FetchContent-only
+headers. Consume it in-tree via FetchContent or <code class="docutils literal notranslate"><span class="pre">add_subdirectory</span></code>. The
+installable surface is the C ABI: <code class="docutils literal notranslate"><span class="pre">treeweave::treeweave_c</span></code> and
+<code class="docutils literal notranslate"><span class="pre">treeweave::treeweave_c_static</span></code>.</p>
 </section>
-<section id="build-from-source">
-<h2>Build from source<a class="headerlink" href="#build-from-source" title="Link to this heading"></a></h2>
+<section id="source-build">
+<h2>Source build<a class="headerlink" href="#source-build" title="Link to this heading"></a></h2>
+<p>Requirements: a C++20 compiler and CMake 3.25 or newer. Dependencies are
+fetched automatically.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DiamonDinoia/treeweave.git
-cmake<span class="w"> </span>-S<span class="w"> </span>treeweave<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_BUILD_EXAMPLES<span class="o">=</span>ON
-cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"> </span>-j
-<span class="c1"># one-flag compile against the consolidated header tree:</span>
-g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/include<span class="w"> </span>-o<span class="w"> </span>simple1d
+<span class="nb">cd</span><span class="w"> </span>treeweave
+cmake<span class="w"> </span>--preset<span class="w"> </span>dev-release
+cmake<span class="w"> </span>--build<span class="w"> </span>build/dev-release<span class="w"> </span>-j
+ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/dev-release
 </pre></div>
 </div>
-<p>After <code class="docutils literal notranslate"><span class="pre">cmake</span> <span class="pre">--install</span> <span class="pre">build</span> <span class="pre">--prefix</span> <span class="pre">P</span></code>, use <code class="docutils literal notranslate"><span class="pre">-IP/include</span></code> (or nothing for a
-standard prefix). <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> uses the generated <code class="docutils literal notranslate"><span class="pre">build/make.inc</span></code>.</p>
-<p>The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime; the C++
-header-only path compiles into your TU with your own <code class="docutils literal notranslate"><span class="pre">-march</span></code>. See <a class="reference internal" href="dispatch.html"><span class="doc">Runtime ISA dispatch</span></a>.</p>
-<p>Runnable sources:
-<a class="reference external" href="https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B">examples/c++/</a>.</p>
+<p>For a non-CMake C++ build, configure once to consolidate headers into
+<code class="docutils literal notranslate"><span class="pre">&lt;build&gt;/include</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>dev-release
+cmake<span class="w"> </span>--build<span class="w"> </span>build/dev-release
+g++<span class="w"> </span>-std<span class="o">=</span>c++20<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>examples/c++/simple1d.cpp<span class="w"> </span>-Ibuild/dev-release/include<span class="w"> </span>-o<span class="w"> </span>simple1d
+</pre></div>
+</div>
+<p>The build writes <code class="docutils literal notranslate"><span class="pre">build/dev-release/make.inc</span></code> with <code class="docutils literal notranslate"><span class="pre">CXX</span></code>, <code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_INC</span></code>. <code class="docutils literal notranslate"><span class="pre">examples/c++/Makefile</span></code> includes it, so
+<code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">examples/c++</span> <span class="pre">&amp;&amp;</span> <span class="pre">make</span></code> builds every example.</p>
 </section>
 </section>
 
@@ -419,8 +481,8 @@ header-only path compiles into your TU with your own <code class="docutils liter
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="matlab.html" class="btn btn-neutral float-left" title="MATLAB / Octave" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="c.html" class="btn btn-neutral float-right" title="C" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="options.html" class="btn btn-neutral float-left" title="Fit options" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="performance.html" class="btn btn-neutral float-right" title="Performance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

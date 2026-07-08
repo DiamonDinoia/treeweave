@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Performance" href="performance.html" />
-    <link rel="prev" title="Fortran" href="fortran.html" /> 
+    <link rel="next" title="CMake" href="cmake.html" />
+    <link rel="prev" title="JavaScript / TypeScript" href="js.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,9 +49,15 @@
               <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#prebuilt-binaries">Prebuilt binaries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#use-it-in-your-cmake-project">Use it in your CMake project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../install.html#building-from-source">Building from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#id1">C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#julia">Julia</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#matlab">MATLAB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#octave">Octave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#fortran">Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#javascript-typescript">JavaScript / TypeScript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#cmake">CMake</a></li>
 </ul>
 </li>
 </ul>
@@ -76,8 +82,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#install-matlab-prebuilt-mex">Install (MATLAB) — prebuilt MEX</a></li>
-<li class="toctree-l2"><a class="reference internal" href="matlab.html#build-from-source-octave-or-matlab-without-the-prebuilt-bundle">Build from source (Octave, or MATLAB without the prebuilt bundle)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#install-matlab">Install (MATLAB)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#install-octave">Install (Octave)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#build-from-source">Build from source</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
@@ -95,27 +102,62 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#direct-tarball">Direct tarball</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#cmake-package">CMake package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#fit">Fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#evaluate">Evaluate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#by-value-scalar-eval">By-value scalar eval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#introspection-and-teardown">Introspection and teardown</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#prebuilt-c-abi">Prebuilt C ABI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#source-build">Source build</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="js.html">JavaScript / TypeScript</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="js.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#source-build">Source build</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Fit options</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#treeweave-options"><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-fit-options">Common fit options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#language-specific-options">Language-specific options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cmake.html">CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#vendored-c">Vendored C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#targets">Targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#installed-package">Installed package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#source-build">Source build</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
@@ -132,18 +174,6 @@
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="c-abi.html">C ABI reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#handle-and-callbacks">Handle and callbacks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#fit">Fit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#evaluate">Evaluate</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="c-abi.html#by-value-scalar-eval-c-convenience">By-value scalar eval (C convenience)</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#introspection-and-teardown">Introspection and teardown</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c-abi.html#thread-safety">Thread safety</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
@@ -252,12 +282,13 @@
              
   <section id="fit-options">
 <h1>Fit options<a class="headerlink" href="#fit-options" title="Link to this heading"></a></h1>
-<p>Everything here is optional — the defaults are tuned to be good out of the box.
-The C++ knobs live in <code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code> (passed as the trailing <code class="docutils literal notranslate"><span class="pre">fit</span></code>
-argument); the C ABI mirrors the subset that matters across the boundary in
-<code class="docutils literal notranslate"><span class="pre">treeweave_opts</span></code>.</p>
-<section id="treeweave-options">
-<h2><code class="docutils literal notranslate"><span class="pre">treeweave::options</span></code><a class="headerlink" href="#treeweave-options" title="Link to this heading"></a></h2>
+<p>Everything here is optional — the defaults are tuned to be good out of the box.</p>
+<p>Options are documented here once. Language guides show how to pass them, and
+use each language’s naming style: C++ uses <code class="docutils literal notranslate"><span class="pre">tol_kind</span></code>, Python/Julia/MATLAB use
+<code class="docutils literal notranslate"><span class="pre">tol_kind</span></code>, JavaScript uses <code class="docutils literal notranslate"><span class="pre">tolKind</span></code>, and C/Fortran use the C ABI fields.</p>
+<section id="common-fit-options">
+<h2>Common fit options<a class="headerlink" href="#common-fit-options" title="Link to this heading"></a></h2>
+<p>These apply to every language binding:</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 24.0%" />
@@ -307,6 +338,44 @@ refinement only.</p></td>
 parameter (<code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code>, default 7); the C ABI auto-selects a
 register-optimal degree for the detected CPU.</p>
 </section>
+<section id="language-specific-options">
+<h2>Language-specific options<a class="headerlink" href="#language-specific-options" title="Link to this heading"></a></h2>
+<p>Some bindings add convenience fields around the shared C ABI:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 24.0%" />
+<col style="width: 24.0%" />
+<col style="width: 52.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Language</p></th>
+<th class="head"><p>Field</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Python, JavaScript</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dim</span></code> / <code class="docutils literal notranslate"><span class="pre">out_dim</span></code> or <code class="docutils literal notranslate"><span class="pre">outDim</span></code></p></td>
+<td><p>Input/output dimensions can be inferred by probing the callback; set
+them explicitly when inference is ambiguous or expensive.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Python, JavaScript</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dtype</span></code></p></td>
+<td><p>Select <code class="docutils literal notranslate"><span class="pre">f64</span></code>/<code class="docutils literal notranslate"><span class="pre">float64</span></code> or <code class="docutils literal notranslate"><span class="pre">f32</span></code>/<code class="docutils literal notranslate"><span class="pre">float32</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p>JavaScript</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">backend</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">auto</span></code> chooses native under Node and WASM in browsers; <code class="docutils literal notranslate"><span class="pre">native</span></code> and
+<code class="docutils literal notranslate"><span class="pre">wasm</span></code> force one backend.</p></td>
+</tr>
+<tr class="row-odd"><td><p>C++</p></td>
+<td><p>degree template parameter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code> sets the leaf polynomial degree. Other bindings use
+the C ABI’s CPU-selected degree.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="tolkind">
 <span id="id1"></span><h2><code class="docutils literal notranslate"><span class="pre">TolKind</span></code><a class="headerlink" href="#tolkind" title="Link to this heading"></a></h2>
 <table class="docutils align-default">
@@ -350,8 +419,8 @@ values (<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_R
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="fortran.html" class="btn btn-neutral float-left" title="Fortran" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="performance.html" class="btn btn-neutral float-right" title="Performance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="js.html" class="btn btn-neutral float-left" title="JavaScript / TypeScript" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cmake.html" class="btn btn-neutral float-right" title="CMake" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

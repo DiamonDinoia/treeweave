@@ -1,7 +1,7 @@
 treeweave
 =========
 
-**Evaluate an expensive function millions of times, fast.** Fit once; every evaluation afterward is a cheap polynomial lookup.
+Treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
 
 .. code-block:: cpp
 
@@ -9,7 +9,7 @@ treeweave
    auto fn = treeweave::fit([](double s) { double a=0; for(int k=1;k<=1000;++k) a+=std::pow(k,-s); return a; }, 2.0, 10.0, 1e-10);
    double y = fn(3.5);   // evaluate a polynomial, not the original function
 
-Use it from **C++** (header-only) or from **C**, **Fortran**, **Python**, **Julia**, **MATLAB/Octave**, and **JavaScript/TypeScript** through a stable C ABI.
+Use it from **C++** (header-only or compiled) or from **C**, **Fortran**, **Python**, **Julia**, **MATLAB/Octave**, and **JavaScript/TypeScript** through a stable C ABI.
 
 `GitHub <https://github.com/DiamonDinoia/treeweave>`_ · `Releases <https://github.com/DiamonDinoia/treeweave/releases>`_ · `Issues <https://github.com/DiamonDinoia/treeweave/issues>`_ · `License (BSD-3-Clause) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_ · `Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_
 
@@ -29,14 +29,15 @@ Use it from **C++** (header-only) or from **C**, **Fortran**, **Python**, **Juli
    guides/cpp
    guides/c
    guides/fortran
+   guides/js
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference
 
    guides/options
+   guides/cmake
    guides/performance
-   guides/c-abi
    guides/dispatch
    how-treeweave-works
    known-issues
