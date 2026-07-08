@@ -5,35 +5,19 @@ Install
 -------
 
 The package resolves ``libtreeweave_c`` in this order: the ``LIBTREEWEAVE_C``
-environment variable, then a sibling ``build*/`` directory, then a prebuilt
-download from the GitHub Release. That gives two install paths.
+environment variable, then a sibling ``build*/`` directory for developers, then
+a prebuilt download from the GitHub Release.
 
-**From source (works today — no release needed).** Build the C ABI in a
-checkout, then ``develop`` the package against the sibling build:
-
-.. code-block:: bash
-
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cmake --preset bindings-julia
-   cmake --build build/bindings-julia --target treeweave_c
-
-.. code-block:: julia
-
-   using Pkg
-   Pkg.develop(path="treeweave/bindings/julia/Treeweave")
-   Pkg.build("Treeweave")   # finds the sibling build/bindings-julia/libtreeweave_c
-
-**From a release (prebuilt).** Once a ``v*`` release is published, add the
-package directly; on first build it downloads the matching ``libtreeweave_c``
-from the GitHub Release and caches it:
+The normal install uses the prebuilt release binary:
 
 .. code-block:: julia
 
    using Pkg
    Pkg.add(url="https://github.com/DiamonDinoia/treeweave", subdir="bindings/julia/Treeweave")
 
-Override the release's source repo with the ``TREEWEAVE_REPO`` environment
-variable, or point ``LIBTREEWEAVE_C`` at a local build.
+On first build, Julia downloads the matching ``libtreeweave_c`` from the GitHub
+Release and caches it. Override the release source repo with ``TREEWEAVE_REPO``,
+or point ``LIBTREEWEAVE_C`` at a local C ABI build.
 
 Minimal example
 ---------------
@@ -58,7 +42,7 @@ fast paths:
    approx(xs; sorted = true)         # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)
 
-``sorted = true`` skips treeweave's internal counting-sort and is ~3–4× faster
+``sorted = true`` skips treeweave's internal bin-sort and is ~3–4× faster
 when you can promise ``xs`` is ascending — common for ``range`` grids, quadrature
 nodes, and time series. The promise is unchecked: unsorted input gives wrong
 values, so use the plain batch path when unsure. ``transposed = true`` returns
@@ -125,10 +109,25 @@ See :doc:`options` for a full description of each option and the tolerance kinds
 Further
 -------
 
+Build from source only when working on the binding or testing an unreleased
+change. Build the C ABI in a checkout, then ``develop`` the package against the
+sibling build:
+
 .. code-block:: bash
 
+   git clone https://github.com/DiamonDinoia/treeweave.git
+   cd treeweave
    cmake --preset bindings-julia
    cmake --build build/bindings-julia -j --target treeweave_c
+
+.. code-block:: julia
+
+   using Pkg
+   Pkg.develop(path="bindings/julia/Treeweave")
+   Pkg.build("Treeweave")
+
+.. code-block:: bash
+
    ctest --test-dir build/bindings-julia -R julia_treeweave
 
 Examples:

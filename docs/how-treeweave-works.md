@@ -266,7 +266,7 @@ degree argument. Instead it picks a register-optimal, spill-free degree at
 runtime based on the detected CPU vector width. The multi-arch dispatch path —
 enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON` — selects among
 compiled-in ISA variants so the best leaf size for the host CPU is used
-automatically: on x86 a SSE2/SSE4.2/AVX2/AVX-512 ladder, on aarch64 the single
+automatically: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
 mandatory NEON64 variant, and on RISC-V an `rvv` variant (best-effort,
 untested). See the [Runtime ISA dispatch](guides/dispatch.rst) guide for the
 full family selection and the `TREEWEAVE_FORCE_ARCH` override. Accuracy is driven entirely by the
@@ -285,6 +285,9 @@ adaptive paneling extends to several dimensions — see:
 > Mathematics, October 2025.
 > [slides (PDF)](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) ·
 > [code demos](https://gist.github.com/ahbarnett)
+
+For broader HPC context around the surrounding numerical-computing work, see
+Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 
 That talk surveys the exact recipe treeweave automates — "break the domain into
 panels, use a fixed-degree interpolant on each, and recursively split panels

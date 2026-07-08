@@ -11,6 +11,7 @@ int main() {
     auto bump = [](std::array<double, 2> x) -> std::array<double, 1> {
         return {std::exp(-100.0 * (x[0] - 0.5) * (x[0] - 0.5) - (x[1] - 0.5) * (x[1] - 0.5))};
     };
+    // Fit bump(x, y) on [0, 1]^2 syntax is fit(callback, lower_bound, upper_bound, tolerance).
     auto fn = treeweave::fit(bump, std::array{0.0, 0.0}, std::array{1.0, 1.0},
                              /*tol=*/1e-8);
 
@@ -23,6 +24,7 @@ int main() {
 
     const auto t0  = std::chrono::steady_clock::now();
     double     acc = 0.0;
+    // Evaluate fn on random points and print throughput plus max error.
     for (auto &x : xs)
         acc += fn(x)[0];
     const auto   t1 = std::chrono::steady_clock::now();

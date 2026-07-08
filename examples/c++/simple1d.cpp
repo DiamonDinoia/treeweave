@@ -36,10 +36,11 @@ int main() {
         return a;
     };
 
-    // Fit once (milliseconds); f is then a cheap polynomial good to ~1e-10.
+    // Fit zeta(s) on [2, 10] syntax is fit(callback, lower_bound, upper_bound, tolerance).
     auto f = treeweave::fit(zeta, 2.0, 10.0, /*tol=*/1e-10);
 
     const double x = 3.5;
+    // Evaluate f on (3.5) and print the result.
     std::cout << std::setprecision(15)           //
               << "zeta(x) = " << zeta(x) << "\n" //
               << "f(x)    = " << f(x) << "\n"    //

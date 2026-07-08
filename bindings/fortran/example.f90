@@ -34,6 +34,8 @@ program treeweave_example
     b(1) = 1.0_c_double
     tol  = 1.0e-10_c_double
 
+    ! Fit exp(x) on [0, 1] syntax is
+    ! treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options).
     h = treeweave_fit(c_funloc(kernel_exp), 1_c_int, 1_c_int, a, b, tol, &
                    c_null_ptr, c_null_ptr)
     if (.not. c_associated(h)) then
@@ -45,6 +47,7 @@ program treeweave_example
         " output_dim=", treeweave_output_dim(h), " memory=", treeweave_memory_usage(h), " bytes"
 
     x(1) = 0.5_c_double
+    ! Evaluate h on (0.5) and print the result.
     call treeweave_eval(h, x, y)
     write (*, '(A,F0.12,A,F0.12)') "exp(0.5) approx=", y(1), " exact=", exp(0.5_c_double)
 

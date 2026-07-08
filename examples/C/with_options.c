@@ -31,6 +31,8 @@ int main(void) {
     opts.max_depth         = 50;
     opts.min_uniform_depth = 2;
 
+    /* Fit kernel(x) on [0.01, 5] syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(kernel,
                       /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-8, /*context=*/NULL, /*opts=*/&opts);
@@ -45,6 +47,7 @@ int main(void) {
 
     const double x = 1.0;
     double       y = 0.0;
+    /* Evaluate fn on (1.0) and print the result. */
     treeweave_eval(fn, &x, &y);
     printf("fn(1.0) = %.12f  exact = %.12f\n", y, sin(50.0) / 1.0);
 
@@ -55,7 +58,12 @@ int main(void) {
     treeweave_opts shallow;
     treeweave_default_opts(&shallow);
     shallow.max_depth = 4;
-    treeweave_t bad   = treeweave_fit(kernel, 1, 1, &a, &b, 1e-8, NULL, &shallow);
+    /* Fit kernel(x) on [0.01, 5] syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options),
+       then print the expected shallow max_depth failure. */
+    treeweave_t bad = treeweave_fit(kernel,
+                                    /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-8, /*context=*/NULL,
+                                    /*opts=*/&shallow);
     if (bad != NULL) {
         fprintf(stderr, "expected the shallow fit to fail, but it succeeded\n");
         treeweave_free(bad);

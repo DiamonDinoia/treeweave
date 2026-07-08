@@ -5,10 +5,13 @@
 addpath(fileparts(fileparts(mfilename('fullpath'))));   % add bindings/matlab/ (treeweave.m)
 
 f   = @(x) sin(x(1) + x(2));
+% Fit f(x, y) on [-1, 1]^2 syntax is
+% treeweave(callback, lower_bound, upper_bound, tolerance, name/value options).
 obj = treeweave(f, [-1,-1], [1,1], 1e-7, 'dim', 2, 'out_dim', 1);
 
 [gx, gy]  = meshgrid(linspace(-1,1,40));
 Xgrid     = [gx(:), gy(:)];
+% Evaluate obj on a grid and print the maximum error.
 Yhat      = obj.eval(Xgrid);
 Yref      = sin(Xgrid(:,1) + Xgrid(:,2));
 fprintf('2D->1D max abs error: %.3e\n', max(abs(Yhat - Yref)));

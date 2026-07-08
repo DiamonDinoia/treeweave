@@ -19,6 +19,8 @@ int main(void) {
     const double a[3] = {-1.0, -1.0, -1.0};
     const double b[3] = {1.0, 1.0, 1.0};
 
+    /* Fit gaussian(x, y, z) on [-1, 1]^3 syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(gaussian,
                       /*input_dim=*/3, /*output_dim=*/1, a, b, /*tol=*/1e-8, /*context=*/NULL, /*opts=*/NULL);
@@ -30,6 +32,7 @@ int main(void) {
     printf("input_dim=%d output_dim=%d memory=%zu bytes\n", treeweave_input_dim(fn), treeweave_output_dim(fn),
            treeweave_memory_usage(fn));
 
+    /* Evaluate fn on a grid and print the maximum error. */
     /* Scalar eval over a coarse interior grid; track worst absolute error. */
     double max_abs_err = 0.0;
     for (int i = -8; i <= 8; ++i) {
@@ -51,6 +54,7 @@ int main(void) {
     /* AoS batch eval: 2 packed (x, y, z) coords -> 2 results. */
     const double xs[6] = {0.0, 0.0, 0.0, 0.3, -0.4, 0.5};
     double       ys[2] = {0};
+    /* Evaluate fn on batched points and print the origin result. */
     treeweave_batch(fn, xs, ys, 2);
     printf("f(0,0,0) approx = %.12f (exact 1.0)\n", ys[0]);
 

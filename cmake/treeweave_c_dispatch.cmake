@@ -5,12 +5,6 @@
 include_guard(GLOBAL)
 include(CheckCXXCompilerFlag)
 
-option(
-    TREEWEAVE_C_MULTIARCH
-    "Build the C ABI with runtime multi-architecture dispatch (x86 ladder / aarch64 neon64 / riscv rvv)"
-    OFF
-)
-
 set(_treeweave_variant_srcs "")
 set(_treeweave_gen_dir "${CMAKE_CURRENT_BINARY_DIR}/capi_gen")
 foreach(_dtype f64 f32)

@@ -12,12 +12,14 @@ def func(x):
 # arithmetic + I/O array dtype). It cannot be inferred from `func`: a Python
 # callable just returns a float, so the precision is a deliberate fit-time knob
 # (default "f64"). dim/out_dim *are* inferred, by probing func.
+# Fit sin(x) on [0, pi] syntax is fit(callback, lower_bound, upper_bound, tol, dtype=...).
 approx = treeweave.fit(func, 0.0, math.pi, tol=1e-4, dtype="f32")
 print(approx)  # dtype='f32', dim, out_dim, memory_usage
 
 # The fit domain is [a, b); evaluating exactly at the upper corner b is allowed
 # as a convenience and returns the boundary value (not NaN).
 xs = np.linspace(0.0, math.pi, 50, dtype=np.float32)  # includes the endpoint
+# Evaluate approx on 50 points and print the maximum error.
 ys = approx(xs)
 assert ys.dtype == np.float32
 max_err = float(np.max(np.abs(ys.astype(np.float64) - np.sin(xs))))

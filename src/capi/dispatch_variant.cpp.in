@@ -1,7 +1,7 @@
 // dispatch_variant.cpp.in — CMake template for one (dtype, input_dim)
 // C-ABI factory TU. configure_file() expands @TREEWEAVE_VT@ / @TREEWEAVE_VIN@
 // into 6 TUs (2 dtypes × 3 dims), compiled once (multiarch OFF) or four times
-// at distinct -march levels (multiarch ON). Degree baked (= 7, see arch_degree_table.hpp).
+// at distinct ISA levels (multiarch ON). Degree baked (= 7, see arch_degree_table.hpp).
 // COMDAT dedup and internal/external linkage split: see c_binding_detail.hpp.
 
 #include <xsimd/xsimd.hpp>

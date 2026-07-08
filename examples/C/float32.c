@@ -23,6 +23,8 @@ int main(void) {
 
     /* tol is a double even on the f32 path (it matches treeweave::fit's signature);
      * 1e-5 is about as tight as single precision can meaningfully resolve. */
+    /* Fit kernel(x) on [0, 1] syntax is
+       treeweavef_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweavef_fit(kernel,
                        /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-5, /*context=*/NULL, /*opts=*/NULL);
@@ -34,6 +36,7 @@ int main(void) {
     printf("dtype=%d (1 == F32) input_dim=%d output_dim=%d memory=%zu bytes\n", (int)treeweave_dtype(fn),
            treeweave_input_dim(fn), treeweave_output_dim(fn), treeweave_memory_usage(fn));
 
+    /* Evaluate fn on points in [0, 1] and print the maximum error. */
     /* Scalar eval at a few points. */
     float max_abs_err = 0.0F;
     for (int i = 0; i <= 20; ++i) {
@@ -51,6 +54,7 @@ int main(void) {
     /* AoS batch eval. */
     const float xs[5] = {0.05F, 0.25F, 0.5F, 0.75F, 0.95F};
     float       ys[5] = {0};
+    /* Evaluate fn on batched points and print the result at 0.5. */
     treeweavef_batch(fn, xs, ys, 5);
     float exact_mid = 0.0F;
     kernel(&xs[2], &exact_mid, NULL);

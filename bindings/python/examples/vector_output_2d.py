@@ -13,6 +13,7 @@ def func(x):
 
 
 # out_dim is inferred from a one-shot probe of func at the box midpoint.
+# Fit func(x, y) on [0.2, 1.5]^2 syntax is fit(callback, lower_bound, upper_bound, tol).
 approx = treeweave.fit(func, [0.2, 0.2], [1.5, 1.5], tol=1e-8)
 print(approx)  # dtype, dim, out_dim, memory_usage
 
@@ -20,6 +21,7 @@ N = 64
 rng = np.random.default_rng(0)
 xs = rng.uniform([[0.2, 0.2]], [[1.5, 1.5]], size=(N, 2))
 
+# Evaluate approx on random points and print AoS/transposed parity.
 aos = approx(xs)                       # (N, out_dim)
 tr = approx(xs, transposed=True)       # (out_dim, N)
 

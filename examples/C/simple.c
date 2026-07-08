@@ -20,6 +20,8 @@ int main(void) {
     const double a = 0.0;
     const double b = 1.0;
 
+    /* Fit exp(x) on [0, 1] syntax is
+       treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options). */
     treeweave_t fn =
         treeweave_fit(kernel,
                       /*input_dim=*/1, /*output_dim=*/1, &a, &b, /*tol=*/1e-10, /*context=*/NULL, /*opts=*/NULL);
@@ -31,6 +33,7 @@ int main(void) {
     printf("dtype=%d input_dim=%d output_dim=%d memory=%zu bytes\n", (int)treeweave_dtype(fn), treeweave_input_dim(fn),
            treeweave_output_dim(fn), treeweave_memory_usage(fn));
 
+    /* Evaluate fn on points in [0, 1] and print the maximum error. */
     /* Scalar eval at a few points; compare to the exact value. The by-value
        treeweave_eval_1d returns the result directly — no output pointer, which
        is the ergonomic form for a 1D->1D fit (y = f(x)). */

@@ -19,12 +19,14 @@ int main() {
     constexpr double      tol = 1e-8;
     std::array<double, 2> a{0.2, 0.2};
     std::array<double, 2> b{1.5, 1.5};
-    auto                  fn = treeweave::fit(f, a, b, tol);
+    // Fit f(x, y) on [0.2, 1.5]^2 syntax is fit(callback, lower_bound, upper_bound, tolerance).
+    auto fn = treeweave::fit(f, a, b, tol);
 
     std::mt19937                           gen(42);
     std::uniform_real_distribution<double> dx(0.21, 1.49);
     std::uniform_real_distribution<double> dy(0.21, 1.49);
     std::array<double, 2>                  mx{0.0, 0.0};
+    // Evaluate fn on random points and print max relative error per channel.
     for (int i = 0; i < 5000; ++i) {
         std::array<double, 2> x{dx(gen), dy(gen)};
         const auto            exact  = f(x);
