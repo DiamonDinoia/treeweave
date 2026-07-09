@@ -55,6 +55,9 @@ _treeweave_add_cpp_test(test_greens   test_greens.cpp)
 _treeweave_add_cpp_test(test_threadsafe test_threadsafe.cpp)
 find_package(Threads REQUIRED)
 target_link_libraries(test_threadsafe PRIVATE Threads::Threads)
+# Exercises the evaluators from concurrent threads -> its instrumented header
+# instantiations need atomic coverage counters (the rest of the suite doesn't).
+treeweave_coverage_atomic_counters(test_threadsafe)
 _treeweave_add_cpp_test(test_allocator test_allocator.cpp)
 
 if(TREEWEAVE_BUILD_C_API)
@@ -62,6 +65,9 @@ if(TREEWEAVE_BUILD_C_API)
     # test_c.cpp spins std::threads to assert treeweave_last_error() is
     # thread-local across the C ABI, so it needs the threading runtime too.
     target_link_libraries(test_c PRIVATE treeweave_c Threads::Threads)
+    # Those threads drive the C ABI concurrently; its own TU needs atomic
+    # counters (the C-ABI objects it calls get them in treeweave_c_dispatch).
+    treeweave_coverage_atomic_counters(test_c)
 endif()
 
 # Make the coverage target build every test executable before it runs CTest.

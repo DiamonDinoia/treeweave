@@ -76,6 +76,9 @@ function(_treeweave_configure_c_object tgt)
     if(TREEWEAVE_ENABLE_SANITIZERS)
         target_compile_options(${tgt} PRIVATE -fno-sanitize=address,undefined)
     endif()
+    # test_c drives the C ABI from concurrent threads, so these shared objects
+    # need atomic coverage counters even though the rest of the suite is serial.
+    treeweave_coverage_atomic_counters(${tgt})
 endfunction()
 
 function(_treeweave_add_c_object_lib name)

@@ -164,8 +164,13 @@ endif()
 # Must run before library/test targets (ordering constraint).
 if(TREEWEAVE_ENABLE_COVERAGE)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        # -fprofile-update=atomic: batch evaluator uses threads; avoids .gcda races.
-        add_compile_options(--coverage -fprofile-update=atomic)
+        # Counter updates default to non-atomic (-fprofile-update=single): fast,
+        # and correct for the single-threaded majority of the suite (a lone
+        # thread never races its own .gcda counters). Atomic updates are much
+        # slower per basic block under -O0 and are only needed where instrumented
+        # code runs concurrently — applied per-target via
+        # treeweave_coverage_atomic_counters() to the threaded TUs only.
+        add_compile_options(--coverage)
         add_link_options(--coverage)
         message(
             STATUS
@@ -179,6 +184,16 @@ if(TREEWEAVE_ENABLE_COVERAGE)
         )
     endif()
 endif()
+
+# Opt a target into atomic coverage counters. Needed only for TUs whose
+# instrumented code is exercised by multiple threads concurrently (else races
+# silently drop .gcda increments -> undercounted coverage). No-op when coverage
+# is off or the compiler lacks the flag.
+function(treeweave_coverage_atomic_counters tgt)
+    if(TREEWEAVE_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${tgt} PRIVATE -fprofile-update=atomic)
+    endif()
+endfunction()
 
 option(
     TREEWEAVE_ENABLE_CLANG_TIDY
