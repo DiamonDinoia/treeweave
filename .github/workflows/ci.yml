@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-  schedule:
-    - cron: '0 3 * * *'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -179,7 +177,6 @@ jobs:
     # force-inlined (TREEWEAVE_FLATTEN) dispatch TUs sits right at ~30 min on a
     # 4-core runner; 30 was tipping over into a timeout (job -> cancelled).
     timeout-minutes: 50
-    needs: build
     steps:
       - name: Checkout
         uses: actions/checkout@v7

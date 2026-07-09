@@ -34,10 +34,13 @@ jobs:
   # Compute the shared X.Y.Z.devN version once so every builder pins the same one.
   version:
     name: Derive dev version
-    # Publish only green commits: workflow_dispatch, or a CI run that succeeded.
+    # Publish only green *pushes*: manual dispatch, or a CI run that succeeded
+    # AND was driven by a push — so a CI run from any other trigger (a manual
+    # re-run, etc.) can't republish an identical .devN for an unchanged commit.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.v.outputs.version }}
