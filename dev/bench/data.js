@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783334658027,
+  "lastUpdate": 1783935271096,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2492,6 +2492,94 @@ window.BENCHMARK_DATA = {
             "value": 0.00166083088888889,
             "unit": "s/batch",
             "extra": "MdAPE=0.00188187028348211; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "a009698bd8fc07e3f3042404fc3c7f436f52926e",
+          "message": "perf(coverage): atomic gcov counters only on threaded TUs\n\nThe coverage build used -fprofile-update=atomic globally. Atomic counter\nupdates are only needed where instrumented code runs under concurrent\nthreads; a single-threaded test never races its own .gcda counters. Under\n-O0 the atomic (lock-prefixed) per-basic-block increment costs ~5x a plain\none, and the whole suite was paying it.\n\nMeasured on the heavy single-threaded [batch] case in test_cpp:\n  atomic 86.0s -> single 17.7s  (~4.9x)\n\nMake non-atomic the default and apply atomic per-target only to the TUs\nthat spin threads: test_threadsafe, test_c, and the shared C-ABI dispatch\nobjects test_c drives concurrently. Coverage counts stay accurate there;\neverywhere else the run gets much faster.",
+          "timestamp": "2026-07-09T21:16:07Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/a009698bd8fc07e3f3042404fc3c7f436f52926e"
+        },
+        "date": 1783935269089,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000713690888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00630256309698828; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.00123121777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00209848192067553; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000596567125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00392082941062635; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00192925525,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00353419411546938; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002786557,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00209369105650123; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.005845198,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.033569752443146; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.046963657375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00252135066138997; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0016624467,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00369602072164579; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.00029408075,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0051328155129602; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000577518222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00863997317364311; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000500875444444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00413739771278467; batch=65536 pts/call"
           }
         ]
       }
