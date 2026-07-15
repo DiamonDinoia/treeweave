@@ -98,7 +98,22 @@ int main() {
 }
 ```
 
-Use the CMake section below, or download `treeweave-cxx-headers.tar.gz` from
+To install directly in CMake:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    treeweave
+    GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
+    GIT_TAG stable # or any other release tag
+)
+
+FetchContent_MakeAvailable(treeweave)
+add_executable(my_app example.cpp)
+target_link_libraries(my_app PRIVATE treeweave::treeweave)
+```
+
+The CMake section below contains more details, or download `treeweave-cxx-headers.tar.gz` from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases) and compile with
 `-std=c++20 -Iinclude`.
 
@@ -360,7 +375,8 @@ Targets by language:
 
 ## Acknowledgements
 
-treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute). treeweave rebuilds the fit/eval pipeline on [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
+treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute).
+Thank you Robert! treeweave rebuilds the fit/eval pipeline on [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
 
 For numerical background, see Alex Barnett's talk [What everyone should know about function approximation](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) (FWAM7, Flatiron Institute, 2025), and Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 
