@@ -9,11 +9,12 @@ single ``treeweave.mw`` source; the user-facing ``treeweave.m`` is a thin
 Install (MATLAB)
 ----------------
 
-With `mip <https://mip.sh/>`_ after ``treeweave`` is published to a mip channel:
+With `mip <https://mip.sh/>`_, from the `mip-org/labs
+<https://github.com/mip-org/mip-labs>`_ channel:
 
 .. code-block:: matlab
 
-   mip install treeweave
+   mip install --channel mip-org/labs treeweave
    mip load treeweave
 
 Or download the bundle directly. Each release attaches a self-contained
