@@ -161,10 +161,10 @@ delete(approx);
 
 Install:
 
-With [mip](https://mip.sh/) after `treeweave` is published to a mip channel:
+With [mip](https://mip.sh/), from the [`mip-org/labs`](https://github.com/mip-org/mip-labs) channel:
 
 ```matlab
-mip install treeweave
+mip install --channel mip-org/labs treeweave
 mip load treeweave
 ```
 
