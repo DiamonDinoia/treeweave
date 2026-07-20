@@ -16,6 +16,10 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 - Julia bindings `Project.toml` carried `version = "0.0.0"`, which Julia's Pkg
   rejects as an invalid version (`Pkg.add` fails). Bumped to `0.0.1`.
+- The Windows N-API prebuild now links node's import library and delay-loads
+  `node.exe` (the node-gyp / cmake-js approach), so the native addon builds
+  under MSVC instead of failing to resolve `napi_*` — Windows Node users get the
+  native backend, not just the WASM fallback.
 
 ### Added
 

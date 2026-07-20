@@ -122,6 +122,27 @@ else()
                     treeweave_node
                     PRIVATE -undefined dynamic_lookup
                 )
+            elseif(WIN32)
+                # MSVC cannot leave the napi_* imports unresolved (unlike ELF /
+                # dyld). Link node's import library and delay-load node.exe so
+                # they bind to the host process at load time — the node-gyp
+                # approach. TREEWEAVE_NODE_LIB is node.lib for the target node,
+                # fetched by the prebuild workflow.
+                if(NOT TREEWEAVE_NODE_LIB)
+                    message(
+                        FATAL_ERROR
+                        "treeweave[js]: Windows native addon needs -DTREEWEAVE_NODE_LIB=<path to node.lib>"
+                    )
+                endif()
+                target_sources(
+                    treeweave_node
+                    PRIVATE "${_js_dir}/src/win_delay_load_hook.cc"
+                )
+                target_link_libraries(
+                    treeweave_node
+                    PRIVATE "${TREEWEAVE_NODE_LIB}" delayimp
+                )
+                target_link_options(treeweave_node PRIVATE /DELAYLOAD:node.exe)
             endif()
             message(
                 STATUS
