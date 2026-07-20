@@ -80,15 +80,21 @@ else()
         )
     else()
         # node_api.h ships inside the Node distribution's include/node directory.
-        execute_process(
-            COMMAND
-                "${TREEWEAVE_NODE_EXECUTABLE}" -e
-                "const p=require('path');process.stdout.write(p.join(p.dirname(process.execPath),'..','include','node'))"
-            OUTPUT_VARIABLE _node_inc
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE _node_res
-        )
-        if(NOT _node_res EQUAL 0 OR NOT EXISTS "${_node_inc}")
+        # Windows node has no bundled headers, so the prebuild workflow downloads
+        # them and passes TREEWEAVE_NODE_INCLUDE; otherwise derive from execPath.
+        if(TREEWEAVE_NODE_INCLUDE)
+            set(_node_inc "${TREEWEAVE_NODE_INCLUDE}")
+        else()
+            execute_process(
+                COMMAND
+                    "${TREEWEAVE_NODE_EXECUTABLE}" -e
+                    "const p=require('path');process.stdout.write(p.join(p.dirname(process.execPath),'..','include','node'))"
+                OUTPUT_VARIABLE _node_inc
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                RESULT_VARIABLE _node_res
+            )
+        endif()
+        if(NOT EXISTS "${_node_inc}")
             message(
                 WARNING
                 "treeweave[js]: could not resolve node include dir — skipping native addon."
