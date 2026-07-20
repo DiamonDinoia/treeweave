@@ -1,11 +1,12 @@
-/* Force a monospace code font that ships full, cell-width box-drawing glyphs
- * (┌─┬┐│└┘) plus • and →, so the ASCII-art diagrams in how-treeweave-works
- * stay aligned in the browser. The RTD theme's default stack
- * (SFMono/Menlo/Consolas…) lacks these glyphs on many systems, so the browser
- * substitutes them per-glyph from a fallback font whose advance width differs
- * from the ASCII cell — which is what makes the boxes drift apart. */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-
+/* Keep the ASCII-art diagrams in how-treeweave-works aligned in the browser.
+ *
+ * Alignment breaks when the box-drawing glyphs (┌─┬┐│└┘┼), • and → come from a
+ * different font than the ASCII cells: a per-glyph fallback whose advance width
+ * differs from the ASCII cell makes the boxes drift. So the whole code block
+ * must render from ONE font that carries all of them at cell width. We do NOT
+ * pull a webfont here: Google Fonts subsets JetBrains Mono and drops the
+ * box-drawing block (U+2500–257F) and →, which reintroduces the split. Every
+ * font below covers the full box-drawing block on its platform. */
 .rst-content pre,
 .rst-content pre.literal-block,
 .rst-content div[class^="highlight"] pre,
@@ -15,10 +16,9 @@ code,
 pre,
 kbd,
 samp {
-  font-family: "JetBrains Mono", ui-monospace, "DejaVu Sans Mono", "Cascadia Mono",
-               Menlo, Consolas, "Liberation Mono", monospace !important;
-  /* Box-art relies on a fixed grid: kill ligatures and any inherited spacing
-   * that would shift cell boundaries. */
+  font-family: ui-monospace, "DejaVu Sans Mono", "Liberation Mono",
+               "Cascadia Mono", Menlo, Consolas, monospace !important;
+  /* Box-art relies on a fixed grid: kill ligatures and inherited spacing. */
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
   letter-spacing: 0;
