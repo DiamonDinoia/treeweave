@@ -624,7 +624,9 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish js-pkg/*.tgz --access public
+        # ./ is required: without it npm reads "js-pkg/<file>.tgz" as a GitHub
+        # owner/repo shorthand (EALLOWGIT) instead of a local tarball path.
+        run: npm publish ./js-pkg/*.tgz --access public
 
   # Now that the Release assets exist, verify the one wrapper path that can only
   # be tested after publishing: Julia's prebuilt-download install (deps/build.jl
