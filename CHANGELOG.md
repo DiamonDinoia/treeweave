@@ -10,6 +10,13 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-07-20
+
+### Fixed
+
+- Julia bindings `Project.toml` carried `version = "0.0.0"`, which Julia's Pkg
+  rejects as an invalid version (`Pkg.add` fails). Bumped to `0.0.1`.
+
 ### Added
 
 - Documentation now defaults to released/prebuilt install paths, with source
