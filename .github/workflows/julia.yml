@@ -2,9 +2,11 @@ name: Julia
 
 # Julia wrapper: builds libtreeweave_c, dlopens it, and runs runtests.jl via the
 # julia_treeweave CTest target. Split out from the former bindings.yml so it earns
-# its own status badge. The macos-14 (Apple Silicon) leg is load-bearing: the
-# @cfunction callback in Treeweave.jl must not capture a closure, since closure
-# cfunctions are unsupported on aarch64-apple-darwin.
+# its own status badge. The matrix builds + runs the suite from source on every
+# platform the release ships a prebuilt for, so a wrapper bug lands on a PR, not
+# post-release. The macos-14 (Apple Silicon) leg is load-bearing: the @cfunction
+# callback in Treeweave.jl must not capture a closure, since closure cfunctions
+# are unsupported on aarch64-apple-darwin.
 on:
   push:
     branches: [main]
@@ -26,8 +28,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: linux-x86_64, runs-on: ubuntu-24.04, compiler: gcc }
-          - { name: macos-arm64,  runs-on: macos-14,      compiler: apple-clang }
+          - { name: linux-x86_64,     runs-on: ubuntu-24.04,     compiler: gcc }
+          - { name: linux-aarch64,    runs-on: ubuntu-24.04-arm, compiler: gcc }
+          - { name: macos-14-arm64,   runs-on: macos-14,         compiler: apple-clang }
+          - { name: macos-15-arm64,   runs-on: macos-15,         compiler: apple-clang }
+          - { name: macos-15-x86_64,  runs-on: macos-15-intel,   compiler: apple-clang }
+          - { name: windows-x64,      runs-on: windows-2022,     compiler: msvc }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,6 +46,7 @@ jobs:
           cmake: true
           ninja: true
           cache-tools: true
+          vcvarsall: ${{ runner.os == 'Windows' }}
 
       - uses: julia-actions/setup-julia@v3
         with:
