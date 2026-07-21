@@ -104,14 +104,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64|riscv)$")
     set(_treeweave_is_riscv64 TRUE)
 endif()
 
-# Multi-arch fan-out: x86 (any compiler) or non-MSVC/non-Apple aarch64/riscv64.
-# Apple clang rejects -march=armv8-a; MSVC non-x86 has no /arch: ladder.
+# Multi-arch fan-out: x86 (any compiler) or non-MSVC aarch64/riscv64. Apple clang
+# accepts the aarch64 -march levels below (verified on clang 21); the per-level
+# probe further down is the guard for any toolchain that doesn't. MSVC non-x86
+# has no /arch: ladder.
 set(_treeweave_multiarch_family FALSE)
 if(
     TREEWEAVE_C_MULTIARCH
     AND (
         _treeweave_is_x86
-        OR (_treeweave_is_aarch64 AND NOT APPLE AND NOT MSVC)
+        OR (_treeweave_is_aarch64 AND NOT MSVC)
         OR (_treeweave_is_riscv64 AND NOT MSVC)
     )
 )
