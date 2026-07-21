@@ -1,0 +1,25 @@
+name: JS native prebuilds
+
+# Per-PR validation of the native N-API addon (treeweave.node) on the SAME
+# runners and via the SAME builder the release uses (_build-node-prebuilds.yml).
+# Until now that builder ran only at release time behind continue-on-error, so a
+# broken mac/Windows addon shipped silently as a missing prebuild (WASM fallback)
+# and was never caught in CI. Running it here proves every leg continuously, so
+# the release legs can drop `optional` and fail loud on a real regression.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: js-prebuilds-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  prebuilds:
+    uses: ./.github/workflows/_build-node-prebuilds.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha || github.sha }}
