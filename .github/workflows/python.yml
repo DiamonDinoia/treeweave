@@ -17,9 +17,15 @@ permissions:
 
 jobs:
   python:
-    name: Python (nanobind) bindings
-    runs-on: ubuntu-24.04
+    name: Python (nanobind) bindings (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,  runs-on: ubuntu-24.04,     arch: x86-64-v3 }
+          - { name: linux-aarch64, runs-on: ubuntu-24.04-arm, arch: armv8-a }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,7 +48,7 @@ jobs:
 
       - name: Configure + build
         run: |
-          cmake --preset bindings-python
+          cmake --preset bindings-python -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build/bindings-python -j
 
       - name: Run pytest suite (python_treeweave)

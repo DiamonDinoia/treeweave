@@ -73,6 +73,11 @@ jobs:
           CIBW_ENVIRONMENT: >-
             CMAKE_ARGS="${{ matrix.cmake-args }}"
             MACOSX_DEPLOYMENT_TARGET=11.0
+          # Exercise each built wheel on its own platform (native runners, no
+          # emulation) so a release wheel that imports/computes wrong is caught
+          # here, not by users. {package} is the package-dir (bindings/python).
+          CIBW_TEST_REQUIRES: pytest numpy
+          CIBW_TEST_COMMAND: pytest {package}/tests
 
       # The cibuildwheel action runs from the repo root, so wheelhouse/ lands there.
       - uses: actions/upload-artifact@v7

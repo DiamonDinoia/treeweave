@@ -19,9 +19,15 @@ permissions:
 
 jobs:
   octave:
-    name: Octave bindings
-    runs-on: ubuntu-24.04
+    name: Octave bindings (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,  runs-on: ubuntu-24.04,     arch: x86-64-v3 }
+          - { name: linux-aarch64, runs-on: ubuntu-24.04-arm, arch: armv8-a }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,7 +48,7 @@ jobs:
       # backend is selected.
       - name: Configure + build the Octave MEX
         run: |
-          cmake --preset bindings-octave
+          cmake --preset bindings-octave -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build/bindings-octave -j
 
       # test_treeweave.m calls error() on any failure -> octave exits non-zero.
