@@ -18,9 +18,15 @@ permissions:
 
 jobs:
   js:
-    name: JavaScript/TypeScript bindings
-    runs-on: ubuntu-24.04
+    name: JavaScript/TypeScript bindings (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,  runs-on: ubuntu-24.04,     arch: x86-64-v3 }
+          - { name: linux-aarch64, runs-on: ubuntu-24.04-arm, arch: armv8-a }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,7 +55,7 @@ jobs:
 
       - name: Configure + build the native (.node) backend
         run: |
-          cmake --preset bindings-js
+          cmake --preset bindings-js -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build/bindings-js -j --target treeweave_node treeweave_js_ts
 
       - name: Configure + build the WASM backend

@@ -17,9 +17,15 @@ permissions:
 
 jobs:
   fortran:
-    name: Fortran bindings
-    runs-on: ubuntu-24.04
+    name: Fortran bindings (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64,  runs-on: ubuntu-24.04,     arch: x86-64-v3 }
+          - { name: linux-aarch64, runs-on: ubuntu-24.04-arm, arch: armv8-a }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,7 +44,7 @@ jobs:
 
       - name: Configure + build
         run: |
-          cmake --preset bindings-fortran
+          cmake --preset bindings-fortran -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build/bindings-fortran -j
 
       # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
