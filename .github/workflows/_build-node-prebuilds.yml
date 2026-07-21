@@ -21,6 +21,15 @@ on:
         description: 'Git ref to build from (commit SHA / branch / tag)'
         required: true
         type: string
+      fail_on_error:
+        description: >-
+          If true, every leg is required (a failure fails the job). CI
+          (js-prebuilds.yml) sets this to catch regressions pre-merge. The
+          release leaves it false so a transient hiccup on a best-effort
+          platform degrades to WASM fallback instead of blocking npm publish.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -31,13 +40,14 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 90
     container: ${{ matrix.container }}
-    # The native addon has only ever been built on Linux (js.yml). macOS should
-    # link (the JS CMakeLists uses -undefined dynamic_lookup), and Windows MSVC
-    # N-API linking (node.lib + delay-load) is unproven here — so the non-Linux
-    # legs are best-effort: a failure surfaces as a MISSING prebuild for that
-    # platform (its users transparently get the bundled WASM backend), never a
-    # blocked release. A workflow_dispatch dry-run shows which actually build.
-    continue-on-error: ${{ matrix.optional == 'true' }}
+    # Best-effort legs (optional: true) may fail without blocking a RELEASE — a
+    # missing prebuild just means that platform falls back to the bundled WASM
+    # backend, and release.yml deliberately keeps the npm/GitHub Release going
+    # (see its github-release always() gate). But js-prebuilds.yml runs this same
+    # builder per-PR with fail_on_error=true, so a regression on ANY platform is
+    # caught pre-merge rather than surfacing silently at release time. Linux is
+    # always required (no optional flag) — it has no WASM-only fallback story.
+    continue-on-error: ${{ matrix.optional == 'true' && !inputs.fail_on_error }}
     strategy:
       fail-fast: false
       matrix:

@@ -23,3 +23,4 @@ jobs:
     uses: ./.github/workflows/_build-node-prebuilds.yml
     with:
       ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      fail_on_error: true  # in CI every platform is required — catch regressions pre-merge
