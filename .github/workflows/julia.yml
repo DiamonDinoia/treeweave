@@ -2,7 +2,9 @@ name: Julia
 
 # Julia wrapper: builds libtreeweave_c, dlopens it, and runs runtests.jl via the
 # julia_treeweave CTest target. Split out from the former bindings.yml so it earns
-# its own status badge.
+# its own status badge. The macos-14 (Apple Silicon) leg is load-bearing: the
+# @cfunction callback in Treeweave.jl must not capture a closure, since closure
+# cfunctions are unsupported on aarch64-apple-darwin.
 on:
   push:
     branches: [main]
@@ -17,9 +19,15 @@ permissions:
 
 jobs:
   julia:
-    name: Julia bindings
-    runs-on: ubuntu-24.04
+    name: Julia bindings (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, runs-on: ubuntu-24.04, compiler: gcc }
+          - { name: macos-arm64,  runs-on: macos-14,      compiler: apple-clang }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -28,7 +36,7 @@ jobs:
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@v1.8.1
         with:
-          compiler: gcc
+          compiler: ${{ matrix.compiler }}
           cmake: true
           ninja: true
           cache-tools: true

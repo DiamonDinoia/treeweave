@@ -171,10 +171,6 @@ mutable struct TreeweaveFn{T}
     ptr     :: Ptr{Cvoid}   # treeweave_t  (opaque struct*)
     dim     :: Int
     out_dim :: Int
-    # Keep the CFunction alive for the lifetime of the fit call.
-    # @cfunction closures must not be GC'd while any pointer derived from them
-    # could still be invoked; storing it here ensures that.
-    _cfun   :: Any
 end
 
 # Internal helpers
@@ -182,6 +178,49 @@ end
 @inline function _last_error()::String
     ptr = ccall((:treeweave_last_error, LIBTREEWEAVE), Cstring, ())
     ptr == C_NULL ? "(no error message)" : unsafe_string(ptr)
+end
+
+# Fit callback state, passed to the C layer through `context` (a Ptr{Cvoid}).
+# Closures cannot be turned into C function pointers on ARM64 (no runtime
+# codegen), so the trampolines below are non-capturing top-level functions that
+# recover this struct from `context` via `unsafe_pointer_to_objref`.
+mutable struct _FitCtx
+    f
+    dim     :: Int
+    out_dim :: Int
+    err                     # first user exception, or `nothing`
+end
+
+@inline function _invoke_user(ctx::_FitCtx, xptr::Ptr{CT}, yptr::Ptr{CT}) where {CT}
+    nan = CT(NaN)
+    if ctx.err !== nothing
+        for j in 1:ctx.out_dim; unsafe_store!(yptr, nan, j); end
+        return
+    end
+    try
+        f = ctx.f
+        result = ctx.dim == 1 ? f(unsafe_load(xptr, 1)) :
+                                f(ntuple(i -> unsafe_load(xptr, i), ctx.dim)...)
+        if ctx.out_dim == 1
+            unsafe_store!(yptr, CT(result), 1)
+        else
+            for j in 1:ctx.out_dim; unsafe_store!(yptr, CT(result[j]), j); end
+        end
+    catch e
+        ctx.err = e
+        for j in 1:ctx.out_dim; unsafe_store!(yptr, nan, j); end
+    end
+    return
+end
+
+function _trampoline64(xptr::Ptr{Cdouble}, yptr::Ptr{Cdouble}, ctxptr::Ptr{Cvoid})
+    _invoke_user(unsafe_pointer_to_objref(ctxptr)::_FitCtx, xptr, yptr)
+    return nothing
+end
+
+function _trampoline32(xptr::Ptr{Cfloat}, yptr::Ptr{Cfloat}, ctxptr::Ptr{Cvoid})
+    _invoke_user(unsafe_pointer_to_objref(ctxptr)::_FitCtx, xptr, yptr)
+    return nothing
 end
 
 """
@@ -225,98 +264,42 @@ function fit(f, a, b, tol::Real;
         out_dim = length(probe)
     end
 
-    err = Ref{Any}(nothing)
-
-    # Capture `dim` and `out_dim` by value through closure.
-    _dim     = dim
-    _out_dim = out_dim
+    # State reaches the trampoline through `context`, not a closure capture, so a
+    # non-capturing @cfunction works on ARM64 as well as x86_64 (see _FitCtx).
+    ctx = _FitCtx(f, Int(dim), Int(out_dim), nothing)
 
     if T == Float64
-        function trampoline64(xptr::Ptr{Cdouble}, yptr::Ptr{Cdouble}, ::Ptr{Cvoid})
-            if err[] !== nothing
-                for j in 1:_out_dim; unsafe_store!(yptr, NaN, j); end
-                return nothing
-            end
-            try
-                if _dim == 1
-                    coords = unsafe_load(xptr, 1)
-                    result = f(coords)
-                else
-                    coords = ntuple(i -> unsafe_load(xptr, i), _dim)
-                    result = f(coords...)
-                end
-                if _out_dim == 1
-                    unsafe_store!(yptr, Cdouble(result), 1)
-                else
-                    for j in 1:_out_dim
-                        unsafe_store!(yptr, Cdouble(result[j]), j)
-                    end
-                end
-            catch e
-                err[] = e
-                for j in 1:_out_dim; unsafe_store!(yptr, NaN, j); end
-            end
-            return nothing
-        end
-        cfun = @cfunction($trampoline64, Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cvoid}))
-        ptr = GC.@preserve cfun av bv begin
+        cfun = @cfunction(_trampoline64, Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cvoid}))
+        ptr = GC.@preserve ctx av bv begin
             # treeweave_fit(f, input_dim, output_dim, a, b, tol, context, opts).
-            # Julia carries state in the closure `cfun`, so `context` is C_NULL.
             ccall((:treeweave_fit, LIBTREEWEAVE), Ptr{Cvoid},
                   (Ptr{Cvoid}, Cint, Cint,
                    Ptr{Cdouble}, Ptr{Cdouble}, Cdouble, Ptr{Cvoid}, Ref{TreeweaveOptions}),
                   cfun, Cint(dim), Cint(out_dim),
-                  av, bv, Cdouble(tol), C_NULL, options)
+                  av, bv, Cdouble(tol), pointer_from_objref(ctx), options)
         end
     else
-        function trampoline32(xptr::Ptr{Cfloat}, yptr::Ptr{Cfloat}, ::Ptr{Cvoid})
-            if err[] !== nothing
-                for j in 1:_out_dim; unsafe_store!(yptr, NaN32, j); end
-                return nothing
-            end
-            try
-                if _dim == 1
-                    coords = unsafe_load(xptr, 1)
-                    result = f(coords)
-                else
-                    coords = ntuple(i -> unsafe_load(xptr, i), _dim)
-                    result = f(coords...)
-                end
-                if _out_dim == 1
-                    unsafe_store!(yptr, Cfloat(result), 1)
-                else
-                    for j in 1:_out_dim
-                        unsafe_store!(yptr, Cfloat(result[j]), j)
-                    end
-                end
-            catch e
-                err[] = e
-                for j in 1:_out_dim; unsafe_store!(yptr, NaN32, j); end
-            end
-            return nothing
-        end
-        cfun = @cfunction($trampoline32, Cvoid, (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Cvoid}))
-        ptr = GC.@preserve cfun av bv begin
+        cfun = @cfunction(_trampoline32, Cvoid, (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Cvoid}))
+        ptr = GC.@preserve ctx av bv begin
             # treeweavef_fit(f, input_dim, output_dim, a, b, tol, context, opts).
-            # Julia carries state in the closure `cfun`, so `context` is C_NULL.
             ccall((:treeweavef_fit, LIBTREEWEAVE), Ptr{Cvoid},
                   (Ptr{Cvoid}, Cint, Cint,
                    Ptr{Cfloat}, Ptr{Cfloat}, Cdouble, Ptr{Cvoid}, Ref{TreeweaveOptions}),
                   cfun, Cint(dim), Cint(out_dim),
-                  av, bv, Cdouble(tol), C_NULL, options)
+                  av, bv, Cdouble(tol), pointer_from_objref(ctx), options)
         end
     end
 
     # If the user function threw, re-raise that (more informative).
-    if err[] !== nothing
-        throw(err[])
+    if ctx.err !== nothing
+        throw(ctx.err)
     end
 
     if ptr == C_NULL
         error("treeweave fit failed: " * _last_error())
     end
 
-    handle = TreeweaveFn{T}(ptr, dim, out_dim, cfun)
+    handle = TreeweaveFn{T}(ptr, dim, out_dim)
     finalizer(handle) do h
         if h.ptr != C_NULL
             h.ptr = ccall((:treeweave_free, LIBTREEWEAVE), Ptr{Cvoid}, (Ptr{Cvoid},), h.ptr)

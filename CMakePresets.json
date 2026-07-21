@@ -215,7 +215,8 @@
       "displayName": "Julia bindings",
       "inherits": "lib-release",
       "cacheVariables": {
-        "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" }
+        "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_ARCH": "native"
       }
     },
     {
