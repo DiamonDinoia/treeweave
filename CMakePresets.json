@@ -31,8 +31,8 @@
     {
       "name": "lib-release",
       "hidden": true,
-      "description": "Library-only build (no tests/examples) at the x86-64-v3 baseline — shared by the binding jobs. Build type defaults to Release.",
-      "inherits": ["arch-x86-64-v3", "base"],
+      "description": "Library-only build (no tests/examples) at the native baseline — shared by the binding jobs. Build type defaults to Release. CI overrides TREEWEAVE_ARCH per platform with a portable baseline; local builds get -march=native.",
+      "inherits": ["arch-native", "base"],
       "cacheVariables": {
         "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
         "TREEWEAVE_BUILD_EXAMPLES": { "type": "BOOL", "value": "OFF" }
@@ -215,8 +215,7 @@
       "displayName": "Julia bindings",
       "inherits": "lib-release",
       "cacheVariables": {
-        "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" },
-        "TREEWEAVE_ARCH": "native"
+        "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" }
       }
     },
     {

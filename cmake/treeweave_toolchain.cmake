@@ -74,13 +74,19 @@ elseif(MSVC)
     else()
         set(_treeweave_arch_flags "")
     endif()
-    # Apple clang on AArch64 rejects `-march=apple-*` / `-mtune=` — it expects
-    # `-mcpu=` for that microarch family. Use the right spelling per platform.
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    # Apple clang splits the two spellings: -march= takes the portable armv*
+    # arch levels (and rejects apple-*/native), while -mcpu= takes the CPU
+    # names (native, apple-m1) and rejects the armv* levels. -mcpu is also the
+    # only one that sets Apple-pipeline scheduling *and* full feature detection:
+    # on M2, -mcpu=native = apple-m1 + BF16/MATMUL_INT8, whereas -march=native
+    # drops FP16/crypto and tunes generic. So use -mcpu for CPU names, -march
+    # only for the armv* baselines used by the multiarch dispatch variants.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        # Homebrew GCC on Apple Silicon doesn't know the `apple-m1` CPU name
-        # (only Apple clang does); `-mcpu=native` targets the runner's core.
+        # Homebrew GCC doesn't know the apple-* CPU names; native targets the core.
         set(_treeweave_arch_flags -mcpu=native)
+    elseif(TREEWEAVE_ARCH MATCHES "^armv")
+        set(_treeweave_arch_flags -march=${TREEWEAVE_ARCH})
     else()
         set(_treeweave_arch_flags -mcpu=${TREEWEAVE_ARCH})
     endif()
