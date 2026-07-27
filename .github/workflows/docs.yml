@@ -49,12 +49,12 @@ jobs:
           ninja: true
           cache-tools: true
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
       # Doxygen (XML for Breathe) + Graphviz for any diagrams.
-      - uses: ssciwr/doxygen-install@329d88f5a303066a5bd006db7516b1925b86350e  # v2
+      - uses: ssciwr/doxygen-install@b5b80f5a60852f72d3c33f47fee9ddfb84a25929  # v2
         with:
           version: "1.13.2"
       - name: Install Graphviz
