@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784539269105,
+  "lastUpdate": 1785146291227,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2668,6 +2668,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000444458,
             "unit": "s/batch",
             "extra": "MdAPE=0.00627794517644211; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "DiamonDinoia@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "e2e728e91098e8fc9463bf7c10d21d5aaca896a0",
+          "message": "ci: validate native node prebuilds on real runners per-PR (#35)\n\n* ci: validate native node prebuilds on real runners per-PR\n\nRuns the release prebuild builder (_build-node-prebuilds.yml) on push/PR so the\nmac/Windows native addon legs are proven continuously, not only at release time\nbehind continue-on-error. Prerequisite to dropping their `optional` flag.\n\n* ci: enforce native prebuilds pre-merge, keep release graceful\n\nAdd fail_on_error input to the prebuild builder: js-prebuilds.yml sets it true\nso every platform (incl. mac-arm64/mac-x64/win32, all proven green on real\nrunners) is required per-PR and a regression fails the PR. The release caller\nleaves it false, preserving the deliberate graceful-degradation path (a\nbest-effort leg hiccup degrades that platform to WASM fallback instead of\nblocking the npm publish / GitHub Release).",
+          "timestamp": "2026-07-21T19:31:50Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/e2e728e91098e8fc9463bf7c10d21d5aaca896a0"
+        },
+        "date": 1785146288423,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000519359222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00265591900557104; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.00082948925,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0290879108531055; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000400361,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00711704159479089; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.0009996684,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00478023236134459; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00174407611111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00449877660674219; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.003920880125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0219049240272167; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.0346960588888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00211041533064847; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.000888341555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00171324150512047; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000226742,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0028754903288764; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000410243,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00482200234658193; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000348299555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00503463778213042; batch=65536 pts/call"
           }
         ]
       }
