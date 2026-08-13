@@ -65,9 +65,9 @@ option(TREEWEAVE_ENABLE_SANITIZERS "Enable ASan/UBSan" OFF)
 option(TREEWEAVE_ENABLE_STATIC_ANALYSIS "Run static analysis" OFF)
 # Build with coverage instrumentation. Prefer the coverage preset.
 option(TREEWEAVE_ENABLE_COVERAGE "Build coverage" OFF)
-# Link-time optimization. OFF by default: the C++ API is header-only, so IPO
-# pays only where a shared artifact ships, and it fills the installed static
-# archive with IL that only one toolchain version can link.
+# Link-time optimization, OFF by default: the header-only C++ API gains nothing
+# and IPO fills the installed static archive with single-toolchain IL. gcc and
+# MSVC ignore it when ON; see cmake/treeweave_toolchain.cmake.
 option(TREEWEAVE_ENABLE_IPO "Link-time optimization" OFF)
 # END TREEWEAVE_CMAKE_OPTIONS_DOCS
 

@@ -36,9 +36,10 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
   headers, and the C ABI objects feed the installed static archive as well as
   `libtreeweave_c.so` — IPO fills that archive with compiler IL only one
   toolchain version can link. Every binding preset turns it back on, because a
-  binding ships one shared artifact and no archive; the Emscripten preset and
-  GCC stay excluded. This also removes an MSVC `/LTCG` link that took over an
-  hour per test executable.
+  binding ships one shared artifact and no archive; the Emscripten preset stays
+  excluded, as do GCC and MSVC even when the option is `ON` — GCC ICEs on these
+  templates and MSVC `/LTCG` took over an hour to link one executable. clang-cl
+  still gives Windows a ThinLTO path.
 
 ## [0.0.1] - 2026-07-20
 

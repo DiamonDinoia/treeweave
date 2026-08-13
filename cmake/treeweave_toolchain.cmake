@@ -48,9 +48,14 @@ if(NOT MSVC)
 endif()
 
 include(GNUInstallDirs)
-# IPO is opt-in; see TREEWEAVE_ENABLE_IPO. Skipped on gcc even then: gcc ICEs
-# on these templates.
-if(TREEWEAVE_ENABLE_IPO AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# IPO is opt-in; see TREEWEAVE_ENABLE_IPO. Two compilers stay out even then:
+# gcc ICEs on these templates, and MSVC /LTCG takes tens of minutes per link.
+# clang-cl keeps IPO, so Windows still gets a ThinLTO path.
+if(
+    TREEWEAVE_ENABLE_IPO
+    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
+)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
     if(_ipo_supported)
