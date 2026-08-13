@@ -433,9 +433,9 @@ vendoring treeweave into another project.</p>
 <span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_STATIC_ANALYSIS</span><span class="w"> </span><span class="s2">&quot;Run static analysis&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build with coverage instrumentation. Prefer the coverage preset.</span>
 <span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_COVERAGE</span><span class="w"> </span><span class="s2">&quot;Build coverage&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
-<span class="c"># Link-time optimization. OFF by default: the C++ API is header-only, so IPO</span>
-<span class="c"># pays only where a shared artifact ships, and it fills the installed static</span>
-<span class="c"># archive with IL that only one toolchain version can link.</span>
+<span class="c"># Link-time optimization, OFF by default: the header-only C++ API gains nothing</span>
+<span class="c"># and IPO fills the installed static archive with single-toolchain IL. gcc and</span>
+<span class="c"># MSVC ignore it when ON; see cmake/treeweave_toolchain.cmake.</span>
 <span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_IPO</span><span class="w"> </span><span class="s2">&quot;Link-time optimization&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 </pre></div>
 </div>
