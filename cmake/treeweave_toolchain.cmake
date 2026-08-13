@@ -50,11 +50,13 @@ endif()
 include(GNUInstallDirs)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
-# Skip IPO on gcc (ICE on heavy templates) and Emscripten (link-time cost,
-# no eval-throughput gain).
+# Skip IPO on gcc (ICE on heavy templates), MSVC (/LTCG spends over an hour
+# per executable on these templates) and Emscripten (link-time cost, no
+# eval-throughput gain). clang-cl keeps IPO: ThinLTO links in seconds.
 if(
     _ipo_supported
     AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
     AND NOT EMSCRIPTEN
 )
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
