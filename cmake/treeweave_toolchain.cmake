@@ -20,6 +20,33 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     )
 endif()
 
+# CMake's default Debug is -O0, which leaves this header-only, deeply-inlined
+# code un-inlined and makes the compute-heavy tests crawl -- the slowest single
+# test runs longer than the whole suite does at Release. -Og keeps -g and the
+# asserts without that cost, so it is the default for every Debug build,
+# coverage included: the line data stays good enough to be useful and the
+# instrumented run is no longer the slowest job in CI. A caller that spelled
+# CMAKE_CXX_FLAGS_DEBUG out itself still wins. MSVC has no -Og.
+#
+# CMake pre-seeds these cache entries from *_INIT ("-g" for GNU/Clang), so
+# "did the caller set it?" is a comparison against that seed, not a NOT test.
+# The seed is stored with the surrounding whitespace CMake strips on the way
+# into the cache, so both sides are stripped before comparing.
+if(NOT MSVC)
+    foreach(_lang CXX C)
+        string(STRIP "${CMAKE_${_lang}_FLAGS_DEBUG}" _tw_dbg_cur)
+        string(STRIP "${CMAKE_${_lang}_FLAGS_DEBUG_INIT}" _tw_dbg_init)
+        if(_tw_dbg_cur STREQUAL _tw_dbg_init)
+            set(CMAKE_${_lang}_FLAGS_DEBUG
+                "-Og -g"
+                CACHE STRING
+                "Flags used by the ${_lang} compiler during DEBUG builds."
+                FORCE
+            )
+        endif()
+    endforeach()
+endif()
+
 include(GNUInstallDirs)
 include(CheckIPOSupported)
 check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)

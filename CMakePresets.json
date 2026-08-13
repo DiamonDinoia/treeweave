@@ -21,7 +21,7 @@
     {
       "name": "debug-og",
       "hidden": true,
-      "description": "Debug at -Og instead of CMake's default Debug (-g, i.e. -O0): keeps -g and asserts but drops the -O0 slowdown on compute-heavy tests. Coverage deliberately does NOT use this — it needs -O0 for accurate line data.",
+      "description": "Debug at -Og: keeps -g and asserts but drops the -O0 slowdown on compute-heavy tests. This is also the toolchain default for any Debug build now, so this preset only spells it out explicitly.",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_FLAGS_DEBUG": "-Og -g",
@@ -138,8 +138,8 @@
     },
     {
       "name": "coverage",
-      "displayName": "Coverage (Debug -O0 + --coverage)",
-      "description": "Plain Debug (-O0), NOT debug-og: -O0 is what makes gcov line coverage accurate.",
+      "displayName": "Coverage (Debug -Og + --coverage)",
+      "description": "Debug + --coverage. Runs at the -Og toolchain default rather than -O0: line attribution is slightly coarser where the optimizer inlines, in exchange for an instrumented run that is not the slowest job in CI. Pass -DCMAKE_CXX_FLAGS_DEBUG='-O0 -g' to get the strictest line data back.",
       "inherits": ["arch-x86-64-v3", "base"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
