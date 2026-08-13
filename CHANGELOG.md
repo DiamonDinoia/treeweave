@@ -10,6 +10,27 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-08-13
+
+### Changed
+
+- Vendored dependency pins updated to the current releases: xsimd 14.2.0 →
+  14.3.0 and POET `b55580f` → `v0.0.1`. Both are now on the same refs consumers
+  are most likely to already have, so a project that already provides either
+  dependency satisfies treeweave's copy instead of ending up with two
+  incompatible sets of `xsimd` / `poet` targets in one build. The xsimd checkout
+  is still verified against its pinned commit SHA at configure time to catch a
+  moved tag.
+- `Debug` builds now default to `-Og` rather than CMake's `-O0`. The `debug-og`
+  preset already did this — `-O0` leaves the header-only, deeply-inlined code
+  un-inlined and the compute-heavy tests slow to a crawl — but a preset-less
+  `-DCMAKE_BUILD_TYPE=Debug`, which is what a consumer's `FetchContent` build
+  gets, did not. The default now applies to every `Debug` build including
+  coverage, where line attribution becomes slightly coarser wherever the
+  optimizer inlines but the instrumented run stops being the slowest job in CI.
+  An explicit `CMAKE_CXX_FLAGS_DEBUG` still takes precedence, so
+  `-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g'` restores the strictest line data.
+
 ## [0.0.1] - 2026-07-20
 
 ### Fixed
