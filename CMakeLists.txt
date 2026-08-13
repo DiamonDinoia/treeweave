@@ -65,11 +65,15 @@ option(TREEWEAVE_ENABLE_SANITIZERS "Enable ASan/UBSan" OFF)
 option(TREEWEAVE_ENABLE_STATIC_ANALYSIS "Run static analysis" OFF)
 # Build with coverage instrumentation. Prefer the coverage preset.
 option(TREEWEAVE_ENABLE_COVERAGE "Build coverage" OFF)
+# Link-time optimization. OFF by default: the C++ API is header-only, so IPO
+# pays only where a shared artifact ships, and it fills the installed static
+# archive with IL that only one toolchain version can link.
+option(TREEWEAVE_ENABLE_IPO "Link-time optimization" OFF)
 # END TREEWEAVE_CMAKE_OPTIONS_DOCS
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-include(treeweave_toolchain) # C++ standard, IPO, -march/-mtune, FP-contraction
+include(treeweave_toolchain) # C++ standard, opt-in IPO, -march/-mtune, FP
 include(dev_helpers) # warnings / sanitizers / static analysis helpers
 include(treeweave_deps) # fetch polyfit, POET, Catch2
 include(treeweave_c_api) # C ABI (libtreeweave_c) — built before examples/tests

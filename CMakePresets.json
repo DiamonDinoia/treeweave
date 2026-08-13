@@ -203,9 +203,18 @@
     },
 
     {
+      "name": "bindings-base",
+      "hidden": true,
+      "description": "Common settings for every language binding. IPO is on here and off in lib-release: a binding ships one shared artifact and no static archive, so link-time optimization pays and no consumer ever links compiler IL.",
+      "inherits": "lib-release",
+      "cacheVariables": {
+        "TREEWEAVE_ENABLE_IPO": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
       "name": "bindings-python",
       "displayName": "Python (nanobind) bindings",
-      "inherits": "lib-release",
+      "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_PYTHON": { "type": "BOOL", "value": "ON" }
       }
@@ -213,7 +222,7 @@
     {
       "name": "bindings-julia",
       "displayName": "Julia bindings",
-      "inherits": "lib-release",
+      "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_JULIA": { "type": "BOOL", "value": "ON" }
       }
@@ -221,7 +230,7 @@
     {
       "name": "bindings-fortran",
       "displayName": "Fortran bindings",
-      "inherits": "lib-release",
+      "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_FORTRAN": { "type": "BOOL", "value": "ON" }
       }
@@ -230,7 +239,7 @@
       "name": "bindings-matlab",
       "displayName": "MATLAB/Octave (MEX) bindings",
       "description": "Builds the MEX entirely from CMake: fetches the mwrap generator via CPM, generates the gateway + bz_*.m from treeweave.mw, and compiles/links treeweave_c_static via matlab_add_mex (MATLAB) and/or mkoctfile (Octave).",
-      "inherits": "lib-release",
+      "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_MATLAB": { "type": "BOOL", "value": "ON" }
       }
@@ -245,7 +254,7 @@
       "name": "bindings-js",
       "displayName": "JS/TS binding (native N-API addon)",
       "description": "Builds the native Node-API .node addon (links treeweave_c_static) plus the TypeScript layer, and registers the node:test suite. Run 'npm install' in bindings/js first so node-addon-api headers and tsc are present.",
-      "inherits": "lib-release",
+      "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_JS": { "type": "BOOL", "value": "ON" }
       }
@@ -253,10 +262,11 @@
     {
       "name": "bindings-js-wasm",
       "displayName": "JS/TS binding (Emscripten WASM)",
-      "description": "Builds the same C ABI to a WASM module for the browser backend. Needs the Emscripten SDK on PATH with EMSDK set (e.g. via mymindstorm/setup-emsdk); the toolchain file is resolved from $EMSDK. TREEWEAVE_ARCH is cleared because emcc rejects -march (the toolchain enables -msimd128 instead). Build the treeweave_wasm + treeweave_js_ts targets (not ALL — the SHARED treeweave_c isn't meaningful under emcc).",
+      "description": "Builds the same C ABI to a WASM module for the browser backend. Needs the Emscripten SDK on PATH with EMSDK set (e.g. via mymindstorm/setup-emsdk); the toolchain file is resolved from $EMSDK. TREEWEAVE_ARCH is cleared because emcc rejects -march (the toolchain enables -msimd128 instead). Build the treeweave_wasm + treeweave_js_ts targets (not ALL — the SHARED treeweave_c isn't meaningful under emcc). IPO returns to OFF here: emcc pays the link-time cost and gains no eval throughput.",
       "inherits": "bindings-js",
       "cacheVariables": {
         "TREEWEAVE_ARCH": "",
+        "TREEWEAVE_ENABLE_IPO": { "type": "BOOL", "value": "OFF" },
         "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
       }
     }

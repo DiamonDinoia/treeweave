@@ -30,6 +30,15 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
   optimizer inlines but the instrumented run stops being the slowest job in CI.
   An explicit `CMAKE_CXX_FLAGS_DEBUG` still takes precedence, so
   `-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g'` restores the strictest line data.
+- Link-time optimization is now the opt-in option `TREEWEAVE_ENABLE_IPO`,
+  default `OFF`, where it was on for every non-GCC compiler. The C++ API is
+  header-only, so IPO changes nothing for a consumer that only includes the
+  headers, and the C ABI objects feed the installed static archive as well as
+  `libtreeweave_c.so` — IPO fills that archive with compiler IL only one
+  toolchain version can link. Every binding preset turns it back on, because a
+  binding ships one shared artifact and no archive; the Emscripten preset and
+  GCC stay excluded. This also removes an MSVC `/LTCG` link that took over an
+  hour per test executable.
 
 ## [0.0.1] - 2026-07-20
 

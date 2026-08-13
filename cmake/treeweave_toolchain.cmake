@@ -1,5 +1,5 @@
-# treeweave_toolchain.cmake — language standard, build-type default, IPO, and
-# global -march/-mtune + FP-contraction flags.
+# treeweave_toolchain.cmake — language standard, build-type default, opt-in IPO,
+# and global -march/-mtune + FP-contraction flags.
 
 include_guard(GLOBAL)
 
@@ -48,20 +48,16 @@ if(NOT MSVC)
 endif()
 
 include(GNUInstallDirs)
-include(CheckIPOSupported)
-check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
-# Skip IPO on gcc (ICE on heavy templates), MSVC (/LTCG spends over an hour
-# per executable on these templates) and Emscripten (link-time cost, no
-# eval-throughput gain). clang-cl keeps IPO: ThinLTO links in seconds.
-if(
-    _ipo_supported
-    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-    AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"
-    AND NOT EMSCRIPTEN
-)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-elseif(NOT _ipo_supported)
-    message(WARNING "IPO is not supported: ${_ipo_error}")
+# IPO is opt-in; see TREEWEAVE_ENABLE_IPO. Skipped on gcc even then: gcc ICEs
+# on these templates.
+if(TREEWEAVE_ENABLE_IPO AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_error)
+    if(_ipo_supported)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(WARNING "IPO is not supported: ${_ipo_error}")
+    endif()
 endif()
 
 # -march=native is required for FMA codegen; profiling showed ~50% of hot-path
@@ -130,9 +126,9 @@ else()
     set(_treeweave_fp_flags -ffp-contract=fast)
 endif()
 add_compile_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
-# GCC/Clang want -march on the link line too (LTO codegen). MSVC/clang-cl
-# /arch:* is compile-only — lld-link reads it as an input file and errors;
-# ThinLTO picks the ISA up from the per-function attributes instead.
+# GCC/Clang take -march on the link line too, for any link-time codegen.
+# MSVC/clang-cl /arch:* is compile-only — lld-link reads it as an input file
+# and errors.
 if(NOT MSVC)
     add_link_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
 endif()

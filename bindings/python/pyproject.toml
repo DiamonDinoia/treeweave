@@ -45,6 +45,8 @@ TREEWEAVE_BUILD_TESTS    = "OFF"
 TREEWEAVE_BUILD_EXAMPLES = "OFF"
 # A stray warning on the wheel builder's compiler must never break `pip install`.
 TREEWEAVE_WARNINGS_AS_ERRORS = "OFF"
+# The wheel ships one extension module and no static archive, so IPO pays here.
+TREEWEAVE_ENABLE_IPO = "ON"
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
