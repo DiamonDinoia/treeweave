@@ -9,5 +9,5 @@ template <class Arch, class T, std::size_t IN, int Deg>
 auto make_eval_for(int output_dim, c_func_t<T> f, void *data, const T *a, const T *b, double tol,
                    const treeweave::options &opts) -> IEval<T> * {
     return poet::dispatch(EvalFactory<Arch, T, IN, Deg>{f, data, a, b, tol, opts},
-                          poet::DispatchParam<poet::make_range<1, 3>>{output_dim});
+                          poet::dispatch_param<poet::inclusive_range<1, 3>>{output_dim});
 }

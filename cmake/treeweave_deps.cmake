@@ -4,42 +4,6 @@
 include_guard(GLOBAL)
 include(FetchContent)
 
-# Override polyfit's CPM-pinned xsimd (14.0.0) with 14.3.0 via a local clone;
-# SHA verified at configure time to detect tag-move.
-set(_treeweave_xsimd_src "${PROJECT_BINARY_DIR}/_deps_external/xsimd")
-if(NOT EXISTS "${_treeweave_xsimd_src}/.git")
-    message(
-        STATUS
-        "treeweave: cloning xtensor-stack/xsimd:e88a7283 (14.3.0) → ${_treeweave_xsimd_src}"
-    )
-    execute_process(
-        COMMAND
-            git clone --depth=1 --branch 14.3.0
-            https://github.com/xtensor-stack/xsimd.git "${_treeweave_xsimd_src}"
-        RESULT_VARIABLE _treeweave_xsimd_clone_rc
-    )
-    if(NOT _treeweave_xsimd_clone_rc EQUAL 0)
-        message(
-            FATAL_ERROR
-            "treeweave: failed to clone xsimd (rc=${_treeweave_xsimd_clone_rc})"
-        )
-    endif()
-    execute_process(
-        COMMAND git -C "${_treeweave_xsimd_src}" rev-parse HEAD
-        OUTPUT_VARIABLE _treeweave_xsimd_actual_sha
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    set(_treeweave_xsimd_pinned_sha "e88a72831858123924f7118f345dfe5d70d95991")
-    if(NOT _treeweave_xsimd_actual_sha STREQUAL _treeweave_xsimd_pinned_sha)
-        message(
-            FATAL_ERROR
-            "treeweave: xsimd HEAD ${_treeweave_xsimd_actual_sha} != pinned SHA "
-            "${_treeweave_xsimd_pinned_sha} — tag 14.3.0 may have moved"
-        )
-    endif()
-endif()
-set(CPM_xsimd_SOURCE "${_treeweave_xsimd_src}" CACHE PATH "" FORCE)
-
 # Stash analysis vars and arch/FP directory flags before fetching deps so they
 # don't inherit our -Werror/-march settings. Restored at bottom of file.
 set(_treeweave_saved_clang_tidy "${CMAKE_CXX_CLANG_TIDY}")
@@ -51,27 +15,20 @@ get_directory_property(_treeweave_saved_compile_options COMPILE_OPTIONS)
 get_directory_property(_treeweave_saved_link_options LINK_OPTIONS)
 set_directory_properties(PROPERTIES COMPILE_OPTIONS "" LINK_OPTIONS "")
 
+# polyfit is the single pin site for xsimd and poet as well as for itself: it
+# fetches both through CPM, and CPM declares them before anything here can, so a
+# competing FetchContent_Declare for either is accepted silently and then
+# ignored -- first declaration of a name wins. Move xsimd or poet by bumping
+# polyfit, never by adding a declaration here.
 FetchContent_Declare(
     polyfit
     GIT_REPOSITORY https://github.com/DiamonDinoia/polyfit.git
-    GIT_TAG 828582f2523678d206b2f76281088237427ff5b3
+    GIT_TAG efefd17540287272b691594113fd85ec970739e9
     SYSTEM
 )
 set(POLYFIT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(POLYFIT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(polyfit)
-
-FetchContent_Declare(
-    poet
-    GIT_REPOSITORY https://github.com/DiamonDinoia/POET.git
-    GIT_TAG dfb3e800a1e52c68333170cf1126335eef818535
-    SYSTEM
-)
-set(POET_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(POET_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(POET_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(POET_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(poet)
 
 function(_treeweave_make_system target)
     if(NOT TARGET "${target}")
