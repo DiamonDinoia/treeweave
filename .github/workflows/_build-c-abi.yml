@@ -99,6 +99,9 @@ jobs:
         with:
           cmake: true
           ninja: true
+          # cl.exe needs ~58 min on one dispatch TU at the SSE2 baseline and
+          # blows the 90 min cap; clang-cl needs ~24 s.
+          compiler: ${{ matrix.name == 'windows-x64' && 'llvm' || '' }}
           vcvarsall: ${{ matrix.name == 'windows-x64' }}
 
       - name: Package name
@@ -140,6 +143,8 @@ jobs:
           # failing the MAJOR.MINOR.PATCH check. The bash legs above are unaffected.
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `
+            -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF `
             -DCMAKE_INSTALL_LIBDIR=lib `
             -DTREEWEAVE_BUILD_TESTS=OFF `
             -DTREEWEAVE_BUILD_EXAMPLES=OFF `
@@ -148,8 +153,7 @@ jobs:
           cmake --build build
           cmake --install build --prefix dist
 
-      - name: Smoke test (find_package + link, Linux/macOS)
-        if: matrix.name != 'windows-x64'
+      - name: Smoke test (find_package + link)
         shell: bash
         run: bash .github/scripts/smoke_find_package.sh "$PWD/dist"
 

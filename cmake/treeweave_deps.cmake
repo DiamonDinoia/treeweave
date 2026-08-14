@@ -23,7 +23,7 @@ set_directory_properties(PROPERTIES COMPILE_OPTIONS "" LINK_OPTIONS "")
 FetchContent_Declare(
     polyfit
     GIT_REPOSITORY https://github.com/DiamonDinoia/polyfit.git
-    GIT_TAG v0.0.1
+    GIT_TAG v0.0.2
     SYSTEM
 )
 set(POLYFIT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
