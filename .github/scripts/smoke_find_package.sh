@@ -4,6 +4,7 @@
 # Usage: smoke_find_package.sh <install-prefix>
 set -euo pipefail
 
+set -x
 prefix="${1:?usage: smoke_find_package.sh <install-prefix>}"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -48,11 +49,17 @@ else
     src="$work"
 fi
 
-cmake -S "$src" -B "$src/build" "${gen[@]}" -DCMAKE_PREFIX_PATH="$prefix" >/dev/null
-cmake --build "$src/build" >/dev/null
+cmake -S "$src" -B "$src/build" "${gen[@]}" -DCMAKE_PREFIX_PATH="$prefix"
+cmake --build "$src/build"
 
-bin="$work/build/smoke"
-[ -f "$bin.exe" ] && bin="$bin.exe"
+# The exe lands in build/ with Ninja and build/<config>/ with a multi-config
+# generator, so locate it instead of assuming either layout.
+bin="$(find "$work/build" -maxdepth 2 -name 'smoke' -o -maxdepth 2 -name 'smoke.exe' | head -1)"
+if [ -z "$bin" ]; then
+    echo "no smoke binary under $work/build" >&2
+    find "$work/build" -maxdepth 2 >&2
+    exit 1
+fi
 "$bin"
 
 # Confirm libtreeweave_c is the treeweave one (vendored/installed), not a system stray.
