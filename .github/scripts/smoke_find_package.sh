@@ -37,16 +37,31 @@ int main(void) {
 }
 C
 
-cmake -S "$work" -B "$work/build" -DCMAKE_PREFIX_PATH="$prefix" >/dev/null
-cmake --build "$work/build" >/dev/null
-"$work/build/smoke"
+# Git Bash hands CMake POSIX paths it cannot use, and the default VS generator
+# is multi-config, which moves the binary into a per-config subdirectory.
+gen=()
+if command -v cygpath >/dev/null 2>&1; then
+    gen=(-G Ninja -DCMAKE_BUILD_TYPE=Release)
+    src="$(cygpath -m "$work")"
+    prefix="$(cygpath -m "$prefix")"
+else
+    src="$work"
+fi
+
+cmake -S "$src" -B "$src/build" "${gen[@]}" -DCMAKE_PREFIX_PATH="$prefix" >/dev/null
+cmake --build "$src/build" >/dev/null
+
+bin="$work/build/smoke"
+[ -f "$bin.exe" ] && bin="$bin.exe"
+"$bin"
 
 # Confirm libtreeweave_c is the treeweave one (vendored/installed), not a system stray.
-bin="$work/build/smoke"
 echo "--- linkage ---"
 if command -v ldd >/dev/null 2>&1; then
     ldd "$bin" | grep -i treeweave || echo "(static link — no treeweave_c shared dep)"
 elif command -v otool >/dev/null 2>&1; then
     otool -L "$bin" | grep -i treeweave || echo "(static link — no treeweave_c shared dep)"
+elif command -v dumpbin >/dev/null 2>&1; then
+    dumpbin //dependents "$bin"
 fi
 echo "smoke_find_package: PASS"
