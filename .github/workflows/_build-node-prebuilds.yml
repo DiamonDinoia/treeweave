@@ -98,10 +98,12 @@ jobs:
 
       # macOS/Windows: CMake + Ninja via setup-cpp, with the MSVC environment on
       # Windows so the addon builds with Ninja (single-config) like everywhere else.
+      # Windows also installs LLVM; the addon compiles with clang-cl, not cl.exe.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.platdir, 'linux') }}
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
         with:
+          compiler: ${{ matrix.platdir == 'win32-x64' && 'llvm' || '' }}
           cmake: true
           ninja: true
           vcvarsall: ${{ matrix.platdir == 'win32-x64' }}
@@ -125,9 +127,15 @@ jobs:
             curl -fL -o node.lib "https://nodejs.org/dist/${nodever}/win-x64/node.lib"
             curl -fL -o node-headers.tar.gz "https://nodejs.org/dist/${nodever}/node-${nodever}-headers.tar.gz"
             tar xzf node-headers.tar.gz
+            # clang-cl, not cl.exe: cl.exe needs ~58 min per dim3 C-ABI TU at the
+            # SSE2 baseline and blows the 90-minute cap; clang-cl needs ~40 s and
+            # keeps the flatten path. Warnings-as-errors off, as in ci-windows-clang.
             extra+=(
               "-DTREEWEAVE_NODE_LIB=$PWD/node.lib"
               "-DTREEWEAVE_NODE_INCLUDE=$PWD/node-${nodever}/include/node"
+              "-DCMAKE_C_COMPILER=clang-cl"
+              "-DCMAKE_CXX_COMPILER=clang-cl"
+              "-DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
             )
           fi
           cmake -S . -B build -G Ninja \
@@ -148,6 +156,18 @@ jobs:
           mkdir -p "prebuilds/${{ matrix.platdir }}"
           cp bindings/js/dist/treeweave.node "prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
           ls -l "prebuilds/${{ matrix.platdir }}"
+
+      # The addon compiles with clang-cl but must stay a plain MSVC-ABI DLL: the
+      # import table may name only the CRT and node.exe that a cl.exe build names.
+      # An LLVM/libc++/compiler-rt import would mean an extra install dependency.
+      - name: Check the Windows addon imports no LLVM runtime
+        if: ${{ matrix.platdir == 'win32-x64' }}
+        shell: cmd
+        run: |
+          dumpbin /dependents "prebuilds\win32-x64\treeweave.napi.node" > deps.txt
+          type deps.txt
+          findstr /i /r "libc++ LLVM clang_rt libunwind" deps.txt && exit /b 1
+          exit /b 0
 
       - name: Smoke test the freshly built addon (Node import + eval)
         shell: bash
