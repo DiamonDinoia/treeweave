@@ -21,10 +21,7 @@
 #define TREEWEAVE_FLATTEN
 #endif
 #elif defined(_MSC_VER)
-// __forceinline overrides MSVC's cost model at every level of the recursive eval
-// template tree, and the expansion is superlinear: the dim3 C-ABI variant TUs
-// exceed the 90-minute CI cap. Plain `inline` keeps MSVC's own heuristic.
-#define TREEWEAVE_ALWAYS_INLINE inline
+#define TREEWEAVE_ALWAYS_INLINE __forceinline
 #define TREEWEAVE_FLATTEN
 #else
 #define TREEWEAVE_ALWAYS_INLINE inline
