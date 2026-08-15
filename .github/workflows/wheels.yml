@@ -55,12 +55,24 @@ jobs:
           - name: windows-x64
             runs-on: windows-2022
             cibw-arch: AMD64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
+
+      # cl.exe blows the 90 min cap on the dim3 dispatch TUs, and multiarch
+      # compiles them once per ISA level. cibuildwheel builds in the host
+      # environment on Windows, so vcvarsall and LLVM here reach the build.
+      - name: Setup clang-cl + Ninja (Windows)
+        if: matrix.name == 'windows-x64'
+        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        with:
+          compiler: llvm
+          cmake: true
+          ninja: true
+          vcvarsall: true
 
       - name: Build wheels
         uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
@@ -73,6 +85,11 @@ jobs:
           CIBW_ENVIRONMENT: >-
             CMAKE_ARGS="${{ matrix.cmake-args }}"
             MACOSX_DEPLOYMENT_TARGET=11.0
+          # Windows override: Ninja, because the default VS generator ignores
+          # CMAKE_CXX_COMPILER and would build with cl.exe anyway.
+          CIBW_ENVIRONMENT_WINDOWS: >-
+            CMAKE_ARGS="${{ matrix.cmake-args }}"
+            CMAKE_GENERATOR=Ninja
           # Exercise each built wheel on its own platform (native runners, no
           # emulation) so a release wheel that imports/computes wrong is caught
           # here, not by users. {package} is the package-dir (bindings/python).
