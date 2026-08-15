@@ -93,6 +93,21 @@ C
    gcc example.c -Iinclude -Llib -ltreeweave_c -lm -o example
    LD_LIBRARY_PATH=lib ./example
 
+On Windows the zip puts ``treeweave_c.dll`` in ``bin\`` and the import library
+``treeweave_c.lib`` in ``lib\``. Windows has no ``RPATH``, so the loader finds
+the DLL only through ``PATH``:
+
+.. code-block:: bat
+
+   cl example.c /I include /link /LIBPATH:lib treeweave_c.lib
+   set PATH=%CD%\bin;%PATH%
+   example.exe
+
+The same applies to a ``find_package(treeweave)`` consumer: linking succeeds
+without ``PATH``, and the executable then fails to start. Either put ``bin\``
+on ``PATH``, copy the DLL next to the executable, or link
+``treeweave::treeweave_c_static``.
+
 See :doc:`guides/c`.
 
 Julia

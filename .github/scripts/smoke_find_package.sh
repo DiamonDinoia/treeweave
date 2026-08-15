@@ -60,6 +60,13 @@ if [ -z "$bin" ]; then
     find "$work/build" -maxdepth 2 >&2
     exit 1
 fi
+
+# Windows has no RPATH: treeweave_c.dll installs to bin/ and the loader searches
+# the exe directory and PATH, so a consumer must put bin/ on PATH.
+if command -v cygpath >/dev/null 2>&1; then
+    PATH="$(cygpath -u "$prefix")/bin:$PATH"
+    export PATH
+fi
 "$bin"
 
 # Confirm libtreeweave_c is the treeweave one (vendored/installed), not a system stray.

@@ -36,11 +36,22 @@ permissions:
 jobs:
   # README: find_package(treeweave) against an installed C ABI prefix.
   find-package:
-    name: CMake find_package (installed C ABI)
+    name: CMake find_package (installed C ABI, ${{ matrix.os }})
     # Skip on the workflow_run trigger — that event is only for the pip job.
     if: github.event_name != 'workflow_run'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            compiler: gcc
+          - os: windows-2022
+            compiler: llvm
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,17 +60,26 @@ jobs:
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
         with:
-          compiler: gcc
+          compiler: ${{ matrix.compiler }}
           cmake: true
           ninja: true
           cache-tools: true
+          vcvarsall: ${{ runner.os == 'Windows' }}
 
       - name: Build + install the C ABI to a prefix
         run: |
+          # clang-cl, as the release job does: cl.exe blows the job cap on the
+          # dim3 dispatch TUs.
+          extra=()
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            extra+=(-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
+                    -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF)
+          fi
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DTREEWEAVE_BUILD_TESTS=OFF \
-            -DTREEWEAVE_BUILD_EXAMPLES=OFF
+            -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            "${extra[@]}"
           cmake --build build -j
           cmake --install build --prefix "$PWD/_prefix"
 
@@ -91,10 +111,20 @@ jobs:
             return 0;
           }
           EOF
+          prefix="$PWD/_prefix"
+          app=consumer/build/app
+          # Windows has no RPATH: treeweave_c.dll installs to bin/, so a
+          # consumer must put that directory on PATH before running.
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PATH="$prefix/bin:$PATH"; export PATH
+            prefix="$(cygpath -m "$prefix")"
+            app=consumer/build/app.exe
+          fi
           cmake -S consumer -B consumer/build -G Ninja \
-            -DCMAKE_PREFIX_PATH="$PWD/_prefix"
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$prefix"
           cmake --build consumer/build -j
-          ./consumer/build/app
+          "./$app"
 
   # README: FetchContent -> header-only treeweave::treeweave (C++).
   fetchcontent:
