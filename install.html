@@ -361,6 +361,18 @@ tar<span class="w"> </span>xzf<span class="w"> </span><span class="s2">&quot;tre
 <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>lib<span class="w"> </span>./example
 </pre></div>
 </div>
+<p>On Windows the zip puts <code class="docutils literal notranslate"><span class="pre">treeweave_c.dll</span></code> in <code class="docutils literal notranslate"><span class="pre">bin\</span></code> and the import library
+<code class="docutils literal notranslate"><span class="pre">treeweave_c.lib</span></code> in <code class="docutils literal notranslate"><span class="pre">lib\</span></code>. Windows has no <code class="docutils literal notranslate"><span class="pre">RPATH</span></code>, so the loader finds
+the DLL only through <code class="docutils literal notranslate"><span class="pre">PATH</span></code>:</p>
+<div class="highlight-bat notranslate"><div class="highlight"><pre><span></span>cl example.c /I include /link /LIBPATH:lib treeweave_c.lib
+<span class="k">set</span> <span class="nv">PATH</span><span class="p">=</span><span class="nv">%CD%</span>\bin;<span class="nv">%PATH%</span>
+example.exe
+</pre></div>
+</div>
+<p>The same applies to a <code class="docutils literal notranslate"><span class="pre">find_package(treeweave)</span></code> consumer: linking succeeds
+without <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, and the executable then fails to start. Either put <code class="docutils literal notranslate"><span class="pre">bin\</span></code>
+on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>, copy the DLL next to the executable, or link
+<code class="docutils literal notranslate"><span class="pre">treeweave::treeweave_c_static</span></code>.</p>
 <p>See <a class="reference internal" href="guides/c.html"><span class="doc">C</span></a>.</p>
 </section>
 <section id="julia">
