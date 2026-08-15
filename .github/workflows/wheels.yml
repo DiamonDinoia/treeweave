@@ -11,11 +11,9 @@ name: Wheels
 # extension (see bindings/python/treeweave_python.cmake), so there is no external
 # shared library to vendor — wheels carry only the system C/C++ runtimes.
 #
-# x86 wheels enable TREEWEAVE_C_MULTIARCH and build at the x86-64 baseline, so a
-# single wheel dispatches SSE4.2 / AVX2 / AVX-512 at runtime and runs on any
-# x86-64 CPU. Linux aarch64 wheels likewise enable TREEWEAVE_C_MULTIARCH at the
-# armv8-a baseline. Apple-silicon wheels build single-arch at their apple-m1
-# baseline.
+# Linux and macOS wheels enable TREEWEAVE_C_MULTIARCH at their family baseline,
+# so one wheel dispatches by ISA at runtime. Apple silicon builds single-arch at
+# apple-m1; Windows is SSE2-only, see the windows-x64 matrix entry.
 on:
   workflow_call:
     inputs:
@@ -52,10 +50,13 @@ jobs:
             runs-on: macos-15-intel
             cibw-arch: x86_64
             cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+          # Multiarch OFF: static-linked into the extension it faults with an
+          # illegal instruction inside treeweave_fit under every arch, sse2
+          # included. The same C ABI as a DLL passes. Windows runs SSE2-only.
           - name: windows-x64
             runs-on: windows-2022
             cibw-arch: AMD64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=OFF -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
     steps:
       - uses: actions/checkout@v7
         with:
