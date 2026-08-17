@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786348061940,
+  "lastUpdate": 1786950097725,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -2932,6 +2932,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000443517777777778,
             "unit": "s/batch",
             "extra": "MdAPE=0.00602489986488241; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "8c8b23a9372ae9db01bf53eaa9d02123d7cd5b31",
+          "message": "fix(release): build the Windows wheel single-arch\n\nWith TREEWEAVE_C_MULTIARCH=ON the extension faults with an illegal instruction\ninside treeweave_fit on the first call. Probe 31860261379 ran both settings on\none windows-2022 runner: OFF passes, ON fails. Forcing every ladder arch,\nsse2 included, still faults, so runtime ISA selection is not the cause; the\nsame C ABI passes as a DLL, and the wheel static-links it instead.\n\nEvery other Windows artifact in the release already ships single-arch. The\nWindows wheel now runs at the SSE2 baseline until the static-link fault is\nfixed.\n\nAssisted-by: Claude Opus 5 <noreply@anthropic.com>",
+          "timestamp": "2026-08-15T02:57:21Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/8c8b23a9372ae9db01bf53eaa9d02123d7cd5b31"
+        },
+        "date": 1786950096715,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000710519666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00509899349851206; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.0012180555,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00995904886497639; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.0005962025,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0131174109707902; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001905467875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00270701178662639; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00280997855555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00199775607605092; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.005674193625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0321826758498537; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.0147362135,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00206791664090088; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00166816077777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00418144542909879; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.0002883331,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00104710769481795; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000563293777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00378611845008017; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.0004963145,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00241925859485012; batch=65536 pts/call"
           }
         ]
       }
