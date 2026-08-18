@@ -293,7 +293,7 @@ matching native prebuild.</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
-<div class="highlight-js notranslate"><div class="highlight"><pre><span></span><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Treeweave</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@flatironinstitute/treeweave&quot;</span><span class="p">;</span>
+<div class="highlight-js notranslate"><div class="highlight"><pre><span></span><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Treeweave</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"@flatironinstitute/treeweave"</span><span class="p">;</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">zeta</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
@@ -313,10 +313,10 @@ matching native prebuild.</p>
 fit options are documented in <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a>; JavaScript uses lower camel case
 names such as <code class="docutils literal notranslate"><span class="pre">tolKind</span></code> and <code class="docutils literal notranslate"><span class="pre">maxMemoryMib</span></code>.</p>
 <div class="highlight-ts notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">Treeweave</span><span class="p">.</span><span class="nx">fit</span><span class="p">(</span><span class="nx">f</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">tolKind</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;absolute_max&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">tolKind</span><span class="o">:</span><span class="w"> </span><span class="s2">"absolute_max"</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">maxDepth</span><span class="o">:</span><span class="w"> </span><span class="kt">30</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">maxMemoryMib</span><span class="o">:</span><span class="w"> </span><span class="kt">64</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">backend</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;native&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">backend</span><span class="o">:</span><span class="w"> </span><span class="s2">"native"</span><span class="p">,</span>
 <span class="p">});</span>
 </pre></div>
 </div>

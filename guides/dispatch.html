@@ -356,7 +356,7 @@ verified.</p></li>
 a specific level (capped at what the host actually supports), so one capable
 machine can exercise every fallback path:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>sse2<span class="w">       </span>./test_c_abi<span class="w">   </span><span class="c1"># force the x86 baseline</span>
-<span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>avx<span class="w">        </span>./test_c_abi<span class="w">   </span><span class="c1"># force MSVC&#39;s middle rung</span>
+<span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>avx<span class="w">        </span>./test_c_abi<span class="w">   </span><span class="c1"># force MSVC's middle rung</span>
 <span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>fma3+avx2<span class="w">  </span>./test_c_abi<span class="w">   </span><span class="c1"># force AVX2</span>
 <span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>arm64+neon<span class="w"> </span>./test_c_abi<span class="w">   </span><span class="c1"># force NEON64 on aarch64</span>
 </pre></div>

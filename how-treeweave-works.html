@@ -430,7 +430,7 @@ chain.</p>
    │  10   │  11   │                   | (y &gt; cy) &lt;&lt; 1
    │ (NW)  │ (NE)  │
    ├───────●───────┤         the bullet is (cx, cy), the
-   │  00   │  01   │         node&#39;s split point.
+   │  00   │  01   │         node's split point.
    │ (SW)  │ (SE)  │
    └───────┴───────┘
 </pre></div>
@@ -462,7 +462,7 @@ when the leaf is hot in L1.</p>
 <p>This is what makes treeweave fast on million-point batches. Naive batch:
 1M points × independent descents × independent polyfits → terrible cache
 behaviour. Optimised path:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   xp[N] — caller&#39;s points, mixed across leaves:
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   xp[N] — caller's points, mixed across leaves:
 
    ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
    │ L3 │ L0 │ L3 │ L1 │ L0 │ L3 │ L0 │ L1 │ L3 │   each cell tagged with

@@ -300,7 +300,7 @@ install it with TestPyPI as the primary index and real PyPI for the dependencies
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;simple_1d.py — minimal 1D -&gt; 1D fit and evaluation.&quot;&quot;&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""simple_1d.py — minimal 1D -&gt; 1D fit and evaluation."""</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">treeweave</span>
@@ -321,9 +321,9 @@ install it with TestPyPI as the primary index and real PyPI for the dependencies
 <span class="n">ys</span> <span class="o">=</span> <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
 <span class="n">exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
 <span class="n">max_err</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">exact</span><span class="p">)))</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;max |approx - exp| over 11 points: </span><span class="si">{</span><span class="n">max_err</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">assert</span> <span class="n">max_err</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;too large: </span><span class="si">{</span><span class="n">max_err</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;OK&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max |approx - exp| over 11 points: </span><span class="si">{</span><span class="n">max_err</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">max_err</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"too large: </span><span class="si">{</span><span class="n">max_err</span><span class="si">}</span><span class="s2">"</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"OK"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">fit</span></code> infers the input/output dimensions by probing the callable, so the

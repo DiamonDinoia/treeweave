@@ -287,7 +287,7 @@ vendoring treeweave into another project.</p>
 <section id="vendored-c">
 <h2>Vendored C++<a class="headerlink" href="#vendored-c" title="Link to this heading"></a></h2>
 <p>CPM.cmake:</p>
-<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">CPMAddPackage</span><span class="p">(</span><span class="s2">&quot;gh:DiamonDinoia/treeweave@stable&quot;</span><span class="p">)</span>
+<div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="nb">CPMAddPackage</span><span class="p">(</span><span class="s2">"gh:DiamonDinoia/treeweave@stable"</span><span class="p">)</span>
 <span class="nb">add_executable</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">example.cpp</span><span class="p">)</span>
 <span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">my_app</span><span class="w"> </span><span class="s">PRIVATE</span><span class="w"> </span><span class="s">treeweave::treeweave</span><span class="p">)</span>
 </pre></div>
@@ -384,59 +384,59 @@ vendoring treeweave into another project.</p>
 <div class="highlight-cmake notranslate"><div class="highlight"><pre><span></span><span class="c"># Build example programs. Defaults ON for a direct treeweave checkout so</span>
 <span class="c"># developers can run examples immediately; defaults OFF for FetchContent and</span>
 <span class="c"># add_subdirectory consumers so vendoring treeweave stays small.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_EXAMPLES</span><span class="w"> </span><span class="s2">&quot;Build C++ examples&quot;</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_EXAMPLES</span><span class="w"> </span><span class="s2">"Build C++ examples"</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
 <span class="c"># Build the C++/C test suites. Defaults ON only for a direct treeweave checkout;</span>
 <span class="c"># consumers opt in explicitly when they want to test the vendored dependency.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_TESTS</span><span class="w"> </span><span class="s2">&quot;Build tests&quot;</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_TESTS</span><span class="w"> </span><span class="s2">"Build tests"</span><span class="w"> </span><span class="o">${</span><span class="nv">PROJECT_IS_TOP_LEVEL</span><span class="o">}</span><span class="p">)</span>
 <span class="c"># Build the C ABI libraries. This provides treeweave::treeweave_c</span>
 <span class="c"># (shared, when the platform supports shared libraries) and</span>
 <span class="c"># treeweave::treeweave_c_static. Most non-C++ bindings link through this ABI.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_C_API</span><span class="w"> </span><span class="s2">&quot;Build C ABI&quot;</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_C_API</span><span class="w"> </span><span class="s2">"Build C ABI"</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
 <span class="c"># Build the Python nanobind extension and register the pytest smoke/parity</span>
 <span class="c"># target. Normal Python users should prefer the PyPI wheel.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_PYTHON</span><span class="w"> </span><span class="s2">&quot;Build Python binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_PYTHON</span><span class="w"> </span><span class="s2">"Build Python binding"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Register the Julia binding test suite against the C ABI. Normal Julia users</span>
 <span class="c"># should prefer Pkg.add, which downloads the release C ABI automatically.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JULIA</span><span class="w"> </span><span class="s2">&quot;Build Julia tests&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JULIA</span><span class="w"> </span><span class="s2">"Build Julia tests"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the MATLAB/Octave MEX binding and register its smoke test. The</span>
 <span class="c"># bindings-matlab and bindings-octave presets are the preferred entry points.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_MATLAB</span><span class="w"> </span><span class="s2">&quot;Build MATLAB/Octave MEX&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_MATLAB</span><span class="w"> </span><span class="s2">"Build MATLAB/Octave MEX"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the Fortran iso_c_binding module plus its example and tests. Requires a</span>
 <span class="c"># modern Fortran compiler on PATH or CMAKE_Fortran_COMPILER set explicitly.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_FORTRAN</span><span class="w"> </span><span class="s2">&quot;Build Fortran binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_FORTRAN</span><span class="w"> </span><span class="s2">"Build Fortran binding"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the JavaScript/TypeScript binding. With a normal compiler this builds</span>
 <span class="c"># the native N-API addon; with the Emscripten preset it builds the WASM backend.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JS</span><span class="w"> </span><span class="s2">&quot;Build JS/TS binding&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_JS</span><span class="w"> </span><span class="s2">"Build JS/TS binding"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build local performance benchmark executables. OFF by default: the benchmark</span>
 <span class="c"># sources are not clang-tidy clean, so a top-level default would drag them into</span>
 <span class="c"># the analysis preset. Turn on via the bench preset.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_BENCHMARKS</span><span class="w"> </span><span class="s2">&quot;Build benchmarks&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_BENCHMARKS</span><span class="w"> </span><span class="s2">"Build benchmarks"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the CodSpeed benchmark used by CI. Prefer the codspeed preset.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_CODSPEED</span><span class="w"> </span><span class="s2">&quot;Build CodSpeed benchmark&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_CODSPEED</span><span class="w"> </span><span class="s2">"Build CodSpeed benchmark"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Add documentation targets: doxygen, sphinx, and docs. Requires Doxygen,</span>
 <span class="c"># sphinx-build, and the Python packages from docs/requirements.txt.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_GENERATE_DOCS</span><span class="w"> </span><span class="s2">&quot;Build docs targets&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_GENERATE_DOCS</span><span class="w"> </span><span class="s2">"Build docs targets"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the C ABI with runtime ISA dispatch where the platform supports it. On</span>
 <span class="c"># x86 this builds a portable baseline plus wider variants and selects at runtime</span>
 <span class="c"># (GCC/Clang: SSE2/SSE4.2/AVX2/AVX-512; MSVC ABI: SSE2/AVX/AVX2/AVX-512). On</span>
 <span class="c"># unsupported platforms it falls back to the normal single-arch C ABI build.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_C_MULTIARCH</span><span class="w"> </span><span class="s2">&quot;Runtime ISA dispatch&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_C_MULTIARCH</span><span class="w"> </span><span class="s2">"Runtime ISA dispatch"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Treat project warnings as errors. Dependency warnings are kept out of this</span>
-<span class="c"># policy; this is intended to keep treeweave&#39;s own code clean.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_WARNINGS_AS_ERRORS</span><span class="w"> </span><span class="s2">&quot;Treat warnings as errors&quot;</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
+<span class="c"># policy; this is intended to keep treeweave's own code clean.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_WARNINGS_AS_ERRORS</span><span class="w"> </span><span class="s2">"Treat warnings as errors"</span><span class="w"> </span><span class="s">ON</span><span class="p">)</span>
 <span class="c"># Enable ASan/UBSan for project targets. Prefer sanitizer presets where</span>
 <span class="c"># available because they pick compiler/build settings known to fit CI memory.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_SANITIZERS</span><span class="w"> </span><span class="s2">&quot;Enable ASan/UBSan&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_SANITIZERS</span><span class="w"> </span><span class="s2">"Enable ASan/UBSan"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Run clang-tidy/cppcheck. OFF by default: as a global CMAKE_CXX_CLANG_TIDY it</span>
 <span class="c"># would also lint vendored deps configured outside the FetchContent guard (e.g.</span>
 <span class="c"># nanobind in the Python preset). Turn on via the analysis preset.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_STATIC_ANALYSIS</span><span class="w"> </span><span class="s2">&quot;Run static analysis&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_STATIC_ANALYSIS</span><span class="w"> </span><span class="s2">"Run static analysis"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build with coverage instrumentation. Prefer the coverage preset.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_COVERAGE</span><span class="w"> </span><span class="s2">&quot;Build coverage&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_COVERAGE</span><span class="w"> </span><span class="s2">"Build coverage"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Link-time optimization, OFF by default: the header-only C++ API gains nothing</span>
 <span class="c"># and IPO fills the installed static archive with single-toolchain IL. gcc and</span>
 <span class="c"># MSVC ignore it when ON; see cmake/treeweave_toolchain.cmake.</span>
-<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_IPO</span><span class="w"> </span><span class="s2">&quot;Link-time optimization&quot;</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_ENABLE_IPO</span><span class="w"> </span><span class="s2">"Link-time optimization"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
