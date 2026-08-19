@@ -18,6 +18,11 @@ permissions:
 # LRU quota, so a cache survived about two runs before eviction.
 env:
   SCCACHE_GHA_ENABLED: "true"
+  # The daemon exits after SCCACHE_IDLE_TIMEOUT seconds without a client
+  # request (default 600). Linking issues no compile requests, so a long link
+  # phase killed the daemon mid-build and the next compile got
+  # "os error 10054". 0 keeps the daemon up for the whole job.
+  SCCACHE_IDLE_TIMEOUT: "0"
 
 jobs:
   build:
