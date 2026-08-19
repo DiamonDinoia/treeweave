@@ -68,9 +68,6 @@ jobs:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      # cl.exe blows the 90 min cap on the dim3 dispatch TUs, and multiarch
-      # compiles them once per ISA level. cibuildwheel builds in the host
-      # environment on Windows, so vcvarsall and LLVM here reach the build.
       # A staging build pins X.Y.Z.devN here: CMake's numeric project version
       # cannot carry a .devN suffix, so pyproject is overridden statically.
       # cibuildwheel copies this dir into the build container, so the edit sticks.
@@ -79,6 +76,9 @@ jobs:
         shell: bash
         run: python .github/scripts/set_dev_version.py "${{ inputs.dev-version }}"
 
+      # cl.exe blows the 90 min cap on the dim3 dispatch TUs, and multiarch
+      # compiles them once per ISA level. cibuildwheel builds in the host
+      # environment on Windows, so vcvarsall and LLVM here reach the build.
       - name: Setup clang-cl + Ninja (Windows)
         if: matrix.name == 'windows-x64'
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
@@ -127,7 +127,6 @@ jobs:
           persist-credentials: false
       # A staging build pins X.Y.Z.devN here: CMake's numeric project version
       # cannot carry a .devN suffix, so pyproject is overridden statically.
-      # cibuildwheel copies this dir into the build container, so the edit sticks.
       - name: Pin dev version
         if: inputs.dev-version != ''
         shell: bash
