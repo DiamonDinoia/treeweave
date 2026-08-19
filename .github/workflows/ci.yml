@@ -12,6 +12,12 @@ concurrency:
 permissions:
   contents: read
 
+# ccache's default cache directory is per-platform (~/Library/Caches/ccache on
+# macOS, %LOCALAPPDATA%\ccache on Windows), so a hardcoded ~/.cache/ccache in
+# actions/cache saved nothing off Linux. Pin one absolute path for every OS.
+env:
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+
 jobs:
   build:
     name: ${{ matrix.os }} (${{ matrix.toolchain }} ${{ matrix.build_type }})
@@ -85,7 +91,7 @@ jobs:
         if: ${{ !matrix.arch_native }}
         uses: actions/cache@v6
         with:
-          path: ~/.cache/ccache
+          path: ${{ github.workspace }}/.ccache
           key: ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-
@@ -131,6 +137,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       # clang-tidy comes from pip (pinned 22.*), not apt: the apt clang-tidy
       # 18 misattributes libstdc++'s own `namespace std` to user code under
@@ -195,7 +202,7 @@ jobs:
       - name: ccache cache
         uses: actions/cache@v6
         with:
-          path: ~/.cache/ccache
+          path: ${{ github.workspace }}/.ccache
           key: ccache-${{ runner.os }}-coverage-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-coverage-
@@ -247,6 +254,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       # All the file-hygiene / spelling / shell / pyproject hooks. The C++ and
       # CMake hooks are staged-hunk based (built for the commit flow, not
@@ -287,14 +295,37 @@ jobs:
         with:
           persist-credentials: false
 
+      # Use setup-cpp to get a consistent gcc + ccache environment (matching the
+      # build matrix pattern), then persist the object cache across runs.
+      # Valgrind's Build step was 7m38s with no cache (run 32208936358).
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          ccache: true
+          cache-tools: true
+
+      - name: ccache cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ runner.os }}-valgrind-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-valgrind-
+
       # valgrind must be present at configure time so the test_c_abi_valgrind
       # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
-      - name: Install valgrind + toolchain
-        run: sudo apt-get update && sudo apt-get install -y valgrind ninja-build cmake g++
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
 
       # Single-arch AVX2 baseline (no multiarch): valgrind handles AVX2 but not
       # the AVX-512 variant the dispatcher would otherwise build + run.
       - name: Configure
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ccache
+          CMAKE_CXX_COMPILER_LAUNCHER: ccache
         run: cmake --preset valgrind
 
       - name: Build
@@ -324,7 +355,7 @@ jobs:
       - name: ccache cache
         uses: actions/cache@v6
         with:
-          path: ~/.cache/ccache
+          path: ${{ github.workspace }}/.ccache
           key: ccache-${{ runner.os }}-multiarch-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-multiarch-
@@ -391,7 +422,7 @@ jobs:
       - name: ccache cache
         uses: actions/cache@v6
         with:
-          path: ~/.cache/ccache
+          path: ${{ github.workspace }}/.ccache
           key: ccache-${{ runner.os }}-multiarch-arm-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-multiarch-arm-
