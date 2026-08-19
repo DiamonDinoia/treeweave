@@ -12,11 +12,12 @@ concurrency:
 permissions:
   contents: read
 
-# ccache's default cache directory is per-platform (~/Library/Caches/ccache on
-# macOS, %LOCALAPPDATA%\ccache on Windows), so a hardcoded ~/.cache/ccache in
-# actions/cache saved nothing off Linux. Pin one absolute path for every OS.
+# sccache stores objects individually in the Actions cache service instead of a
+# per-job tarball. ccache + actions/cache rewrote every leg's full cache under a
+# new ${{ github.sha }} key each run — ~5 GB per run against the 10 GB per-repo
+# LRU quota, so a cache survived about two runs before eviction.
 env:
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  SCCACHE_GHA_ENABLED: "true"
 
 jobs:
   build:
@@ -58,7 +59,7 @@ jobs:
           - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           # arch_native: this leg is the one that resolves to -mcpu=native
           # (Homebrew gcc on Apple Silicon doesn't know apple-m1 — see
-          # treeweave_toolchain.cmake). Cross-run ccache is unsafe for native
+          # treeweave_toolchain.cmake). A cross-run cache is unsafe for native
           # arch: an object built on one runner's microarch could be restored
           # onto another and fault. So it skips the persisted cache below.
           - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
@@ -77,35 +78,31 @@ jobs:
           compiler: ${{ matrix.toolchain }}
           cmake: true
           ninja: true
-          ccache: true
           cache-tools: true
           vcvarsall: ${{ runner.os == 'Windows' }}
 
-      # Persist the ccache object cache per leg. setup-cpp installs ccache; the
-      # COMPILER_LAUNCHER env on Configure routes the compiler through it.
-      # Skipped on the -mcpu=native leg: a persisted cache shared across runners
-      # of differing microarch would risk restoring instructions the restoring
-      # host can't execute. (The launcher still runs ccache intra-job — single
-      # CPU, safe — it just never reads/writes a cross-run cache.)
-      - name: ccache cache
-        if: ${{ !matrix.arch_native }}
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-
-            ccache-${{ runner.os }}-${{ matrix.toolchain }}-
+      # sccache reads and writes the Actions cache service directly, so no
+      # save/restore step is needed. The action's post step prints hit rates.
+      # The -mcpu=native leg opts out of the shared backend: -mcpu=native hashes
+      # to the same key on every runner but expands to that runner's microarch,
+      # so a restored object could carry instructions the restoring host cannot
+      # execute. That leg keeps a local disk cache, which is single-CPU and safe.
+      - name: sccache
+        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+      - name: Opt the -mcpu=native leg out of the shared cache
+        if: ${{ matrix.arch_native }}
+        shell: bash
+        run: echo "SCCACHE_GHA_ENABLED=false" >> "$GITHUB_ENV"
 
       # All build settings (portable -march baseline, sanitizers on the Linux
       # Debug rows, -Og for the Debug test matrix) live in CMakePresets.json.
       # Every platform builds single-config via Ninja (Windows uses the MSVC
-      # environment set up by setup-cpp's vcvarsall above). ccache is wired via
+      # environment set up by setup-cpp's vcvarsall above). sccache is wired via
       # COMPILER_LAUNCHER here (not in the presets) so local builds are untouched.
       - name: Configure
         env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
@@ -196,16 +193,10 @@ jobs:
           compiler: gcc-13
           cmake: true
           ninja: true
-          ccache: true
           cache-tools: true
 
-      - name: ccache cache
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-coverage-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-coverage-
+      - name: sccache
+        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
 
       - name: Install coverage tools
         run: |
@@ -214,12 +205,12 @@ jobs:
 
       - name: Configure (coverage)
         env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: cmake --preset coverage
 
       # -j: the coverage target was the one build missing parallelism; with
-      # ccache + all cores it lands well under the 50-min timeout.
+      # sccache + all cores it lands well under the 50-min timeout.
       - name: Build coverage target
         run: cmake --build build/coverage --parallel --target coverage
 
@@ -295,8 +286,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # Use setup-cpp to get a consistent gcc + ccache environment (matching the
-      # build matrix pattern), then persist the object cache across runs.
+      # Use setup-cpp to get a consistent gcc + sccache environment (matching the
+      # build matrix pattern), so the objects persist across runs.
       # Valgrind's Build step was 7m38s with no cache (run 32208936358).
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
@@ -304,16 +295,10 @@ jobs:
           compiler: gcc
           cmake: true
           ninja: true
-          ccache: true
           cache-tools: true
 
-      - name: ccache cache
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-valgrind-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-valgrind-
+      - name: sccache
+        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
 
       # valgrind must be present at configure time so the test_c_abi_valgrind
       # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
@@ -324,8 +309,8 @@ jobs:
       # the AVX-512 variant the dispatcher would otherwise build + run.
       - name: Configure
         env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: cmake --preset valgrind
 
       - name: Build
@@ -349,24 +334,18 @@ jobs:
           compiler: gcc
           cmake: true
           ninja: true
-          ccache: true
           cache-tools: true
 
-      - name: ccache cache
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-multiarch-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-multiarch-
+      - name: sccache
+        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
 
       # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
       # pick one at runtime; the rest of CI pins a single -march, leaving the
       # dispatcher and its AVX-512 variant otherwise unbuilt/untested.
       - name: Configure (multiarch dispatch)
         env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: cmake --preset multiarch
 
       - name: Build
@@ -416,24 +395,18 @@ jobs:
           compiler: gcc
           cmake: true
           ninja: true
-          ccache: true
           cache-tools: true
 
-      - name: ccache cache
-        uses: actions/cache@v6
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-multiarch-arm-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ runner.os }}-multiarch-arm-
+      - name: sccache
+        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
 
       # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
       # armv8-a baseline with the runtime dispatcher, which selects the single
       # mandatory neon64 variant (SVE excluded by design — see dispatch_arch.hpp).
       - name: Configure (multiarch dispatch)
         env:
-          CMAKE_C_COMPILER_LAUNCHER: ccache
-          CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
         run: cmake --preset multiarch-arm
 
       - name: Build
