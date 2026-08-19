@@ -24,6 +24,7 @@ FetchContent_Declare(
     polyfit
     GIT_REPOSITORY https://github.com/DiamonDinoia/polyfit.git
     GIT_TAG v0.0.3
+    GIT_SHALLOW TRUE
     SYSTEM
 )
 set(POLYFIT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -60,6 +61,7 @@ if(TREEWEAVE_BUILD_BENCHMARKS)
         nanobench
         GIT_REPOSITORY https://github.com/martinus/nanobench.git
         GIT_TAG v4.3.11
+        GIT_SHALLOW TRUE
         SYSTEM
     )
     FetchContent_MakeAvailable(nanobench)
@@ -87,6 +89,7 @@ if(TREEWEAVE_BUILD_TESTS)
         catch2
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v3.9.0
+        GIT_SHALLOW TRUE
         SYSTEM
     )
     FetchContent_MakeAvailable(catch2)

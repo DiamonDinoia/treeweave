@@ -309,7 +309,7 @@ if(LCOV_EXECUTABLE AND GENHTML_EXECUTABLE)
         coverage
         COMMAND
             ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR}
-            --output-on-failure
+            --output-on-failure --parallel
         COMMAND
             ${LCOV_EXECUTABLE} --capture --directory ${CMAKE_BINARY_DIR}
             --output-file ${LCOV_INFO} --ignore-errors
@@ -333,7 +333,7 @@ elseif(GCOVR_EXECUTABLE)
         coverage
         COMMAND
             ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR}
-            --output-on-failure
+            --output-on-failure --parallel
         COMMAND
             ${GCOVR_EXECUTABLE} -r ${CMAKE_SOURCE_DIR} --filter
             "include/treeweave/|tests/" --exclude ".*/_deps/.*" --exclude
