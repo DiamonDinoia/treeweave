@@ -62,81 +62,21 @@ jobs:
           echo "version=${base}.dev${n}" >> "$GITHUB_OUTPUT"
           echo "Derived dev version: ${base}.dev${n}"
 
-  wheels:
-    name: ${{ matrix.name }}
+  # The wheel/sdist matrix lives in wheels.yml — the same one the real PyPI
+  # release uses. Duplicating it here let the Windows entry drift: it kept
+  # cl.exe + multiarch long after wheels.yml moved to clang-cl, which both
+  # blows the build time cap and ships a wheel that faults on import.
+  build:
+    name: build
     needs: version
-    runs-on: ${{ matrix.runs-on }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux-x86_64
-            runs-on: ubuntu-24.04
-            cibw-arch: x86_64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
-          - name: linux-aarch64
-            runs-on: ubuntu-24.04-arm
-            cibw-arch: aarch64
-            cmake-args: "-DTREEWEAVE_ARCH=armv8-a"
-          - name: macos-arm64
-            runs-on: macos-14
-            cibw-arch: arm64
-            cmake-args: "-DTREEWEAVE_ARCH=apple-m1"
-          - name: macos-x86_64
-            runs-on: macos-15-intel
-            cibw-arch: x86_64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
-          - name: windows-x64
-            runs-on: windows-2022
-            cibw-arch: AMD64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}   # the commit CI validated
-
-      # Pin the wheel to the shared dev version (CMake's numeric project version
-      # cannot carry a .devN suffix, so we statically override pyproject here).
-      # cibuildwheel copies this dir into the build container, so the edit sticks.
-      - name: Pin dev version
-        shell: bash
-        run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
-        with:
-          package-dir: bindings/python
-        env:
-          CIBW_ARCHS: ${{ matrix.cibw-arch }}
-          CIBW_ENVIRONMENT: >-
-            CMAKE_ARGS="${{ matrix.cmake-args }}"
-            MACOSX_DEPLOYMENT_TARGET=11.0
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: wheels-${{ matrix.name }}
-          path: wheelhouse/*.whl
-
-  sdist:
-    name: sdist
-    needs: version
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}   # the commit CI validated
-      - name: Pin dev version
-        run: python .github/scripts/set_dev_version.py "${{ needs.version.outputs.version }}"
-      - name: Build sdist
-        run: pipx run build --sdist --outdir dist bindings/python
-      - uses: actions/upload-artifact@v7
-        with:
-          name: sdist
-          path: dist/*.tar.gz
+    uses: ./.github/workflows/wheels.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      dev-version: ${{ needs.version.outputs.version }}
 
   publish:
     name: Publish to TestPyPI
-    needs: [wheels, sdist]
+    needs: [build]
     runs-on: ubuntu-24.04
     environment: testpypi
     permissions:

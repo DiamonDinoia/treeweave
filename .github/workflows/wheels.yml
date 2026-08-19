@@ -21,6 +21,11 @@ on:
         description: 'Git ref to build from (commit SHA / branch / tag)'
         required: true
         type: string
+      dev-version:
+        description: 'X.Y.Z.devN to stamp into the wheels; empty builds the release version'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -66,6 +71,14 @@ jobs:
       # cl.exe blows the 90 min cap on the dim3 dispatch TUs, and multiarch
       # compiles them once per ISA level. cibuildwheel builds in the host
       # environment on Windows, so vcvarsall and LLVM here reach the build.
+      # A staging build pins X.Y.Z.devN here: CMake's numeric project version
+      # cannot carry a .devN suffix, so pyproject is overridden statically.
+      # cibuildwheel copies this dir into the build container, so the edit sticks.
+      - name: Pin dev version
+        if: inputs.dev-version != ''
+        shell: bash
+        run: python .github/scripts/set_dev_version.py "${{ inputs.dev-version }}"
+
       - name: Setup clang-cl + Ninja (Windows)
         if: matrix.name == 'windows-x64'
         uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
@@ -112,6 +125,14 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
+      # A staging build pins X.Y.Z.devN here: CMake's numeric project version
+      # cannot carry a .devN suffix, so pyproject is overridden statically.
+      # cibuildwheel copies this dir into the build container, so the edit sticks.
+      - name: Pin dev version
+        if: inputs.dev-version != ''
+        shell: bash
+        run: python .github/scripts/set_dev_version.py "${{ inputs.dev-version }}"
+
       - name: Build sdist
         run: pipx run build --sdist --outdir dist bindings/python
       - uses: actions/upload-artifact@v7
