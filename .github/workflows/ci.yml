@@ -93,7 +93,7 @@ jobs:
       # so a restored object could carry instructions the restoring host cannot
       # execute. That leg keeps a local disk cache, which is single-CPU and safe.
       - name: sccache
-        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+        uses: mozilla/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
       - name: Opt the -mcpu=native leg out of the shared cache
         if: ${{ matrix.arch_native }}
         shell: bash
@@ -201,7 +201,7 @@ jobs:
           cache-tools: true
 
       - name: sccache
-        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+        uses: mozilla/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
 
       - name: Install coverage tools
         run: |
@@ -303,7 +303,7 @@ jobs:
           cache-tools: true
 
       - name: sccache
-        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+        uses: mozilla/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
 
       # valgrind must be present at configure time so the test_c_abi_valgrind
       # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
@@ -342,7 +342,7 @@ jobs:
           cache-tools: true
 
       - name: sccache
-        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+        uses: mozilla/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
 
       # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
       # pick one at runtime; the rest of CI pins a single -march, leaving the
@@ -403,7 +403,7 @@ jobs:
           cache-tools: true
 
       - name: sccache
-        uses: mozilla/sccache-action@fd02668681acd5f960e1372061bee5e3e987195c  # v0.0.11
+        uses: mozilla/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba  # v0.0.11
 
       # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
       # armv8-a baseline with the runtime dispatcher, which selects the single
