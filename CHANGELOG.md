@@ -10,6 +10,14 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 
 ## [Unreleased]
 
+### Added
+
+- Python: `treeweave.fit` doubles as a decorator when the callable is omitted —
+  `@treeweave.fit(a, b, tol)` above a `def` replaces the function with its
+  fitted approximation, the `functools.cache` spelling. Every keyword option of
+  the direct call applies unchanged, and the original callable stays reachable
+  as `__wrapped__`.
+
 ## [0.0.2] - 2026-08-13
 
 ### Changed

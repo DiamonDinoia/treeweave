@@ -62,7 +62,13 @@ set_tests_properties(
 foreach(
     _example
     IN
-    ITEMS float32_fit simple_1d simple_2d sorted_1d vector_output_2d
+    ITEMS
+        decorator_1d
+        float32_fit
+        simple_1d
+        simple_2d
+        sorted_1d
+        vector_output_2d
 )
     add_test(
         NAME "python_example_${_example}"
