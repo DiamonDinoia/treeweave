@@ -60,6 +60,16 @@ approx = treeweave.fit(zeta, 2.0, 10.0, tol=1e-10)
 print(approx(3.5))
 ```
 
+Omit the callable and `fit` becomes a decorator, the `functools.cache` spelling:
+
+```python
+@treeweave.fit(2.0, 10.0, tol=1e-10)
+def zeta(s):
+    return sum(math.pow(k, -s[0]) for k in range(1, 1001))
+
+print(zeta(3.5))          # evaluates the approximation
+```
+
 Install:
 
 ```bash

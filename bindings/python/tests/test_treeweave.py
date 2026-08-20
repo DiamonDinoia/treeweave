@@ -319,3 +319,64 @@ def test_out_param_validation():
     )
     with pytest.raises(ValueError):  # out= with transposed=True
         fv(np.linspace(0.0, 1.0, 10), transposed=True, out=np.empty((2, 10)))
+
+
+# ---------------------------------------------------------------------------
+# 13. Decorator form: @fit(a, b, tol) replaces the function with the fit
+# ---------------------------------------------------------------------------
+
+
+def test_decorator_matches_direct_fit():
+    """@fit(a, b, tol) gives the same values as fit(f, a, b, tol)."""
+
+    def func(x):
+        return math.exp(x[0])
+
+    direct = treeweave.fit(func, 0.0, 1.0, tol=1e-8)
+
+    @treeweave.fit(0.0, 1.0, 1e-8)
+    def decorated(x):
+        return math.exp(x[0])
+
+    xs = np.linspace(0.0, 1.0, 101)
+    np.testing.assert_array_equal(decorated(xs), direct(xs))
+    assert isinstance(decorated, treeweave.TreeweaveFunction)
+
+
+def test_decorator_keyword_tol_and_options():
+    """The decorator accepts tol= and every fit option, and infers the dims."""
+
+    @treeweave.fit([0.0, 0.0], [1.0, 1.0], tol=1e-6, dtype="f32", max_depth=20)
+    def surface(x):
+        return np.array([x[0] + x[1], math.cos(x[0] - x[1])])
+
+    assert surface.dim == 2
+    assert surface.out_dim == 2
+    assert surface.dtype == "f32"
+
+    got = surface(np.array([[0.25, 0.75]], dtype=np.float32))
+    assert got.shape == (1, 2)
+    assert abs(got[0, 0] - 1.0) < 1e-4
+    assert abs(got[0, 1] - math.cos(-0.5)) < 1e-4
+
+
+def test_decorator_preserves_metadata():
+    """update_wrapper keeps the name/doc and exposes the original callable."""
+
+    @treeweave.fit(0.0, 1.0, 1e-8)
+    def logistic(x):
+        """1 / (1 + exp(-x))."""
+        return 1.0 / (1.0 + math.exp(-x[0]))
+
+    assert logistic.__name__ == "logistic"
+    assert logistic.__doc__ == "1 / (1 + exp(-x))."
+    assert logistic.__wrapped__(np.array([0.5])) == 1.0 / (1.0 + math.exp(-0.5))
+    assert abs(logistic(0.5) - logistic.__wrapped__(np.array([0.5]))) < 1e-8
+
+
+def test_decorator_missing_tol():
+    """Omitting the tolerance raises TypeError, not a confusing fit error."""
+    with pytest.raises(TypeError):
+        treeweave.fit(0.0, 1.0)
+    with pytest.raises(TypeError):
+        treeweave.fit(lambda x: x[0], 0.0, 1.0)

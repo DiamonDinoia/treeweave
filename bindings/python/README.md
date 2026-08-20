@@ -47,6 +47,23 @@ Fits callable `f` and returns a callable `TreeweaveFunction`.
   box midpoint (`np.asarray(f(mid)).size`, scalar ⇒ 1) when omitted.
 - `dtype`: `"f64"` (default) or `"f32"`.
 
+### `treeweave.fit(a, b, tol, ...)` as a decorator
+
+Omitting `f` returns a decorator, the `functools.cache` spelling:
+
+```python
+@treeweave.fit(0.0, 1.0, tol=1e-10)
+def expensive(x):
+    return math.exp(x[0])
+
+expensive(0.5)          # evaluates the approximation
+expensive.__wrapped__   # the original callable
+```
+
+`fit(a, b, tol)` and `fit(a, b, tol=...)` both work, and all keyword options
+apply unchanged. The result is a plain `TreeweaveFunction` carrying the
+original `__name__` / `__doc__`. Fitting happens at decoration time.
+
 ### `TreeweaveFunction`
 
 The fitted object is **called** — there are no named eval methods. A point

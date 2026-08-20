@@ -7,6 +7,12 @@ fit(f, a, b, tol, *, ...)  -> TreeweaveFunction
     ``out_dim`` are inferred from the domain corners and a one-shot probe of
     ``f``, so the common call is just ``treeweave.fit(f, a, b, tol)``.
 
+fit(a, b, tol, *, ...)  -> decorator
+    Same call with the callable omitted returns a decorator, the
+    ``functools.cache`` spelling: ``@treeweave.fit(0.0, 1.0, 1e-8)`` above a
+    ``def`` replaces the function with its fitted approximation. The original
+    stays reachable as ``.__wrapped__``.
+
 TreeweaveFunction
     Callable evaluator. Call it with a point or a batch; ``sorted=`` and
     ``transposed=`` select the 1-D sorted fast path and the ``(out_dim, N)``
@@ -16,6 +22,7 @@ TreeweaveFunction
 
 from __future__ import annotations
 
+import functools as _functools
 from typing import Callable
 import numpy as _np
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
@@ -184,10 +191,10 @@ class TreeweaveFunction:
 
 
 def fit(
-    f: Callable,
-    a,
-    b,
-    tol: float,
+    f: Callable | None = None,
+    a=None,
+    b=None,
+    tol: float | None = None,
     *,
     dim: int | None = None,
     out_dim: int | None = None,
@@ -200,9 +207,22 @@ def fit(
 ) -> TreeweaveFunction:
     """Fit a Python callable and return a callable :class:`TreeweaveFunction`.
 
+    Omit *f* to get a decorator instead, the ``functools.cache`` spelling::
+
+        @treeweave.fit(0.0, 1.0, 1e-8)          # or fit(a, b, tol=1e-8)
+        def f(x):
+            return math.exp(x[0])
+
+        f(0.5)          # evaluates the approximation
+        f.__wrapped__   # the original Python callable
+
+    Every keyword option below applies to the decorator form unchanged.
+
     Parameters
     ----------
-    f : callable
+    f : callable, optional
+        Omit to return a decorator; the remaining arguments then shift left,
+        so ``fit(a, b, tol)`` and ``fit(a, b, tol=...)`` both work.
         ``f(x) -> scalar`` or ``f(x) -> array(out_dim,)``. For f64 fits *x* is
         a ``float64`` ndarray of shape ``(dim,)``; for f32 fits a ``float32``
         one. For ``dim == 1`` *x* is a 1-element array (shape ``(1,)``).
@@ -244,6 +264,28 @@ def fit(
         If the fit fails (MaxDepthExceeded, MemoryBudgetExceeded, …) or if the
         callback *f* raises (in which case the original exception propagates).
     """
+    if not callable(f):
+        # Decorator form: the corners take the place of *f*, so shift left.
+        options = dict(
+            dim=dim,
+            out_dim=out_dim,
+            dtype=dtype,
+            tol_kind=tol_kind,
+            max_depth=max_depth,
+            max_memory_mib=max_memory_mib,
+            allow_max_depth_leaves=allow_max_depth_leaves,
+            min_uniform_depth=min_uniform_depth,
+        )
+        a, b, tol = f, a, b if tol is None else tol
+        if tol is None:
+            raise TypeError("fit() as a decorator needs (a, b, tol)")
+        return lambda func: _functools.update_wrapper(
+            fit(func, a, b, tol, **options), func
+        )
+
+    if tol is None:
+        raise TypeError("fit() needs a tolerance: fit(f, a, b, tol)")
+
     try:
         a_seq = list(a)
     except TypeError:
