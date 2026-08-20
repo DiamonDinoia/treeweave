@@ -33,6 +33,27 @@ common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
 directly for a single point or a batch. A C++ fit failure surfaces as a native
 Python exception.
 
+Decorator form
+--------------
+
+Omit the callable and ``fit`` returns a decorator, the ``functools.cache``
+spelling. The decorated name becomes the fitted approximation:
+
+.. literalinclude:: ../../bindings/python/examples/decorator_1d.py
+   :language: python
+
+``fit(a, b, tol)`` and ``fit(a, b, tol=...)`` are both accepted, and every
+keyword option below applies unchanged::
+
+   @treeweave.fit([0.0, 0.0], [1.0, 1.0], tol=1e-6, dtype="f32")
+   def surface(x):
+       return math.cos(x[0] - x[1])
+
+The decorated object is an ordinary ``TreeweaveFunction``, so ``sorted=`` /
+``transposed=`` and the properties all work on it. ``__name__`` and ``__doc__``
+come from the original function, which stays reachable as ``__wrapped__``.
+Fitting happens at decoration time, so an import-time failure raises there.
+
 Evaluation routes
 -----------------
 

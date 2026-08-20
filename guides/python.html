@@ -66,6 +66,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Python</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#install">Install</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#decorator-form">Decorator form</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
@@ -330,6 +331,49 @@ install it with TestPyPI as the primary index and real PyPI for the dependencies
 common case is just <code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">tol=...)</span></code>. The fitted object is called
 directly for a single point or a batch. A C++ fit failure surfaces as a native
 Python exception.</p>
+</section>
+<section id="decorator-form">
+<h2>Decorator form<a class="headerlink" href="#decorator-form" title="Link to this heading"></a></h2>
+<p>Omit the callable and <code class="docutils literal notranslate"><span class="pre">fit</span></code> returns a decorator, the <code class="docutils literal notranslate"><span class="pre">functools.cache</span></code>
+spelling. The decorated name becomes the fitted approximation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""decorator_1d.py — @fit(a, b, tol) replaces a function with its approximation."""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">treeweave</span>
+
+
+<span class="c1"># Same options as fit(f, a, b, tol); the callable is simply omitted.</span>
+<span class="nd">@treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">expensive</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A slow callable, evaluated once per fit sample instead of per call."""</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">expensive</span><span class="p">)</span>  <span class="c1"># dtype, dim, out_dim, memory_usage</span>
+
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+<span class="n">max_err</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">expensive</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">xs</span><span class="p">))))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max |approx - exp| over 11 points: </span><span class="si">{</span><span class="n">max_err</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">max_err</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"too large: </span><span class="si">{</span><span class="n">max_err</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="c1"># The undecorated function stays reachable, as with functools.cache.</span>
+<span class="k">assert</span> <span class="n">expensive</span><span class="o">.</span><span class="n">__wrapped__</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]))</span> <span class="o">==</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">expensive</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"expensive"</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"OK"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">fit(a,</span> <span class="pre">b,</span> <span class="pre">tol)</span></code> and <code class="docutils literal notranslate"><span class="pre">fit(a,</span> <span class="pre">b,</span> <span class="pre">tol=...)</span></code> are both accepted, and every
+keyword option below applies unchanged:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@treeweave</span><span class="o">.</span><span class="n">fit</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"f32"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">surface</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The decorated object is an ordinary <code class="docutils literal notranslate"><span class="pre">TreeweaveFunction</span></code>, so <code class="docutils literal notranslate"><span class="pre">sorted=</span></code> /
+<code class="docutils literal notranslate"><span class="pre">transposed=</span></code> and the properties all work on it. <code class="docutils literal notranslate"><span class="pre">__name__</span></code> and <code class="docutils literal notranslate"><span class="pre">__doc__</span></code>
+come from the original function, which stays reachable as <code class="docutils literal notranslate"><span class="pre">__wrapped__</span></code>.
+Fitting happens at decoration time, so an import-time failure raises there.</p>
 </section>
 <section id="evaluation-routes">
 <h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
