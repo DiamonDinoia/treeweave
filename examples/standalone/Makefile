@@ -1,4 +1,4 @@
-# Build demo.cpp against an extracted treeweave headers bundle — no CMake.
+# Build demo.cpp against an extracted treeweave headers bundle, no CMake.
 #
 #   1. tar xzf treeweave-<ver>-cxx-headers.tar.gz   # -> ./include/...
 #   2. make                                         # this file

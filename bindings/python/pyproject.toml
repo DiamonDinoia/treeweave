@@ -22,7 +22,7 @@ minimum-version = "0.10"
 cmake.build-type = "Release"
 # The Python package lives here in bindings/python, but the C++ core it links
 # is the whole repo. Point scikit-build-core at the root CMakeLists (built
-# with TREEWEAVE_BUILD_PYTHON=ON) so the wheel is self-contained — the same trick
+# with TREEWEAVE_BUILD_PYTHON=ON) so the wheel is self-contained, the same trick
 # finufft uses. cibuildwheel copies the repo root into the build container, so
 # "../../" resolves there too.
 cmake.source-dir = "../../"
@@ -69,7 +69,7 @@ build = "cp39-* cp310-* cp311-* cp312-*"
 skip = "*-musllinux_* pp*"
 build-frontend = "build"
 # The C ABI is linked statically into _treeweave, so the only shared deps are the
-# system C/C++ runtimes — nothing external to vendor. The repair step still
+# system C/C++ runtimes, with nothing external to vendor. The repair step still
 # runs (auditwheel/delocate) to stamp the platform tag. Per-arch baselines
 # (TREEWEAVE_ARCH / TREEWEAVE_C_MULTIARCH) are injected by wheels.yml.
 test-extras = ["test"]

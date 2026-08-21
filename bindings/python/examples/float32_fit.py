@@ -1,4 +1,4 @@
-"""float32_fit.py — f32 dtype fit and evaluation."""
+"""float32_fit.py: f32 dtype fit and evaluation."""
 import math
 import numpy as np
 import treeweave

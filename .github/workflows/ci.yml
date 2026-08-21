@@ -14,7 +14,7 @@ permissions:
 
 # sccache stores objects individually in the Actions cache service instead of a
 # per-job tarball. ccache + actions/cache rewrote every leg's full cache under a
-# new ${{ github.sha }} key each run — ~5 GB per run against the 10 GB per-repo
+# new ${{ github.sha }} key each run, ~5 GB per run against the 10 GB per-repo
 # LRU quota, so a cache survived about two runs before eviction.
 env:
   SCCACHE_GHA_ENABLED: "true"
@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Ubuntu Debug — gcc-11/12 on 22.04 (native there; noble drops them),
+          # Ubuntu Debug: gcc-11/12 on 22.04 (native there; noble drops them),
           # newer toolchains on 24.04. C++20 needs gcc >= 11 / clang >= 16.
           - {os: ubuntu-22.04, toolchain: gcc-11,  build_type: Debug, preset: ci-linux-debug}
           - {os: ubuntu-24.04, toolchain: gcc-12,  build_type: Debug, preset: ci-linux-debug}
@@ -56,19 +56,19 @@ jobs:
           - {os: ubuntu-24.04, toolchain: llvm,    build_type: Release, preset: ci-linux-release}
           - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Release, preset: ci-linux-release}
           - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Release, preset: ci-linux-release}
-          # macOS — apple-clang on both arm64 images (14 + 15); gcc-14 on 14 for
+          # macOS: apple-clang on both arm64 images (14 + 15); gcc-14 on 14 for
           # GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
           - {os: macos-14,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
           - {os: macos-14,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
           - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           # arch_native: this leg is the one that resolves to -mcpu=native
-          # (Homebrew gcc on Apple Silicon doesn't know apple-m1 — see
+          # (Homebrew gcc on Apple Silicon doesn't know apple-m1, see
           # treeweave_toolchain.cmake). A cross-run cache is unsafe for native
           # arch: an object built on one runner's microarch could be restored
           # onto another and fault. So it skips the persisted cache below.
           - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
-          # Windows (Ninja, Release only — Debug MSVC builds are very slow)
+          # Windows (Ninja, Release only; Debug MSVC builds are very slow)
           - {os: windows-2022, toolchain: msvc, build_type: Release, preset: ci-windows}
           - {os: windows-2022, toolchain: llvm, build_type: Release, preset: ci-windows-clang}
     steps:
@@ -365,7 +365,7 @@ jobs:
       - name: Diagnose ISA dispatch (cpu flags + per-arch forced run)
         continue-on-error: true
         # set +e: the forced runs may exit non-zero (parity diffs) or crash
-        # (SIGILL) — keep going so every arch's result is reported.
+        # (SIGILL). Keep going so every arch's result is reported.
         run: |
           set +e
           echo "== CPU model =="; lscpu | grep -i "model name"
@@ -407,7 +407,7 @@ jobs:
 
       # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
       # armv8-a baseline with the runtime dispatcher, which selects the single
-      # mandatory neon64 variant (SVE excluded by design — see dispatch_arch.hpp).
+      # mandatory neon64 variant (SVE excluded by design, see dispatch_arch.hpp).
       - name: Configure (multiarch dispatch)
         env:
           CMAKE_C_COMPILER_LAUNCHER: sccache

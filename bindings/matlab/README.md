@@ -1,18 +1,18 @@
 # treeweave MATLAB / Octave binding
 
-MATLAB and GNU Octave wrapper for treeweave. One source ([`treeweave.mw`](treeweave.mw)) generates the MEX gateway and `tw_*.m` stubs via mwrap; the default build uses the pre-generated files in [`generated/`](generated/) — no mwrap/bison/flex required. To regenerate after editing `treeweave.mw`, configure with `-DTREEWEAVE_MATLAB_USE_PREGENERATED=OFF` and build the `treeweave_mw_regen` target.
+MATLAB and GNU Octave wrapper for treeweave. One source ([`treeweave.mw`](treeweave.mw)) generates the MEX gateway and `tw_*.m` stubs via mwrap; the default build uses the pre-generated files in [`generated/`](generated/), so mwrap, bison and flex are not required. To regenerate after editing `treeweave.mw`, configure with `-DTREEWEAVE_MATLAB_USE_PREGENERATED=OFF` and build the `treeweave_mw_regen` target.
 
 ## Prerequisites
 
-- MATLAB R2019b+ (tested on R2025a) **or** GNU Octave with `mkoctfile`
+- MATLAB R2019b+ (tested on R2025a) or GNU Octave with `mkoctfile`
 - A C++20 toolchain + CMake ≥ 3.25 (the default build needs no mwrap/bison/flex;
-  they are only required to regenerate `generated/` — see below)
+  they are only required to regenerate `generated/`, see below)
 
 ## Build
 
-The binding is an opt-in CMake option, `TREEWEAVE_BUILD_MATLAB`. With a MATLAB
-install on `PATH` the MATLAB MEX is built; with `mkoctfile` present the Octave
-MEX is built; if both are present, both are built.
+The binding is an opt-in CMake option, `TREEWEAVE_BUILD_MATLAB`. CMake builds
+the MATLAB MEX when a MATLAB install is on `PATH`, the Octave MEX when
+`mkoctfile` is present, and both when it finds both.
 
 ```bash
 cmake --preset bindings-matlab          # or: cmake -S . -B build -DTREEWEAVE_BUILD_MATLAB=ON ...
@@ -38,8 +38,8 @@ result. The only Octave-specific piece is
 shim that satisfies mwrap's `#include <matrix.h>` (a MATLAB-only header; Octave's
 `mex.h` is self-contained).
 
-Octave is **not** shipped as a prebuilt binary (it has no stable MEX ABI across
-versions) — build from source as above.
+No prebuilt Octave binary ships, because Octave has no stable MEX ABI across
+versions. Build from source as above.
 
 ## Usage
 
@@ -68,28 +68,28 @@ fprintf('Memory: %.1f KiB\n', obj2.memory_usage()/1024);
 delete(obj2);
 ```
 
-The `matlab_treeweave` CTest does the `addpath` wiring for you and runs
+The `matlab_treeweave` CTest does the `addpath` wiring and runs
 `test_treeweave.m` headless under Octave (preferred) or MATLAB.
 
 ## Performance
 
-Single-point eval (`obj.eval(scalar)`) carries a fixed per-call overhead that is
-inherent to mwrap's generic R2008OO codegen, **not** to treeweave: the handle is
-stored as a string in the `mwptr` property and re-parsed via `sscanf` on every
-call, and a temporary output buffer is allocated and copied. Use the **batch**
-API (`obj.eval(X)` with an `N×dim` matrix) for hot loops — it amortises this to
-~zero.
+Single-point eval (`obj.eval(scalar)`) carries a fixed per-call overhead.
+mwrap's generic R2008OO codegen sets that cost, not treeweave. The codegen
+stores the handle as a string in the `mwptr` property, so every call re-parses
+it with `sscanf`, and every call allocates and copies a temporary output buffer.
+In a hot loop, call the batch API (`obj.eval(X)` with an `N×dim` matrix), which
+pays the overhead once for the whole array.
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `treeweave.mw` | **mwrap source of truth** (inline-C wrappers + trampoline + `@function` decls) |
+| `treeweave.mw` | mwrap source of truth (inline-C wrappers, trampoline, `@function` decls) |
 | `treeweave.m` | Thin `classdef` over the generated `tw_*` stubs (handle in `mwptr`) |
 | `CMakeLists.txt` | CMake-only build: fetch mwrap (CPM), generate gateway + stubs, compile MEX |
 | `octave_compat/matrix.h` | Shim so Octave satisfies mwrap's `<matrix.h>` include |
 | `test_treeweave.m` | Smoke/parity tests (portable across MATLAB and Octave) |
 | `examples/` | Simple 1-D, 2-D, vector examples |
 
-`treeweave_mex_gen.cpp` and `tw_*.m` are generated into the build tree at build
-time (never committed).
+`generated/` holds the committed `treeweave_mex_gen.cpp` and `tw_*.m`. Never
+hand-edit them. Edit `treeweave.mw` and regenerate.

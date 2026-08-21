@@ -1,11 +1,11 @@
-/* with_context.c — using the `context` pointer to parameterize a kernel.
+/* with_context.c: using the `context` pointer to parameterize a kernel.
  *
  * A C function pointer cannot capture state the way a C++ lambda does, so the
  * `context` argument to treeweave_fit() is the C stand-in for a closure's
  * captures: treeweave forwards it, untouched, to every invocation of the
  * callback. Here the kernel is f(x) = amplitude * sin(frequency * x); the two
- * parameters live in a Params struct that we hand to the fit as `context`,
- * instead of resorting to file-scope globals. */
+ * parameters live in a Params struct passed to the fit as `context`,
+ * instead of file-scope globals. */
 
 #include <math.h>
 #include <stdio.h>
@@ -20,7 +20,7 @@ typedef struct {
 } Params;
 
 /* The callback recovers its parameters by casting `context` back to Params*.
- * It is plain, reentrant C — no globals — so the same function could be fit
+ * It is plain, reentrant C: no globals, so the same function could be fit
  * concurrently with different parameter sets. */
 static void kernel(const double *x, double *y, void *context) {
     const Params *p = (const Params *)context;

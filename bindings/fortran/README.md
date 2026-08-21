@@ -1,9 +1,9 @@
 # treeweave Fortran binding
 
-A thin **Fortran 2018** wrapper over the treeweave C ABI
+A thin Fortran 2018 wrapper over the treeweave C ABI
 ([`../../include/treeweave.h`](../../include/treeweave.h)), built on the intrinsic
-`iso_c_binding` module. Every C entry point is exposed as a Fortran procedure of
-the same name, so the mapping is one-to-one and explicit.
+`iso_c_binding` module. The module exposes every C entry point as a Fortran
+procedure of the same name, so the mapping is one-to-one and explicit.
 
 > **Compiler requirement.** The binding uses `error stop <integer-expression>`,
 > which is Fortran 2018. gfortran >= 10 supports it; gfortran 8 (the RHEL 8
@@ -35,7 +35,7 @@ use, intrinsic :: iso_c_binding
 use treeweave
 ```
 
-1. Write your target as a `bind(C)` procedure matching the C callback
+1. Write the target as a `bind(C)` procedure matching the C callback
    `void f(const double *x, double *y, void *context)`:
 
    ```fortran
@@ -123,8 +123,8 @@ h = treeweave_fit(c_funloc(kernel_ctx), 1_c_int, 1_c_int, a, b, tol, &
 | `size_t n`                                       | `integer(c_size_t), value`                                |
 | `double *const *soa`                             | `type(c_ptr), intent(in) :: soa(*)`                       |
 | `treeweave_dtype_t` / `treeweave_tol_kind_t`           | `integer(c_int)` parameters (`TREEWEAVE_F64`, `TREEWEAVE_RELATIVE_MAX`, …) |
-| `double treeweave_eval_1d(h, double x0)`            | `real(c_double) function treeweave_eval_1d(f, x0)` — `x0` by value |
-| `double treeweave_eval_2d(h, x0, x1)`               | `real(c_double) function treeweave_eval_2d(f, x0, x1)` — all by value |
+| `double treeweave_eval_1d(h, double x0)`            | `real(c_double) function treeweave_eval_1d(f, x0)`, `x0` by value |
+| `double treeweave_eval_2d(h, x0, x1)`               | `real(c_double) function treeweave_eval_2d(f, x0, x1)`, all by value |
 | `double treeweave_eval_3d(h, x0, x1, x2)`           | `real(c_double) function treeweave_eval_3d(f, x0, x1, x2)` |
 | `float treeweavef_eval_1d(h, float x0)`             | `real(c_float) function treeweavef_eval_1d(f, x0)` |
 | `float treeweavef_eval_2d(h, x0, x1)`               | `real(c_float) function treeweavef_eval_2d(f, x0, x1)` |
@@ -134,11 +134,11 @@ h = treeweave_fit(c_funloc(kernel_ctx), 1_c_int, 1_c_int, a, b, tol, &
 The `treeweave_*` procedures operate on `double`; the `treeweavef_*` twins (fit + the
 eval family) on `float`. Introspection and lifetime (`treeweave_dtype`,
 `treeweave_input_dim`, `treeweave_output_dim`, `treeweave_memory_usage`,
-`treeweave_print_stats`, `treeweave_free`) are dtype-independent — no `treeweavef_` twin.
+`treeweave_print_stats`, `treeweave_free`) are dtype-independent, with no `treeweavef_` twin.
 
 ## Build
 
-The binding is wired into the top-level CMake behind `TREEWEAVE_BUILD_FORTRAN`
+The top-level CMake wires the binding in behind `TREEWEAVE_BUILD_FORTRAN`
 (default OFF). It builds a self-checking test (`treeweave_fortran_test`) and an
 example (`treeweave_fortran_example`), both linking the shared `treeweave_c`:
 
@@ -148,7 +148,7 @@ cmake --build build --target treeweave_fortran_test treeweave_fortran_example
 ctest --test-dir build -R fortran_treeweave --output-on-failure
 ```
 
-A missing Fortran compiler degrades to a STATUS message and a skipped test.
+Without a Fortran compiler, CMake prints a STATUS message and skips the test.
 
 ## Files
 

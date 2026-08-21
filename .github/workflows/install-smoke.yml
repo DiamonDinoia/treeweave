@@ -1,14 +1,14 @@
 name: Install smoke
 
 # Validates the install recipes in README.md / docs end to end, from a
-# consumer's point of view — the paths the existing workflows do NOT cover:
+# consumer's point of view: the paths the existing workflows do NOT cover:
 #
-#   * find_package   — build + install the C ABI to a prefix, then a separate
+#   * find_package  : build + install the C ABI to a prefix, then a separate
 #                      consumer project does find_package(treeweave) and links
 #                      treeweave::treeweave_c (README "Installed package").
-#   * FetchContent   — a consumer project pulls treeweave in and links the
+#   * FetchContent  : a consumer project pulls treeweave in and links the
 #                      header-only treeweave::treeweave (README "FetchContent").
-#   * pip / TestPyPI — install the published wheel from TestPyPI and import +
+#   * pip / TestPyPI: install the published wheel from TestPyPI and import +
 #                      evaluate it (README "Install -> Python"). Runs after the
 #                      TestPyPI workflow succeeds, since it needs the upload.
 #
@@ -26,7 +26,7 @@ concurrency:
   # Scope by trigger as well as ref: the push run (find_package + FetchContent)
   # and the TestPyPI-driven workflow_run run (pip job) both land on
   # refs/heads/main, so a shared group would let the later workflow_run cancel
-  # the in-flight push run — leaving no green push run for the Release gate.
+  # the in-flight push run: leaving no green push run for the Release gate.
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
@@ -37,7 +37,7 @@ jobs:
   # README: find_package(treeweave) against an installed C ABI prefix.
   find-package:
     name: CMake find_package (installed C ABI, ${{ matrix.os }})
-    # Skip on the workflow_run trigger — that event is only for the pip job.
+    # Skip on the workflow_run trigger: that event is only for the pip job.
     if: github.event_name != 'workflow_run'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -83,7 +83,7 @@ jobs:
           cmake --build build -j
           cmake --install build --prefix "$PWD/_prefix"
 
-      - name: Consumer project — find_package + treeweave::treeweave_c
+      - name: Consumer project, find_package + treeweave::treeweave_c
         run: |
           mkdir -p consumer
           cat > consumer/CMakeLists.txt <<'EOF'
@@ -145,7 +145,7 @@ jobs:
           ninja: true
           cache-tools: true
 
-      - name: Consumer project — FetchContent + treeweave::treeweave
+      - name: Consumer project, FetchContent + treeweave::treeweave
         run: |
           # SOURCE_DIR pins treeweave to *this* checkout so the smoke tests the
           # tree under review; the README documents the GIT_REPOSITORY form.
@@ -182,7 +182,7 @@ jobs:
   # README: header-only "download & -Iinclude" drop-in (no CMake link, no lib).
   # Build the consolidated build/include tree, tar it exactly as the release
   # cxx-headers asset is packed, extract to a temp dir, then compile+run the
-  # standalone demo with just -Iinclude — simulating the download without a
+  # standalone demo with just -Iinclude, simulating the download without a
   # published release.
   cxx-headers:
     name: C++ headers drop-in (-Iinclude, no CMake)

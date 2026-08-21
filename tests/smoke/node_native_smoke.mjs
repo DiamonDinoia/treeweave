@@ -29,4 +29,4 @@ const y = fn.evalOne(Float64Array.of(1.5));
 fn.free();
 
 assert.ok(Math.abs(y - 2.25) < 1e-6, `bad eval: ${y}`);
-console.log(`OK native addon ${addonPath} — version ${addon.versionString}, eval(1.5) = ${y}`);
+console.log(`OK native addon ${addonPath}: version ${addon.versionString}, eval(1.5) = ${y}`);

@@ -1,4 +1,4 @@
-/// test_c.cpp — exercises the extern "C" surface (treeweave.h) and checks it
+/// test_c.cpp: exercises the extern "C" surface (treeweave.h) and checks it
 /// against a direct C++ `treeweave::fit` of the same kernel. The C API builds
 /// the same Function internally, so parity must be exact up to floating
 /// noise; the comparison validates the dispatch / buffer / dtype plumbing,

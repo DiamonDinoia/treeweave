@@ -119,7 +119,7 @@ void run_3d(std::size_t n_points) {
 }
 
 void run_yukawa_3d(std::size_t n_points) {
-    // Yukawa e^{-r}/r on a shifted box (off the singularity) — a realistic
+    // Yukawa e^{-r}/r on a shifted box (off the singularity), a realistic
     // ND kernel workload surfacing the per-eval cost of leaf polyfits.
     auto f = [](std::array<double, 3> x) -> std::array<double, 1> {
         const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);

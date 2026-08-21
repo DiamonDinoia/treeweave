@@ -1,4 +1,4 @@
-# tests/CMakeLists.txt — Catch2 test suite wiring. Added via add_subdirectory()
+# tests/CMakeLists.txt: Catch2 test suite wiring. Added via add_subdirectory()
 # from the top-level CMakeLists, guarded by TREEWEAVE_BUILD_TESTS there.
 
 # Keep test executables in the build root (where they lived before tests/ became
@@ -25,8 +25,8 @@ function(_treeweave_add_cpp_test name source)
     )
     treeweave_enable_warnings(${name})
     # Catch2's TEST_CASE expands to a use of __COUNTER__, which bleeding-edge
-    # clang flags as a C2y extension; the warning is harmless and out of our
-    # control (lives in Catch2 macros), so silence it on test targets only.
+    # clang flags as a C2y extension. The warning is harmless and lives in the
+    # Catch2 macros, so silence it on test targets only.
     target_compile_options(
         ${name}
         PRIVATE
@@ -38,7 +38,7 @@ function(_treeweave_add_cpp_test name source)
     set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS ${name})
 endfunction()
 
-# Compile-time (constexpr / static_assert) test. No Catch2 needed — compiling
+# Compile-time (constexpr / static_assert) test. No Catch2 needed, compiling
 # the TU is the test; the binary returns 0 unconditionally. Warnings stay on
 # (treeweave_enable_warnings) but clang-tidy/cppcheck are already cleared above.
 add_executable(test_constexpr test_constexpr.cpp)

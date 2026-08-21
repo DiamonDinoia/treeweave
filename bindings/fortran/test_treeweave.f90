@@ -1,4 +1,4 @@
-! test_treeweave.f90 — self-checking conformance test for the Fortran binding.
+! test_treeweave.f90: self-checking conformance test for the Fortran binding.
 !
 ! Like tests/test_c_abi.c, correctness is checked two ways: closed-form (eval
 ! within a generous margin of the exact kernel) and self-consistency (two paths
@@ -332,8 +332,8 @@ contains
         h = treeweave_free(h)
     end subroutine test_transposed_soa
 
-    ! treeweave_print_stats: just call it — a crash or hang is a FAIL.
-    ! The output goes to stdout; we only check the call completes without error.
+    ! treeweave_print_stats: just call it, a crash or hang is a FAIL.
+    ! The output goes to stdout; the check is only that the call completes.
     subroutine test_print_stats(failures)
         integer, intent(inout) :: failures
         type(c_ptr)    :: h

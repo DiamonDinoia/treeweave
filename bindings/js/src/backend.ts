@@ -1,16 +1,16 @@
-// backend.ts — the backend-agnostic contract plus runtime backend selection.
+// backend.ts: the backend-agnostic contract plus runtime backend selection.
 //
 // treeweave's JS binding has two interchangeable backends over the same C ABI:
-//   * "native": a Node-API `.node` addon (fast, Node-only) — treeweave_napi.cpp
-//   * "wasm":   an Emscripten module (browser + Node) — wasm.ts / wasm_glue.cpp
-// Both implement the `Backend` interface below; `index.ts` (the Treeweave
-// class) is written entirely against this interface and never imports a backend
+//   * "native": a Node-API `.node` addon (fast, Node-only), treeweave_napi.cpp
+//   * "wasm":   an Emscripten module (browser + Node), wasm.ts / wasm_glue.cpp
+// Both implement the `Backend` interface below. `index.ts` (the Treeweave
+// class) uses only that interface and never imports a backend
 // directly. `loadBackend()` chooses one at runtime.
 
 export type DType = "f64" | "f32";
 export type FloatArray = Float64Array | Float32Array;
 
-/** Numeric `tol_kind` values — mirror treeweave_tol_kind_t in treeweave.h. */
+/** Numeric `tol_kind` values: mirror treeweave_tol_kind_t in treeweave.h. */
 export const TOL_KIND = {
     relative_tail: 0,
     absolute_tail: 1,

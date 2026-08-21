@@ -1,11 +1,11 @@
-"""treeweave — piecewise-polynomial function approximation.
+"""treeweave: piecewise-polynomial function approximation.
 
 Public API
 ----------
 fit(f, a, b, tol, *, ...)  -> TreeweaveFunction
-    Fit a Python callable and return a *callable* evaluator. ``dim`` and
-    ``out_dim`` are inferred from the domain corners and a one-shot probe of
-    ``f``, so the common call is just ``treeweave.fit(f, a, b, tol)``.
+    Fit a Python callable and return a *callable* evaluator. ``fit`` infers
+    ``dim`` and ``out_dim`` from the domain corners and from one probe of
+    ``f``, so the common call is ``treeweave.fit(f, a, b, tol)``.
 
 fit(a, b, tol, *, ...)  -> decorator
     Same call with the callable omitted returns a decorator, the
@@ -49,10 +49,10 @@ _TOL_KIND = {
 class TreeweaveFunction:
     """Callable evaluator for a fitted treeweave approximation.
 
-    Do not construct directly; use :func:`treeweave.fit`. The object is *called*
-    to evaluate — there are no named eval methods. A point yields a point
-    result, a batch yields a batch result, and the optional ``sorted`` /
-    ``transposed`` flags select alternate batch modes.
+    Do not construct directly; use :func:`treeweave.fit`. Call the object to
+    evaluate it. There are no named eval methods. A point yields a point
+    result, a batch yields a batch result, and the optional ``sorted`` and
+    ``transposed`` flags select the other batch modes.
     """
 
     def __init__(self, inner: _treeweave.TreeweaveFunction) -> None:
@@ -84,8 +84,8 @@ class TreeweaveFunction:
         Parameters
         ----------
         x : scalar | array-like
-            A single point — a scalar (``dim == 1`` only) or a ``(dim,)``
-            sequence — or a batch — ``(N,)`` for ``dim == 1`` or ``(N, dim)``
+            A single point, either a scalar (``dim == 1`` only) or a ``(dim,)``
+            sequence, or a batch, ``(N,)`` for ``dim == 1`` or ``(N, dim)``
             otherwise.
         sorted : bool, optional
             1-D ascending-batch fast path. Requires ``dim == 1``; the caller
@@ -96,7 +96,7 @@ class TreeweaveFunction:
         out : ndarray, optional
             Pre-allocated output to write into (in-place, zero-copy). Must be a
             contiguous, C-ordered array of this fit's dtype and the exact result
-            shape — ``(N,)`` for ``out_dim == 1`` else ``(N, out_dim)`` — and is
+            shape, ``(N,)`` for ``out_dim == 1`` else ``(N, out_dim)``, and is
             returned as-is. Batch only: not valid for a single point or
             ``transposed=True``.
 
@@ -234,9 +234,8 @@ def fit(
         Input dimension. Inferred from ``len(a)`` (scalar corners ⇒ 1) when
         not given.
     out_dim : int, optional
-        Output dimension. When not given it is inferred by probing
-        ``f`` once at the box midpoint and taking ``np.asarray(result).size``
-        (a scalar result ⇒ 1).
+        Output dimension. When not given, ``fit`` probes ``f`` once at the box
+        midpoint and takes ``np.asarray(result).size`` (a scalar result ⇒ 1).
     dtype : {'f64', 'f32'}
         Floating-point precision.
     tol_kind : str
@@ -252,7 +251,7 @@ def fit(
     allow_max_depth_leaves : bool
         Allow leaves at max depth (relaxes convergence).
     min_uniform_depth : int
-        Minimum uniform refinement depth before adaptivity kicks in.
+        Minimum uniform refinement depth before adaptive refinement starts.
 
     Returns
     -------

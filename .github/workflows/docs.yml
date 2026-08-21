@@ -7,12 +7,12 @@ name: Docs
 # Pages serves the gh-pages branch root (repo Settings -> Pages -> "Deploy from
 # a branch" -> gh-pages /). The Sphinx site lands at the root; the benchmark
 # workflow (bench.yml) keeps its history under dev/bench/ on the same branch,
-# which is why we publish with keep_files (so neither workflow wipes the
-# other's output).
+# so this workflow publishes with keep_files and neither workflow wipes the
+# other's output.
 on:
   push:
     branches: [main]
-    # Only rebuild Doxygen+Sphinx when something the docs render actually changed.
+    # Only rebuild Doxygen+Sphinx when something the docs render has changed.
     paths:
       - 'docs/**'
       - '**/*.md'

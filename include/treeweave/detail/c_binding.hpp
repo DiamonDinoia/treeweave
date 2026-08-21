@@ -10,19 +10,20 @@
 ///
 /// The heavy machinery is split out so the dispatcher / entry-point TUs stay
 /// instantiation-free:
-///   * c_binding_detail.hpp  — `EvalImpl` / `EvalFactory` / `wrap_callback`,
+///   * c_binding_detail.hpp: `EvalImpl` / `EvalFactory` / `wrap_callback`,
 ///     pulled into an anonymous namespace by each per-arch variant TU so its
 ///     instantiations get *internal* linkage and are never COMDAT-folded
 ///     across architectures.
-///   * c_binding_dispatch.hpp — the body of `make_eval_for<Arch, …>`, the one
+///   * c_binding_dispatch.hpp: the body of `make_eval_for<Arch, …>`, the one
 ///     external symbol per (arch, dtype, dim). Keying it on the xsimd `Arch`
 ///     type gives each `-march` variant a distinct mangled name, so the four
 ///     variants coexist with external linkage and the baseline dispatcher can
 ///     bind to them through `xsimd::dispatch`.
 ///
 /// `SelectMakeEval` (the `xsimd::dispatch` functor) lives here and instantiates
-/// *no* kernels — it only takes the address of the declared-only `make_eval_for`
-/// external — so every TU that includes this header stays cheap to compile.
+/// *no* kernels. It only takes the address of the declared-only
+/// `make_eval_for` external, so every TU that includes this header stays cheap
+/// to compile.
 ///
 /// Degree is baked to `chosen_degree<Arch,T,IN>` (= 7 everywhere; see
 /// include/treeweave/detail/arch_degree_table.hpp). `select_degree` and the
@@ -77,8 +78,8 @@ using c_func_t = void (*)(const T *, T *, void *);
 /// Runtime-polymorphic evaluator interface for value type `T`. One concrete
 /// `EvalImpl` per supported (IN, OUT, Policy) implements it; the C shims hold
 /// an `IEval<T>*` behind the opaque handle. Only scalar `const T*`/`T*` cross
-/// this interface, so no SIMD type — and therefore no arch-dependent
-/// `sizeof` — ever crosses a TU boundary.
+/// this interface, so no SIMD type, and therefore no arch-dependent `sizeof`,
+/// ever crosses a TU boundary.
 template <class T>
 struct IEval {
     virtual ~IEval() = default;
@@ -96,7 +97,7 @@ struct IEval {
 
 /// One external factory symbol per (arch, value_type, input_dim).
 /// Declared here (no body); defined in c_binding_dispatch.hpp and explicitly
-/// instantiated — once, at `xsimd::best_arch` — by each per-arch variant TU.
+/// instantiated once, at `xsimd::best_arch`, by each per-arch variant TU.
 /// `Arch` keys the mangled name so the per-`-march` variants stay distinct;
 /// the body ignores it (vector width comes from the TU's `-march` macros).
 /// Degree is baked to `chosen_degree<Arch,T,IN>` (= 7). Builds and returns a
@@ -116,11 +117,11 @@ using make_eval_fn_t = auto (*)(int output_dim, c_func_t<T> f, void *data, const
 
 /// `xsimd::dispatch` functor for a fixed (value_type, input_dim). For the widest
 /// arch the host CPU supports, `operator()(Arch)` returns the *address* of
-/// `make_eval_for<Arch, T, IN, chosen_degree<Arch,T,IN>>` — it does NOT run the
+/// `make_eval_for<Arch, T, IN, chosen_degree<Arch,T,IN>>`. It does NOT run the
 /// fit. That keeps the functor `noexcept` (safe inside `xsimd::dispatch`'s
 /// noexcept walk); the caller invokes the returned pointer afterwards, outside
 /// the dispatch, where the fit may throw and propagate to the extern "C" shim.
-/// Degree is baked — the functor carries no state.
+/// Degree is baked in, and the functor carries no state.
 template <class T, std::size_t IN>
 struct SelectMakeEval {
     template <class Arch>
@@ -132,7 +133,8 @@ struct SelectMakeEval {
 /// Per-(value_type, input_dim) factory. Declared here, defined (one each) in
 /// the entry-point TU selected by CMake: src/capi/arch_single.cpp (single
 /// arch; multiarch OFF or non-x86) or src/capi/arch_dispatch.cpp (x86 runtime
-/// dispatch; multiarch ON). Degree is baked — these take no degree argument.
+/// dispatch; multiarch ON). Degree is baked in, so these take no degree
+/// argument.
 auto make_eval_f64_dim1(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
                         const treeweave::options &opts) -> IEval<double> *;
 auto make_eval_f64_dim2(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,

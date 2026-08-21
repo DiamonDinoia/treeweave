@@ -1,4 +1,4 @@
-# treeweave_generate_version.cmake — composes TREEWEAVE_VERSION_FULL from
+# treeweave_generate_version.cmake: composes TREEWEAVE_VERSION_FULL from
 # VERSION + git state; writes include/treeweave_version.h (committed, in-tree).
 # Script mode: cmake -P ...; -DCHECK=ON exits 1 if header would change.
 
@@ -89,7 +89,7 @@ if(Git_FOUND AND EXISTS "${_tw_src}/.git" AND NOT _shallow)
     endif()
 
     if(NOT _on_exact_tag)
-        # Look for a v<BASE> tag so we can count commits since it.
+        # Look for a v<BASE> tag to count commits since it.
         execute_process(
             COMMAND
                 "${GIT_EXECUTABLE}" -C "${_tw_src}" rev-parse --verify --quiet
@@ -130,7 +130,7 @@ endif()
 if(_shallow)
     message(
         STATUS
-        "treeweave version: shallow clone — trusting committed include/treeweave_version.h"
+        "treeweave version: shallow clone, trusting committed include/treeweave_version.h"
     )
     return()
 endif()

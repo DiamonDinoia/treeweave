@@ -1,4 +1,4 @@
-/* float32.c — single-precision (f32) fit and eval from C11.
+/* float32.c: single-precision (f32) fit and eval from C11.
  *
  * Precision lives in the library prefix: the `treeweavef_*` entry points are the
  * float twins of the `treeweave_*` (double) functions, so the callback, domain

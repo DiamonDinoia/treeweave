@@ -1,4 +1,4 @@
-// treeweave_napi.cpp — Node-API (node-addon-api) native backend.
+// treeweave_napi.cpp: Node-API (node-addon-api) native backend.
 // JS exceptions from the fit callback are caught in the trampoline (not unwound through C ABI); eval batches are
 // zero-copy through Node's ArrayBuffer backing store.
 
@@ -79,7 +79,7 @@ extern "C" void trampoline_f32(const float *x, float *y, void *ctx) {
     trampoline<float, Napi::Float32Array>(x, y, ctx, kNaN32);
 }
 
-// Fitted-function state — owns the handle; freed when the last closure dies.
+// Fitted-function state: owns the handle; freed when the last closure dies.
 struct FnState {
     treeweave_t h;
     int         input_dim;
@@ -88,7 +88,7 @@ struct FnState {
     FnState(treeweave_t handle, int in, int out, bool is_f32)
         : h(handle), input_dim(in), output_dim(out), f32(is_f32) {}
     // Owns the handle: must not be copied (a copy's destructor would free a
-    // handle still in use — the bug of constructing via a temporary).
+    // handle still in use: the bug of constructing via a temporary).
     FnState(const FnState &)            = delete;
     FnState &operator=(const FnState &) = delete;
     ~FnState() {

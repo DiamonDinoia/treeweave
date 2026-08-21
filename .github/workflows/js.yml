@@ -1,7 +1,7 @@
 name: JavaScript
 
-# JS/TS wrapper: builds BOTH backends — the native N-API addon (bindings-js) and
-# the WASM module (bindings-js-wasm, via emsdk) — then runs the node:test suite,
+# JS/TS wrapper: builds BOTH backends, the native N-API addon (bindings-js) and
+# the WASM module (bindings-js-wasm, via emsdk), then runs the node:test suite,
 # which exercises whichever backends it finds in dist/ (here: both). Split out
 # from the former bindings.yml so it earns its own status badge.
 on:
@@ -64,7 +64,7 @@ jobs:
           cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
 
       # Validate the raw WASM module (treeweave.mjs + treeweave.wasm) on its own,
-      # the standalone path shipped as a Release asset — driven directly through
+      # the standalone path shipped as a Release asset, driven directly through
       # the Emscripten runtime, independent of the TypeScript wrapper.
       - name: Smoke the raw WASM module
         run: node tests/smoke/wasm_smoke.mjs bindings/js/dist/treeweave.mjs

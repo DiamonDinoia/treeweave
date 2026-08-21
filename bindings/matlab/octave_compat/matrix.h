@@ -1,4 +1,4 @@
-/* Octave compatibility shim — intentionally empty.
+/* Octave compatibility shim: intentionally empty.
  *
  * mwrap's generated gateway and treeweave.mw #include <matrix.h>, a MATLAB-only
  * header. Octave's <mex.h> already declares the full mxArray / mx* / mex* API,

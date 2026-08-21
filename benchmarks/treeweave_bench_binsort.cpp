@@ -39,8 +39,8 @@ namespace {
 // exactly-uniform 2^depth-leaf tree (no extra adaptive refinement).
 constexpr std::size_t kDeg = 3;
 
-// One tile's worth of points for the per-phase split — matches the batch
-// path's default tile cap, so `counts[]` sees its real per-tile footprint.
+// One tile's worth of points for the per-phase split. The count matches the
+// batch path's default tile cap, so `counts[]` sees its real per-tile footprint.
 constexpr std::size_t kTileN = 65536;
 constexpr std::size_t kFullN = 1u << 20;
 
@@ -94,7 +94,7 @@ void run_dtype(const char *tag) {
         const double h_cyc = (static_cast<double>(cyc[1]) / denom) - q_cyc;
         const double s_cyc = (static_cast<double>(cyc[2]) / denom) - q_cyc;
 
-        // (2) Full unsorted-batch throughput — manual median over a handful
+        // (2) Full unsorted-batch throughput, manual median over a handful
         //     of timed reps (robust under the powersave governor; the median
         //     rejects the occasional frequency-step outlier).
         fn(xfull.data(), resfull.data(), kFullN); // warm

@@ -5,7 +5,7 @@ The wheel version is normally single-sourced from the root CMakeLists.txt via
 scikit-build-core's regex metadata provider (see [tool.scikit-build.metadata.
 version]). CMake's project(VERSION ...) is numeric-only, so it cannot carry a
 PEP 440 `.devN` suffix. For staging uploads we therefore replace the dynamic
-version with a static one for the duration of the build only — this edit is
+version with a static one for the duration of the build only. This edit is
 never committed.
 
 Usage: set_dev_version.py X.Y.Z.devN [path/to/pyproject.toml]

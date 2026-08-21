@@ -18,7 +18,7 @@ for x in 0.0:0.25:2.0   # b_val is evaluable too (returns the boundary value)
     println("  x=$x  exact=$(round(exact,digits=8))  approx=$(round(approx_val,digits=8))  err=$(round(err,sigdigits=3))")
 end
 
-# Batch eval — the handle is called directly. The fit domain is [a, b_val);
+# Batch eval: the handle is called directly. The fit domain is [a, b_val);
 # the upper corner b_val is evaluable too (it returns the boundary value).
 xs = collect(range(a, b_val; length=1001))
 # Evaluate approx on a batch and print the maximum error.

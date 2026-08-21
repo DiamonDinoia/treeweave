@@ -1,4 +1,4 @@
-/* treeweave.h — C ABI for the treeweave piecewise-polynomial approximator.
+/* treeweave.h: C ABI for the treeweave piecewise-polynomial approximator.
  *
  * This surface mirrors the C++ `treeweave::fit(f, a, b, tol, options)` API
  * (see include/treeweave/treeweave.hpp): the domain is given as its lower/upper
@@ -42,8 +42,9 @@
 #include <treeweave_version.h>
 
 /* Symbol visibility. libtreeweave_c is built with hidden default visibility
- * (-fvisibility=hidden on GCC/Clang), so only the TREEWEAVE_EXPORT-tagged public
- * surface below is exported; all internal machinery stays local. TREEWEAVE_C_BUILD
+ * (-fvisibility=hidden on GCC/Clang), so the library exports only the
+ * TREEWEAVE_EXPORT-tagged entry points below and every internal symbol stays
+ * local. TREEWEAVE_C_BUILD
  * is defined by the build only while compiling the library's own objects.
  * Consumers of the shared library leave it unset (they import); consumers of
  * the static archive define TREEWEAVE_STATIC (no decoration). */
@@ -65,7 +66,7 @@
 extern "C" {
 #endif
 
-/* Tolerance interpretation — numeric values match treeweave::TolKind. */
+/* Tolerance interpretation; numeric values match treeweave::TolKind. */
 typedef enum {
     TREEWEAVE_RELATIVE_TAIL = 0, /* relative tail-coefficient estimate (1D) */
     TREEWEAVE_ABSOLUTE_TAIL = 1, /* absolute tail-coefficient estimate (1D) */
@@ -77,8 +78,8 @@ typedef enum {
 
 typedef enum { TREEWEAVE_F64 = 0, TREEWEAVE_F32 = 1 } treeweave_dtype_t;
 
-/* Fit knobs — mirrors treeweave::options. `int` is used for the bool field so
- * the struct is plain C. */
+/* Fit knobs, mirroring treeweave::options. The bool field is an `int` so the
+ * struct stays plain C. */
 typedef struct {
     treeweave_tol_kind_t tol_kind;
     int                  max_depth;
@@ -180,7 +181,7 @@ TREEWEAVE_EXPORT void treeweave_transposed(treeweave_t f, const double *x, doubl
 TREEWEAVE_EXPORT void treeweavef_transposed(treeweave_t f, const float *x, float *const *soa, size_t n);
 
 /* ---- by-value scalar eval (C convenience) ---------------------------- *
- * Pass coordinates by value, return the scalar result — no output pointer.
+ * Pass coordinates by value, return the scalar result, no output pointer.
  * These are thin wrappers over treeweave_eval/treeweavef_eval for the common
  * `y = f(x)` case. The `_1d`/`_2d`/`_3d` suffix is the call arity (== the
  * handle's input_dim). They require a scalar-output handle (output_dim == 1);

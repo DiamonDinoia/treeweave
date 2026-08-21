@@ -1,4 +1,4 @@
-// native.ts — the "native" backend: a thin TypeScript wrapper over the
+// native.ts: the "native" backend, a thin TypeScript wrapper over the
 // Node-API addon (treeweave.node, built from treeweave_napi.cpp). The addon
 // already returns objects shaped like BackendFunction, so this mostly marshals
 // the fit request (typed a/b arrays + the packed opts) and casts the result.
@@ -26,7 +26,7 @@ interface Addon {
 
 // Resolve the N-API addon. Published packages carry per-platform prebuilt
 // binaries under prebuilds/<platform>-<arch>/ (node-gyp-build picks the one
-// matching the running Node/OS/arch — N-API is ABI-stable, so one binary per
+// matching the running Node/OS/arch, N-API is ABI-stable, so one binary per
 // platform serves every Node version). A local CMake build instead drops
 // treeweave.node next to this file in dist/, so fall back to that.
 function loadAddon(require: NodeRequire): Addon {

@@ -1,4 +1,4 @@
-# treeweave_python.cmake — single source of truth for the `_treeweave` nanobind
+# treeweave_python.cmake: single source of truth for the `_treeweave` nanobind
 # extension, included by cmake/treeweave_bindings.cmake. The wheel build and the
 # in-tree CTest glue share that one include path: scikit-build-core configures
 # the root CMakeLists (pyproject sets cmake.source-dir = "../../") with
@@ -41,7 +41,7 @@ function(treeweave_setup_nanobind)
         message(
             STATUS
             "treeweave[python]: nanobind not importable in "
-            "${Python_EXECUTABLE} — fetching it via FetchContent."
+            "${Python_EXECUTABLE}, fetching it via FetchContent."
         )
         include(FetchContent)
         FetchContent_Declare(

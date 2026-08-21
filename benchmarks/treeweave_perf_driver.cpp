@@ -1,4 +1,4 @@
-// Focused perf driver: 1D gauss/runge, 2D bump, 3D gauss — N=1e6 each.
+// Focused perf driver: 1D gauss/runge, 2D bump and 3D gauss at N=1e6 each.
 // Tight outer loop so perf samples concentrate on operator() batch eval.
 #include <array>
 #include <chrono>

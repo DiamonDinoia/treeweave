@@ -1,4 +1,4 @@
-# bindings/matlab — MATLAB/Octave MEX binding. Pregenerated gateway by default
+# bindings/matlab: MATLAB/Octave MEX binding. Pregenerated gateway by default
 # (TREEWEAVE_MATLAB_USE_PREGENERATED=ON); set OFF to fetch+run mwrap via CPM.
 # Backend auto-detected: mkoctfile (license-free) or MATLAB; both if present.
 
@@ -9,7 +9,7 @@ find_package(Matlab QUIET COMPONENTS MAIN_PROGRAM MEX_COMPILER MX_LIBRARY)
 if(NOT TREEWEAVE_MKOCTFILE_EXECUTABLE AND NOT Matlab_FOUND)
     message(
         STATUS
-        "treeweave[matlab]: neither mkoctfile (Octave) nor MATLAB found — skipping."
+        "treeweave[matlab]: neither mkoctfile (Octave) nor MATLAB found, skipping."
     )
     return()
 endif()
@@ -43,7 +43,7 @@ if(TREEWEAVE_MATLAB_USE_PREGENERATED)
     )
     set(_treeweave_mw_dep "") # no generator target
 else()
-    # Regen path: MWRAP_COMPILE_MEX OFF so we drive compile/link ourselves.
+    # Regen path: MWRAP_COMPILE_MEX OFF so this file drives compile and link.
     _treeweave_ensure_cpm()
     cpmaddpackage(
         NAME mwrap
@@ -54,7 +54,7 @@ else()
     if(NOT TARGET mwrap)
         message(
             WARNING
-            "treeweave[matlab]: mwrap generator unavailable after CPM — skipping."
+            "treeweave[matlab]: mwrap generator unavailable after CPM, skipping."
         )
         return()
     endif()

@@ -1,9 +1,9 @@
-# bindings/js — JavaScript/TypeScript binding over the C ABI, with two
+# bindings/js: JavaScript/TypeScript binding over the C ABI, with two
 # toolchain-selected backends:
 #   * native (default): a Node-API `.node` addon linking treeweave_c_static,
 #     exactly like the Python nanobind extension. Headers are located via
 #     node-addon-api (header-only, over the ABI-stable node_api.h that ships
-#     with Node) — no cmake-js, so the project's preset/CTest flow is unchanged.
+#     with Node): no cmake-js, so the project's preset/CTest flow is unchanged.
 #   * WASM (under emcc): the same C ABI compiled to a single WASM module; the C
 #     ABI symbols are exported by name and the Emscripten runtime drives them.
 # Added by cmake/treeweave_bindings.cmake when TREEWEAVE_BUILD_JS=ON. A missing
@@ -16,7 +16,7 @@ include_guard()
 
 find_program(TREEWEAVE_NODE_EXECUTABLE NAMES node)
 if(NOT TREEWEAVE_NODE_EXECUTABLE)
-    message(STATUS "treeweave[js]: node not found — skipping.")
+    message(STATUS "treeweave[js]: node not found, skipping.")
     return()
 endif()
 
@@ -26,9 +26,9 @@ file(MAKE_DIRECTORY "${_js_dist}")
 
 if(EMSCRIPTEN)
     # ---- WASM backend --------------------------------------------------------
-    # The public surface is the C ABI itself, exported by name (underscore
-    # prefixed). The exported-functions list doubles as the linker's set of
-    # roots, pulling the needed members out of the treeweave_c_static archive.
+    # The WASM module exports the C ABI entry points by name, each with a
+    # leading underscore. That same list is the linker's root set, so the
+    # linker pulls only the needed members out of treeweave_c_static.
     add_executable(treeweave_wasm "${_js_dir}/src/wasm_glue.cpp")
     target_link_libraries(treeweave_wasm PRIVATE treeweave_c_static)
 
@@ -76,7 +76,7 @@ else()
     if(NOT _napi_res EQUAL 0 OR NOT EXISTS "${_napi_inc}")
         message(
             STATUS
-            "treeweave[js]: node-addon-api not found (run 'npm install' in bindings/js) — skipping native addon."
+            "treeweave[js]: node-addon-api not found (run 'npm install' in bindings/js), skipping native addon."
         )
     else()
         # node_api.h ships inside the Node distribution's include/node directory.
@@ -97,7 +97,7 @@ else()
         if(NOT EXISTS "${_node_inc}")
             message(
                 WARNING
-                "treeweave[js]: could not resolve node include dir — skipping native addon."
+                "treeweave[js]: could not resolve node include dir, skipping native addon."
             )
         else()
             add_library(
@@ -131,7 +131,7 @@ else()
             elseif(WIN32)
                 # MSVC cannot leave the napi_* imports unresolved (unlike ELF /
                 # dyld). Link node's import library and delay-load node.exe so
-                # they bind to the host process at load time — the node-gyp
+                # they bind to the host process at load time, the node-gyp
                 # approach. TREEWEAVE_NODE_LIB is node.lib for the target node,
                 # fetched by the prebuild workflow.
                 if(NOT TREEWEAVE_NODE_LIB)
@@ -177,7 +177,7 @@ if(TREEWEAVE_TSC)
 else()
     message(
         STATUS
-        "treeweave[js]: tsc not found in node_modules/.bin (run 'npm install') — dist/*.js not built here."
+        "treeweave[js]: tsc not found in node_modules/.bin (run 'npm install'), dist/*.js not built here."
     )
 endif()
 

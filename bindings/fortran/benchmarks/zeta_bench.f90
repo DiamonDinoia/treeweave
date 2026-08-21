@@ -1,4 +1,4 @@
-! zeta_bench.f90 — treeweave vs a fair brute-force Riemann-zeta eval, via the C ABI.
+! zeta_bench.f90: treeweave vs a fair brute-force Riemann-zeta eval, via the C ABI.
 ! See examples/c++/zeta_bench.cpp for the rationale. ζ(s) = Σ_k k^-s summed until
 ! the tail is negligible (rel 1e-10, ≤160 terms) yet smooth on [2,10]: fit once.
 ! Times single/multi/sorted; the native rate is sampled over n_native and reused.
@@ -8,7 +8,7 @@ module zeta_bench_kernels
     use, intrinsic :: iso_c_binding
     implicit none
     ! Fair baseline: sum k^-s until a term is below zeta_eps relative to the
-    ! running total, capped at zeta_max_terms — a competent zeta stops early.
+    ! running total, capped at zeta_max_terms, a competent zeta stops early.
     real(c_double), parameter :: zeta_eps = 1.0e-10_c_double
     integer,        parameter :: zeta_max_terms = 160
 contains
@@ -33,7 +33,7 @@ contains
         y(1) = zeta_partial(x(1))
     end subroutine kernel_zeta
 
-    ! In-place ascending quicksort (Hoare partition) — builds the sorted input
+    ! In-place ascending quicksort (Hoare partition), builds the sorted input
     ! for the sorted-eval mode. The sample is random, so recursion depth stays
     ! O(log n); the sort itself is untimed.
     recursive subroutine quicksort(arr, lo, hi)

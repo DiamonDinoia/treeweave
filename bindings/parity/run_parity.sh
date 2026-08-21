@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_parity.sh — cross-language parity check.
+# run_parity.sh: cross-language parity check.
 #
 # Fits the same 2D -> 3D kernel in C (the reference), Python, and Julia, and
 # verifies that Python and Julia reproduce the C reference's evaluations.

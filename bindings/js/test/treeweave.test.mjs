@@ -1,4 +1,4 @@
-// treeweave.test.mjs — node:test suite, run by CTest as `js_treeweave`.
+// treeweave.test.mjs: node:test suite, run by CTest as `js_treeweave`.
 //
 // Exercises BOTH backends under Node: the native .node addon (built by the
 // bindings-js preset) and the WASM module (built by bindings-js-wasm). The WASM
@@ -63,7 +63,7 @@ for (const backend of backends) {
             // single point
             assert.ok(Math.abs(tw.eval(7.5) - zeta(7.5)) / zeta(7.5) < 1e-9);
 
-            // batch (unsorted) — deterministic pseudo-random points in [A, B)
+            // batch (unsorted): deterministic pseudo-random points in [A, B)
             const n = 5000;
             const xs = new Float64Array(n);
             let s = 12345;

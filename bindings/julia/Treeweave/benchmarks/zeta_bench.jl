@@ -1,4 +1,4 @@
-# zeta_bench.jl — treeweave vs a fair brute-force Riemann-zeta eval.
+# zeta_bench.jl: treeweave vs a fair brute-force Riemann-zeta eval.
 # See examples/c++/zeta_bench.cpp for the rationale. ζ(s) = Σ_k k^-s summed until
 # the tail is negligible (rel 1e-10, ≤160 terms) yet smooth on [2,10]: fit once.
 # Times single/multi/sorted; the native rate is sampled over n_native and reused.
@@ -7,7 +7,7 @@ using Treeweave
 using Printf
 
 # Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
-# total, capped at ZETA_MAX_TERMS — a competent zeta stops early.
+# total, capped at ZETA_MAX_TERMS: a competent zeta stops early.
 const ZETA_EPS = 1e-10
 const ZETA_MAX_TERMS = 160
 

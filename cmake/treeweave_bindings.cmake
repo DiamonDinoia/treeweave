@@ -1,4 +1,4 @@
-# treeweave_bindings.cmake — optional language wrappers over the C ABI.
+# treeweave_bindings.cmake: optional language wrappers over the C ABI.
 # Options live in the top-level CMakeLists.txt; missing toolchain → STATUS + skip.
 
 include_guard(GLOBAL)

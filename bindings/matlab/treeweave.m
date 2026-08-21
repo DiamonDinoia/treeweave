@@ -9,9 +9,9 @@ classdef treeweave < handle
 %   obj = treeweave(f, a, b, tol)
 %   obj = treeweave(f, a, b, tol, Name, Value, ...)
 %
-%   f   — function_handle  @(x) y   (x: 1×dim row, y: 1×out_dim row)
-%   a,b — 1×dim double domain corners (lower/upper)
-%   tol — scalar double tolerance
+%   f  : function_handle  @(x) y   (x: 1×dim row, y: 1×out_dim row)
+%   a,b: 1×dim double domain corners (lower/upper)
+%   tol: scalar double tolerance
 %
 %   Name/Value options:
 %     'dim'                   input dimension (default: numel(a))
@@ -29,9 +29,9 @@ classdef treeweave < handle
 %   y = obj(X, 'sorted', true)       1-D ascending fast path (dim==1)
 %   y = obj(X, 'transposed', true)   y is out_dim×N (out_dim>1)
 %
-%   There is deliberately no in-place out= argument (cf. the Python/Julia
-%   bindings): MATLAB/Octave copy-on-write means a MEX cannot safely write into a
-%   caller-owned array, and the gateway returns a fresh array by value regardless.
+%   The Python and Julia bindings take an in-place out= argument. The MATLAB
+%   binding does not. MATLAB/Octave copy-on-write forbids a MEX from writing
+%   into a caller-owned array, and the gateway returns a fresh array by value.
 %   n = obj.memory_usage()
 %   obj.print_stats()
 %   delete(obj)                      frees C-side memory
@@ -159,8 +159,9 @@ classdef treeweave < handle
 
         function varargout = subsref(obj, S)
             if numel(S) == 1 && strcmp(S.type, '()')
-                % Guard against obj('sorted', true) / obj('transposed', true)
-                % with no leading X argument — gives a confusing error without this.
+                % Guard against obj('sorted', true) and obj('transposed', true)
+                % with no leading X argument. Without the guard the error is
+                % confusing.
                 subs = S.subs;
                 if ~isempty(subs) && ischar(subs{1})
                     error('treeweave:subsref', ...

@@ -1,4 +1,4 @@
-% example_2d.m — 2-D scalar fit: sin(x+y) on [-1,1]^2
+% example_2d.m: 2-D scalar fit of sin(x+y) on [-1,1]^2
 %
 % Before running: add the build tree (tw_*.m stubs + treeweave_mex.mex/mexa64)
 % to the MATLAB/Octave path. This script adds only the source dir (treeweave.m).

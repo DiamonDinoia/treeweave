@@ -66,8 +66,8 @@ TEST_CASE("1D array->array evaluations", "[treeweave_template]") {
 
     // Batch pointer overloads on a 1D vector-output Function. Previously
     // the sorted overload mixed value_type and input_type, and the
-    // FuncEvalND batch entry rejected raw `double*`; we now reinterpret
-    // the layout-equivalent buffers at the polyfit boundary.
+    // FuncEvalND batch entry rejected raw `double*`. The overloads now
+    // reinterpret the layout-equivalent buffers at the polyfit boundary.
     SECTION("unsorted and sorted batch overloads match per-point eval") {
         constexpr std::size_t N = 256;
         std::vector<double>   xs(N);

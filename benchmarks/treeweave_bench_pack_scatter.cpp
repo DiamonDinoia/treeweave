@@ -36,7 +36,7 @@ auto make_tanh_sharp1d() {
 auto make_erf1d() {
     return [](double x) { return std::erf(x); };
 }
-// Borderline-deep kernels — sharper tanh + tighter tol pushes max_depth
+// Borderline-deep kernels: sharper tanh + tighter tol pushes max_depth
 // past 14 (the current leaf-table build threshold), so find_leaf_id
 // runs the descent fallback per call. Plan Phase 1 widens that
 // threshold; these cases are the regression-trackable witness.
@@ -136,7 +136,7 @@ void sweep_scatter_1d(ankerl::nanobench::Bench &b, const char *label, std::size_
     std::mt19937                           cgen(11);
     std::uniform_real_distribution<double> cd(-1.0, 1.0);
 
-    // Build R distinct smooth fits over [0, 1] — small random Chebyshev-series
+    // Build R distinct smooth fits over [0, 1], small random Chebyshev-series
     // polynomials so every fit is exactly representable by the leaf and
     // tree depth stays uniform across fits.
     std::vector<ff> exact;
@@ -220,13 +220,13 @@ int main() {
     auto b = make_bench();
 
     // eval_pack<N> on three 1D kernels covering smooth / sigmoid /
-    // near-singular regimes. Two degrees so we see the FMA chain
+    // near-singular regimes. Two degrees expose the FMA chain
     // length effect.
     sweep_pack_1d<8>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_pack_1d<10>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_pack_1d<8>(b, "1d_erf", make_erf1d, -3.0, 3.0);
     sweep_pack_1d<10>(b, "1d_tanh_sharp", make_tanh_sharp1d, -1.0, 1.0);
-    // Borderline-deep cases — depth 15/16 under tol=1e-12, just past
+    // Borderline-deep cases: depth 15/16 under tol=1e-12, just past
     // the 14-bit leaf-table build threshold so find_leaf_id descends.
     sweep_pack_1d<6>(b, "1d_tanh500_deep", make_tanh500, -1.0, 1.0, 1e-12);
     sweep_pack_1d<8>(b, "1d_tanh1000_deep", make_tanh1000, -1.0, 1.0, 1e-12);
@@ -237,7 +237,7 @@ int main() {
     sweep_scatter_1d<8>(b, "1d_scatter", /*R=*/16);
     sweep_scatter_1d<8>(b, "1d_scatter", /*R=*/64);
 
-    // ND scalar-call shape — 256 scalar operator()(x) calls per epoch,
+    // ND scalar-call shape: 256 scalar operator()(x) calls per epoch,
     // exercises the inlining of polyfit's evalCanonical into treeweave.
     // Probe asm showed 1 callq/eval in 2D and 2 in 3D before
     // TREEWEAVE_FLATTEN on operator(); 1 callq stays in both after.

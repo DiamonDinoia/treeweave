@@ -1,17 +1,17 @@
 name: TestPyPI
 
 # Publishes a staging build to https://test.pypi.org/ for every *green* commit
-# on the default branch — it runs only after the CI workflow succeeds, so a
+# on the default branch: it runs only after the CI workflow succeeds, so a
 # broken commit never publishes. The version is X.Y.Z.devN, where X.Y.Z is the
 # root CMakeLists project version and N is the number of commits since the last
-# v* release tag — so each commit gets a unique, monotonically increasing dev
+# v* release tag, so each commit gets a unique, monotonically increasing dev
 # version and TestPyPI never rejects a re-upload. This is the dry run for the
 # real PyPI publish: it exercises the full wheel matrix + sdist + metadata.
 #
 # Because it triggers on CI's workflow_run, the checkout steps pin
-# workflow_run.head_sha — the exact commit CI validated, not default-branch HEAD.
+# workflow_run.head_sha: the exact commit CI validated, not default-branch HEAD.
 #
-# Publishing uses PyPI Trusted Publishing (OIDC) — no API token to store.
+# Publishing uses PyPI Trusted Publishing (OIDC), no API token to store.
 # One-time setup on test.pypi.org -> the `treeweave` project -> Publishing:
 #   Owner: DiamonDinoia | Repo: treeweave
 #   Workflow: testpypi.yml | Environment: testpypi
@@ -35,7 +35,7 @@ jobs:
   version:
     name: Derive dev version
     # Publish only green *pushes*: manual dispatch, or a CI run that succeeded
-    # AND was driven by a push — so a CI run from any other trigger (a manual
+    # AND was driven by a push, so a CI run from any other trigger (a manual
     # re-run, etc.) can't republish an identical .devN for an unchanged commit.
     if: >-
       github.event_name == 'workflow_dispatch' ||
@@ -62,7 +62,7 @@ jobs:
           echo "version=${base}.dev${n}" >> "$GITHUB_OUTPUT"
           echo "Derived dev version: ${base}.dev${n}"
 
-  # The wheel/sdist matrix lives in wheels.yml — the same one the real PyPI
+  # The wheel/sdist matrix lives in wheels.yml, the same one the real PyPI
   # release uses. Duplicating it here let the Windows entry drift: it kept
   # cl.exe + multiarch long after wheels.yml moved to clang-cl, which both
   # blows the build time cap and ships a wheel that faults on import.
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: testpypi
     permissions:
-      id-token: write   # OIDC token for Trusted Publishing — no API token needed
+      id-token: write   # OIDC token for Trusted Publishing, no API token needed
     steps:
       - uses: actions/download-artifact@v8
         with:

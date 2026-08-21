@@ -117,7 +117,7 @@ function(treeweave_enable_warnings target)
         /w14906
         /w14928
         # MSVC's C4702 ("unreachable code") fires inside heavily-templated
-        # `if constexpr` ladders in polyfit / poet / our numerics — it's a
+        # `if constexpr` ladders in polyfit, poet and treeweave numerics. It is a
         # known false-positive class with no clean source-level fix. Disable
         # it explicitly so /WX doesn't reject those harmless paths.
         /wd4702
@@ -168,7 +168,7 @@ if(TREEWEAVE_ENABLE_COVERAGE)
         # and correct for the single-threaded majority of the suite (a lone
         # thread never races its own .gcda counters). Atomic updates are much
         # slower per basic block under -O0 and are only needed where instrumented
-        # code runs concurrently — applied per-target via
+        # code runs concurrently, applied per-target via
         # treeweave_coverage_atomic_counters() to the threaded TUs only.
         add_compile_options(--coverage)
         add_link_options(--coverage)

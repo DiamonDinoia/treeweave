@@ -7,7 +7,7 @@ Usage::
 
 The single source of truth is the root ``VERSION`` file: the root
 ``CMakeLists.txt`` ``project()`` reads it, and the Python wheel version is
-derived from it by scikit-build-core's regex metadata provider — so neither is
+derived from it by scikit-build-core's regex metadata provider, so neither is
 edited here. The remaining files carry their own copy and must move in lockstep:
 
 - ``include/treeweave_version.h``            ``TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}`` + ``_STRING``
@@ -58,10 +58,10 @@ def main() -> int:
         return 2
     major, minor, patch = m.groups()
 
-    # VERSION — the single source of truth.
+    # VERSION: the single source of truth.
     VERSION_FILE.write_text(f"{version}\n")
 
-    # include/treeweave_version.h — committed generated header (macros only).
+    # include/treeweave_version.h: committed generated header (macros only).
     text = HEADER_VERSION.read_text()
     text = _sub_once(
         HEADER_VERSION,
@@ -89,7 +89,7 @@ def main() -> int:
     )
     HEADER_VERSION.write_text(text)
 
-    # bindings/julia/Treeweave/Project.toml — package version.
+    # bindings/julia/Treeweave/Project.toml, package version.
     text = JULIA_PROJECT.read_text()
     text = _sub_once(
         JULIA_PROJECT,
@@ -99,7 +99,7 @@ def main() -> int:
     )
     JULIA_PROJECT.write_text(text)
 
-    # bindings/js/package.json — package version.
+    # bindings/js/package.json: package version.
     text = JS_PACKAGE.read_text()
     text = _sub_once(
         JS_PACKAGE,

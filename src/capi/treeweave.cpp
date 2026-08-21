@@ -1,4 +1,4 @@
-/// src/capi/treeweave.cpp — the extern "C" surface declared in treeweave.h.
+/// src/capi/treeweave.cpp: the extern "C" surface declared in treeweave.h.
 ///
 /// Holds the opaque handle definition, the thread-local last-error buffer,
 /// the fit dispatch over input_dim (delegating to the per-(value_type,
@@ -38,8 +38,8 @@ void set_last_error(const char *msg) noexcept {
     try {
         error_buffer() = (msg != nullptr) ? msg : "";
         // At the C boundary a throwing std::string assignment (bad_alloc) leaves
-        // the prior message intact; there is nothing else we can usefully do,
-        // and nothing may escape this noexcept function.
+        // the prior message intact. No recovery is possible here, and nothing may
+        // escape this noexcept function.
     } catch (...) { // NOLINT(bugprone-empty-catch)
     }
 }

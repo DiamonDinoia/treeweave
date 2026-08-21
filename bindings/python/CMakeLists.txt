@@ -1,4 +1,4 @@
-# bindings/python — nanobind extension linking treeweave_c_static + a pytest
+# bindings/python: nanobind extension linking treeweave_c_static + a pytest
 # CTest. Added by cmake/treeweave_bindings.cmake when TREEWEAVE_BUILD_PYTHON=ON.
 # The pip/scikit-build wheel build reaches this same file: pyproject sets
 # cmake.source-dir = "../../" and configures the root with TREEWEAVE_BUILD_PYTHON=ON.
@@ -15,7 +15,7 @@ find_package(
 if(NOT Python_FOUND)
     message(
         STATUS
-        "treeweave[python]: Python 3.9+ (Development.Module) not found — skipping."
+        "treeweave[python]: Python 3.9+ (Development.Module) not found, skipping."
     )
     return()
 endif()
@@ -29,7 +29,7 @@ treeweave_add_python_module(treeweave::treeweave_c_static)
 # C++ dev tree (headers / libtreeweave_c / CMake config).
 install(TARGETS _treeweave LIBRARY DESTINATION treeweave COMPONENT python_ext)
 
-# Assemble an importable package *in the build tree* — never write the .so (or
+# Assemble an importable package *in the build tree*, never write the .so (or
 # copy .py) into the source tree. Layout: <build>/python-pkg/treeweave/.
 set(_treeweave_pypkg "${CMAKE_BINARY_DIR}/python-pkg")
 set_target_properties(

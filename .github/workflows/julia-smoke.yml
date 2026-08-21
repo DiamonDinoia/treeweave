@@ -4,10 +4,10 @@ name: Julia prebuilt smoke test
 # in-repo (sibling-build) path; this instead exercises the DISTRIBUTION path a
 # real `Pkg.add` user hits: deps/build.jl downloads the prebuilt libtreeweave_c
 # for `tag` from the GitHub Release (see release.yml), dlopens it, and runs the
-# package test suite — on every OS/arch the release ships an asset for.
+# package test suite: on every OS/arch the release ships an asset for.
 #
-# Run it after a Release job finishes to confirm the uploaded binaries actually
-# load and pass on each platform. There is no central "TestPyPI for Julia"; the
+# Run it after a Release job finishes to confirm the uploaded binaries load and
+# pass on each platform. There is no central "TestPyPI for Julia"; the
 # staging knob is the repo the assets are pulled from (TREEWEAVE_REPO), so this
 # can also smoke-test a fork's pre-release.
 on:
@@ -79,7 +79,7 @@ jobs:
             p.write_text(re.sub(r'^version = .*', 'version = \"$ver\"', p.read_text(), count=1, flags=re.M))"
 
       # Fresh checkout has no sibling build/ dir and LIBTREEWEAVE_C is unset, so
-      # locate() falls through to download_prebuilt() — the path we want to test.
+      # locate() falls through to download_prebuilt(), the path under test.
       - name: Pkg.build (downloads prebuilt) + Pkg.test
         shell: bash
         run: |
@@ -89,7 +89,7 @@ jobs:
             Pkg.develop(path="bindings/julia/Treeweave")
             Pkg.build("Treeweave"; verbose=true)
             p = include(joinpath(pwd(), "bindings/julia/Treeweave/deps/deps.jl"))
-            isempty(p) && error("deps.jl is empty — prebuilt binary was not resolved")
+            isempty(p) && error("deps.jl is empty: prebuilt binary was not resolved")
             isfile(p)  || error("resolved libtreeweave_c path does not exist: $p")
             @info "resolved prebuilt libtreeweave_c" path=p
             Pkg.test("Treeweave")

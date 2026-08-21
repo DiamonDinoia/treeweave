@@ -11,8 +11,8 @@ Install
 Prebuilt C ABI
 ^^^^^^^^^^^^^^
 
-Fortran calls the C ABI, so the release C archive is enough when you already
-have your own Fortran wrapper or build setup:
+Fortran calls the C ABI, so the release C archive is enough alongside an
+existing Fortran wrapper or build setup:
 
 .. code-block:: bash
 
@@ -34,8 +34,8 @@ Build the ``treeweave_fortran`` target using the CMake preset:
    cmake --preset bindings-fortran
    cmake --build build/bindings-fortran -j
 
-A missing Fortran compiler is skipped gracefully. The ``treeweave`` module is
-generated in the build tree.
+Without a Fortran compiler, CMake skips the Fortran targets. The build writes
+the generated ``treeweave`` module into the build tree.
 
 Minimal example
 ---------------
@@ -66,7 +66,8 @@ Batch & sorted eval
    call treeweave_batch(h, xs, res, n)    ! batch: many points, any order
    call treeweave_sorted(h, xs, res, n)   ! promise xs(i) <= xs(i+1), 1-D; ~3-4x faster
 
-``treeweave_sorted`` requires 1-D input (``input_dim == 1``). The caller promises ascending order; treeweave does not verify it.
+``treeweave_sorted`` requires 1-D input (``input_dim == 1``). The caller
+promises ascending order, and treeweave does not verify it.
 
 Options
 -------
@@ -94,5 +95,5 @@ Further
    cmake --build build/bindings-fortran -j
    ctest --test-dir build/bindings-fortran -R fortran_treeweave
 
-A missing Fortran compiler is skipped gracefully. Full example:
+Without a Fortran compiler, CMake skips the Fortran targets. Full example:
 `bindings/fortran/example.f90 <https://github.com/DiamonDinoia/treeweave/blob/main/bindings/fortran/example.f90>`_.

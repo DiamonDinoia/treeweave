@@ -1,4 +1,4 @@
-// Smoke for the raw standalone WASM assets (treeweave.mjs + treeweave.wasm) —
+// Smoke for the raw standalone WASM assets (treeweave.mjs + treeweave.wasm),
 // the emscripten module attached to the GitHub Release for direct web/Node use,
 // independent of the npm package's TypeScript wrapper. Loads the module, fits
 // x^2 on [0, 2) and evals at 1.5 (~= 2.25), driving the C ABI through the
@@ -16,7 +16,7 @@ const M = await mod.default();
 const version = M.ccall("treeweave_version_string", "string", [], []);
 
 // f64 path: 8-byte elements; pointers are i32 in wasm32. Re-read HEAPF64 after
-// every _malloc — growth detaches the old view.
+// every _malloc: growth detaches the old view.
 const ELT = 8;
 const f = (x) => x[0] * x[0];
 
@@ -31,7 +31,7 @@ const bPtr = M._malloc(ELT);
 M.HEAPF64[aPtr / ELT] = 0.0;
 M.HEAPF64[bPtr / ELT] = 2.0;
 // opts: [tolKind, maxDepth, maxMemoryMib, allowMaxDepthLeaves, minUniformDepth]
-// — same as the native smoke (relative_max tol, depth 50, no memory cap).
+// Same as the native smoke (relative_max tol, depth 50, no memory cap).
 const optsPtr = M._malloc(20);
 M.HEAP32.set(Int32Array.of(2, 50, -1, 0, 0), optsPtr / 4);
 
@@ -56,4 +56,4 @@ M._free(yPtr);
 M._treeweave_free(handle);
 
 assert.ok(Math.abs(y - 2.25) < 1e-6, `bad eval: ${y}`);
-console.log(`OK raw WASM ${mjsPath} — version ${version}, eval(1.5) = ${y}`);
+console.log(`OK raw WASM ${mjsPath}: version ${version}, eval(1.5) = ${y}`);

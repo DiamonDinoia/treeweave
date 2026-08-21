@@ -1,9 +1,9 @@
-/* sorted.c — 1D -> 1D fit with the sorted-batch fast path, from C11.
+/* sorted.c: 1D -> 1D fit with the sorted-batch fast path, from C11.
  *
  * `treeweave_sorted` is a 1D-only batch evaluator that assumes the
  * inputs are non-decreasing (x[i] <= x[i+1]) and walks leaves monotonically.
  * It must produce the same results as `treeweave_batch` on the same
- * sorted buffer — this demo asserts exactly that. */
+ * sorted buffer: this demo asserts exactly that. */
 
 #include <math.h>
 #include <stdio.h>

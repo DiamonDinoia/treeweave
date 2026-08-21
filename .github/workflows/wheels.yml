@@ -3,13 +3,13 @@ name: Wheels
 # Reusable builder (workflow_call only). Builds prebuilt Python wheels for every
 # supported OS/arch with cibuildwheel, plus the sdist, at the static X.Y.Z that
 # the build ref's root CMakeLists carries (scikit-build-core reads it via its
-# regex metadata provider — no version pinning here). The Release orchestrator
+# regex metadata provider: no version pinning here). The Release orchestrator
 # (release.yml) calls this and then publishes/attaches the artifacts; this
 # workflow neither publishes nor creates a Release on its own.
 #
 # The C ABI (libtreeweave_c) is linked STATICALLY into the _treeweave nanobind
 # extension (see bindings/python/treeweave_python.cmake), so there is no external
-# shared library to vendor — wheels carry only the system C/C++ runtimes.
+# shared library to vendor: wheels carry only the system C/C++ runtimes.
 #
 # Linux and macOS wheels enable TREEWEAVE_C_MULTIARCH at their family baseline,
 # so one wheel dispatches by ISA at runtime. Apple silicon builds single-arch at

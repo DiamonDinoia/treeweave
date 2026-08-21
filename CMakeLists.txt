@@ -76,7 +76,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 include(treeweave_toolchain) # C++ standard, opt-in IPO, -march/-mtune, FP
 include(dev_helpers) # warnings / sanitizers / static analysis helpers
 include(treeweave_deps) # fetch polyfit, POET, Catch2
-include(treeweave_c_api) # C ABI (libtreeweave_c) — built before examples/tests
+include(treeweave_c_api) # C ABI (libtreeweave_c), built before examples/tests
 include(treeweave_bundle) # consolidate C++ headers + deps into <build>/include
 
 if(TREEWEAVE_BUILD_EXAMPLES)

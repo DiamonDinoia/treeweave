@@ -39,7 +39,7 @@ def test_accuracy_1d():
 
 
 # ---------------------------------------------------------------------------
-# 2. AoS vs transposed parity — 2D → 3D (out_dim inferred from a probe)
+# 2. AoS vs transposed parity: 2D → 3D (out_dim inferred from a probe)
 # ---------------------------------------------------------------------------
 
 def test_aos_transposed_parity_2d_3out():
@@ -137,7 +137,7 @@ def test_max_depth_exceeded():
     """Overly tight tolerance with tiny max_depth raises RuntimeError."""
 
     def hard_func(x):
-        # Highly oscillatory — hard to fit tightly in 2 levels.
+        # Highly oscillatory: hard to fit tightly in 2 levels.
         return math.sin(200.0 * x[0])
 
     with pytest.raises(RuntimeError, match="(?i)(maxdepth|depth|memory|budget|failed)"):

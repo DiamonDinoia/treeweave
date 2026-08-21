@@ -15,17 +15,17 @@
 [![JavaScript](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=JS%2FWASM)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml)
 [![MATLAB](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/matlab.yml?branch=main&label=MATLAB)](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
 
-## Why you care
+## What it solves
 
-Treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
+treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
 
-When `f(x)` is expensive but smooth on a bounded domain, Treeweave samples it once, builds a compact polynomial approximation, and reuses that approximation for cheap lookups. It is meant for workloads where the same function is evaluated many times: special functions, kernels, simulations, calibration models, or table-backed interpolators.
+When `f(x)` is expensive but smooth on a bounded domain, treeweave samples it once, builds a compact polynomial approximation, and reuses that approximation for cheap lookups. The target is any workload that evaluates the same function many times: special functions, kernels, simulations, calibration models, table-backed interpolators.
 
 ## Benchmarks
 
-These charts fit a Riemann-zeta sum on `[2, 10]` to `1e-10` using a naive algorithm, then compare against treeweave. Bars are Mevals/s on a log scale; higher is better.
+Each chart fits a Riemann-zeta sum on `[2, 10]` to `1e-10` with a naive algorithm, then compares against treeweave. Bars are Mevals/s on a log scale; higher is better.
 
-### Single Eval
+### Single eval
 
 ![Riemann-zeta single-eval throughput](https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_single.svg)
 
@@ -33,7 +33,7 @@ These charts fit a Riemann-zeta sum on `[2, 10]` to `1e-10` using a naive algori
 
 ![Riemann-zeta batch throughput](https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg)
 
-### Sorted Batch
+### Sorted batch
 
 ![Riemann-zeta sorted-batch throughput](https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_sorted.svg)
 
@@ -41,11 +41,11 @@ See the [performance guide](https://diamondinoia.github.io/treeweave/guides/perf
 
 ## What it is
 
-treeweave fits low-order polynomial panels on an adaptive tree. The fitted object is immutable and can be evaluated from C++, C, Python, Julia, MATLAB/Octave, Fortran, and JavaScript/TypeScript.
+treeweave fits low-order polynomial panels on an adaptive tree. The fitted object is immutable. C++, C, Python, Julia, MATLAB/Octave, Fortran and JavaScript/TypeScript can all evaluate it.
 
-The fit domain is `[a, b)`, but evaluation is valid on the interval [a,b] (magic!). That is to say don't worry about `b` even if the function is not defined on that point there will not be issues by passing `[a,b]` to treeweave fit. Other out-of-domain inputs, including `NaN` and infinities, return `NaN`.
+The fit covers `[a, b)`. Evaluation still accepts the closed interval `[a, b]`, because an input exactly at `b` lands in the last panel and returns a finite value. Pass `[a, b]` even when `f` is undefined at `b`. Inputs below `a`, inputs above `b`, and `NaN` or infinite inputs all return `NaN`.
 
-## Examples And Install
+## Examples and install
 
 ### Python
 
@@ -298,7 +298,7 @@ Source builds, release channels, and package details are in the [install guide](
 
 ## CMake
 
-The default CMake path is enough for C++:
+For C++, CPM is enough:
 
 ```cmake
 CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
@@ -357,7 +357,7 @@ Targets by language:
 
 ## Acknowledgements
 
-treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute). It reimplements the fit/eval pipeline around [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
+treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute). treeweave rebuilds the fit/eval pipeline on [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
 
 For numerical background, see Alex Barnett's talk [What everyone should know about function approximation](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) (FWAM7, Flatiron Institute, 2025), and Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 

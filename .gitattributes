@@ -1,0 +1,6 @@
+# Generated file: checked in so a consumer needs no CMake run to get it, but
+# never edited by hand. `cmake/treeweave_generate_version.cmake` writes it from
+# treeweave_version.h.in. Marking it collapses the diff in reviews and drops it
+# from the language stats. The mwrap gateway carries its own marker in
+# bindings/matlab/.gitattributes.
+include/treeweave_version.h linguist-generated=true

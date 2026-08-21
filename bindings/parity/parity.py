@@ -1,4 +1,4 @@
-"""parity.py — Python side of the cross-language parity check.
+"""parity.py: Python side of the cross-language parity check.
 
 Fits the same 2D -> 3D kernel as reference.c and prints `x0,x1,y0,y1,y2` at the
 identical fixed points, in the identical full-precision format, so run_parity.sh

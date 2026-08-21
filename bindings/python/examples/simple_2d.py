@@ -1,4 +1,4 @@
-"""simple_2d.py — 2D -> 1D Gaussian bump fit."""
+"""simple_2d.py: 2D -> 1D Gaussian bump fit."""
 import math
 import numpy as np
 import treeweave

@@ -1,4 +1,4 @@
-"""zeta_bench.py — treeweave vs a fair brute-force Riemann-zeta eval.
+"""zeta_bench.py: treeweave vs a fair brute-force Riemann-zeta eval.
 
 See examples/c++/zeta_bench.cpp for the rationale. zeta(s) = sum_k k**-s summed
 until the tail is negligible (rel 1e-10, <=160 terms) yet smooth on [2, 10]: fit
@@ -16,7 +16,7 @@ import treeweave
 a, b = 2.0, 10.0
 
 # Fair baseline: sum k**-s until a term is below EPS relative to the running
-# total, capped at MAX_TERMS — a competent zeta stops early once the tail is
+# total, capped at MAX_TERMS: a competent zeta stops early once the tail is
 # negligible, so this is an honest cost rather than a fixed-iteration strawman.
 EPS = 1e-10
 MAX_TERMS = 160

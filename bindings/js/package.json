@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Adaptive piecewise-polynomial function approximation — JS/TS binding (native N-API addon + WASM) over the treeweave C ABI.",
+  "description": "Adaptive piecewise-polynomial function approximation, JS/TS binding (native N-API addon + WASM) over the treeweave C ABI.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

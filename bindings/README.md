@@ -1,8 +1,8 @@
 # treeweave host-language bindings
 
-Thin wrappers over the C ABI (`libtreeweave_c`, [`treeweave.h`](../include/treeweave.h)) for **Python**, **Julia**, **MATLAB/Octave**, and **Fortran**. All reuse the pre-instantiated C++ templates — no re-compilation.
+Thin wrappers over the C ABI (`libtreeweave_c`, [`treeweave.h`](../include/treeweave.h)) for Python, Julia, MATLAB/Octave and Fortran. All reuse the pre-instantiated C++ templates, so nothing recompiles.
 
-Python, Julia, and MATLAB infer `dim` and `out_dim` from the callable and are called directly with a point or batch; `sorted` and `transposed` flags select fast paths. The Fortran binding is explicit: named procedures, `input_dim` / `output_dim` passed directly, no inference.
+Python, Julia and MATLAB infer `dim` and `out_dim` from the callable. Call the fitted object directly, with a point or with a batch, and pass the `sorted` and `transposed` flags to select the fast paths. The Fortran binding infers nothing. It exposes named procedures and takes `input_dim` and `output_dim` directly.
 
 | Supported | values |
 |-----------|--------|
@@ -10,7 +10,7 @@ Python, Julia, and MATLAB infer `dim` and `out_dim` from the callable and are ca
 | output dim | 1, 2, 3 (a 1-D vector-valued fit is `dim=1, out_dim>1`) |
 | dtype      | `f64` (double), `f32` (float) |
 
-**Domain:** `[a, b)` — evaluating at `b` returns the boundary value; every other out-of-domain point returns `NaN`, branchless. **Exceptions:** a raising callback is re-thrown after the C ABI unwinds cleanly.
+The fit covers `[a, b)`. A point exactly at `b` returns the boundary value, and every other out-of-domain point returns `NaN`, branchless. A callback that raises propagates to the caller after the C ABI unwinds.
 
 ---
 
@@ -24,7 +24,7 @@ pytest bindings/python/tests
 ```python
 import numpy as np, treeweave
 
-N = 1000  # zeta_N(s) = sum_{k=1..N} k**-s — expensive; fit once, eval a polynomial
+N = 1000  # zeta_N(s) = sum_{k=1..N} k**-s, expensive; fit once, eval a polynomial
 f = treeweave.fit(lambda x: np.sum(np.arange(1.0, N + 1.0) ** (-x[0])), 2.0, 10.0, tol=1e-8)
 f(3.5)                          # scalar
 f(np.linspace(2, 10, 100))              # vectorized -> (100,)
@@ -73,14 +73,14 @@ after the fit. See [`julia/Treeweave/README.md`](https://github.com/DiamonDinoia
 ## MATLAB / Octave (MEX)
 
 ```bash
-# MATLAB and/or Octave — whichever is found is built (MATLAB links
+# CMake builds whichever of MATLAB and Octave it finds (MATLAB links
 # -static-libstdc++ so the .mexa64 is independent of MATLAB's libstdc++).
 cmake --preset bindings-matlab
 cmake --build build/bindings-matlab -j
 ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
 
 # License-free Octave path (selects the Octave backend when only mkoctfile is
-# present; Octave is not shipped prebuilt — no stable MEX ABI across versions).
+# present; Octave ships no prebuilt MEX, since the MEX ABI is not stable).
 cmake --preset bindings-octave
 cmake --build build/bindings-octave -j
 ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
@@ -140,8 +140,8 @@ cmake --build build
 ctest --test-dir build -R "python_treeweave|julia_treeweave|matlab_treeweave|fortran_treeweave"
 ```
 
-Missing toolchains are detected and skipped. (The Julia CTest passes `LIBTREEWEAVE_C` pointing
-at the freshly-built shared library.)
+CMake detects a missing toolchain and skips its tests. The Julia CTest passes
+`LIBTREEWEAVE_C` pointing at the freshly built shared library.
 
 ## Cross-language parity
 

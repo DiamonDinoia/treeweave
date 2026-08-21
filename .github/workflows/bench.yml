@@ -5,7 +5,7 @@ name: Benchmarks
 # benchmark-action/github-action-benchmark. History accumulates under
 # dev/bench/ on the gh-pages branch (served alongside the Doxygen site, see
 # docs.yml) and a regression past the alert threshold posts a commit comment.
-# Non-gating gh-pages dashboard — runs per-release plus weekly + on demand, so
+# Non-gating gh-pages dashboard: runs per-release plus weekly + on demand, so
 # it no longer fires on every push (one of the two heaviest non-gating per-push
 # jobs). History still accumulates under dev/bench/ on each run.
 on:

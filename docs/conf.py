@@ -17,7 +17,7 @@ extensions = [
 myst_enable_extensions = ["dollarmath", "amsmath"]
 
 # Generate slug anchors for headings (h1-h3) so in-page `[text](#slug)` links
-# resolve — e.g. the "see [Background](#background-and-further-reading)" link.
+# resolve: e.g. the "see [Background](#background-and-further-reading)" link.
 myst_heading_anchors = 3
 
 # Breathe configuration. The Doxygen XML dir is passed by CMake via the
@@ -27,7 +27,7 @@ doxygen_xml = os.environ.get("DOXYGEN_XML_OUTPUT", "../build/docs/xml")
 breathe_projects = {"treeweave": os.path.abspath(doxygen_xml)}
 breathe_default_project = "treeweave"
 
-# Exhale configuration — generates the API tree from the Breathe project.
+# Exhale configuration: generates the API tree from the Breathe project.
 exhale_args = {
     "containmentFolder": "./api",
     "rootFileName": "library_root.rst",

@@ -1,18 +1,18 @@
 # Changelog
 
-All notable changes to `treeweave` are documented in this file.
+This file records every notable change to `treeweave`.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The `## [X.Y.Z]` section matching a release is sliced verbatim into that
-release's GitHub Release notes by the Release workflow (`.github/workflows/release.yml`).
+The Release workflow (`.github/workflows/release.yml`) copies the `## [X.Y.Z]`
+section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
 ### Added
 
-- Python: `treeweave.fit` doubles as a decorator when the callable is omitted —
+- Python: `treeweave.fit` doubles as a decorator when the callable is omitted.
   `@treeweave.fit(a, b, tol)` above a `def` replaces the function with its
   fitted approximation, the `functools.cache` spelling. Every keyword option of
   the direct call applies unchanged, and the original callable stays reachable
@@ -30,22 +30,22 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
   is still verified against its pinned commit SHA at configure time to catch a
   moved tag.
 - `Debug` builds now default to `-Og` rather than CMake's `-O0`. The `debug-og`
-  preset already did this — `-O0` leaves the header-only, deeply-inlined code
-  un-inlined and the compute-heavy tests slow to a crawl — but a preset-less
+  preset already did this, because `-O0` leaves the header-only, deeply-inlined
+  code un-inlined and the compute-heavy tests slow to a crawl. A preset-less
   `-DCMAKE_BUILD_TYPE=Debug`, which is what a consumer's `FetchContent` build
   gets, did not. The default now applies to every `Debug` build including
-  coverage, where line attribution becomes slightly coarser wherever the
-  optimizer inlines but the instrumented run stops being the slowest job in CI.
+  coverage. There, line attribution gets coarser wherever the optimizer
+  inlines, and the instrumented run stops being the slowest job in CI.
   An explicit `CMAKE_CXX_FLAGS_DEBUG` still takes precedence, so
   `-DCMAKE_CXX_FLAGS_DEBUG='-O0 -g'` restores the strictest line data.
 - Link-time optimization is now the opt-in option `TREEWEAVE_ENABLE_IPO`,
   default `OFF`, where it was on for every non-GCC compiler. The C++ API is
   header-only, so IPO changes nothing for a consumer that only includes the
   headers, and the C ABI objects feed the installed static archive as well as
-  `libtreeweave_c.so` — IPO fills that archive with compiler IL only one
+  `libtreeweave_c.so`, and IPO fills that archive with compiler IL only one
   toolchain version can link. Every binding preset turns it back on, because a
   binding ships one shared artifact and no archive; the Emscripten preset stays
-  excluded, as do GCC and MSVC even when the option is `ON` — GCC ICEs on these
+  excluded, as do GCC and MSVC even when the option is `ON`: GCC ICEs on these
   templates and MSVC `/LTCG` took over an hour to link one executable. clang-cl
   still gives Windows a ThinLTO path.
 
@@ -58,13 +58,13 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
 - The Windows N-API prebuild now builds: the workflow fetches the node C headers
   (absent from the Windows node install) and `node.lib` from the node dist, and
   the addon delay-loads `node.exe` to resolve `napi_*` under MSVC (the node-gyp /
-  cmake-js approach). Windows Node users get the native backend, not just the
-  WASM fallback.
+  cmake-js approach). Windows Node users now get the native backend instead of
+  the WASM fallback.
 
 ### Added
 
-- Documentation now defaults to released/prebuilt install paths, with source
-  builds moved to the end of each language guide for development or unreleased
+- Documentation now leads with the released/prebuilt install paths, and moves
+  source builds to the end of each language guide for development or unreleased
   changes.
 - Added a CMake guide covering the minimal CPM/FetchContent usage, user-facing
   presets, user-facing CMake options, and targets by language.
@@ -75,34 +75,35 @@ release's GitHub Release notes by the Release workflow (`.github/workflows/relea
   `/arch:SSE4.2`.
 - Added the Practical HPC NUFFTs talk link to the acknowledgements/background
   material.
-- Post-publish `release-install.yml` now verifies the **published** binaries on a
+- Post-publish `release-install.yml` now verifies the published binaries on a
   full matrix: `pip install treeweave` from PyPI (linux/macOS/windows × py3.9 +
   py3.12), each per-platform C-ABI release tarball via `find_package`
   (linux-x86_64/-aarch64, macOS-arm64, windows-x64), and a new
   `npm install @flatironinstitute/treeweave` job (WASM-only, all three OSes).
-- One-liner installs surfaced in the README and install guide: `pip install
+- Added one-liner installs to the README and install guide: `pip install
   treeweave`, `npm install @flatironinstitute/treeweave`, release tarball
   `curl`/`wget` commands, Julia `Pkg.add`, and
   `CPMAddPackage("gh:DiamonDinoia/treeweave@stable")` for C++.
 - `conda/recipe/meta.yaml` + `conda/README.md`: a conda-forge recipe prepared for
   submission to `conda-forge/staged-recipes` (manual follow-up).
-- The raw `treeweave.wasm` + `treeweave.mjs` loader are attached to each GitHub
-  Release, so a web page can fetch them from a stable URL without npm.
-- The npm package now ships **prebuilt native N-API binaries** (Linux x64/arm64,
+- Each GitHub Release now carries the raw `treeweave.wasm` and the
+  `treeweave.mjs` loader, so a web page can fetch them from a stable URL without npm.
+- The npm package now ships prebuilt native N-API binaries (Linux x64/arm64,
   macOS arm64/x64, Windows x64), resolved by `node-gyp-build`, so Node consumers
   get the fast native backend automatically; the bundled WASM build remains the
   browser backend and the fallback for any unmatched host. Built by the new
   reusable `_build-node-prebuilds.yml` (Linux in manylinux_2_28, same as wheels)
   and bundled into the package by `release.yml`'s `build-js` job.
 
-### Deferred (roadmap — not yet implemented)
+### Deferred (roadmap, not yet implemented)
 
-- **conda-forge:** submit `conda/recipe` to `conda-forge/staged-recipes`; then
-  `conda install -c conda-forge treeweave` is the one-liner (add a conda badge).
-- **Julia General registry:** register so `Pkg.add("Treeweave")` works (needs a
-  tagged release + Registrator/JLL, or keep the bespoke `build.jl`).
-- **vcpkg / Conan:** C/C++ ports.
-- **MATLAB File Exchange / Add-On** packaging.
+- conda-forge: submit `conda/recipe` to `conda-forge/staged-recipes`, so that
+  `conda install -c conda-forge treeweave` becomes the one-liner (add a conda
+  badge).
+- Julia General registry: register so `Pkg.add("Treeweave")` works. That needs a
+  tagged release plus Registrator/JLL, or the bespoke `build.jl` stays.
+- vcpkg and Conan C/C++ ports.
+- MATLAB File Exchange / Add-On packaging.
 - Fortran / Octave remain build-from-source (Octave has no stable MEX ABI).
 
 ## [0.0.0] - 2026-06-11

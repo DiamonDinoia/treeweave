@@ -3,14 +3,14 @@
 # We start from "*" and switch off check families that are pure layout
 # (clang-format owns those) or that actively fight the idioms of a header-only
 # SIMD/template math library, plus a few subjective metrics. The modernize-*
-# family is kept on deliberately — we want modern C++ (trailing return types,
+# family is kept on deliberately, to enforce modern C++ (trailing return types,
 # `auto`, std::array, [[nodiscard]]). What remains is the set whose warnings
 # indicate a likely bug, a real performance issue, a missed modern-C++ idiom, or
 # a genuine maintainability smell.
 #
 # hicpp-explicit-conversions is off: Value<T,N> is a math type with intentional
 # implicit scalar<->Value conversions, and allocator rebind constructors must
-# stay implicit — forcing `explicit` there breaks the API and STL allocator use.
+# stay implicit; forcing `explicit` there breaks the API and STL allocator use.
 # modernize-use-constraints stays ON globally, but is suppressed with NOLINT at
 # two Value constructors whose enable_if -> requires rewrite apple-clang rejects.
 #
@@ -28,7 +28,7 @@
 #                       no-array-decay, pro-type-reinterpret-cast, pro-type-vararg,
 #                       vararg, signed-bitwise, owning-memory,
 #                       pro-bounds-avoid-unchecked-container-access (clang-tidy
-#                       >=22: flags every `operator[]` — the same bounds-safety
+#                       >=22: flags every `operator[]`, the same bounds-safety
 #                       family as the pro-bounds-* entries above, and equally at
 #                       odds with a SIMD/perf library that indexes deliberately)
 #   Numeric readability: math-missing-parentheses (a numerics library writes
@@ -54,7 +54,7 @@ CheckOptions:
   - key: modernize-use-auto.RemoveStars
     value: 'true'
   # `poet::static_for` lives in poet/core/static_for.hpp, but `core/*` is
-  # explicitly non-public — the only sanctioned entry point is the
+  # explicitly non-public; the only sanctioned entry point is the
   # `<poet/poet.hpp>` umbrella. Tell include-cleaner not to flag it as
   # "not used directly". xsimd is likewise consumed only through its
   # `<xsimd/xsimd.hpp>` umbrella; its symbols (xsimd::best_arch, batch types)

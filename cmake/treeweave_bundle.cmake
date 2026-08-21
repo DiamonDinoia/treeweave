@@ -1,4 +1,4 @@
-# treeweave_bundle.cmake — merge all C++ API headers into one include tree so
+# treeweave_bundle.cmake: merge all C++ API headers into one include tree so
 # non-CMake users get `g++ -I<build>/include`. Top-level only.
 
 include_guard(GLOBAL)
@@ -23,7 +23,7 @@ foreach(
         if(_d MATCHES "\\$<BUILD_INTERFACE:(.+)>")
             set(_d "${CMAKE_MATCH_1}") # strip genexpr wrapper
         elseif(_d MATCHES "\\$<")
-            continue() # INSTALL_INTERFACE etc. — no build-tree path
+            continue() # INSTALL_INTERFACE etc., no build-tree path
         endif()
         if(_d AND IS_DIRECTORY "${_d}")
             execute_process(

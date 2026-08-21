@@ -1,4 +1,4 @@
-/* _treeweave.cpp — nanobind bindings for the treeweave C ABI.
+/* _treeweave.cpp: nanobind bindings for the treeweave C ABI.
  * GIL/callback trampoline + TreeweaveFunction handle.
  */
 
@@ -101,7 +101,7 @@ static void trampoline(const T *x, T *y, void *data) {
     nb::gil_scoped_acquire gil;
 
     try {
-        // Wrap x as a (input_dim,) NumPy view — zero-copy, read-only.
+        // Wrap x as a (input_dim,) NumPy view, zero-copy, read-only.
         nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> xarr(const_cast<T *>(x),
                                                                                            {(size_t)st->input_dim});
         nb::object                                                                    result = st->callable(xarr);
@@ -178,7 +178,7 @@ class TreeweaveFunction {
 
     // x: (N, input_dim) or (N,) for 1D. Returns (N, output_dim) or (N,) for
     // od==1. The result array is allocated up front (or supplied via `out`) and
-    // the C eval writes straight into its buffer — no intermediate copy.
+    // the C eval writes straight into its buffer, no intermediate copy.
     nb::object eval_multi_py(nb::object x_obj, nb::object out_obj) const {
         const int id = input_dim(), od = output_dim();
         if (treeweave_dtype(handle_) == TREEWEAVE_F32)
@@ -243,7 +243,7 @@ class TreeweaveFunction {
     // Resolve the output array for a batch/sorted eval: allocate a fresh (N,) /
     // (N, od) array, or validate and reuse a caller-supplied `out`. Returns the
     // array (kept alive by the caller) and a raw pointer the C eval writes into
-    // directly — no intermediate buffer or copy.
+    // directly: no intermediate buffer or copy.
     template <typename T>
     static std::pair<nb::object, T *> _output_buffer(nb::object out_obj, size_t n, int od) {
         if (out_obj.is_none()) {
@@ -253,8 +253,8 @@ class TreeweaveFunction {
                                                           "dtype"_a = np.attr(Traits<T>::numpy_dtype));
             return {arr, nb::cast<ArrayMut<T>>(arr).data()};
         }
-        // out= must already be the right type/layout: convert=false so we never
-        // silently write into a throwaway converted copy instead of the caller's.
+        // out= must already be the right type/layout: convert=false so nanobind never
+        // writes into a throwaway converted copy instead of the caller's buffer.
         ArrayMut<T> arr;
         if (!nb::try_cast<ArrayMut<T>>(out_obj, arr, /*convert=*/false))
             throw std::invalid_argument(std::string("out= must be a contiguous, C-ordered ") + Traits<T>::numpy_dtype +

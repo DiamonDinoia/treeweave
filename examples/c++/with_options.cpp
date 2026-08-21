@@ -4,7 +4,7 @@
 #include <iostream>
 
 int main() {
-    // sin(50 x) / x on [0.01, 5) — oscillatory and nearly singular near 0.
+    // sin(50 x) / x on [0.01, 5): oscillatory and nearly singular near 0.
     // A low max_depth forces the fit to hit the ceiling: `MaxDepthExceeded`
     // then carries the offending panel [a, b) so the caller can identify
     // the region responsible.
@@ -23,7 +23,7 @@ int main() {
                   << "  what()  = " << e.what() << "\n";
     }
 
-    // Re-fit with the default max_depth — converges now.
+    // Re-fit with the default max_depth; the fit converges.
     // Fit f(x) on [0.01, 5] syntax is fit(callback, lower_bound, upper_bound, tolerance).
     auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8);
     // Evaluate fn on (1.0) and print the result.

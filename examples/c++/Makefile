@@ -4,7 +4,7 @@
 #      cmake --build build
 #   2. cd examples/c++ && make
 #
-# make.inc (auto-generated) sets CXX, CXXFLAGS and TREEWEAVE_INC — the -I paths
+# make.inc (auto-generated) sets CXX, CXXFLAGS and TREEWEAVE_INC, the -I paths
 # for treeweave's header-only deps (polyfit, POET, xsimd, mdspan), wherever CMake
 # fetched them. `make -n simple1d` prints the exact compile command.
 

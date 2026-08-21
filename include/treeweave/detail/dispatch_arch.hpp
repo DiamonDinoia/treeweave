@@ -1,7 +1,7 @@
 #ifndef TREEWEAVE_DETAIL_DISPATCH_ARCH_HPP
 #define TREEWEAVE_DETAIL_DISPATCH_ARCH_HPP
 
-// dispatch_arch.hpp — the family-selected xsimd arch_list the C-ABI runtime
+// dispatch_arch.hpp: the family-selected xsimd arch_list the C-ABI runtime
 // dispatcher walks. Mirrors simdrng's include/random/dispatch_arch.hpp.
 // Compiled at each family's baseline -march; xsimd::dispatch + available_architectures().has
 // picks the widest host-supported variant at runtime.
@@ -14,13 +14,13 @@ namespace treeweave::capi {
 
 // xsimd's x86 hierarchy has three independent roots that all derive from
 // `common` (sse2, avx, avx512f), so "is this an x86 arch?" needs all three
-// base checks — there is no single x86 base class to test against.
+// base checks, since no single x86 base class covers them.
 inline constexpr bool dispatch_is_x86 = std::is_base_of_v<xsimd::sse2, xsimd::best_arch> ||
                                         std::is_base_of_v<xsimd::avx, xsimd::best_arch> ||
                                         std::is_base_of_v<xsimd::avx512f, xsimd::best_arch>;
 
 inline constexpr bool dispatch_is_aarch64 = std::is_base_of_v<xsimd::neon, xsimd::best_arch>;
-// neon64 derives from neon — assert so a future xsimd rearrangement breaks loudly.
+// neon64 derives from neon; assert so a future xsimd rearrangement breaks loudly.
 static_assert(std::is_base_of_v<xsimd::neon, xsimd::neon64>,
               "dispatch_arch: expected xsimd::neon64 to derive from xsimd::neon");
 

@@ -1,4 +1,4 @@
-// A/B microbench for Function::sorted() — the only bench exercising the sorted 1D path.
+// A/B microbench for Function::sorted(), the only bench exercising the sorted 1D path.
 // Used to verify AoS/SoA skeleton sharing is perf-neutral.
 
 #define ANKERL_NANOBENCH_IMPLEMENT
@@ -27,8 +27,8 @@ auto make_tanh_sharp1d() {
     return [](double x) { return std::tanh(50.0 * x); };
 }
 // Sharp tanh + tight tol pushes max_depth past the leaf-table build
-// threshold, so find_leaf_id runs the per-call descent fallback — the
-// slower of the two `sorted` regimes.
+// threshold, so find_leaf_id runs the per-call descent fallback. That fallback
+// is the slower of the two `sorted` regimes.
 auto make_tanh1000() {
     return [](double x) { return std::tanh(1000.0 * x); };
 }

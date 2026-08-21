@@ -1,4 +1,4 @@
-// arch_dispatch.cpp — runtime multi-architecture C-ABI entry points.
+// arch_dispatch.cpp: runtime multi-architecture C-ABI entry points.
 //
 // Selected by CMake when TREEWEAVE_C_MULTIARCH is ON. Compiled at the family
 // baseline -march; emits no SIMD itself, only a CPU-feature probe + indirect

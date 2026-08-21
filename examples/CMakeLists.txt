@@ -1,8 +1,8 @@
-# examples/CMakeLists.txt — C++ examples. Added via add_subdirectory() from the
+# examples/CMakeLists.txt: C++ examples. Added via add_subdirectory() from the
 # top-level CMakeLists, guarded by TREEWEAVE_BUILD_EXAMPLES there.
 
 # Keep example executables in the build root (where they lived before examples/
-# became its own subdirectory) rather than under build/examples/ — CI and docs
+# became its own subdirectory) rather than under build/examples/, CI and docs
 # invoke them as build/<example>.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 

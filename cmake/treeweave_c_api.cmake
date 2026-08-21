@@ -1,4 +1,4 @@
-# treeweave_c_api.cmake — C ABI (libtreeweave_c) for the new fit/options surface.
+# treeweave_c_api.cmake: C ABI (libtreeweave_c) for the new fit/options surface.
 # Builds a shared and a static library from src/capi/*.cpp (each per-(dtype,
 # input_dim) dispatch TU compiles in parallel) plus the extern "C" shim, and
 # wires the C smoke example. The global -march/-ffp-contract flags from the

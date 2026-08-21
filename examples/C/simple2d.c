@@ -1,4 +1,4 @@
-/* simple2d.c — 2D -> 1D scalar fit from C11.
+/* simple2d.c: 2D -> 1D scalar fit from C11.
  *
  * Mirrors examples/c++/simple2d.cpp: a Gaussian bump on the unit square.
  * Shows the scalar `treeweave_eval` and the AoS batch `treeweave_batch`
