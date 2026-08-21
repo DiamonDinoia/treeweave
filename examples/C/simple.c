@@ -1,4 +1,4 @@
-/* simple.c — minimal treeweave C API usage, compiled as C11 (not C++).
+/* simple.c: minimal treeweave C API usage, compiled as C11 (not C++).
  *
  * Doubles as the ABI smoke test: if this links and runs, the header is
  * C-clean and no C++ exception escaped the boundary. */
@@ -35,7 +35,7 @@ int main(void) {
 
     /* Evaluate fn on points in [0, 1] and print the maximum error. */
     /* Scalar eval at a few points; compare to the exact value. The by-value
-       treeweave_eval_1d returns the result directly — no output pointer, which
+       treeweave_eval_1d returns the result directly, with no output pointer, which
        is the ergonomic form for a 1D->1D fit (y = f(x)). */
     double max_abs_err = 0.0;
     for (int i = 0; i <= 10; ++i) {

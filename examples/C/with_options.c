@@ -1,4 +1,4 @@
-/* with_options.c — custom fit knobs and error reporting from C11.
+/* with_options.c: custom fit knobs and error reporting from C11.
  *
  * Mirrors examples/c++/with_options.cpp. Shows how to populate a
  * `treeweave_opts` (instead of passing NULL for the defaults), how to read
@@ -24,7 +24,7 @@ int main(void) {
     const double b = 5.0;
 
     /* Start from the documented defaults, then override a few knobs. Copying
-     * treeweave_default_opts() keeps any field we do not set at its default. */
+     * treeweave_default_opts() keeps every unset field at its default. */
     treeweave_opts opts;
     treeweave_default_opts(&opts);
     opts.tol_kind          = TREEWEAVE_ABSOLUTE_MAX;

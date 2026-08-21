@@ -1,4 +1,4 @@
-# treeweave_toolchain.cmake — language standard, build-type default, opt-in IPO,
+# treeweave_toolchain.cmake: language standard, build-type default, opt-in IPO,
 # and global -march/-mtune + FP-contraction flags.
 
 include_guard(GLOBAL)
@@ -89,7 +89,7 @@ set(TREEWEAVE_TUNE
 )
 # Emscripten's clang rejects -march=/-mtune= entirely; the only knob that
 # matters for WASM is SIMD128 (xsimd then auto-selects its `xsimd::wasm`
-# backend). No -mtune. -ffp-contract=fast (below) is fine — emcc is clang.
+# backend). No -mtune. -ffp-contract=fast (below) is fine, since emcc is clang.
 if(EMSCRIPTEN)
     set(_treeweave_arch_flags -msimd128)
 elseif(MSVC)
@@ -132,7 +132,7 @@ else()
 endif()
 add_compile_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})
 # GCC/Clang take -march on the link line too, for any link-time codegen.
-# MSVC/clang-cl /arch:* is compile-only — lld-link reads it as an input file
+# MSVC/clang-cl /arch:* is compile-only; lld-link reads it as an input file
 # and errors.
 if(NOT MSVC)
     add_link_options(${_treeweave_arch_flags} ${_treeweave_fp_flags})

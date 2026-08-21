@@ -70,7 +70,7 @@ void run_threadsafe_check(Fn &fn, const std::vector<double> &xp, const std::vect
     const std::size_t n = res_ref.size();
 
     // First call establishes the canonical threaded output. Repeated calls
-    // with the same chunking must match it bit-for-bit — that's how a race
+    // with the same chunking must match it bit-for-bit, that's how a race
     // would show up.
     auto res0 = run_chunked<Dim>(fn, xp, n);
     for (int rep = 1; rep < kRepeats; ++rep) {
@@ -80,7 +80,7 @@ void run_threadsafe_check(Fn &fn, const std::vector<double> &xp, const std::vect
 
     // Threaded vs serial reference: chunking changes per-leaf cnts which
     // changes polyfit's SIMD-batch / scalar-tail mix. Deterministic but
-    // path-dependent ~1 ULP drift — not a race. Bound it tightly.
+    // path-dependent ~1 ULP drift: not a race. Bound it tightly.
     double max_abs = 0.0, max_rel = 0.0;
     for (std::size_t i = 0; i < n; ++i) {
         const double d = std::abs(res0[i] - res_ref[i]);
@@ -91,7 +91,7 @@ void run_threadsafe_check(Fn &fn, const std::vector<double> &xp, const std::vect
     REQUIRE(max_rel < 1e-12);
 }
 
-// f32 helpers — separate from the f64 helpers to keep the template
+// f32 helpers: separate from the f64 helpers to keep the template
 // arithmetic in the correct precision.
 
 auto make_inputs_1d_f32(float a, float b, std::size_t n, std::uint32_t seed) -> std::vector<float> {

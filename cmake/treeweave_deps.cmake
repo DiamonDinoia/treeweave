@@ -1,11 +1,11 @@
-# treeweave_deps.cmake — fetch header-only dependencies and mark their include
+# treeweave_deps.cmake: fetch header-only dependencies and mark their include
 # trees as system headers so consumer warnings (-Werror) don't fire on them.
 
 include_guard(GLOBAL)
 include(FetchContent)
 
 # Stash analysis vars and arch/FP directory flags before fetching deps so they
-# don't inherit our -Werror/-march settings. Restored at bottom of file.
+# don't inherit the treeweave -Werror/-march settings. Restored at bottom of file.
 set(_treeweave_saved_clang_tidy "${CMAKE_CXX_CLANG_TIDY}")
 set(_treeweave_saved_cppcheck "${CMAKE_CXX_CPPCHECK}")
 unset(CMAKE_CXX_CLANG_TIDY)

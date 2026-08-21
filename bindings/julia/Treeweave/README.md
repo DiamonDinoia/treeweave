@@ -1,17 +1,17 @@
 # Treeweave.jl
 
-Julia bindings for [treeweave](https://github.com/DiamonDinoia/treeweave) — a
+Julia bindings for [treeweave](https://github.com/DiamonDinoia/treeweave), a
 piecewise-polynomial function approximator for smooth functions over
-axis-aligned box domains in 1–3 dimensions.
+axis-aligned box domains in 1-3 dimensions.
 
 ## Requirements
 
 - Julia 1.9+
-- `libtreeweave_c` (the C ABI layer over the C++ library). For a released version, `Pkg.add` downloads the matching prebuilt from the GitHub Release automatically (`LIBTREEWEAVE_C` env var overrides; in-repo developers get the sibling `build*/libtreeweave_c.<ext>` automatically).
+- `libtreeweave_c`, the C ABI over the C++ library. For a released version, `Pkg.add` downloads the matching prebuilt from the GitHub Release. `LIBTREEWEAVE_C` overrides that choice, and an in-repo checkout picks up the sibling `build*/libtreeweave_c.<ext>`.
 
 ### Installing
 
-Distribution is **GitHub Releases only** (not the General registry):
+The package ships through GitHub Releases only, not the General registry:
 
 ```julia
 using Pkg
@@ -37,7 +37,7 @@ b(0.5)                       # evaluate a point
 b2 = fit((x,y) -> (sin(x)*cos(y), x+y, x*y), [0.0,0.0], [1.0,1.0], 1e-8)
 b2([0.3, 0.7])               # Vector{Float64} of length 3
 
-# Batch eval (100 points, 2D) — the handle is called directly
+# Batch eval (100 points, 2D): the handle is called directly
 X = rand(100, 2)
 R  = b2(X)                   # 100×3 Matrix{Float64}
 Rt = b2(X; transposed=true)  # 3×100 (struct-of-arrays layout)
@@ -65,8 +65,8 @@ r  = b(xs; sorted=true)      # Vector{Float64}
 | 1    | `f(x::T)`               | scalar              | indexable length-`out_dim`            |
 | > 1  | `f(x1::T, x2::T, …)`   | scalar              | indexable length-`out_dim`            |
 
-Coordinates are passed as separate scalar arguments (splatted from an
-`NTuple`), so a 2D function is simply `(x, y) -> ...`.
+Treeweave.jl passes the coordinates as separate scalar arguments, splatted from
+an `NTuple`, so a 2D function reads `(x, y) -> ...`.
 
 ### `TreeweaveOptions`
 
@@ -79,7 +79,7 @@ TreeweaveOptions(;
     min_uniform_depth      = 0)                      # force uniform refinement up to this depth
 ```
 
-### Evaluation — the handle is called directly
+### Evaluation: call the handle directly
 
 | call                         | description                                          |
 |------------------------------|------------------------------------------------------|

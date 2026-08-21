@@ -1,4 +1,4 @@
-% example_1d.m — 1-D scalar fit: exp(0.5*x)+sin(3*x) on [0,1]
+% example_1d.m: 1-D scalar fit of exp(0.5*x)+sin(3*x) on [0,1]
 %
 % Before running: the build tree (where treeweave_mex.mex/mexa64 and the
 % tw_*.m stubs live) must already be on the MATLAB/Octave path, e.g.:

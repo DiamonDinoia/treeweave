@@ -1,7 +1,8 @@
 name: Unstable headers
 
-# Rolling, arch-independent C++ headers bundle from the latest GREEN main CI —
-# the "bleeding edge, no CMake" companion to the stable release asset (issue #20).
+# Rolling, arch-independent C++ headers bundle from the latest GREEN main CI.
+# This bundle is the "bleeding edge, no CMake" companion to the stable release
+# asset (issue #20).
 #
 # Called `unstable` (not `nightly`) on purpose: it refreshes on EVERY green main
 # CI, not on a nightly schedule, so it always reflects current main.
@@ -14,7 +15,7 @@ name: Unstable headers
 #   .../releases/download/unstable/treeweave-cxx-headers.tar.gz
 #
 # Because it's a prerelease, GitHub's `/releases/latest/` (used for the stable
-# download) keeps ignoring it — stable users are unaffected.
+# download) keeps ignoring it: stable users are unaffected.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -67,6 +68,6 @@ jobs:
           if ! gh release view unstable --repo "$repo" >/dev/null 2>&1; then
             gh release create unstable --repo "$repo" --prerelease \
               --title "treeweave unstable (main)" \
-              --notes "Rolling C++ headers bundle built from the latest green main CI. Unstable — for a pinned/stable build use a tagged release (see docs/install.rst)."
+              --notes "Rolling C++ headers bundle built from the latest green main CI. Unstable: for a pinned or stable build use a tagged release (see docs/install.rst)."
           fi
           gh release upload unstable --repo "$repo" --clobber treeweave-cxx-headers.tar.gz

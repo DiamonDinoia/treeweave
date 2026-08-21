@@ -24,7 +24,7 @@ auto random_points(std::size_t n, double lo, double hi, unsigned seed) -> std::v
     return v;
 }
 
-// kDeep*: depth pins that spill the leaf table past L1/L2 (1D:14, 2D:8, 3D:5 — at/below 64K-entry cap).
+// kDeep*: depth pins that spill the leaf table past L1/L2 (1D:14, 2D:8, 3D:5, at/below 64K-entry cap).
 constexpr int kDeep1D = 14;
 constexpr int kDeep2D = 8;
 constexpr int kDeep3D = 5;
@@ -39,7 +39,7 @@ void eval_1d_runge_f64(benchmark::State &state) {
     }
 }
 
-// 1D — Runge, deep uniform tree (large f64 leaf table; L1/L2-spilling lookup).
+// 1D: Runge, deep uniform tree (large f64 leaf table; L1/L2-spilling lookup).
 void eval_1d_runge_deep_f64(benchmark::State &state) {
     auto fn  = treeweave::fit([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10,
                               treeweave::options{.min_uniform_depth = kDeep1D});
@@ -51,7 +51,7 @@ void eval_1d_runge_deep_f64(benchmark::State &state) {
     }
 }
 
-// 1D — Runge in f32, deep uniform tree (large f32 leaf table; the gather path).
+// 1D: Runge in f32, deep uniform tree (large f32 leaf table; the gather path).
 void eval_1d_runge_deep_f32(benchmark::State &state) {
     auto fn  = treeweave::fit([](float x) { return 1.0F / (1.0F + 25.0F * x * x); }, -1.0F, 1.0F, /*tol=*/1e-6,
                               treeweave::options{.min_uniform_depth = kDeep1D});
@@ -91,7 +91,7 @@ void eval_3d_smooth_f64(benchmark::State &state) {
     }
 }
 
-// 2D -> 1D — bump, deep uniform tree (large 2D leaf table).
+// 2D -> 1D: bump, deep uniform tree (large 2D leaf table).
 void eval_2d_bump_deep_f64(benchmark::State &state) {
     auto fn = treeweave::fit(
         [](std::array<double, 2> x) -> std::array<double, 1> {
@@ -106,7 +106,7 @@ void eval_2d_bump_deep_f64(benchmark::State &state) {
     }
 }
 
-// 3D -> 1D — smooth, deep uniform tree (large 3D leaf table).
+// 3D -> 1D: smooth, deep uniform tree (large 3D leaf table).
 void eval_3d_smooth_deep_f64(benchmark::State &state) {
     auto fn = treeweave::fit(
         [](std::array<double, 3> x) -> std::array<double, 1> {
@@ -122,7 +122,7 @@ void eval_3d_smooth_deep_f64(benchmark::State &state) {
     }
 }
 
-// 2D -> 3D — vector-valued output.
+// 2D -> 3D: vector-valued output.
 void eval_2d_to_3d_vector_f64(benchmark::State &state) {
     auto fn = treeweave::fit(
         [](std::array<double, 2> x) -> std::array<double, 3> {

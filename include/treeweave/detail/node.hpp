@@ -22,7 +22,7 @@ namespace treeweave::detail {
 /// during descent from the subtree's `(lo, hi)` bounds, so the node carries
 /// no per-axis geometry. `first_child_idx == kLeafSentinel` marks a leaf;
 /// `poly_eval_id` indexes the per-Function polyfits table and is meaningful
-/// only on leaves. 8 nodes per cache line in every dim — descent loads few
+/// only on leaves. 8 nodes per cache line in every dim, so descent loads few
 /// cachelines.
 template <class Func, std::size_t Degree, EvalPolicy Policy = EvalPolicy::Balanced>
 class Node {
@@ -111,7 +111,7 @@ class Node {
 };
 
 // Lock the 8-B node invariant. If this fires, an extra field was added
-// or alignment regressed — descent load-volume depends on 8 nodes per
+// or alignment regressed. Descent load-volume depends on 8 nodes per
 // cache line.
 namespace detail_node_size_check {
 struct ScalarFn {

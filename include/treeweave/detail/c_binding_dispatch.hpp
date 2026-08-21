@@ -1,4 +1,4 @@
-// c_binding_dispatch.hpp — definition of make_eval_for<Arch, T, IN, Deg>.
+// c_binding_dispatch.hpp: definition of make_eval_for<Arch, T, IN, Deg>.
 //
 // No include guard / namespace: included at treeweave::capi scope (NOT inside
 // the anonymous namespace) so the instantiated symbol has external linkage

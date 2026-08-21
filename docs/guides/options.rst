@@ -1,11 +1,12 @@
 Fit options
 ===========
 
-Everything here is optional — the defaults are tuned to be good out of the box.
+Every option here has a default that works. Set one only to override it.
 
-Options are documented here once. Language guides show how to pass them, and
-use each language's naming style: C++ uses ``tol_kind``, Python/Julia/MATLAB use
-``tol_kind``, JavaScript uses ``tolKind``, and C/Fortran use the C ABI fields.
+This page documents each option once. The language guides show how to pass
+them, in each language's own naming style. C++, Python, Julia and MATLAB spell
+it ``tol_kind``, JavaScript spells it ``tolKind``, and C and Fortran use the C
+ABI fields.
 
 Common fit options
 ------------------
@@ -21,7 +22,7 @@ These apply to every language binding:
      - Meaning
    * - ``tol_kind``
      - ``RelativeMax``
-     - How ``tol`` is interpreted (see :ref:`tolkind`).
+     - How treeweave interprets ``tol`` (see :ref:`tolkind`).
    * - ``max_depth``
      - ``50``
      - Tree-depth ceiling. Hitting it without converging throws
@@ -45,9 +46,9 @@ These apply to every language binding:
        leaf-table fast path (see :doc:`performance`). ``0`` = tol-based
        refinement only.
 
-The leaf polynomial **degree** is not a runtime option: in C++ it is a template
-parameter (``treeweave::fit<N>``, default 7); the C ABI auto-selects a
-register-optimal degree for the detected CPU.
+The leaf polynomial degree is not a runtime option. In C++ it is a template
+parameter, ``treeweave::fit<N>``, default 7. The C ABI picks a register-optimal
+degree for the detected CPU.
 
 Language-specific options
 -------------------------
@@ -63,8 +64,8 @@ Some bindings add convenience fields around the shared C ABI:
      - Meaning
    * - Python, JavaScript
      - ``dim`` / ``out_dim`` or ``outDim``
-     - Input/output dimensions can be inferred by probing the callback; set
-       them explicitly when inference is ambiguous or expensive.
+     - A probe of the callback infers the input/output dimensions; set them
+       explicitly when the probe is ambiguous or expensive.
    * - Python, JavaScript
      - ``dtype``
      - Select ``f64``/``float64`` or ``f32``/``float32``.
@@ -97,9 +98,9 @@ Some bindings add convenience fields around the shared C ABI:
    * - ``AbsoluteL2``
      - sample-grid L2 absolute error
    * - ``RelativeTail``
-     - 1-D only — relative coefficient-tail estimate
+     - 1-D only, relative coefficient-tail estimate
    * - ``AbsoluteTail``
-     - 1-D only — absolute coefficient-tail estimate
+     - 1-D only, absolute coefficient-tail estimate
 
 Switch to an ``Absolute*`` kind when ``f`` can be zero or when relative accuracy
 is not meaningful. In the C ABI these are the ``treeweave_tol_kind_t`` enum

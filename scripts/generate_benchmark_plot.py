@@ -4,8 +4,8 @@
 Each benchmark in the zeta family (one per binding: C, C++, Fortran, Python,
 Julia, Octave, JS) writes a YAML file when the ``TREEWEAVE_BENCH_YAML``
 environment variable names a path; see examples/c++/zeta_bench.cpp for the
-schema. This script loads every ``*.yaml`` in ``--results-dir`` — keyed by each
-file's own ``language`` field, not its path — and emits a family of SVG bar
+schema. This script loads every ``*.yaml`` in ``--results-dir``, keyed by each
+file's own ``language`` field and not by its path, then emits a family of SVG bar
 charts to ``--output-dir``.
 
 Two metrics are charted, both derived from the same per-mode YAML block
@@ -21,7 +21,7 @@ and in two framings:
 
 The bars are **horizontal** (languages on the y-axis): the language set grows
 downward as new wrappers are added, with no x-axis crowding. The x-axis is
-log-scaled — throughput spans orders of magnitude across a CI matrix that
+log-scaled, because throughput spans orders of magnitude across a CI matrix that
 spreads languages over different runners, but each *pair* of bars within one
 language is measured in the same process, so the within-language comparison is
 the meaningful one (absolute Mevals/s across languages is not). On the
@@ -30,7 +30,7 @@ is labelled with the within-language **speedup** instead (native = 1× baseline,
 treeweave = N×); the throughput chart also marks the 1 Meval/s line.
 
 The README embeds the three treeweave-vs-native throughput charts (single,
-batch, sorted) — even a minimal native Riemann-zeta eval is tens-to-hundreds of
+batch, sorted). Even a minimal native Riemann-zeta eval is tens-to-hundreds of
 pow()s, so treeweave wins in every mode; the docs guide embeds the fuller latency
 and batch-vs-sorted set.
 
@@ -55,9 +55,9 @@ import yaml  # noqa: E402
 
 # ── Styling ──────────────────────────────────────────────────────────────────
 
-# Fixed display order (top-to-bottom) across all charts; only languages actually
-# present in the results are drawn (a missing one leaves no gap, since a log
-# x-axis has no meaningful zero bar).
+# Fixed display order (top-to-bottom) across all charts. The plot draws only the
+# languages present in the results; a missing one leaves no gap, since a log
+# x-axis has no meaningful zero bar.
 LANGUAGE_ORDER = ["c", "c++", "fortran", "python", "julia", "octave", "js"]
 
 LANGUAGE_LABELS = {
@@ -144,7 +144,7 @@ def grouped_barh(
     ``series`` is a list of (legend label, per-language values, colour). Bars are
     annotated with ``_fmt(value, unit)`` by default; pass ``bar_labels`` (one
     string list per series, parallel to ``langs``) to label them with something
-    other than the bar's own value — e.g. the speedup ``×`` while the axis still
+    other than the bar's own value, e.g. the speedup ``×`` while the axis still
     shows absolute throughput. ``vline`` draws a labelled reference line at the
     given x.
     """
@@ -218,7 +218,7 @@ def chart_tw_vs_native(records, mode: str, metric: str, out: Path) -> None:
             nat_vals.append(_ns_per_eval(nat))
 
     # The axis carries the absolute metric; label the bars with the within-language
-    # speedup instead (native = 1× baseline, treeweave = ×) — identical for both
+    # speedup instead (native = 1× baseline, treeweave = ×), identical for both
     # framings, since the latency ratio is the throughput ratio.
     bar_labels = [
         [_fmt(s, "speedup") for s in speedups],
@@ -231,11 +231,11 @@ def chart_tw_vs_native(records, mode: str, metric: str, out: Path) -> None:
             "mevals",
             "higher is better",
         )
-        title = f"Riemann-zeta {MODES[mode]}\nthroughput — {sense}"
+        title = f"Riemann-zeta {MODES[mode]}\nthroughput, {sense}"
         vline = (1.0, "1 Meval/s")
     else:
         xlabel, unit, sense = "Latency (ns/eval, log scale)", "ns", "lower is better"
-        title = f"Riemann-zeta {MODES[mode]}\nlatency — {sense}"
+        title = f"Riemann-zeta {MODES[mode]}\nlatency, {sense}"
 
     grouped_barh(
         out,
@@ -276,10 +276,10 @@ def chart_sorted_vs_unsorted(records, metric: str, out: Path) -> None:
             "mevals",
             "higher is better",
         )
-        title = f"treeweave batch vs sorted batch\nthroughput — {sense}"
+        title = f"treeweave batch vs sorted batch\nthroughput, {sense}"
     else:
         xlabel, unit, sense = "Latency (ns/eval, log scale)", "ns", "lower is better"
-        title = f"treeweave batch vs sorted batch\nlatency — {sense}"
+        title = f"treeweave batch vs sorted batch\nlatency, {sense}"
 
     grouped_barh(
         out,
@@ -294,7 +294,7 @@ def chart_sorted_vs_unsorted(records, metric: str, out: Path) -> None:
 # README embeds the three throughput tw-vs-native charts (single/multi/sorted);
 # the rest are for the docs performance guide.
 def build_all(records, output_dir: Path) -> None:
-    # treeweave vs native — throughput + latency, per mode.
+    # treeweave vs native: throughput + latency, per mode.
     for mode in ("single_eval", "multi_eval", "sorted_eval"):
         short = mode.replace("_eval", "")
         chart_tw_vs_native(

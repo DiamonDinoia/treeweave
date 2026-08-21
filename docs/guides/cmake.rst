@@ -96,7 +96,7 @@ Installed package
 
    cmake --preset dev-release
    cmake --build build/dev-release --parallel
-   cmake --install build/dev-release --prefix /your/prefix
+   cmake --install build/dev-release --prefix /install/prefix
 
 .. code-block:: cmake
 
@@ -106,14 +106,14 @@ Installed package
 The header-only C++ API is not part of the installed
 ``find_package(treeweave)`` package because it depends on FetchContent-only
 headers. Consume it in-tree via FetchContent or ``add_subdirectory``. The
-installable surface is the C ABI: ``treeweave::treeweave_c`` and
+installable part is the C ABI: ``treeweave::treeweave_c`` and
 ``treeweave::treeweave_c_static``.
 
 Source build
 ------------
 
-Requirements: a C++20 compiler and CMake 3.25 or newer. Dependencies are
-fetched automatically.
+Requirements: a C++20 compiler and CMake 3.25 or newer. CMake fetches the
+dependencies automatically.
 
 .. code-block:: bash
 

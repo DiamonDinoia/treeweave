@@ -1,11 +1,11 @@
-"""decorator_1d.py — @fit(a, b, tol) replaces a function with its approximation."""
+"""decorator_1d.py: @fit(a, b, tol) replaces a function with its approximation."""
 
 import math
 import numpy as np
 import treeweave
 
 
-# Same options as fit(f, a, b, tol); the callable is simply omitted.
+# Same options as fit(f, a, b, tol), with the callable omitted.
 @treeweave.fit(0.0, 1.0, tol=1e-10)
 def expensive(x):
     """A slow callable, evaluated once per fit sample instead of per call."""

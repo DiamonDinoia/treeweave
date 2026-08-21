@@ -26,8 +26,8 @@
 using treeweave::fit;
 using treeweave::options;
 
-// Deterministic seeds in tests are intentional: we want reproducible inputs
-// for max-rel-error sweeps.
+// Deterministic seeds in tests are intentional: the max-rel-error sweeps need
+// reproducible inputs.
 // NOLINTBEGIN(cert-msc51-cpp,cert-msc32-c)
 namespace {
 constexpr int N_SAMPLE = 5000;
@@ -196,8 +196,8 @@ TEST_CASE("Vector-valued 2D -> 2D output", "[treeweave][vector-output]") {
 TEST_CASE("Sharp tanh step forces subdivision", "[treeweave][sharp]") {
     auto f  = [](double x) { return std::tanh(50.0 * (x - 0.3)); };
     auto fn = fit<8>(f, 0.0, 1.0, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 30});
-    // Check away from the exact step where we expect subdivision to give
-    // good accuracy; rel_err blows up near zero-crossings so use abs.
+    // Check away from the exact step, where subdivision gives good accuracy.
+    // rel_err blows up near zero-crossings, so use abs.
     std::mt19937                           gen(4);
     std::uniform_real_distribution<double> d(1e-3, 1.0 - 1e-3);
     double                                 mx = 0.0;
@@ -226,9 +226,9 @@ TEST_CASE("sqrt|x - 0.5| -- not C^1, max_depth guards runaway", "[treeweave][sha
     REQUIRE_THROWS_AS(
         fit<8>(f, 0.0, 1.0, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4}),
         treeweave::MaxDepthExceeded);
-    // Generous max_depth + accept best-effort leaves at the singular panel
-    // — `sqrt|x-0.5|` is not C^1 at 0.5, so that panel will never reach
-    // tol=1e-10. We only need the rest of the domain to be usable.
+    // Generous max_depth + accept best-effort leaves at the singular panel.
+    // `sqrt|x-0.5|` is not C^1 at 0.5, so that panel never reaches tol=1e-10.
+    // Only the rest of the domain has to be usable.
     auto fn =
         fit<10>(f, 0.0, 1.0, /*tol=*/1e-10,
                 options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 50, .allow_max_depth_leaves = true});
@@ -257,7 +257,7 @@ TEST_CASE("Batch vs single evaluation agree", "[treeweave][batch]") {
     std::vector<double> batch(N);
     fn(xs.data(), batch.data(), N);
 
-    // Batch path uses polyfit's SIMD Horner, scalar path uses scalar Horner —
+    // Batch path uses polyfit's SIMD Horner, scalar path uses scalar Horner,
     // identical mathematically but FMA reordering can drop a ULP.
     constexpr double ulp = std::numeric_limits<double>::epsilon();
     for (std::size_t i = 0; i < static_cast<std::size_t>(N); ++i) {
@@ -453,7 +453,7 @@ TEST_CASE("SoA batch overload matches AoS bitwise (1D in, 2D out)", "[treeweave]
 }
 
 // The SoA batch overload is gated on `output_dim > 1`. For scalar
-// outputs, AoS and SoA coincide — users pass `value_type*` directly.
+// outputs, AoS and SoA coincide: users pass `value_type*` directly.
 
 TEST_CASE("Batch vs single evaluation agree -- 3D scalar output", "[treeweave][batch][3d]") {
     auto f = [](std::array<double, 3> x) -> std::array<double, 1> {
@@ -510,8 +510,8 @@ TEST_CASE("Batch vs single evaluation agree across L4 tile boundary", "[treeweav
 TEST_CASE("Memory budget aborts a runaway near-singular fit", "[treeweave][memory-budget]") {
     // 3D Yukawa with a *very* tight tolerance over a domain straddling the
     // origin singularity refines aggressively. Each leaf is ~6 KiB
-    // (deg=8 in 3D), so a 1 MiB budget caps at ~170 leaves before bailing
-    // — well below what the smooth-tol target would otherwise pursue.
+    // (deg=8 in 3D), so a 1 MiB budget caps at ~170 leaves before bailing,
+    // well below what the smooth-tol target would otherwise pursue.
     auto f = [](std::array<double, 3> x) -> std::array<double, 1> {
         const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
         return {std::exp(-r) / r};
@@ -585,7 +585,7 @@ TEST_CASE("1D smooth fit on far-shifted domain centred at 1e6", "[treeweave][lar
 }
 
 TEST_CASE("2D smooth fit on large asymmetric domain", "[treeweave][large-domain][2d]") {
-    // Wide non-square box with mismatched per-axis scales — exercises the
+    // Wide non-square box with mismatched per-axis scales, exercises the
     // anisotropic-domain top-level paneling.
     auto f = [](std::array<double, 2> x) -> std::array<double, 1> {
         return {std::sin(1e-3 * x[0]) * std::cos(1e-2 * x[1])};
@@ -606,7 +606,7 @@ TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][mem
     REQUIRE(treeweave::detail::auto_memory_budget_mib(3) == 16); // 3D
 
     // Then exercise the cap mechanism on a near-singular Yukawa-like 3D fit at
-    // a looser tol (~2 MiB tree, ~13 s at -O0 — fast even on the slowest Debug
+    // a looser tol (~2 MiB tree, ~13 s at -O0, fast even on the slowest Debug
     // toolchains). max_memory_mib is integer MiB, so a 1 MiB cap is burst by
     // the ~2 MiB tree mid-fit and throws; an 8 MiB cap completes the same fit.
     auto f = [](std::array<double, 3> x) -> std::array<double, 1> {
@@ -643,7 +643,7 @@ TEST_CASE("eval_pack matches scalar operator() across small N", "[treeweave][pac
 
 TEST_CASE("eval_scatter_sorted matches per-pair scalar evals", "[treeweave][scatter]") {
     // Use a single Func type (std::function) so all fits share a Function
-    // specialization — eval_scatter_sorted takes a span of like pointers.
+    // specialization: eval_scatter_sorted takes a span of like pointers.
     using ff = std::function<double(double)>;
     std::vector<ff> const exact{ff{[](double x) { return std::sin(3.0 * x); }},
                                 ff{[](double x) { return std::cos(7.0 * x); }},
@@ -779,7 +779,7 @@ TEST_CASE("eval_scatter_sorted counting-sort matches per-pair scalar", "[treewea
 }
 
 // Pin the leaf-table build threshold: fits that land at max_depth up
-// to 16 (in 1D) must still get a table — the descent fallback otherwise
+// to 16 (in 1D) must still get a table, the descent fallback otherwise
 // drops IPC from ~4.5 to ~1.9 and lights up branch-mispredict (measured
 // in bench_pack_scatter on tanh500_deep / tanh1000_deep).
 TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table]") {
@@ -788,7 +788,7 @@ TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table
     auto fn = fit<6>([](double x) { return std::tanh(500.0 * x); }, -1.0, 1.0, /*tol=*/1e-12);
     REQUIRE(fn.has_fast_quantize());
 
-    // Sanity at the previously-supported depth too — must not regress.
+    // Sanity at the previously-supported depth too, must not regress.
     auto shallow = fit<8>([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10);
     REQUIRE(shallow.has_fast_quantize());
 }
@@ -799,7 +799,7 @@ TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
     auto f  = [](double x) { return std::cos(x); };
     auto fn = fit<8>(f, 0.0, 1.0, /*tol=*/1e-3, options{.min_uniform_depth = 2});
 
-    // Leaf table is live — driving condition for the SIMD-quantize
+    // Leaf table is live: driving condition for the SIMD-quantize
     // fast path in the batch eval pipeline.
     REQUIRE(fn.has_fast_quantize());
 
@@ -813,7 +813,7 @@ TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
     };
     REQUIRE(count_leaves() >= 4u);
 
-    // Default (no forcing) on the same fit lands at a single leaf —
+    // Default (no forcing) on the same fit lands at a single leaf,
     // proves the knob is the cause of the multi-leaf result above.
     auto        fn_default     = fit<8>(f, 0.0, 1.0, /*tol=*/1e-3);
     std::size_t default_leaves = 0;
@@ -825,7 +825,7 @@ TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
 
 // Edge cases for eval_scatter_sorted: n=0 (no-op), n=1 (single pair),
 // single-fit-id (all runs collapse to one), and a sparse-id case
-// (gaps in fit-id space — caller pads n_fits to cover the max id).
+// (gaps in fit-id space: caller pads n_fits to cover the max id).
 TEST_CASE("eval_scatter_sorted edge cases", "[treeweave][scatter][edge]") {
     using ff = std::function<double(double)>;
     std::vector<ff> const exact{ff{[](double x) { return std::sin(x); }}, ff{[](double x) { return std::cos(x); }}};
@@ -859,7 +859,7 @@ TEST_CASE("eval_scatter_sorted edge cases", "[treeweave][scatter][edge]") {
 // TST1 / COV-G3: f32 parity + sorted path; tol_f*100 tracks fit quality tightly.
 TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[treeweave][f32]") {
     constexpr float  tol_f = 1e-5F;
-    constexpr double tol_d = 1e-5; // same value, double — passed to fit<>(tol)
+    constexpr double tol_d = 1e-5; // same value, double, passed to fit<>(tol)
     // Smooth, comfortably non-zero, and f32-representable on [0, 1].
     auto        func_exact = [](float x) { return std::exp(0.5F * x) + std::sin(3.0F * x); };
     const float a = 0.0F, b = 1.0F;
@@ -925,7 +925,7 @@ TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[tr
     }
 }
 TEST_CASE("Complex-valued scalar fit: double in, std::complex out", "[treeweave][complex][1d]") {
-    // Issue #23: scalar `double` in, `std::complex<double>` out — no manual
+    // Issue #23: scalar `double` in, `std::complex<double>` out, no manual
     // array (un)packing at the fit or eval boundary.
     using cd = std::complex<double>;
     auto g   = [](double x) -> cd { return {std::sin(3.0 * x), std::exp(-x)}; };
@@ -952,7 +952,7 @@ TEST_CASE("Complex-valued scalar fit: double in, std::complex out", "[treeweave]
     for (std::size_t i = 0; i < xs.size(); ++i) {
         REQUIRE(std::abs(batch[i] - g(xs[i])) < 1e-8);
         REQUIRE(srt[i] == batch[i]);
-        // The modulus of the fit tracks the modulus of the target — i.e. the
+        // The modulus of the fit tracks the modulus of the target, i.e. the
         // complex value (not just each real channel) is a faithful interpolant.
         REQUIRE(std::abs(batch[i]) == Catch::Approx(std::abs(g(xs[i]))).margin(1e-8));
     }
@@ -963,7 +963,7 @@ TEST_CASE("Complex-valued scalar fit: float value_type", "[treeweave][complex][1
     // float in, std::complex<float> out, batch over a std::complex<float> buffer.
     using cf = std::complex<float>;
     auto g   = [](float x) -> cf { return {std::sin(3.0F * x), std::exp(-x)}; };
-    // 1e-4 is a realistic f32 target — a tighter tol hits float epsilon in the
+    // 1e-4 is a realistic f32 target: a tighter tol hits float epsilon in the
     // relative convergence check and over-panels past the auto memory budget.
     auto fn = fit(g, 0.1F, 2.0F, /*tol=*/1e-4);
 
@@ -980,7 +980,7 @@ TEST_CASE("Complex-valued scalar fit: float value_type", "[treeweave][complex][1
 
 TEST_CASE("Scalar double input with array output routes through ND path", "[treeweave][complex][1d]") {
     // Issue #23 part (a): a plain `double` domain with vector output no longer
-    // trips the scalar-input static_assert — it auto-wraps to std::array<T,1>.
+    // trips the scalar-input static_assert, it auto-wraps to std::array<T,1>.
     auto       h   = [](double x) -> std::array<double, 2> { return {x * x, std::cos(x)}; };
     auto       fn  = fit(h, 0.0, 1.0, /*tol=*/1e-10);
     const auto out = fn(0.37);

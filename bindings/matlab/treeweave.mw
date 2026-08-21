@@ -1,21 +1,23 @@
-% treeweave.mw — mwrap source of truth for the treeweave MATLAB binding.
+% treeweave.mw: mwrap source of truth for the treeweave MATLAB binding.
 %
 % This is the ONLY hand-edited MEX source. mwrap turns it into:
-%   * treeweave_mex_gen.cpp  — the MEX gateway (generated into the build tree);
-%   * tw_*.m              — thin per-function stubs (generated into the build tree).
-% Neither is committed: the CMake build (bindings/matlab/CMakeLists.txt) fetches
-% mwrap via CPM and regenerates both from this file on every build. The
+%   * treeweave_mex_gen.cpp: the MEX gateway;
+%   * tw_*.m: thin per-function stubs.
+% Both are committed under bindings/matlab/generated/ so a build needs no mwrap.
+% With TREEWEAVE_MATLAB_USE_PREGENERATED=OFF the CMake build
+% (bindings/matlab/CMakeLists.txt) fetches mwrap via CPM and regenerates both
+% from this file, through the treeweave_mw_regen target. The
 % user-facing classdef treeweave.m wraps those tw_*.m stubs, storing the opaque
 % treeweave_t handle in its `mwptr` property (mwrap's R2008OO convention).
 %
-% Equivalent manual regeneration (the build does this for you, then compiles the
+% Equivalent manual regeneration (the regen build runs this, then compiles the
 % mex with -DR2008OO):
 %   mwrap -mex treeweave_mex -c treeweave_mex_gen.cpp -mb treeweave.mw
 %
 % Design notes:
 %   * The handle is an mwrap *object pointer* (treeweave_function*, == treeweave_t).
 %     mwrap stores it losslessly as a string and, under -DR2008OO, reads it
-%     back from a wrapper class's `mwptr` property — no lossy double round-trip.
+%     back from a wrapper class's `mwptr` property, with no lossy double round-trip.
 %   * The user's function_handle is handed to C via the mxArray pass-through:
 %     an `mxArray` argument maps to `const mxArray*`, so the C trampoline can
 %     feval it during the fit.
@@ -31,7 +33,7 @@ $[
 #include <math.h>
 
 /* ------------------------------------------------------------------ */
-/* Fit trampoline state (file-static — safe because MEX is             */
+/* Fit trampoline state (file-static, safe because MEX is              */
 /* single-threaded and treeweave_fit is synchronous / blocking).      */
 /* ------------------------------------------------------------------ */
 struct TrampState {
@@ -45,7 +47,7 @@ struct TrampState {
 /*
  * C callback invoked by treeweave_fit for every Chebyshev sample. Builds a
  * 1×input_dim row vector and calls the handle via mexCallMATLABWithTrap (NOT
- * mexCallMATLAB) — the Trap variant returns a non-NULL mxArray* exception
+ * mexCallMATLAB). The Trap variant returns a non-NULL mxArray* exception
  * instead of longjmping, preserving the C++ call stack of treeweave_fit. On
  * any error it stashes the exception, flags errored, and fills y with NaN.
  */
@@ -201,7 +203,7 @@ $]
 % -----------------------------------------------------------------------
 % Single-point eval. `self` is a treeweave (its mwptr holds the handle).
 % NOTE: the generated gateway reads every scalar via mxWrapGetScalar, which
-% requires mxDOUBLE_CLASS — so the .m stubs must pass plain doubles (no
+% requires mxDOUBLE_CLASS, so the .m stubs must pass plain doubles (no
 % int32/int64 casts) and the C side casts them.
 @function [y] = tw_eval1(self, x, output_dim)
 # tw_eval1_w(treeweave_function* self, double[] x, output double[output_dim] y, int output_dim);

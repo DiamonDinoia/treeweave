@@ -1,11 +1,12 @@
 C
 =
 
-``libtreeweave_c`` is the installable C surface: ``treeweave.h`` header plus a shared
-and static library. The prebuilt binary dispatches across the x86 SIMD ladder at runtime —
-compiling from source does not add meaningful performance for C consumers.
-Prefer the binary, if it does not work for your platform, build from source.
-Feel free to open an issue if you need a prebuilt binary for your platform.
+``libtreeweave_c`` is the installable C library. It ships the ``treeweave.h``
+header, a shared library and a static library. The prebuilt binary dispatches
+across the x86 SIMD ladder at runtime, so a source build runs no faster for a C
+consumer.
+Prefer the binary; build from source only when no binary covers the target
+platform. Open an issue to request a prebuilt binary for another platform.
 See :doc:`dispatch`.
 
 Install
@@ -100,17 +101,17 @@ Evaluate
    void treeweave_sorted    (treeweave_t f, const double *x, double *res, size_t n);
    void treeweave_transposed(treeweave_t f, const double *x, double *const *soa, size_t n);
 
-- ``eval`` — one point.
-- ``batch`` — ``n`` points, array-of-structs (interleaved) layout.
-- ``sorted`` — 1-D fast path for ascending inputs.
-- ``transposed`` — struct-of-arrays output for multi-output fits.
+- ``eval``: one point.
+- ``batch``: ``n`` points, array-of-structs (interleaved) layout.
+- ``sorted``: 1-D fast path for ascending inputs.
+- ``transposed``: struct-of-arrays output for multi-output fits.
 
 Each has a ``treeweavef_*`` ``float`` twin.
 
-Out-of-domain handling is uniform across all eval paths: evaluating exactly at
-the upper corner ``b`` returns the boundary value, and every other point outside
-``[a, b]`` — below ``a``, above ``b``, or ``NaN``/±Inf inputs — yields ``NaN``.
-The batch hot path stays branchless (the domain test compiles to a SIMD mask).
+Every eval path handles out-of-domain input the same way. A point exactly at
+the upper corner ``b`` returns the boundary value. Points below ``a``, points
+above ``b``, and ``NaN`` or ±Inf inputs all yield ``NaN``. The batch hot path
+stays branchless, because the domain test compiles to a SIMD mask.
 
 By-value scalar eval
 ^^^^^^^^^^^^^^^^^^^^

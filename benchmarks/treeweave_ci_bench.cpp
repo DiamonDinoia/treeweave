@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 1D — Runge, deep uniform tree (large f64 leaf table; L1/L2-spilling lookup).
+    // 1D: Runge, deep uniform tree (large f64 leaf table; L1/L2-spilling lookup).
     {
         auto fn  = treeweave::fit([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10,
                                   treeweave::options{.min_uniform_depth = kDeep1D});
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 1D — Runge in f32, deep uniform tree (large f32 leaf table; the gather path).
+    // 1D: Runge in f32, deep uniform tree (large f32 leaf table; the gather path).
     {
         auto fn  = treeweave::fit([](float x) { return 1.0F / (1.0F + 25.0F * x * x); }, -1.0F, 1.0F, /*tol=*/1e-6,
                                   treeweave::options{.min_uniform_depth = kDeep1D});
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 2D -> 1D — bump, deep uniform tree (large 2D leaf table).
+    // 2D -> 1D: bump, deep uniform tree (large 2D leaf table).
     {
         auto fn = treeweave::fit(
             [](std::array<double, 2> x) -> std::array<double, 1> {
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 3D -> 1D — smooth, deep uniform tree (large 3D leaf table).
+    // 3D -> 1D: smooth, deep uniform tree (large 3D leaf table).
     {
         auto fn = treeweave::fit(
             [](std::array<double, 3> x) -> std::array<double, 1> {
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
         });
     }
 
-    // 2D -> 3D — vector-valued output.
+    // 2D -> 3D: vector-valued output.
     {
         auto fn = treeweave::fit(
             [](std::array<double, 2> x) -> std::array<double, 3> {
@@ -166,12 +166,12 @@ int main(int argc, char **argv) {
     // Per-point eval: the path per-point callers (ODE RHS, etc.) take. Unlike
     // the batch cases above it exercises `Function::operator()` (function.hpp),
     // which always runs get_linear_bin -> find_leaf_id (two quantizes) even when
-    // there is a single subtree — the redundant outer quantize that the batch
+    // there is a single subtree: the redundant outer quantize that the batch
     // paths skip via their `subtrees_.size() == 1` fast path.
     //
     // Note on multi-scale: a downstream proposal (imwofx) reported a two-*subtree*
     // regression at near-eps tol (~1e-15). Empirically the current builder yields
-    // 1 subtree for every practical (degree, tol) — >1 subtree needs a near-eps
+    // 1 subtree for every practical (degree, tol); >1 subtree needs a near-eps
     // fit that overruns the memory budget at the default degree, so it is not a
     // CI-stable case. These cases pin the common 1-subtree scalar cost instead;
     // the printed subtrees/leaf-table line makes any future split visible.

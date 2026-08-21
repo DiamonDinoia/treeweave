@@ -1,4 +1,4 @@
-% zeta_bench.m — treeweave vs a fair brute-force Riemann-zeta eval.
+% zeta_bench.m: treeweave vs a fair brute-force Riemann-zeta eval.
 % See examples/c++/zeta_bench.cpp for the rationale. zeta(s) = sum_k k^-s summed
 % until the tail is negligible (rel 1e-10, <=160 terms) yet smooth on [2,10]: fit
 % once, eval a polynomial. Times single/multi/sorted; the native rate is sampled
@@ -10,7 +10,7 @@ a = 2;
 b = 10;
 tol = 1e-10;
 
-% Fair baseline: the first 160 terms (the cap) — beyond that each k^-s adds less
+% Fair baseline: the first 160 terms (the cap), beyond that each k^-s adds less
 % than 1e-10 relative on [2,10], so this matches a stop-early sum to tolerance.
 % Vectorized (no early break) is the Octave/MATLAB idiom and stays a plain handle
 % so the MEX fit callback can resolve it (a script-local function cannot).

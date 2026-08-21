@@ -36,7 +36,7 @@ struct TreeInput {
     /// tree of depth D in input_dim K builds a 2^(K*D)-entry quantize
     /// table at construction (see PolyTree::leaf_table_), turning the
     /// eval-time leaf lookup into one SIMD quantize + one u32 load.
-    /// Default 0 (no forcing — tol-based refinement only).
+    /// Default 0: no forcing, tol-based refinement only.
     int     min_uniform_depth = 0;
     TolKind tol_kind          = TolKind::RelativeMax;
 };

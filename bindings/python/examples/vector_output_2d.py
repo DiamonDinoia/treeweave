@@ -1,4 +1,4 @@
-"""vector_output_2d.py — 2D -> 3D vector-valued fit; AoS vs transposed parity."""
+"""vector_output_2d.py: 2D -> 3D vector-valued fit; AoS vs transposed parity."""
 import math
 import numpy as np
 import treeweave

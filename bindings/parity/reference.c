@@ -1,4 +1,4 @@
-/* reference.c — cross-language parity reference.
+/* reference.c: cross-language parity reference.
  *
  * Fits the 2D -> 3D kernel from examples/C/vector_output.c via the C ABI and
  * prints `x0,x1,y0,y1,y2` (full double precision) for a fixed point set. The

@@ -1,4 +1,4 @@
-// simple_1d.mjs — minimal 1D fit and evaluation (smoke test).
+// simple_1d.mjs: minimal 1D fit and evaluation (smoke test).
 // Fits Math.sin on [0, 1], evals a single point and a batch, checks accuracy.
 // Exits nonzero if max abs error > 1e-6.
 

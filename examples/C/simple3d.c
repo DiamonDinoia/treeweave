@@ -1,4 +1,4 @@
-/* simple3d.c — 3D -> 1D scalar fit from C11.
+/* simple3d.c: 3D -> 1D scalar fit from C11.
  *
  * Mirrors examples/c++/simple3d.cpp: an anisotropic Gaussian on [-1, 1]^3.
  * Shows scalar and AoS batch eval on a 3D domain. */

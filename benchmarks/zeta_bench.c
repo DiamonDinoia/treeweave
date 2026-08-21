@@ -10,7 +10,7 @@
 #include <treeweave.h>
 
 /* Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
- * total, capped at ZETA_MAX_TERMS — a competent zeta stops early. */
+ * total, capped at ZETA_MAX_TERMS: a competent zeta stops early. */
 #define ZETA_EPS 1e-10
 #define ZETA_MAX_TERMS 160
 

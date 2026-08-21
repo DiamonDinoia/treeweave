@@ -977,7 +977,7 @@ mxArray* func(const T* q, mwSize m, mwSize n) \
 #include <math.h>
 
 /* ------------------------------------------------------------------ */
-/* Fit trampoline state (file-static — safe because MEX is             */
+/* Fit trampoline state (file-static, safe because MEX is              */
 /* single-threaded and treeweave_fit is synchronous / blocking).      */
 /* ------------------------------------------------------------------ */
 struct TrampState {
@@ -991,7 +991,7 @@ struct TrampState {
 /*
  * C callback invoked by treeweave_fit for every Chebyshev sample. Builds a
  * 1×input_dim row vector and calls the handle via mexCallMATLABWithTrap (NOT
- * mexCallMATLAB) — the Trap variant returns a non-NULL mxArray* exception
+ * mexCallMATLAB). The Trap variant returns a non-NULL mxArray* exception
  * instead of longjmping, preserving the C++ call stack of treeweave_fit. On
  * any error it stashes the exception, flags errored, and fills y with NaN.
  */
@@ -1204,7 +1204,7 @@ mxWrapGetArrayDef_single(mxWrapGetArray_single_size_t, size_t)
 mxWrapCopyDef_single    (mxWrapCopy_single_size_t,     size_t)
 mxWrapReturnDef_single  (mxWrapReturn_single_size_t,   size_t)
 
-/* ---- treeweave.mw: 199 ----
+/* ---- treeweave.mw: 201 ----
  * treeweave_function* h = tw_fit_w(mxArray fh, double[] a, double[] b, double tol, int input_dim, int output_dim, int tol_kind, int max_depth, int max_memory_mib, int allow_max_depth_leaves, int min_uniform_depth);
  */
 static const char* stubids1_ = "c o treeweave_function* = tw_fit_w(c i mxArray, c i double[], c i double[], c i double, c i int, c i int, c i int, c i int, c i int, c i int, c i int)";
@@ -1318,7 +1318,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 207 ----
+/* ---- treeweave.mw: 209 ----
  * tw_eval1_w(treeweave_function* self, double[] x, output double[output_dim] y, int output_dim);
  */
 static const char* stubids2_ = "tw_eval1_w(c i treeweave_function*, c i double[], c o double[x], c i int)";
@@ -1371,7 +1371,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 212 ----
+/* ---- treeweave.mw: 214 ----
  * tw_eval_multi_w(treeweave_function* self, double[] Xflat, output double[output_dim, n] Yflat, int output_dim, int64_t n);
  */
 static const char* stubids3_ = "tw_eval_multi_w(c i treeweave_function*, c i double[], c o double[xx], c i int, c i int64_t)";
@@ -1434,7 +1434,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 217 ----
+/* ---- treeweave.mw: 219 ----
  * tw_eval_sorted_w(treeweave_function* self, double[] x, output double[output_dim, n] Yflat, int output_dim, int64_t n);
  */
 static const char* stubids4_ = "tw_eval_sorted_w(c i treeweave_function*, c i double[], c o double[xx], c i int, c i int64_t)";
@@ -1497,7 +1497,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 222 ----
+/* ---- treeweave.mw: 224 ----
  * tw_eval_soa_w(treeweave_function* self, double[] Xflat, output double[n, output_dim] Yflat, int output_dim, int64_t n);
  */
 static const char* stubids5_ = "tw_eval_soa_w(c i treeweave_function*, c i double[], c o double[xx], c i int, c i int64_t)";
@@ -1560,7 +1560,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 227 ----
+/* ---- treeweave.mw: 229 ----
  * int d = tw_input_dim_w(treeweave_function* self);
  */
 static const char* stubids6_ = "c o int = tw_input_dim_w(c i treeweave_function*)";
@@ -1592,7 +1592,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 230 ----
+/* ---- treeweave.mw: 232 ----
  * int d = tw_output_dim_w(treeweave_function* self);
  */
 static const char* stubids7_ = "c o int = tw_output_dim_w(c i treeweave_function*)";
@@ -1624,7 +1624,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 233 ----
+/* ---- treeweave.mw: 235 ----
  * double bytes = tw_memory_w(treeweave_function* self);
  */
 static const char* stubids8_ = "c o double = tw_memory_w(c i treeweave_function*)";
@@ -1656,7 +1656,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 236 ----
+/* ---- treeweave.mw: 238 ----
  * tw_stats_w(treeweave_function* self);
  */
 static const char* stubids9_ = "tw_stats_w(c i treeweave_function*)";
@@ -1680,7 +1680,7 @@ mw_err_label:
         mexErrMsgTxt(mw_err_txt_);
 }
 
-/* ---- treeweave.mw: 239 ----
+/* ---- treeweave.mw: 241 ----
  * tw_free_w(treeweave_function* self);
  */
 static const char* stubids10_ = "tw_free_w(c i treeweave_function*)";
@@ -1754,16 +1754,16 @@ void mexFunction(int nlhs, mxArray* plhs[],
     } else if (strcmp(id, "*profile report*") == 0) {
         if (!mexprofrecord_)
             mexPrintf("Profiler inactive\n");
-        mexPrintf("%d calls to treeweave.mw:199\n", mexprofrecord_[1]);
-        mexPrintf("%d calls to treeweave.mw:207\n", mexprofrecord_[2]);
-        mexPrintf("%d calls to treeweave.mw:212\n", mexprofrecord_[3]);
-        mexPrintf("%d calls to treeweave.mw:217\n", mexprofrecord_[4]);
-        mexPrintf("%d calls to treeweave.mw:222\n", mexprofrecord_[5]);
-        mexPrintf("%d calls to treeweave.mw:227\n", mexprofrecord_[6]);
-        mexPrintf("%d calls to treeweave.mw:230\n", mexprofrecord_[7]);
-        mexPrintf("%d calls to treeweave.mw:233\n", mexprofrecord_[8]);
-        mexPrintf("%d calls to treeweave.mw:236\n", mexprofrecord_[9]);
-        mexPrintf("%d calls to treeweave.mw:239\n", mexprofrecord_[10]);
+        mexPrintf("%d calls to treeweave.mw:201\n", mexprofrecord_[1]);
+        mexPrintf("%d calls to treeweave.mw:209\n", mexprofrecord_[2]);
+        mexPrintf("%d calls to treeweave.mw:214\n", mexprofrecord_[3]);
+        mexPrintf("%d calls to treeweave.mw:219\n", mexprofrecord_[4]);
+        mexPrintf("%d calls to treeweave.mw:224\n", mexprofrecord_[5]);
+        mexPrintf("%d calls to treeweave.mw:229\n", mexprofrecord_[6]);
+        mexPrintf("%d calls to treeweave.mw:232\n", mexprofrecord_[7]);
+        mexPrintf("%d calls to treeweave.mw:235\n", mexprofrecord_[8]);
+        mexPrintf("%d calls to treeweave.mw:238\n", mexprofrecord_[9]);
+        mexPrintf("%d calls to treeweave.mw:241\n", mexprofrecord_[10]);
     } else if (strcmp(id, "*profile log*") == 0) {
         FILE* logfp;
         if (nrhs != 2 || mxGetString(prhs[1], id, sizeof(id)) != 0)
@@ -1773,16 +1773,16 @@ void mexFunction(int nlhs, mxArray* plhs[],
             mexErrMsgTxt("Cannot open log for output");
         if (!mexprofrecord_)
             fprintf(logfp, "Profiler inactive\n");
-        fprintf(logfp, "%d calls to treeweave.mw:199\n", mexprofrecord_[1]);
-        fprintf(logfp, "%d calls to treeweave.mw:207\n", mexprofrecord_[2]);
-        fprintf(logfp, "%d calls to treeweave.mw:212\n", mexprofrecord_[3]);
-        fprintf(logfp, "%d calls to treeweave.mw:217\n", mexprofrecord_[4]);
-        fprintf(logfp, "%d calls to treeweave.mw:222\n", mexprofrecord_[5]);
-        fprintf(logfp, "%d calls to treeweave.mw:227\n", mexprofrecord_[6]);
-        fprintf(logfp, "%d calls to treeweave.mw:230\n", mexprofrecord_[7]);
-        fprintf(logfp, "%d calls to treeweave.mw:233\n", mexprofrecord_[8]);
-        fprintf(logfp, "%d calls to treeweave.mw:236\n", mexprofrecord_[9]);
-        fprintf(logfp, "%d calls to treeweave.mw:239\n", mexprofrecord_[10]);
+        fprintf(logfp, "%d calls to treeweave.mw:201\n", mexprofrecord_[1]);
+        fprintf(logfp, "%d calls to treeweave.mw:209\n", mexprofrecord_[2]);
+        fprintf(logfp, "%d calls to treeweave.mw:214\n", mexprofrecord_[3]);
+        fprintf(logfp, "%d calls to treeweave.mw:219\n", mexprofrecord_[4]);
+        fprintf(logfp, "%d calls to treeweave.mw:224\n", mexprofrecord_[5]);
+        fprintf(logfp, "%d calls to treeweave.mw:229\n", mexprofrecord_[6]);
+        fprintf(logfp, "%d calls to treeweave.mw:232\n", mexprofrecord_[7]);
+        fprintf(logfp, "%d calls to treeweave.mw:235\n", mexprofrecord_[8]);
+        fprintf(logfp, "%d calls to treeweave.mw:238\n", mexprofrecord_[9]);
+        fprintf(logfp, "%d calls to treeweave.mw:241\n", mexprofrecord_[10]);
         fclose(logfp);
     } else
         mexErrMsgTxt("Unknown identifier");

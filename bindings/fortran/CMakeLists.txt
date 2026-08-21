@@ -1,4 +1,4 @@
-# bindings/fortran — a thin iso_c_binding module (treeweave.f90) plus a
+# bindings/fortran: a thin iso_c_binding module (treeweave.f90) plus a
 # self-checking test and an example, both linking the shared treeweave_c. A
 # missing Fortran compiler degrades to a STATUS message and a skipped test.
 # Added by cmake/treeweave_bindings.cmake when TREEWEAVE_BUILD_FORTRAN=ON.
@@ -18,7 +18,7 @@
 include(CheckLanguage)
 check_language(Fortran)
 if(NOT CMAKE_Fortran_COMPILER)
-    message(STATUS "treeweave[fortran]: no Fortran compiler found — skipping.")
+    message(STATUS "treeweave[fortran]: no Fortran compiler found, skipping.")
     return()
 endif()
 

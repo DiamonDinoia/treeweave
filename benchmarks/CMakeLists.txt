@@ -1,4 +1,4 @@
-# benchmarks/CMakeLists.txt — performance benchmarks (nanobench drivers, hand-
+# benchmarks/CMakeLists.txt: performance benchmarks (nanobench drivers, hand-
 # rolled timing harness, CodSpeed, and the C zeta reference).
 # Gated by TREEWEAVE_BUILD_BENCHMARKS / TREEWEAVE_BUILD_CODSPEED; never built
 # in a normal test or example build.

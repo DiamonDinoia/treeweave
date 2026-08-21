@@ -1,4 +1,4 @@
-% example_vector.m — 2-D input, 3-D output vector fit
+% example_vector.m: 2-D input, 3-D output vector fit
 %
 % Before running: add the build tree (tw_*.m stubs + treeweave_mex.mex/mexa64)
 % to the MATLAB/Octave path. This script adds only the source dir (treeweave.m).

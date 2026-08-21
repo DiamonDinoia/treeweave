@@ -2,9 +2,9 @@
 
 # treeweave ships the C ABI as the installed package. The exported targets
 # (`treeweave::treeweave_c` shared, `treeweave::treeweave_c_static` static) are
-# self-contained — they only require the installed `treeweave.h` and carry no
+# self-contained: they only require the installed `treeweave.h` and carry no
 # transitive find_dependency() (polyfit/POET are linked privately and are not
-# part of the installed surface). Link your C/C++ application against either:
+# part of the installed set). Link a C/C++ application against either:
 #
 #   find_package(treeweave REQUIRED)
 #   target_link_libraries(app PRIVATE treeweave::treeweave_c)

@@ -186,7 +186,7 @@ template <std::size_t Deg>
 void sweep_multi_fit_1d(ankerl::nanobench::Bench &b, const char *label, std::size_t R, double beta) {
     std::mt19937 cgen(11);
     // Cap K below Deg so the underlying truth is exactly representable by
-    // the leaf polynomial — keeps fit depth shallow and reproducible.
+    // the leaf polynomial: keeps fit depth shallow and reproducible.
     const std::size_t                K = std::min<std::size_t>(Deg - 1, 6);
     std::vector<std::vector<double>> coefs(R, std::vector<double>(K));
     {

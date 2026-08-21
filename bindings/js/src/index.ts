@@ -1,10 +1,11 @@
-// index.ts — the public treeweave JS/TS API.
+// index.ts: the public treeweave JS/TS API.
 //
 // `Treeweave.fit(f, a, b, tol, opts?)` fits a JS callback and resolves to a
-// callable evaluator, mirroring the Python/Julia ergonomics. The backend
-// (native `.node` addon or WASM) is chosen at runtime by backend.ts and is
-// invisible here. Eval inputs/outputs are flat typed arrays of the fit's dtype;
-// batches are row-major ((N, dim) flattened, or (N,) for dim == 1).
+// callable evaluator, the same shape as the Python and Julia APIs. backend.ts
+// picks the backend at runtime, either the native `.node` addon or WASM, and
+// nothing here depends on that choice. Eval inputs and outputs are flat typed
+// arrays of the fit's dtype. Batches are row-major, an (N, dim) array
+// flattened, or (N,) for dim == 1.
 
 import {
     type Backend,

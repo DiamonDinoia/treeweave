@@ -1,4 +1,4 @@
-# parity.jl — Julia side of the cross-language parity check.
+# parity.jl: Julia side of the cross-language parity check.
 #
 # Fits the same 2D -> 3D kernel as reference.c and prints `x0,x1,y0,y1,y2` at
 # the identical fixed points and full-precision format, so run_parity.sh can

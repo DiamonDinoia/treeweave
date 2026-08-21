@@ -5,19 +5,18 @@ Julia wrapper for the treeweave piecewise-polynomial function approximator.
 
 # Overview
 
-`Treeweave` wraps the `libtreeweave_c` C ABI to provide fast, accurate approximations
-of smooth functions over box-shaped domains in 1–3 dimensions with 1–3 output
-components.
+`Treeweave` wraps the `libtreeweave_c` C ABI. It approximates a smooth function
+over a box-shaped domain in 1–3 dimensions, with 1–3 output components.
 
 ## User-function calling convention
 
 The function `f` passed to `fit` must accept:
-- **dim == 1**: a single `Float64` (or `Float32`) scalar.
-- **dim > 1**: a `NTuple{dim, Float64}` (or `Float32`) of coordinates.
+- `dim == 1`: a single `Float64` (or `Float32`) scalar.
+- `dim > 1`: a `NTuple{dim, Float64}` (or `Float32`) of coordinates.
 
 It must return:
-- **out_dim == 1**: a scalar.
-- **out_dim > 1**: an indexable collection of length `out_dim`.
+- `out_dim == 1`: a scalar.
+- `out_dim > 1`: an indexable collection of length `out_dim`.
 
 ## Example
 
@@ -32,7 +31,7 @@ b(0.5)                       # scalar result
 b2 = fit((x, y) -> (sin(x)*cos(y), x+y, x*y), [0.0,0.0], [1.0,1.0], 1e-6; out_dim=3)
 b2([0.5, 0.3])               # Vector{Float64} of length 3
 
-# Batch eval — the handle is called directly
+# Batch eval: the handle is called directly
 X = rand(100, 2)             # 100 points, 2 coordinates each
 R = b2(X)                    # 100×3 matrix
 R = b2(X; transposed=true)   # 3×100 (struct-of-arrays layout)
@@ -40,20 +39,20 @@ R = b2(X; transposed=true)   # 3×100 (struct-of-arrays layout)
 
 ## Library resolution
 
-`libtreeweave_c` is located, in order:
+The loader looks for `libtreeweave_c` in this order:
 
-1. the `LIBTREEWEAVE_C` environment variable (an explicit path — always wins);
-2. `deps/deps.jl`, written by `deps/build.jl` (run automatically by
-   `Pkg.build("Treeweave")`): for an end user it downloads the prebuilt
-   `libtreeweave_c` matching this package version from the GitHub Release; for a
-   developer it finds a sibling CMake `build*/` tree;
-3. the loader search path (`Libdl.find_library`);
+1. the `LIBTREEWEAVE_C` environment variable, an explicit path that always wins;
+2. `deps/deps.jl`, written by `deps/build.jl` when `Pkg.build("Treeweave")` runs.
+   For an end user that script downloads the prebuilt `libtreeweave_c` matching
+   this package version from the GitHub Release. For a developer it finds a
+   sibling CMake `build*/` tree;
+3. the loader search path, through `Libdl.find_library`;
 4. a sibling CMake `build*/` tree found by walking up from the package dir.
 
-So an end user gets the prebuilt binary after `Pkg.build` (which `Pkg.add`
-runs), while an in-repo `using Treeweave` / `Pkg.test()` works without any env var
-as long as the project has been built once (a `build*/libtreeweave_c.<ext>`
-exists). No `Artifacts.toml` is committed, so releases add no commits here.
+`Pkg.add` runs `Pkg.build`, so an end user gets the prebuilt binary. In-repo
+`using Treeweave` and `Pkg.test()` need no env var once the project has been
+built once and a `build*/libtreeweave_c.<ext>` exists. No `Artifacts.toml` is
+committed, so a release adds no commit here.
 """
 module Treeweave
 
@@ -98,7 +97,7 @@ function _resolve_libtreeweave()
     walked = _find_in_build_tree(@__DIR__)
     walked === nothing || return walked
 
-    # Nothing found — return the bare soname so the __init__ warning is clear.
+    # Nothing found: return the bare soname so the __init__ warning is clear.
     return "libtreeweave_c." * Libdl.dlext
 end
 
@@ -162,7 +161,7 @@ end
     Treeweave{T}
 
 Opaque wrapper around a `treeweave_t` handle.  `T` is `Float64` or `Float32`.
-Call the handle directly as a function — `b(x)`, `b(x; sorted=true)`, or
+Call the handle directly as a function: `b(x)`, `b(x; sorted=true)`, or
 `b(x; transposed=true)`.
 
 Do not copy; memory is managed by a finalizer.
@@ -233,7 +232,7 @@ Approximate `f` over the axis-aligned box `[a,b]` to tolerance `tol`.
 
 The user function `f` is called as:
 - dim == 1 : `f(x::T)` where `x` is a scalar.
-- dim > 1  : `f(x1::T, x2::T, ...)` — one scalar argument per dimension,
+- dim > 1  : `f(x1::T, x2::T, ...)`: one scalar argument per dimension,
              dispatched via `f(coords...)` where `coords` is an `NTuple`.
 
 Return value of `f`:
@@ -308,7 +307,7 @@ function fit(f, a, b, tol::Real;
     return handle
 end
 
-# Evaluation — the fitted handle is *called*
+# Evaluation: the fitted handle is *called*
 
 """
     (b::TreeweaveFn)(x; sorted=false, transposed=false)
@@ -316,18 +315,18 @@ end
 Evaluate the fitted approximation. The handle is called directly; there are
 no named eval methods.
 
-- **Point** — a scalar (`dim == 1`) or a length-`dim` `AbstractVector` returns
+- **Point**: a scalar (`dim == 1`) or a length-`dim` `AbstractVector` returns
   a scalar (`out_dim == 1`) or a length-`out_dim` `Vector`.
-- **Batch** — an `n × dim` `AbstractMatrix` (or, for `dim == 1`, any
+- **Batch**: an `n × dim` `AbstractMatrix` (or, for `dim == 1`, any
   `AbstractVector`) returns a length-`n` `Vector` (`out_dim == 1`) or an
   `n × out_dim` `Matrix`.
 
 Keyword flags (batch only):
-- `sorted=true` — 1-D ascending fast path; requires `dim == 1` and that the
+- `sorted=true`: 1-D ascending fast path; requires `dim == 1` and that the
   caller has sorted `x` (`x[i] ≤ x[i+1]`).
-- `transposed=true` — return an `out_dim × n` `Matrix` (struct-of-arrays
+- `transposed=true`: return an `out_dim × n` `Matrix` (struct-of-arrays
   layout) instead of `n × out_dim`; requires `out_dim > 1`.
-- `out=` — a pre-allocated `Vector{T}` of length `n` to write into (in-place,
+- `out=`: a pre-allocated `Vector{T}` of length `n` to write into (in-place,
   zero-copy), returned as-is. Batch/sorted only, and scalar-output
   (`out_dim == 1`) fits only.
 
@@ -498,7 +497,7 @@ function _pack_x(X, dim::Int, ::Type{T}) where T
         # Zero-copy when X is already a dense Vector{T}; otherwise convert.
         return (X isa Vector{T} ? X : Vector{T}(X)), n
     elseif X isa AbstractMatrix
-        # X is n × dim in Julia (column-major).  We need a point-major
+        # X is n × dim in Julia (column-major). The C ABI needs a point-major
         # flat buffer: [p0_x0, p0_x1, ..., p0_x{dim-1}, p1_x0, ...].
         # X[i,j] is the j-th coordinate of the i-th point.
         n, d = size(X)
@@ -520,7 +519,7 @@ function _unpack_y(res::Vector{T}, n::Int, out_dim::Int) where T
     if out_dim == 1
         return res   # already length-n
     else
-        # res is [p0_y0..p0_y{out-1}, p1_y0...] — point-major.
+        # res is [p0_y0..p0_y{out-1}, p1_y0...], point-major.
         # Return an n × out_dim matrix (Julia column-major).
         M = Matrix{T}(undef, n, out_dim)
         for i in 1:n

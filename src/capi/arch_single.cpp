@@ -1,9 +1,9 @@
-// arch_single.cpp — single-architecture C-ABI entry points.
+// arch_single.cpp: single-architecture C-ABI entry points.
 //
 // Selected by CMake when multi-arch dispatch is OFF (the default) or the
 // target is not x86. Compiled at the same `-march` as the variant TUs, so
 // `xsimd::best_arch` here equals the `best_arch` those TUs exported their
-// `make_eval_for` symbols under — the per-(dtype, dim) entry points route
+// `make_eval_for` symbols under. The per-(dtype, dim) entry points route
 // the call straight through `make_eval_for` with the baked degree.
 //
 // This TU instantiates no kernels: it only references declared-only

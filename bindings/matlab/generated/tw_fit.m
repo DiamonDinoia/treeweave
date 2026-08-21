@@ -5,5 +5,5 @@ mex_id_ = 'c o treeweave_function* = tw_fit_w(c i mxArray, c i double[], c i dou
 % -----------------------------------------------------------------------
 % Single-point eval. `self` is a treeweave (its mwptr holds the handle).
 % NOTE: the generated gateway reads every scalar via mxWrapGetScalar, which
-% requires mxDOUBLE_CLASS — so the .m stubs must pass plain doubles (no
+% requires mxDOUBLE_CLASS, so the .m stubs must pass plain doubles (no
 % int32/int64 casts) and the C side casts them.

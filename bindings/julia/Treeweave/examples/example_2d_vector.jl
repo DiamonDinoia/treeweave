@@ -19,7 +19,7 @@ println("  approx = $got")
 println("  exact  = $ref")
 println("  error  = $(maximum(abs.(got .- ref)))")
 
-# Batch eval — call the handle directly
+# Batch eval: call the handle directly
 n = 5
 X = rand(n, 2)
 # Evaluate b on random points and print the maximum component error.

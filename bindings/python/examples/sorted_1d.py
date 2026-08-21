@@ -1,4 +1,4 @@
-"""sorted_1d.py — sorted 1D batch evaluation."""
+"""sorted_1d.py: sorted 1D batch evaluation."""
 import math
 import numpy as np
 import treeweave

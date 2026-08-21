@@ -11,7 +11,7 @@
 // [[gnu::flatten]] recursively force-inlines the entire callee tree into the
 // annotated eval methods. That is a runtime-throughput win in optimized builds,
 // but it produces enormous functions that are very slow and memory-hungry to
-// compile — enough to make Debug builds take tens of minutes and OOM CI runners.
+// compile, enough to make Debug builds take tens of minutes and OOM CI runners.
 // Debug builds do not care about runtime speed, so enable flatten only in
 // optimized (NDEBUG) builds; it expands to nothing in Debug. This changes
 // inlining only, never behavior, so tests are unaffected.

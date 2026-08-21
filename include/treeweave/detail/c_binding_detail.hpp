@@ -1,4 +1,4 @@
-// c_binding_detail.hpp — heavy, internal-linkage half of the C binding.
+// c_binding_detail.hpp: heavy, internal-linkage half of the C binding.
 //
 // NO include guard / #includes / namespace by design: textually included
 // inside an anonymous namespace in each per-arch variant TU so EvalImpl /
@@ -56,8 +56,8 @@ struct EvalImpl final : IEval<T> {
 
     explicit EvalImpl(fn_t fn) : fn_(std::move(fn)) {}
 
-    /// Fit and wrap. May throw treeweave fit exceptions — the caller (the
-    /// extern "C" shim) catches them and converts to NULL + last_error.
+    /// Fit and wrap. May throw treeweave fit exceptions. The caller, the
+    /// extern "C" shim, catches them and converts to NULL + last_error.
     static auto create(c_func_t<T> f, void *data, const T *a, const T *b, double tol, const treeweave::options &opts)
         -> IEval<T> * {
         domain_t lo{};

@@ -72,9 +72,9 @@ fi
 # Confirm libtreeweave_c is the treeweave one (vendored/installed), not a system stray.
 echo "--- linkage ---"
 if command -v ldd >/dev/null 2>&1; then
-    ldd "$bin" | grep -i treeweave || echo "(static link — no treeweave_c shared dep)"
+    ldd "$bin" | grep -i treeweave || echo "(static link, no treeweave_c shared dep)"
 elif command -v otool >/dev/null 2>&1; then
-    otool -L "$bin" | grep -i treeweave || echo "(static link — no treeweave_c shared dep)"
+    otool -L "$bin" | grep -i treeweave || echo "(static link, no treeweave_c shared dep)"
 elif command -v dumpbin >/dev/null 2>&1; then
     dumpbin //dependents "$bin"
 fi

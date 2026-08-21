@@ -7,7 +7,7 @@
 /// `eval_scatter_sorted` takes parallel arrays of (fit-index, point)
 /// pairs and writes per-pair outputs. Pairs are grouped by fit-id so
 /// each Function sees a contiguous run, then dispatched via scalar
-/// `operator()` (TREEWEAVE_ALWAYS_INLINE — no per-pair callq).
+/// `operator()` (TREEWEAVE_ALWAYS_INLINE, so no per-pair callq).
 ///
 /// Two overloads, both counting-sort:
 ///   * scratch-span: caller supplies pre-allocated `counts` (zero-init)
@@ -40,7 +40,7 @@ namespace treeweave {
 /// `std::ranges::fill(counts.first(n_fits), 0u)` first.
 ///
 /// Algorithm: FINUFFT `bin_sort_singlethread_impl` pattern (finufft
-/// spread.hpp:421) — `uint32_t` counts halves cache footprint vs
+/// spread.hpp:421). `uint32_t` counts halves cache footprint vs
 /// `BIGINT`, `std::exclusive_scan` for offsets in place (Reinecke's
 /// trick), scalar histogram/placement (SIMD scatter to `counts` loses
 /// to duplicate-bin serialisation; clang dead-store-eliminates any
@@ -72,7 +72,7 @@ auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, st
 
     // Placement: write only the original-order index at the bin cursor.
     // The dispatch loop reads xs[perm[k]] directly, so no fit-grouped
-    // `xs_sorted` scratch is needed — trades sequential xs_sorted reads
+    // `xs_sorted` scratch is needed. That trades sequential xs_sorted reads
     // for scattered reads of xs, but dispatch already writes ys[perm[k]]
     // scattered, so the cache pattern is the same gather/scatter pair.
     for (std::size_t i = 0; i < n; ++i) {
@@ -94,7 +94,7 @@ auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, st
     }
 }
 
-/// Convenience overload — allocates `counts` and `perm` per call. Use
+/// Convenience overload: allocates `counts` and `perm` per call. Use
 /// the scratch-span overload above when calling repeatedly to amortise
 /// the two allocations (~50–100 ns flat on glibc).
 template <std::size_t Degree, class Func>

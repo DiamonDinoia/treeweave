@@ -1,4 +1,4 @@
-! example.f90 — fit exp(x) and evaluate from Fortran via the treeweave C ABI.
+! example.f90: fit exp(x) and evaluate from Fortran via the treeweave C ABI.
 ! Mirrors examples/C/simple.c: plain bind(C) callback, scalar eval, batch eval.
 ! For the context pattern see README.md § "The context pattern".
 

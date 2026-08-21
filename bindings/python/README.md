@@ -66,9 +66,9 @@ original `__name__` / `__doc__`. Fitting happens at decoration time.
 
 ### `TreeweaveFunction`
 
-The fitted object is **called** — there are no named eval methods. A point
-gives a point result; a batch gives a batch result; two optional keyword flags
-select alternate batch modes.
+Call the fitted object. There are no named eval methods. A point gives a point
+result and a batch gives a batch result. Two optional keyword flags select the
+other batch modes.
 
 | Call / property | Description |
 |---|---|

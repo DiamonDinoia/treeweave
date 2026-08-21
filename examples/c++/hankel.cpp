@@ -1,4 +1,4 @@
-// hankel.cpp — treeweave fit of Hankel H0^(1)(x) = J0(x) + iY0(x).
+// hankel.cpp: treeweave fit of Hankel H0^(1)(x) = J0(x) + iY0(x).
 // Fits a real 2-output function on [1, 30) to absolute tolerance 1e-8,
 // then checks accuracy against the library on 1 M random points.
 // Domain starts at x = 1 because Y0 diverges at the origin.
@@ -29,7 +29,7 @@ int main() {
     // Hankel H0^(1) packed as a real 2-vector: {J0(x), Y0(x)}.
     auto hankel0 = [](std::array<double, 1> x) -> std::array<double, 2> { return {bessel_j0(x[0]), bessel_y0(x[0])}; };
 
-    // J0/Y0 oscillate through zero — fit to absolute tolerance.
+    // J0/Y0 oscillate through zero: fit to absolute tolerance.
     constexpr double   tol = 1e-8;
     treeweave::options opts;
     opts.tol_kind = treeweave::TolKind::AbsoluteMax;

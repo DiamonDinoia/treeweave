@@ -50,7 +50,7 @@ def main():
     if "clang-format did not modify any files" in output:
         sys.exit(0)
 
-    # Files were modified — print what changed and fail so pre-commit re-stages.
+    # Files were modified: print what changed and fail so pre-commit re-stages.
     if output:
         print(output)
     sys.exit(1)

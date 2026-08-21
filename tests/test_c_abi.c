@@ -1,8 +1,8 @@
-/* test_c_abi.c — pure-C conformance test for the treeweave C ABI (treeweave.h).
+/* test_c_abi.c: pure-C conformance test for the treeweave C ABI (treeweave.h).
  *
  * Unlike tests/test_c.cpp (a C++ TU that checks the C API against a direct
  * treeweave::fit reference), this is compiled by the *C* compiler as C11 and
- * cannot call into C++ at all — so it exercises every entry point exactly as a
+ * cannot call into C++ at all: so it exercises every entry point exactly as a
  * downstream C / Fortran consumer would, catching ABI and language-linkage
  * problems the C++ parity test cannot.
  *
@@ -11,7 +11,7 @@
  *   - self-consistency: two paths on the same handle agree (often bit-exact).
  *
  * A tiny CHECK macro counts failures, prints each, and main() returns that
- * count — so 0 means pass and the process exit code is the failure count. */
+ * count: so 0 means pass and the process exit code is the failure count. */
 
 #include <float.h>
 #include <math.h>
@@ -82,8 +82,8 @@ static double next_unit(unsigned int *state) {
 
 static void test_1d_scalar_auto_degree(void) {
     /* The C ABI auto-selects a register-optimal leaf degree per detected CPU.
-     * We verify the result meets the requested tol, and that scalar eval and
-     * multi eval are consistent. */
+     * The test checks the result against the requested tol, and checks that
+     * scalar eval and multi eval agree. */
     const double tol = 1e-9;
     const double a = 0.0, b = 1.0;
     treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, tol, NULL, NULL);
@@ -122,7 +122,7 @@ static void test_1d_scalar_auto_degree(void) {
      * polynomial but through different code paths (scalar Horner vs SIMD). With
      * hardware FMA the two are bit-identical; without it (e.g. an SSE2 baseline
      * build, as on MSVC x64) they differ by at most a few ULP. Accuracy is
-     * checked above; here we only require agreement to rounding. */
+     * checked above; this check only requires agreement to rounding. */
     CHECK(max_parity <= 16.0 * DBL_EPSILON * max_mag);
     treeweave_free(h);
 }
@@ -395,7 +395,7 @@ static void test_f32_path(void) {
  *   x == b   -> the last leaf's polynomial (boundary value), not NaN
  *   x <  a   -> NaN
  *   x >  b   -> NaN (finite far-high points are out-of-domain on every
- *               path — scalar, batch and sorted all agree). */
+ *               path: scalar, batch and sorted all agree). */
 
 static void test_out_of_domain_nan(void) {
     const double a = 0.0, b = 1.0;
@@ -591,7 +591,7 @@ static void test_by_value_eval(void) {
 static void test_null_introspection(void) {
     /* treeweave_dtype/input_dim/output_dim used to dereference NULL.
      * They now guard and return a safe sentinel (dtype=TREEWEAVE_F64=0,
-     * dim=0) and set last_error — consistent with treeweave_memory_usage. */
+     * dim=0) and set last_error: consistent with treeweave_memory_usage. */
     treeweave_dtype_t dt = treeweave_dtype(NULL);
     CHECK(dt == TREEWEAVE_F64); /* sentinel: zero enumerator */
     CHECK(strlen(treeweave_last_error()) > 0);
@@ -725,7 +725,7 @@ cleanup:
     treeweave_free(h3f);
 }
 
-/* ---- G1: OOD contract — below-a -> NaN, above-b -> NaN, at-b -> finite -
+/* ---- G1: OOD contract, below-a -> NaN, above-b -> NaN, at-b -> finite -
  * Both scalar (treeweave_eval) and batch (treeweave_batch) tag all points
  * outside [a, b] as out-of-domain and NaN-fill them.  The one asymmetry is
  * that exactly-at-b returns the last leaf's boundary value (finite), not NaN.
@@ -847,7 +847,7 @@ static void k_rough(const double *x, double *y, void *d) {
 static void test_allow_max_depth_leaves(void) {
     treeweave_opts opts;
     treeweave_default_opts(&opts);
-    opts.max_depth              = 5; /* very shallow — will hit the cap */
+    opts.max_depth              = 5; /* very shallow, hits the cap */
     opts.allow_max_depth_leaves = 1;
 
     const double a = 0.0, b = 1.0;

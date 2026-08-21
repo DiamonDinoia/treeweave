@@ -1,11 +1,11 @@
-// wasm.ts — the "wasm" backend: the treeweave C ABI compiled to a single
+// wasm.ts: the "wasm" backend, the treeweave C ABI compiled to a single
 // WASM module (wasm_glue.cpp + treeweave_c_static under emcc), driven through
 // the Emscripten runtime. Works in the browser and under Node.
 //
 // All eval paths marshal across the WASM heap: copy the input in, call the C
-// function, copy the result out (always before freeing — heap views are
-// invalidated by _free and by any growth). The fit callback is a JS trampoline
-// installed in the function table via addFunction(fn, 'viii') — pointers are
+// function, copy the result out before freeing, because _free and any heap
+// growth invalidate the views. The fit callback is a JS trampoline
+// installed in the function table via addFunction(fn, 'viii'), pointers are
 // i32 in wasm32, so the C signature void(const T*, T*, void*) is 'viii' for
 // both dtypes.
 

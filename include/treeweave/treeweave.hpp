@@ -12,7 +12,7 @@
 /// disjoint output slice. The batch path allocates and frees its scratch
 /// on each call via the caller-supplied allocator (default
 /// `std::allocator<value_type>`); no state is carried between calls.
-/// Callers that want pooled reuse should pass a stateful allocator —
+/// For pooled reuse, pass a stateful allocator;
 /// `std::pmr::polymorphic_allocator` over a `monotonic_buffer_resource`
 /// is the idiomatic choice. See `tests/test_threadsafe.cpp`.
 ///
@@ -64,7 +64,7 @@ constexpr auto version_at_least(int maj, int min, int pat) -> bool { return vers
 /// construction; there is no eval-time benefit to promoting any of them
 /// to a template parameter, so they stay plain data.
 struct options {
-    /// How `tol` is interpreted by the convergence check. The default
+    /// How the convergence check interprets `tol`. The default
     /// (`RelativeMax`) compares max-abs error on a sample grid against
     /// `tol * max(|f|)`; switch to `Absolute*` when `f` can be zero or
     /// when relative accuracy isn't meaningful.
@@ -77,13 +77,13 @@ struct options {
     int max_depth = 50;
     /// Hard cap on accumulated leaf storage during the fit, in MiB.
     /// Tri-state:
-    ///   * `< 0` (default) — auto: a small, dimension-scaled budget,
+    ///   * `< 0` (default): auto, a small, dimension-scaled budget,
     ///     `4 << (input_dim-1)` MiB (4 / 8 / 16 for 1D / 2D / 3D). Leaf
     ///     storage grows ~geometrically with `input_dim`, so a single flat
     ///     cap is either too loose in 1D or too tight in 3D; scaling keeps
     ///     the default a genuine guardrail in every dimension.
-    ///   * `0` — disabled (no cap).
-    ///   * `> 0` — explicit cap in MiB.
+    ///   * `0`: disabled (no cap).
+    ///   * `> 0`: explicit cap in MiB.
     /// The default is deliberately small so an adaptive paneler can't
     /// quietly grow into hundreds of MiB; ambitious 3D+ or oscillatory
     /// fits opt in explicitly with a larger value (or `0`). Crossing the
@@ -104,8 +104,8 @@ struct options {
     /// quantize + one u32 load. Table size grows as
     /// 2^(K*D) * 4 B and is capped at 64 K entries (256 KiB) per
     /// subtree, so values that push past `K*D > 16` will still build
-    /// a uniform tree but not the table. Default 0 (no forcing —
-    /// tol-based refinement only).
+    /// a uniform tree but not the table. Default 0: no forcing,
+    /// tol-based refinement only.
     int min_uniform_depth = 0;
 };
 
@@ -115,15 +115,15 @@ concept Fittable = requires(F f, Domain x) { f(x); };
 
 namespace detail {
 
-// Auto memory budget (MiB): 4/8/16 for 1D/2D/3D (doubles per dim — flat cap
+// Auto memory budget (MiB): 4/8/16 for 1D/2D/3D (doubles per dim; a flat cap
 // is too tight in 3D).
 constexpr auto auto_memory_budget_mib(int input_dim) -> int {
     const unsigned d = input_dim < 1 ? 1U : static_cast<unsigned>(input_dim);
     return static_cast<int>(4U << (d - 1U));
 }
 
-// Default leaf degree: 7 wins/ties every (arch, dtype, dim) cell in the
-// C-ABI campaign; also spill-free in wide SIMD cells.
+// Default leaf degree: 7 wins or ties every (arch, dtype, dim) cell, and is
+// spill-free in the wide SIMD cells.
 inline constexpr std::size_t kDefaultDegree = 7;
 
 inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &opts) -> TreeInput {
@@ -179,7 +179,7 @@ constexpr auto domain_dim() -> int {
 // ---- Ergonomic complex / scalar-input adaptors (issue #23) ---------------
 // The core fitter only speaks real array-in / array-out. These map the
 // natural spellings (scalar `double` in, `std::complex` out) onto it and back,
-// purely at the fit()/operator() boundary — the leaf math stays real.
+// purely at the fit()/operator() boundary; the leaf math stays real.
 
 template <class T>
 inline constexpr bool is_complex_v = false;
@@ -197,7 +197,7 @@ struct complex_elem<std::complex<T>> {
 template <class R>
 using complex_elem_t = complex_elem<R>::type;
 
-// What the core Function actually fits: scalar domain -> 1-element array;
+// What the core Function fits: scalar domain -> 1-element array;
 // complex result -> 2-element real array (re, im); everything else unchanged.
 template <class D>
 using canonical_input_t = std::conditional_t<std::is_arithmetic_v<D>, std::array<D, 1>, D>;
@@ -237,8 +237,8 @@ struct CanonicalFn {
 
 // Restores the user-facing spelling around a real-valued Function.
 // std::complex<T> is layout-compatible with T[2] and std::array<T,N> with
-// T[N], so the batch/sorted overloads just reinterpret the output buffer —
-// no per-point repack. Point eval converts the one returned value.
+// T[N], so the batch/sorted overloads just reinterpret the output buffer,
+// with no per-point repack. Point eval converts the one returned value.
 template <class Inner, class Domain, class Result>
 class AdaptedFunction {
     Inner fn_;
@@ -292,8 +292,8 @@ template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalP
         throw std::invalid_argument("treeweave::fit: tolerance must be > 0");
 
     // decay (not remove_cvref): a plain function passed by reference decays to a
-    // function *pointer*, so the stored Func is never a bare function type — that
-    // would make the internal `const Func&` params const-qualified function types
+    // function *pointer*, so the stored Func is never a bare function type. A bare
+    // function type would make the internal `const Func&` params const-qualified
     // (harmless on gcc/clang, but MSVC warns C4180, fatal under /WX).
     using func_t   = std::decay_t<Func>;
     using result_t = std::invoke_result_t<func_t &, Domain>;

@@ -1,4 +1,4 @@
-/* vector_output.c — 2D -> 3D vector-valued fit from C11.
+/* vector_output.c: 2D -> 3D vector-valued fit from C11.
  *
  * Mirrors examples/c++/vector_output.cpp. Shows the multi-output path and the
  * two batch layouts: AoS (`treeweave_batch`, results packed

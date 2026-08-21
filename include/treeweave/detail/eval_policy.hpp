@@ -16,13 +16,10 @@ namespace treeweave {
 /// the scalar path through `ScalarKernel::Horner`. The distinctions are
 /// reserved for future tuning (see the per-enumerator notes below).
 ///
-/// - `Latency`   : reserved for a future Hybrid mapping. The rev-1 K-sweep
-///                 on Meteor Lake showed `HybridK<2>` (the formula's pick at
-///                 Degree=8) is an 8–33 % regression on `operator()(x)` vs
-///                 Horner. Until a measured (Degree, microarch) cell beats
-///                 Horner on the true scalar path, this policy stays at
-///                 `ScalarKernel::Horner` — equivalent to `Balanced`. See
-///                 `bench/results.md` for the data.
+/// - `Latency`   : reserved for a future Hybrid mapping. `HybridK<2>`
+///                 measured slower than Horner on the scalar path, so this
+///                 policy stays at `ScalarKernel::Horner`, equivalent to
+///                 `Balanced`.
 /// - `Throughput`: maximise per-call ILP across SIMD lanes / outer loops.
 ///                 polyfit's `evalBatch` is hardwired to Horner-SIMD today;
 ///                 the scalar entry stays at `Horner` for the same reason.

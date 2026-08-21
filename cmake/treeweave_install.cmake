@@ -1,4 +1,4 @@
-# treeweave_install.cmake — install rules + relocatable find_package package.
+# treeweave_install.cmake: install rules + relocatable find_package package.
 # Ships C ABI targets + consolidated header bundle. C++ consumed by include path.
 
 include_guard(GLOBAL)

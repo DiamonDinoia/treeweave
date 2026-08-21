@@ -1,10 +1,10 @@
-# bindings/julia — no build step; the package dlopen()s libtreeweave_c at test
-# time. We just point it at the freshly-built shared library via LIBTREEWEAVE_C.
+# bindings/julia: no build step; the package dlopen()s libtreeweave_c at test
+# time. LIBTREEWEAVE_C points the package at the freshly-built shared library.
 # Added by cmake/treeweave_bindings.cmake when TREEWEAVE_BUILD_JULIA=ON.
 
 find_program(TREEWEAVE_JULIA_EXECUTABLE julia)
 if(NOT TREEWEAVE_JULIA_EXECUTABLE)
-    message(STATUS "treeweave[julia]: julia not on PATH — skipping.")
+    message(STATUS "treeweave[julia]: julia not on PATH, skipping.")
     return()
 endif()
 

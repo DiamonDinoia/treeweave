@@ -1,8 +1,8 @@
-/* treeweave_version.h — GENERATED from include/treeweave_version.h.in by
+/* treeweave_version.h: GENERATED from include/treeweave_version.h.in by
  * cmake/treeweave_generate_version.cmake (single source of truth: the VERSION
  * file at the repo root). The generated copy is committed to the include/ tree
  * so every consumer that already adds include/ to its path finds it; it is
- * regenerated on configure and by the pre-commit hook. Do NOT edit by hand —
+ * regenerated on configure and by the pre-commit hook. Do NOT edit by hand,
  * edit VERSION (or this template) and re-run CMake configure.
  *
  * It is plain C (usable from both treeweave.h and the C++ treeweave.hpp) and
@@ -25,7 +25,7 @@
 
 /* Full version including a dev suffix off a release tag, e.g. "1.2.3-dev.42";
  * equals TREEWEAVE_VERSION_STRING on an exact release commit. */
-#define TREEWEAVE_VERSION_FULL "0.0.2-dev.43"
+#define TREEWEAVE_VERSION_FULL "0.0.3-dev.10"
 
 /* Compile-time guard: nonzero iff the treeweave headers are at least
  * `maj.min.pat`. Consumers gate a hard requirement on it, FINUFFT/zlib style:

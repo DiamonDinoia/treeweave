@@ -31,7 +31,7 @@
     {
       "name": "lib-release",
       "hidden": true,
-      "description": "Library-only build (no tests/examples) at the native baseline — shared by the binding jobs. Build type defaults to Release. CI overrides TREEWEAVE_ARCH per platform with a portable baseline; local builds get -march=native.",
+      "description": "Library-only build (no tests/examples) at the native baseline, shared by the binding jobs. Build type defaults to Release. CI overrides TREEWEAVE_ARCH per platform with a portable baseline; local builds get -march=native.",
       "inherits": ["arch-native", "base"],
       "cacheVariables": {
         "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "OFF" },
@@ -80,7 +80,7 @@
     {
       "name": "ci-linux-debug-asan",
       "displayName": "CI Linux Debug (-Og, ASan/UBSan)",
-      "description": "ci-linux-debug + ASan/UBSan. Used by the clang Debug rows only — clang's sanitizer instrumentation compiles the same TUs in a fraction of GCC's time/memory.",
+      "description": "ci-linux-debug + ASan/UBSan. Used by the clang Debug rows only, because clang's sanitizer instrumentation compiles the same TUs in a fraction of GCC's time/memory.",
       "inherits": "ci-linux-debug",
       "cacheVariables": {
         "TREEWEAVE_ENABLE_SANITIZERS": { "type": "BOOL", "value": "ON" }
@@ -192,7 +192,7 @@
     {
       "name": "codspeed",
       "displayName": "CodSpeed benchmark (RelWithDebInfo, Google Benchmark)",
-      "description": "Instruction-count perf bench for CodSpeed CI. x86-64-v3 (AVX2) baseline is deliberate: CodSpeed `simulation` runs the binary under Valgrind/Cachegrind, which handles AVX2 but not AVX-512 — same constraint as the `valgrind` preset. RelWithDebInfo keeps the debug symbols CodSpeed needs for meaningful reports.",
+      "description": "Instruction-count perf bench for CodSpeed CI. x86-64-v3 (AVX2) baseline is deliberate: CodSpeed `simulation` runs the binary under Valgrind/Cachegrind, which handles AVX2 but not AVX-512, same constraint as the `valgrind` preset. RelWithDebInfo keeps the debug symbols CodSpeed needs for meaningful reports.",
       "inherits": ["arch-x86-64-v3", "base"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -247,7 +247,7 @@
     {
       "name": "bindings-octave",
       "displayName": "Octave (MEX) bindings",
-      "description": "License-free CI path. Inherits bindings-matlab (same TREEWEAVE_BUILD_MATLAB=ON flag — there is no separate Octave flag). Backend selection is automatic inside bindings/matlab/CMakeLists.txt: if mkoctfile is found it builds treeweave_mex.mex via mkoctfile; if MATLAB is also found it builds treeweave_mex.mexa64 in addition. Use this preset when only Octave/mkoctfile is present (no MATLAB license needed).",
+      "description": "License-free CI path. Inherits bindings-matlab (same TREEWEAVE_BUILD_MATLAB=ON flag; there is no separate Octave flag). Backend selection is automatic inside bindings/matlab/CMakeLists.txt: if mkoctfile is found it builds treeweave_mex.mex via mkoctfile; if MATLAB is also found it builds treeweave_mex.mexa64 in addition. Use this preset when only Octave/mkoctfile is present (no MATLAB license needed).",
       "inherits": "bindings-matlab"
     },
     {
@@ -262,7 +262,7 @@
     {
       "name": "bindings-js-wasm",
       "displayName": "JS/TS binding (Emscripten WASM)",
-      "description": "Builds the same C ABI to a WASM module for the browser backend. Needs the Emscripten SDK on PATH with EMSDK set (e.g. via mymindstorm/setup-emsdk); the toolchain file is resolved from $EMSDK. TREEWEAVE_ARCH is cleared because emcc rejects -march (the toolchain enables -msimd128 instead). Build the treeweave_wasm + treeweave_js_ts targets (not ALL — the SHARED treeweave_c isn't meaningful under emcc). IPO returns to OFF here: emcc pays the link-time cost and gains no eval throughput.",
+      "description": "Builds the same C ABI to a WASM module for the browser backend. Needs the Emscripten SDK on PATH with EMSDK set (e.g. via mymindstorm/setup-emsdk); the toolchain file is resolved from $EMSDK. TREEWEAVE_ARCH is cleared because emcc rejects -march (the toolchain enables -msimd128 instead). Build the treeweave_wasm + treeweave_js_ts targets (not ALL, because the SHARED treeweave_c isn't meaningful under emcc). IPO returns to OFF here: emcc pays the link-time cost and gains no eval throughput.",
       "inherits": "bindings-js",
       "cacheVariables": {
         "TREEWEAVE_ARCH": "",

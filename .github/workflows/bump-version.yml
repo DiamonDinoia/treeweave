@@ -5,8 +5,9 @@ name: Bump Version
 # Project.toml and the JS package.json, then commits and pushes to main.
 #
 # After the bump lands and CI goes green on the new HEAD, dispatch the Release
-# workflow (release.yml) with the same version — it builds everything, runs the
-# smoke gates, publishes to PyPI, and pushes the v<version> tag atomically.
+# workflow (release.yml) with the same version. The Release workflow builds
+# everything, runs the smoke gates, publishes to PyPI, and pushes the v<version>
+# tag atomically.
 #
 # Single click; no need to edit the version files locally.
 on:
@@ -80,7 +81,7 @@ jobs:
       - name: Next step hint
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            echo "::notice::dry run — re-dispatch with dry_run=false to actually commit."
+            echo "::notice::dry run. Re-dispatch with dry_run=false to commit."
           else
-            echo "::notice::version bumped and pushed. Wait for CI to go green on the new HEAD, then dispatch the Release workflow with version=${{ inputs.version }} and dry_run=false — it builds, smoke-tests, publishes to PyPI, and pushes v${{ inputs.version }} atomically."
+            echo "::notice::version bumped and pushed. Wait for CI to go green on the new HEAD, then dispatch the Release workflow with version=${{ inputs.version }} and dry_run=false. The Release workflow builds, smoke-tests, publishes to PyPI, and pushes v${{ inputs.version }} atomically."
           fi

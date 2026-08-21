@@ -1,4 +1,4 @@
-// test_greens.cpp — Green's function / layer-potential kernels.
+// test_greens.cpp: Green's function / layer-potential kernels.
 
 #include "treeweave/detail/errors.hpp"
 #include "treeweave/detail/tol_kind.hpp"

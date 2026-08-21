@@ -1,7 +1,8 @@
 # @flatironinstitute/treeweave
 
-JavaScript/TypeScript binding for [treeweave](https://github.com/DiamonDinoia/treeweave) —
-adaptive piecewise-polynomial function approximation over the treeweave C ABI.
+JavaScript/TypeScript binding for
+[treeweave](https://github.com/DiamonDinoia/treeweave): adaptive
+piecewise-polynomial function approximation over the treeweave C ABI.
 
 ## Install
 
@@ -9,14 +10,14 @@ adaptive piecewise-polynomial function approximation over the treeweave C ABI.
 npm install @flatironinstitute/treeweave
 ```
 
-Prebuilt native N-API binaries for Linux x64/arm64, macOS arm64/x64, and Windows x64 ship in `prebuilds/` (resolved by [`node-gyp-build`](https://github.com/prebuild/node-gyp-build)); a bundled WASM build serves browsers and hosts without a matching prebuild. N-API is ABI-stable — one binary per platform covers every Node version. Force a backend with `{ backend: "native" | "wasm" }`.
+Prebuilt native N-API binaries for Linux x64/arm64, macOS arm64/x64, and Windows x64 ship in `prebuilds/` (resolved by [`node-gyp-build`](https://github.com/prebuild/node-gyp-build)); a bundled WASM build serves browsers and hosts without a matching prebuild. N-API is ABI-stable, so one binary per platform covers every Node version. Force a backend with `{ backend: "native" | "wasm" }`.
 
-A local `cmake --preset bindings-js` build drops `treeweave.node` into `dist/` (the development case — `prebuilds/` is assembled only in CI).
+A local `cmake --preset bindings-js` build drops `treeweave.node` into `dist/` (the development case; CI assembles `prebuilds/`).
 
 ## Usage
 
 ```js
-// simple_1d.mjs — minimal 1D fit and evaluation (smoke test).
+// simple_1d.mjs: minimal 1D fit and evaluation (smoke test).
 // Fits Math.sin on [0, 1], evals a single point and a batch, checks accuracy.
 // Exits nonzero if max abs error > 1e-6.
 
@@ -84,12 +85,12 @@ See the [guides](https://diamondinoia.github.io/treeweave/) for the full API ref
 
 ## Publishing (maintainers)
 
-The package is published by the Release workflow (`.github/workflows/release.yml`,
+The Release workflow publishes the package (`.github/workflows/release.yml`,
 job `publish-npm`).
 
 > **First publish is a manual bootstrap.** npm OIDC trusted publishing cannot
-> *create* a brand-new package name — it can only publish to a package that
-> already exists. So the very first `npm publish` of `@flatironinstitute/treeweave`
-> must be authenticated with an `NPM_TOKEN` secret (the workflow already uses
+> *create* a brand-new package name. It can only publish to a package that
+> already exists. So the first `npm publish` of `@flatironinstitute/treeweave`
+> must authenticate with an `NPM_TOKEN` secret (the workflow already uses
 > `NODE_AUTH_TOKEN` when present). Once the package exists on the registry,
-> configure OIDC trusted publishing and the token can be removed.
+> configure OIDC trusted publishing and drop the token.

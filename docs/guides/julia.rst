@@ -26,8 +26,8 @@ Minimal example
    :language: julia
 
 ``fit`` infers the dimensions from the callable, so the common case is
-``fit(f, a, b, tol)``. The fitted object is called directly for a point or a
-batch; tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
+``fit(f, a, b, tol)``. Call the fitted object directly, with a point or with a
+batch. Tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
 
 Evaluation routes
 -----------------
@@ -42,14 +42,16 @@ fast paths:
    approx(xs; sorted = true)         # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)
 
-``sorted = true`` skips treeweave's internal bin-sort and is ~3–4× faster
-when you can promise ``xs`` is ascending — common for ``range`` grids, quadrature
-nodes, and time series. The promise is unchecked: unsorted input gives wrong
-values, so use the plain batch path when unsure. ``transposed = true`` returns
-each output component in its own contiguous row. ``sorted`` is 1-D only.
-Out-of-domain handling is uniform across paths: evaluating exactly at ``b``
-returns the boundary value, and every other point outside ``[a, b]`` — below
-``a``, above ``b``, or ``NaN``/±Inf — returns ``NaN``.
+``sorted = true`` skips treeweave's internal bin-sort and is ~3-4x faster when
+the caller can promise ``xs`` is ascending, which covers ``range`` grids,
+quadrature nodes and time series. Nothing checks the promise, and unsorted input
+gives wrong values, so use the plain batch path when the order is unknown.
+``sorted`` is 1-D only. ``transposed = true`` returns each output component in
+its own contiguous row.
+
+Every path handles out-of-domain input the same way. A point exactly at ``b``
+returns the boundary value. Points below ``a``, points above ``b``, and ``NaN``
+or ±Inf inputs all return ``NaN``.
 
 Multi-dimensional fits
 ----------------------

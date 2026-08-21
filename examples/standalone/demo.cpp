@@ -1,6 +1,6 @@
 // Header-only drop-in demo: fit an expensive 1-D function once, then evaluate
-// its fast polynomial approximant. This directory models your OWN project
-// sitting next to an extracted headers bundle — nothing here references the
+// its fast polynomial approximant. This directory models a consumer project
+// sitting next to an extracted headers bundle. Nothing here references the
 // treeweave repo layout, so it compiles with just `-Iinclude`:
 //
 //   wget https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
@@ -17,7 +17,7 @@
 #include <iostream>
 
 int main() {
-    // zeta_N(s) = sum_{k=1..1000} k^-s — hundreds of pow() calls per evaluation.
+    // zeta_N(s) = sum_{k=1..1000} k^-s: hundreds of pow() calls per evaluation.
     auto zeta = [](double s) {
         double a = 0.0;
         for (int k = 1; k <= 1000; ++k)

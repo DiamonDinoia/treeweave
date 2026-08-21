@@ -1,9 +1,9 @@
-! treeweave.f90 — Fortran 2018 binding for the treeweave C ABI (see ../../include/treeweave.h).
+! treeweave.f90: Fortran 2018 binding for the treeweave C ABI (see ../../include/treeweave.h).
 !
 ! This is a faithful, thin binding over `iso_c_binding`: every C entry point is
 ! exposed as a Fortran procedure of the same name via an `interface` block, so
 ! the mapping is one-to-one and explicit. Unlike the Python / Julia / MATLAB
-! wrappers there is no call operator, no keyword arguments, and no inference —
+! wrappers there is no call operator, no keyword arguments, and no inference,
 ! the caller passes `input_dim` / `output_dim` explicitly, exactly as a C
 ! consumer would.
 !
@@ -15,7 +15,7 @@
 ! The user callback has the C prototype
 !     void f(const double *x, double *y, void *context)   ! (float for treeweavef_*)
 ! and must be a `bind(C)` procedure; pass `c_funloc(f)` as the `f` argument.
-! `context` is forwarded untouched to every invocation — the C stand-in for a
+! `context` is forwarded untouched to every invocation, the C stand-in for a
 ! closure's captures (recover it with `c_f_pointer`); pass `c_null_ptr` when
 ! unused. Pass `c_null_ptr` for `opts` to use the default options, or
 ! initialize a `target` `treeweave_opts` with `treeweave_default_opts()`
@@ -37,7 +37,7 @@ module treeweave
     integer(c_int), parameter :: TREEWEAVE_F64 = 0_c_int
     integer(c_int), parameter :: TREEWEAVE_F32 = 1_c_int
 
-    ! ---- fit knobs — interoperable mirror of `treeweave_opts` ---------------
+    ! ---- fit knobs: interoperable mirror of `treeweave_opts` ---------------
     ! Pass c_loc() of a `target` instance as the `opts` argument, or c_null_ptr
     ! to fall back to default options.
     type, bind(C) :: treeweave_opts

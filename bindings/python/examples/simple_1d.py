@@ -1,4 +1,4 @@
-"""simple_1d.py — minimal 1D -> 1D fit and evaluation."""
+"""simple_1d.py: minimal 1D -> 1D fit and evaluation."""
 import math
 import numpy as np
 import treeweave
