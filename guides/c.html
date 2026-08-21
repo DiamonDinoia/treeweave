@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -283,11 +288,12 @@
              
   <section id="c">
 <h1>C<a class="headerlink" href="#c" title="Link to this heading"></a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> is the installable C surface: <code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code> header plus a shared
-and static library. The prebuilt binary dispatches across the x86 SIMD ladder at runtime —
-compiling from source does not add meaningful performance for C consumers.
-Prefer the binary, if it does not work for your platform, build from source.
-Feel free to open an issue if you need a prebuilt binary for your platform.
+<p><code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> is the installable C library. It ships the <code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code>
+header, a shared library and a static library. The prebuilt binary dispatches
+across the x86 SIMD ladder at runtime, so a source build runs no faster for a C
+consumer.
+Prefer the binary; build from source only when no binary covers the target
+platform. Open an issue to request a prebuilt binary for another platform.
 See <a class="reference internal" href="dispatch.html"><span class="doc">Runtime ISA dispatch</span></a>.</p>
 <section id="install">
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
@@ -326,7 +332,7 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build/dev-release<sp
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* simple.c — minimal treeweave C API usage, compiled as C11 (not C++).</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* simple.c: minimal treeweave C API usage, compiled as C11 (not C++).</span>
 <span class="cm"> *</span>
 <span class="cm"> * Doubles as the ABI smoke test: if this links and runs, the header is</span>
 <span class="cm"> * C-clean and no C++ exception escaped the boundary. */</span>
@@ -363,7 +369,7 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build/dev-release<sp
 
 <span class="w">    </span><span class="cm">/* Evaluate fn on points in [0, 1] and print the maximum error. */</span>
 <span class="w">    </span><span class="cm">/* Scalar eval at a few points; compare to the exact value. The by-value</span>
-<span class="cm">       treeweave_eval_1d returns the result directly — no output pointer, which</span>
+<span class="cm">       treeweave_eval_1d returns the result directly, with no output pointer, which</span>
 <span class="cm">       is the ergonomic form for a 1D-&gt;1D fit (y = f(x)). */</span>
 <span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">max_abs_err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
 <span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -431,16 +437,16 @@ thread-local <code class="docutils literal notranslate"><span class="pre">treewe
 </pre></div>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">eval</span></code> — one point.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">batch</span></code> — <code class="docutils literal notranslate"><span class="pre">n</span></code> points, array-of-structs (interleaved) layout.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sorted</span></code> — 1-D fast path for ascending inputs.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">transposed</span></code> — struct-of-arrays output for multi-output fits.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">eval</span></code>: one point.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">batch</span></code>: <code class="docutils literal notranslate"><span class="pre">n</span></code> points, array-of-structs (interleaved) layout.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sorted</span></code>: 1-D fast path for ascending inputs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transposed</span></code>: struct-of-arrays output for multi-output fits.</p></li>
 </ul>
 <p>Each has a <code class="docutils literal notranslate"><span class="pre">treeweavef_*</span></code> <code class="docutils literal notranslate"><span class="pre">float</span></code> twin.</p>
-<p>Out-of-domain handling is uniform across all eval paths: evaluating exactly at
-the upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value, and every other point outside
-<code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b]</span></code> — below <code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, or <code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf inputs — yields <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.
-The batch hot path stays branchless (the domain test compiles to a SIMD mask).</p>
+<p>Every eval path handles out-of-domain input the same way. A point exactly at
+the upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value. Points below <code class="docutils literal notranslate"><span class="pre">a</span></code>, points
+above <code class="docutils literal notranslate"><span class="pre">b</span></code>, and <code class="docutils literal notranslate"><span class="pre">NaN</span></code> or ±Inf inputs all yield <code class="docutils literal notranslate"><span class="pre">NaN</span></code>. The batch hot path
+stays branchless, because the domain test compiles to a SIMD mask.</p>
 </section>
 <section id="by-value-scalar-eval">
 <h3>By-value scalar eval<a class="headerlink" href="#by-value-scalar-eval" title="Link to this heading"></a></h3>

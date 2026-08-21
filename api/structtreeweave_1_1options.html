@@ -44,7 +44,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -92,7 +92,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guides/cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#options">Options</a></li>
@@ -168,24 +173,24 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guides/performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -200,7 +205,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -295,7 +300,7 @@
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7options8tol_kindE">
 <span id="_CPPv3N9treeweave7options8tol_kindE"></span><span id="_CPPv2N9treeweave7options8tol_kindE"></span><span id="treeweave::options::tol_kind__TolKind"></span><span class="target" id="structtreeweave_1_1options_1aff76e82f9cba778c70ee33297f68c097"></span><a class="reference internal" href="enum_tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552.html#_CPPv4N9treeweave7TolKindE" title="treeweave::TolKind"><span class="n"><span class="pre">TolKind</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tol_kind</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="enum_tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552.html#_CPPv4N9treeweave7TolKindE" title="treeweave::TolKind"><span class="n"><span class="pre">TolKind</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="enum_tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552.html#_CPPv4N9treeweave7TolKind11RelativeMaxE" title="treeweave::TolKind::RelativeMax"><span class="n"><span class="pre">RelativeMax</span></span></a><a class="headerlink" href="#_CPPv4N9treeweave7options8tol_kindE" title="Link to this definition"></a><br /></dt>
-<dd><p>How <code class="docutils literal notranslate"><span class="pre">tol</span></code> is interpreted by the convergence check. The default (<code class="docutils literal notranslate"><span class="pre">RelativeMax</span></code>) compares max-abs error on a sample grid against <code class="docutils literal notranslate"><span class="pre">tol</span> <span class="pre">*</span> <span class="pre">max(|f|)</span></code>; switch to <code class="docutils literal notranslate"><span class="pre">Absolute*</span></code> when <code class="docutils literal notranslate"><span class="pre">f</span></code> can be zero or when relative accuracy isn’t meaningful. </p>
+<dd><p>How the convergence check interprets <code class="docutils literal notranslate"><span class="pre">tol</span></code>. The default (<code class="docutils literal notranslate"><span class="pre">RelativeMax</span></code>) compares max-abs error on a sample grid against <code class="docutils literal notranslate"><span class="pre">tol</span> <span class="pre">*</span> <span class="pre">max(|f|)</span></code>; switch to <code class="docutils literal notranslate"><span class="pre">Absolute*</span></code> when <code class="docutils literal notranslate"><span class="pre">f</span></code> can be zero or when relative accuracy isn’t meaningful. </p>
 </dd></dl>
 
 <dl class="cpp var">
@@ -308,9 +313,9 @@
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7options14max_memory_mibE">
 <span id="_CPPv3N9treeweave7options14max_memory_mibE"></span><span id="_CPPv2N9treeweave7options14max_memory_mibE"></span><span id="treeweave::options::max_memory_mib__i"></span><span class="target" id="structtreeweave_1_1options_1a4c892a21d0d16be93ef7b8b69315faec"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">max_memory_mib</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="o"><span class="pre">-</span></span><span class="m"><span class="pre">1</span></span><a class="headerlink" href="#_CPPv4N9treeweave7options14max_memory_mibE" title="Link to this definition"></a><br /></dt>
 <dd><p>Hard cap on accumulated leaf storage during the fit, in MiB. Tri-state:<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> (default) — auto: a small, dimension-scaled budget, <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">&lt;&lt;</span> <span class="pre">(input_dim-1)</span></code> MiB (4 / 8 / 16 for 1D / 2D / 3D). Leaf storage grows ~geometrically with <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>, so a single flat cap is either too loose in 1D or too tight in 3D; scaling keeps the default a genuine guardrail in every dimension.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code> — disabled (no cap).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> — explicit cap in MiB. The default is deliberately small so an adaptive paneler can’t quietly grow into hundreds of MiB; ambitious 3D+ or oscillatory fits opt in explicitly with a larger value (or <code class="docutils literal notranslate"><span class="pre">0</span></code>). Crossing the cap throws <code class="docutils literal notranslate"><span class="pre">MemoryBudgetExceeded</span></code>, which carries the used/budget bytes and the offending panel so the caller can raise the budget or excise the singular region. </p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> (default): auto, a small, dimension-scaled budget, <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">&lt;&lt;</span> <span class="pre">(input_dim-1)</span></code> MiB (4 / 8 / 16 for 1D / 2D / 3D). Leaf storage grows ~geometrically with <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>, so a single flat cap is either too loose in 1D or too tight in 3D; scaling keeps the default a genuine guardrail in every dimension.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code>: disabled (no cap).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code>: explicit cap in MiB. The default is deliberately small so an adaptive paneler can’t quietly grow into hundreds of MiB; ambitious 3D+ or oscillatory fits opt in explicitly with a larger value (or <code class="docutils literal notranslate"><span class="pre">0</span></code>). Crossing the cap throws <code class="docutils literal notranslate"><span class="pre">MemoryBudgetExceeded</span></code>, which carries the used/budget bytes and the offending panel so the caller can raise the budget or excise the singular region. </p></li>
 </ul>
 </p>
 </dd></dl>
@@ -324,7 +329,7 @@
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7options17min_uniform_depthE">
 <span id="_CPPv3N9treeweave7options17min_uniform_depthE"></span><span id="_CPPv2N9treeweave7options17min_uniform_depthE"></span><span id="treeweave::options::min_uniform_depth__i"></span><span class="target" id="structtreeweave_1_1options_1a0272fec75dbf0271219cf39876e44288"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">min_uniform_depth</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N9treeweave7options17min_uniform_depthE" title="Link to this definition"></a><br /></dt>
-<dd><p>Force BFS to refine every panel to at least this depth before the per-panel tolerance test exits. Useful for driving the leaf-table fast path (<code class="docutils literal notranslate"><span class="pre">PolyTree::quantize_one</span></code>): a uniformly- refined tree of depth D in input_dim K builds a 2^(K*D)-entry quantize table the eval-time lookup collapses to one SIMD quantize + one u32 load. Table size grows as 2^(K*D) * 4 B and is capped at 64 K entries (256 KiB) per subtree, so values that push past <code class="docutils literal notranslate"><span class="pre">K*D</span> <span class="pre">&gt;</span> <span class="pre">16</span></code> will still build a uniform tree but not the table. Default 0 (no forcing — tol-based refinement only). </p>
+<dd><p>Force BFS to refine every panel to at least this depth before the per-panel tolerance test exits. Useful for driving the leaf-table fast path (<code class="docutils literal notranslate"><span class="pre">PolyTree::quantize_one</span></code>): a uniformly- refined tree of depth D in input_dim K builds a 2^(K*D)-entry quantize table the eval-time lookup collapses to one SIMD quantize + one u32 load. Table size grows as 2^(K*D) * 4 B and is capped at 64 K entries (256 KiB) per subtree, so values that push past <code class="docutils literal notranslate"><span class="pre">K*D</span> <span class="pre">&gt;</span> <span class="pre">16</span></code> will still build a uniform tree but not the table. Default 0: no forcing, tol-based refinement only. </p>
 </dd></dl>
 
 </div>

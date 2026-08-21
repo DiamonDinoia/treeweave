@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -284,24 +289,24 @@
   <section id="runtime-isa-dispatch">
 <h1>Runtime ISA dispatch<a class="headerlink" href="#runtime-isa-dispatch" title="Link to this heading"></a></h1>
 <p><code class="docutils literal notranslate"><span class="pre">libtreeweave_c</span></code> can ship a single binary that picks the widest SIMD
-instruction set the host CPU supports at load time, rather than being pinned to
-the <code class="docutils literal notranslate"><span class="pre">-march</span></code> it was compiled with. This is the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_C_MULTIARCH</span></code>
-build mode: the eval kernels are compiled once per ISA level, and a tiny
-dispatcher selects one the first time a fit is built.</p>
+instruction set the host CPU supports at load time, instead of staying pinned to
+its compile-time <code class="docutils literal notranslate"><span class="pre">-march</span></code>. <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_C_MULTIARCH</span></code> turns that on. The build
+then compiles the eval kernels once per ISA level, and the dispatcher picks one
+level the first time a caller builds a fit.</p>
 <p>Enable it at configure time:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_C_MULTIARCH<span class="o">=</span>ON<span class="w"> </span>-DTREEWEAVE_ARCH<span class="o">=</span>x86-64<span class="w">   </span><span class="c1"># x86 / MSVC</span>
 cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DTREEWEAVE_C_MULTIARCH<span class="o">=</span>ON<span class="w"> </span>-DTREEWEAVE_ARCH<span class="o">=</span>armv8-a<span class="w">  </span><span class="c1"># aarch64</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH</span></code> is the <strong>baseline</strong> the dispatcher itself and the C shim are
-compiled at, so the library loads on any CPU of the family — keep it at the
+<p><code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH</span></code> is the baseline for the dispatcher and the C shim
+themselves, so the library loads on any CPU of the family. Keep it at the
 lowest level (<code class="docutils literal notranslate"><span class="pre">x86-64</span></code>, <code class="docutils literal notranslate"><span class="pre">armv8-a</span></code>), not a tuned one.</p>
-<section id="how-the-family-is-chosen">
-<h2>How the family is chosen<a class="headerlink" href="#how-the-family-is-chosen" title="Link to this heading"></a></h2>
-<p>The set of variants is selected at compile time from <code class="docutils literal notranslate"><span class="pre">xsimd::best_arch</span></code> by CPU
-family (see <code class="docutils literal notranslate"><span class="pre">include/treeweave/detail/dispatch_arch.hpp</span></code>):</p>
+<section id="how-the-build-chooses-the-family">
+<h2>How the build chooses the family<a class="headerlink" href="#how-the-build-chooses-the-family" title="Link to this heading"></a></h2>
+<p>The build selects the variant set at compile time from <code class="docutils literal notranslate"><span class="pre">xsimd::best_arch</span></code>, by
+CPU family (see <code class="docutils literal notranslate"><span class="pre">include/treeweave/detail/dispatch_arch.hpp</span></code>):</p>
 <ul>
-<li><p><strong>x86-64</strong> — a four-level ladder. The dispatcher walks it widest-first and
+<li><p><code class="docutils literal notranslate"><span class="pre">x86-64</span></code>: a four-level ladder. The dispatcher walks it widest-first and
 selects the first level the host reports as available. GCC/Clang use
 <code class="docutils literal notranslate"><span class="pre">SSE2</span> <span class="pre">-&gt;</span> <span class="pre">SSE4.2</span> <span class="pre">-&gt;</span> <span class="pre">AVX2</span> <span class="pre">-&gt;</span> <span class="pre">AVX-512</span></code>; MSVC ABI compilers use
 <code class="docutils literal notranslate"><span class="pre">SSE2</span> <span class="pre">-&gt;</span> <span class="pre">AVX</span> <span class="pre">-&gt;</span> <span class="pre">AVX2</span> <span class="pre">-&gt;</span> <span class="pre">AVX-512</span></code> because there is no <code class="docutils literal notranslate"><span class="pre">/arch:SSE4.2</span></code>.</p>
@@ -336,26 +341,29 @@ selects the first level the host reports as available. GCC/Clang use
 </tbody>
 </table>
 </li>
-<li><p><strong>aarch64</strong> (non-Apple) — a single <code class="docutils literal notranslate"><span class="pre">neon64</span></code> variant
+<li><p><code class="docutils literal notranslate"><span class="pre">aarch64</span></code> (non-Apple): a single <code class="docutils literal notranslate"><span class="pre">neon64</span></code> variant
 (<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> name <code class="docutils literal notranslate"><span class="pre">arm64+neon</span></code>). NEON64 is mandatory on
-ARMv8-A, so it always dispatches. The win here is a uniform, portable dispatch
-path — not a new performance tier.</p></li>
-<li><p><strong>riscv64</strong> — a single <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (fixed 128-bit RVV). <strong>Best-effort and
-untested</strong>: there is no RISC-V CI runner, so this branch compiles but is not
-verified.</p></li>
+ARMv8-A, so it always dispatches. The single variant keeps one dispatch path
+across platforms. It is not a new performance tier.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">riscv64</span></code>: a single <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (fixed 128-bit RVV). Best-effort and
+untested. No RISC-V CI runner exists, so this branch compiles but nothing
+checks it.</p></li>
 </ul>
 <p>Apple silicon and unknown targets fall back to a single-arch build at
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ARCH</span></code> (no runtime dispatch).</p>
 </section>
 <section id="why-no-sve-on-arm">
 <h2>Why no SVE on ARM<a class="headerlink" href="#why-no-sve-on-arm" title="Link to this heading"></a></h2>
-<p>ARM SVE is excluded: xsimd’s <code class="docutils literal notranslate"><span class="pre">sve&lt;N&gt;</span></code> bakes the width in at compile time, but the runtime probe only checks SVE <em>presence</em> — not width — so a fixed-width variant would falsely match hardware of a different width. NEON64 is mandatory on ARMv8-A, so dropping SVE costs no coverage.</p>
+<p>ARM SVE is excluded. xsimd’s <code class="docutils literal notranslate"><span class="pre">sve&lt;N&gt;</span></code> bakes the width in at compile time,
+while the runtime probe only checks SVE <em>presence</em>, never width, so a
+fixed-width variant would falsely match hardware of a different width. NEON64
+is mandatory on ARMv8-A, so dropping SVE costs no coverage.</p>
 </section>
 <section id="forcing-an-isa-for-testing">
 <h2>Forcing an ISA for testing<a class="headerlink" href="#forcing-an-isa-for-testing" title="Link to this heading"></a></h2>
 <p>Set <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> to one of the names above to pin the dispatcher to
-a specific level (capped at what the host actually supports), so one capable
-machine can exercise every fallback path:</p>
+a specific level, capped at what the host supports, so one capable machine can
+exercise every fallback path:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>sse2<span class="w">       </span>./test_c_abi<span class="w">   </span><span class="c1"># force the x86 baseline</span>
 <span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>avx<span class="w">        </span>./test_c_abi<span class="w">   </span><span class="c1"># force MSVC's middle rung</span>
 <span class="nv">TREEWEAVE_FORCE_ARCH</span><span class="o">=</span>fma3+avx2<span class="w">  </span>./test_c_abi<span class="w">   </span><span class="c1"># force AVX2</span>

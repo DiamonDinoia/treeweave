@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -319,7 +324,7 @@ or point <code class="docutils literal notranslate"><span class="pre">LIBTREEWEA
 <span class="w">    </span><span class="n">println</span><span class="p">(</span><span class="s">"  x=</span><span class="si">$x</span><span class="s">  exact=</span><span class="si">$</span><span class="p">(</span><span class="n">round</span><span class="p">(</span><span class="n">exact</span><span class="p">,</span><span class="n">digits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span><span class="s">  approx=</span><span class="si">$</span><span class="p">(</span><span class="n">round</span><span class="p">(</span><span class="n">approx_val</span><span class="p">,</span><span class="n">digits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span><span class="s">  err=</span><span class="si">$</span><span class="p">(</span><span class="n">round</span><span class="p">(</span><span class="n">err</span><span class="p">,</span><span class="n">sigdigits</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span><span class="s">"</span><span class="p">)</span>
 <span class="k">end</span>
 
-<span class="c"># Batch eval — the handle is called directly. The fit domain is [a, b_val);</span>
+<span class="c"># Batch eval: the handle is called directly. The fit domain is [a, b_val);</span>
 <span class="c"># the upper corner b_val is evaluable too (it returns the boundary value).</span>
 <span class="n">xs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">collect</span><span class="p">(</span><span class="n">range</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b_val</span><span class="p">;</span><span class="w"> </span><span class="n">length</span><span class="o">=</span><span class="mi">1001</span><span class="p">))</span>
 <span class="c"># Evaluate approx on a batch and print the maximum error.</span>
@@ -329,8 +334,8 @@ or point <code class="docutils literal notranslate"><span class="pre">LIBTREEWEA
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">fit</span></code> infers the dimensions from the callable, so the common case is
-<code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">tol)</span></code>. The fitted object is called directly for a point or a
-batch; tune the fit with <code class="docutils literal notranslate"><span class="pre">TreeweaveOptions</span></code> (see <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a>).</p>
+<code class="docutils literal notranslate"><span class="pre">fit(f,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">tol)</span></code>. Call the fitted object directly, with a point or with a
+batch. Tune the fit with <code class="docutils literal notranslate"><span class="pre">TreeweaveOptions</span></code> (see <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a>).</p>
 </section>
 <section id="evaluation-routes">
 <h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
@@ -342,14 +347,15 @@ fast paths:</p>
 <span class="n">approx</span><span class="p">(</span><span class="n">xs</span><span class="p">;</span><span class="w"> </span><span class="n">transposed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">)</span><span class="w">     </span><span class="c"># batch -&gt; out_dim×n  (requires out_dim &gt; 1)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">sorted</span> <span class="pre">=</span> <span class="pre">true</span></code> skips treeweave’s internal bin-sort and is ~3–4× faster
-when you can promise <code class="docutils literal notranslate"><span class="pre">xs</span></code> is ascending — common for <code class="docutils literal notranslate"><span class="pre">range</span></code> grids, quadrature
-nodes, and time series. The promise is unchecked: unsorted input gives wrong
-values, so use the plain batch path when unsure. <code class="docutils literal notranslate"><span class="pre">transposed</span> <span class="pre">=</span> <span class="pre">true</span></code> returns
-each output component in its own contiguous row. <code class="docutils literal notranslate"><span class="pre">sorted</span></code> is 1-D only.
-Out-of-domain handling is uniform across paths: evaluating exactly at <code class="docutils literal notranslate"><span class="pre">b</span></code>
-returns the boundary value, and every other point outside <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b]</span></code> — below
-<code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, or <code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf — returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">sorted</span> <span class="pre">=</span> <span class="pre">true</span></code> skips treeweave’s internal bin-sort and is ~3-4x faster when
+the caller can promise <code class="docutils literal notranslate"><span class="pre">xs</span></code> is ascending, which covers <code class="docutils literal notranslate"><span class="pre">range</span></code> grids,
+quadrature nodes and time series. Nothing checks the promise, and unsorted input
+gives wrong values, so use the plain batch path when the order is unknown.
+<code class="docutils literal notranslate"><span class="pre">sorted</span></code> is 1-D only. <code class="docutils literal notranslate"><span class="pre">transposed</span> <span class="pre">=</span> <span class="pre">true</span></code> returns each output component in
+its own contiguous row.</p>
+<p>Every path handles out-of-domain input the same way. A point exactly at <code class="docutils literal notranslate"><span class="pre">b</span></code>
+returns the boundary value. Points below <code class="docutils literal notranslate"><span class="pre">a</span></code>, points above <code class="docutils literal notranslate"><span class="pre">b</span></code>, and <code class="docutils literal notranslate"><span class="pre">NaN</span></code>
+or ±Inf inputs all return <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p>
 </section>
 <section id="multi-dimensional-fits">
 <h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>

@@ -1,13 +1,14 @@
 C++
 ===
 
-treeweave's C++ API is header-only — include ``treeweave/treeweave.hpp`` and call
-``treeweave::fit``.
+treeweave's C++ API is header-only. Include ``treeweave/treeweave.hpp`` and
+call ``treeweave::fit``.
 
 Install
 -------
 
-**Download headers (no CMake):**
+Download headers, no CMake
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
@@ -19,7 +20,8 @@ Install
 The floating URL always resolves to the newest release; use
 ``.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz`` to pin a version.
 
-**CMake — FetchContent:**
+CMake, FetchContent
+^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: cmake
 
@@ -30,7 +32,8 @@ The floating URL always resolves to the newest release; use
    FetchContent_MakeAvailable(treeweave)
    target_link_libraries(my_app PRIVATE treeweave::treeweave)
 
-**CMake — CPM:**
+CMake, CPM
+^^^^^^^^^^
 
 .. code-block:: cmake
 
@@ -46,7 +49,8 @@ The floating URL always resolves to the newest release; use
 Multi-dimensional fit
 ---------------------
 
-Inputs and outputs are ``std::array``; dimensions are deduced from the callable:
+Inputs and outputs are ``std::array``. treeweave deduces the dimensions from
+the callable:
 
 .. code-block:: cpp
 
@@ -58,7 +62,8 @@ Inputs and outputs are ``std::array``; dimensions are deduced from the callable:
                             std::array{1.0, 1.0}, /*tol=*/1e-8);
    auto y  = fn(std::array{0.4, 0.6});   // std::array<double, 1>
 
-``float`` works the same — use ``float`` corners and a ``float``-returning callable.
+``float`` works the same way: pass ``float`` corners and a ``float``-returning
+callable.
 
 Options
 -------
@@ -98,8 +103,9 @@ Build from source
 After ``cmake --install build --prefix P``, use ``-IP/include`` (or nothing for a
 standard prefix). ``cd examples/c++ && make`` uses the generated ``build/make.inc``.
 
-The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime; the C++
-header-only path compiles into your TU with your own ``-march``. See :doc:`dispatch`.
+The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime. The
+header-only C++ path instead compiles into the consuming translation unit under
+its own ``-march``. See :doc:`dispatch`.
 
 Runnable sources:
 `examples/c++/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B>`_.

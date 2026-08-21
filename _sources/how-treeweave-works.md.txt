@@ -1,9 +1,9 @@
 # How treeweave works
 
-Treeweave turns an expensive function `f(x)` into a cheap lookup by precomputing
-a **piecewise polynomial approximation** on an **adaptive tree**. Cost: memory
-plus a one-time fit. Payoff: every later call is a tree descent followed by
-a degree-7 polynomial evaluation.
+treeweave turns an expensive function `f(x)` into a cheap lookup. It
+precomputes a piecewise polynomial approximation on an adaptive tree. The fit
+runs once and costs memory. Every later call is a tree descent followed by a
+degree-7 polynomial evaluation.
 
 ```
    user calls fn(x), fn(x), fn(x)... a million times.
@@ -23,26 +23,26 @@ a degree-7 polynomial evaluation.
    (cheap, no f() calls anymore)
 ```
 
-## Phase 1 — fit: adaptive paneling
+## Phase 1, fit: adaptive paneling
 
 Start with the whole domain as one box. Try to fit a degree-D polynomial
 (monomial basis, via polyfit, sampled at Chebyshev nodes). If error too large,
 split into `2^Dim` children and recurse.
 Stop when each leaf passes the tolerance check.
 
-Three classical choices make this work, each one a deliberate piece of
-numerical-analysis folklore (see [Background](#background-and-further-reading)):
+Three standard choices from numerical analysis make this work (see
+[Background](#background-and-further-reading)):
 
 - **Chebyshev nodes, not equispaced.** Sampling `f` at the Chebyshev points
-  (end-clustered) avoids the Runge phenomenon — the edge oscillations that make
+  (end-clustered) avoids the Runge phenomenon, the edge oscillations that make
   a high-degree fit on equispaced nodes diverge. On each panel the error then
   converges *exponentially* in the degree for an analytic `f`.
-- **Monomial basis at low degree.** Treeweave keeps the polynomial in the plain
-  monomial basis `Σ cₖ xᵏ`. That is famously a bad idea at high degree, but it
-  is "easy, fast, accurate" at the low degrees treeweave actually uses
-  (degree ≈ 7, well under the `n ≲ 30` regime where the monomial Vandermonde
-  solve stays well-behaved). Horner evaluation of a monomial is a tight FMA
-  chain that maps directly onto a SIMD register lane (Phase 3).
+- **Monomial basis at low degree.** treeweave keeps the polynomial in the plain
+  monomial basis `Σ cₖ xᵏ`. That is a bad idea at high degree, but it is
+  "easy, fast, accurate" at the low degrees treeweave uses (degree ≈ 7, well
+  under the `n ≲ 30` regime where the monomial Vandermonde solve stays
+  well-behaved). Horner evaluation of a monomial is a tight FMA chain that maps
+  directly onto a SIMD register lane (Phase 3).
 - **Adaptive panels, not one global fit.** A small enough panel near a rapid
   change or near-singularity is locally accurate, so refining only where `f` is
   hard is far cheaper than one global high-degree interpolant. The split-until-
@@ -77,7 +77,7 @@ children in the flat `nodes_[]` array; leaves (`L`, `RL`, `RR`) carry a
 `poly_eval_id` that indexes into `polyfits_[]`. A descent for a query `x` walks
 one path from root to leaf, picking the child with `x` on the correct side of
 `center` at each level. In ND, swap binary splits for `2^Dim` children per
-internal node — quadtree (4) in 2D, octree (8) in 3D.
+internal node: quadtree (4) in 2D, octree (8) in 3D.
 
 In 2D / 3D the same idea applies, but each split is into 4 / 8 children
 (quadtree / octree).
@@ -96,11 +96,11 @@ In 2D / 3D the same idea applies, but each split is into 4 / 8 children
    └───────┴───────┘        └───────┴───────────┘
 ```
 
-The result is stored in two flat arrays (Struct-of-Arrays for cache
-locality):
+Phase 1 stores the result in two flat arrays, Struct-of-Arrays for cache
+locality:
 
 ```
-   nodes_[]   — the tree (24/32/40 B per node for 1D/2D/3D)
+   nodes_[]   : the tree (24/32/40 B per node for 1D/2D/3D)
    ┌────┬────┬────┬─────────┬────┬────┬─────────────────────────┐
    │ N0 │ N1 │ N2 │   ...   │ Ni │... │ each Node carries:      │
    └────┴────┴────┴─────────┴────┴────┴─────────────────────────┘
@@ -110,7 +110,7 @@ locality):
                                         • poly_eval_id
                                             → polyfits_[id]
 
-   polyfits_[]   — per-leaf monomial coefficients (packed)
+   polyfits_[]   : per-leaf monomial coefficients (packed)
    ┌──────────┬──────────┬──────────┬──────────┐
    │   P0     │   P1     │   ...    │   Pk     │
    └──────────┴──────────┴──────────┴──────────┘
@@ -122,7 +122,7 @@ iteration, IPC 0.88, scheduler-queue full 89%). Packing nodes contiguously
 and reading only `first_child_idx` per level minimises the dependent-load
 chain.
 
-## Phase 2 — eval: descent
+## Phase 2, eval: descent
 
 Given a query point `x`, walk down the tree:
 
@@ -149,7 +149,7 @@ Given a query point `x`, walk down the tree:
    polyfits_[17].eval(x) → y
 ```
 
-In ND, the child index is built one bit per axis — one comparison per axis,
+In ND, the child index takes one bit per axis: one comparison per axis,
 4 children per 2D node, 8 per 3D node:
 
 ```
@@ -164,11 +164,11 @@ In ND, the child index is built one bit per axis — one comparison per axis,
    └───────┴───────┘
 ```
 
-## Phase 3 — leaf evaluation: tensor-product Horner
+## Phase 3, leaf evaluation: tensor-product Horner
 
 The leaf carries monomial coefficients `c[k_0, k_1, ..., k_{n-1}]`.
-Evaluation collapses one axis at a time using Horner's rule. Total cost:
-**`K^n − 1` FMAs** where `K = degree + 1`.
+Evaluation collapses one axis at a time with Horner's rule, at a cost of
+`K^n − 1` FMAs, where `K = degree + 1`.
 
 ```
    1D Horner (K = 8):              2D Horner (K = 8):
@@ -187,14 +187,14 @@ For 3D the cost is `8^3 − 1 = 511` FMAs per evaluation. The shipped kernel
 batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
 when the leaf is hot in L1.
 
-## Phase 4 — batched eval: counting sort by leaf
+## Phase 4, batched eval: counting sort by leaf
 
-This is what makes treeweave fast on million-point batches. Naive batch:
-1M points × independent descents × independent polyfits → terrible cache
-behaviour. Optimised path:
+A naive batch runs one independent descent and one independent polyfit call
+per point, so the leaf coefficients leave L1 between points. Sorting the
+points by leaf fixes that.
 
 ```
-   xp[N] — caller's points, mixed across leaves:
+   xp[N] : caller's points, mixed across leaves:
 
    ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
    │ L3 │ L0 │ L3 │ L1 │ L0 │ L3 │ L0 │ L1 │ L3 │   each cell tagged with
@@ -239,8 +239,8 @@ Phase-7 attribution at 3D deg=7, N = 10^6:
 
 End-to-end ceiling on one P-core: ~7 % of FMA peak (76.8 GFLOPS DP). The
 55 % descent is at the load-use latency floor; closing the rest needs
-parallel hardware — which is why Phase 8 locks down `operator()`
-thread-safety so callers can chunk and thread externally.
+parallel hardware. Phase 8 therefore locks down `operator()` thread-safety,
+so callers can chunk and thread externally.
 
 ## TL;DR
 
@@ -251,34 +251,34 @@ thread-safety so callers can chunk and thread externally.
               + thread-safe immutable Function
 ```
 
-One fit, immutable `Function`, cheap evaluations forever.
+Fit once, then evaluate from the immutable `Function` as often as needed.
 
 ## Degree selection: C ABI vs C++ header API
 
-The **C++ header API** (`treeweave::fit<Degree>(...)`) requires the leaf degree
-as a compile-time template parameter, letting you tune or override it per
-call site. Supported values are any positive integer; 7 is the default
+The C++ header API (`treeweave::fit<Degree>(...)`) requires the leaf degree
+as a compile-time template parameter, so each call site can tune or override
+it. Supported values are any positive integer; 7 is the default
 (matches one AVX2 / AVX-512 register lane).
 
-The **C ABI** (`treeweave_fit` for double / `treeweavef_fit` for float in
-`treeweave.h` — precision lives in the prefix, FINUFFT/FFTW style) takes no
-degree argument. Instead it picks a register-optimal, spill-free degree at
-runtime based on the detected CPU vector width. The multi-arch dispatch path —
-enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON` — selects among
-compiled-in ISA variants so the best leaf size for the host CPU is used
-automatically: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
+The C ABI (`treeweave_fit` for double, `treeweavef_fit` for float, in
+`treeweave.h`, where the precision lives in the prefix, FINUFFT/FFTW style)
+takes no degree argument. Instead it picks a register-optimal, spill-free degree at
+runtime based on the detected CPU vector width. The multi-arch dispatch path,
+enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON`, selects among
+compiled-in ISA variants, so the dispatcher picks the best leaf size for the
+host CPU: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
 mandatory NEON64 variant, and on RISC-V an `rvv` variant (best-effort,
 untested). See the [Runtime ISA dispatch](guides/dispatch.rst) guide for the
-full family selection and the `TREEWEAVE_FORCE_ARCH` override. Accuracy is driven entirely by the
-`tol` parameter; the adaptive tree refines until every leaf meets tolerance
-regardless of which degree is chosen.
+full family selection and the `TREEWEAVE_FORCE_ARCH` override. Accuracy comes
+from `tol` alone. Whichever degree the dispatcher picks, the adaptive tree
+refines until every leaf meets the tolerance.
 
 ## Background and further reading
 
-The design above is a software realization of standard function-approximation
-practice. For an accessible, modern tour of the underlying numerical analysis —
-why Chebyshev nodes, why the monomial basis is fine at low degree, and how
-adaptive paneling extends to several dimensions — see:
+The design above implements standard function-approximation practice. One
+talk covers the numerical analysis behind it. It explains why Chebyshev nodes,
+why the monomial basis is fine at low degree, and how adaptive paneling extends
+to several dimensions.
 
 > **Alex Barnett**, *What everyone should know about function approximation in
 > one and more dimensions*, FWAM7, Flatiron Institute Center for Computational
@@ -286,46 +286,45 @@ adaptive paneling extends to several dimensions — see:
 > [slides (PDF)](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) ·
 > [code demos](https://gist.github.com/ahbarnett)
 
-For broader HPC context around the surrounding numerical-computing work, see
-Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
+For the wider HPC context, see Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 
-That talk surveys the exact recipe treeweave automates — "break the domain into
+That talk surveys the exact recipe treeweave automates, "break the domain into
 panels, use a fixed-degree interpolant on each, and recursively split panels
-until the local error meets the user's tolerance" — and lists
+until the local error meets the user's tolerance". It lists
 [baobzi](https://github.com/flatironinstitute/baobzi) (treeweave's predecessor)
 alongside `HChebInterp.jl` and `Chebfun` as adaptive-interpolation codes. A few
 specific points it makes that justify treeweave's choices:
 
-- **Chebyshev nodes defeat the Runge phenomenon** and give exponential
+- Chebyshev nodes defeat the Runge phenomenon and give exponential
   convergence for analytic functions; the convergence rate is governed by the
   size of the Bernstein ellipse in which `f` is analytic (Runge 1901;
   Trefethen, *Approximation Theory and Approximation Practice*).
-- **The monomial basis is "easy, fast, accurate" for degree `n ≲ 30`** even
-  though it is ill-advised at higher degree — exactly the low-degree, many-panel
+- The monomial basis is "easy, fast, accurate" for degree `n ≲ 30`, even
+  though it is ill-advised at higher degree, exactly the low-degree, many-panel
   regime treeweave operates in (Helsing 2008; Shen & Serkh, *SINUM* 2025).
-- **Piecewise high-order interpolation on adaptive boxes** (a quadtree in 2D, an
+- Piecewise high-order interpolation on adaptive boxes (a quadtree in 2D, an
   octree in 3D) is the standard way to beat the `nᵈ` curse of dimensionality in
-  low dimensions, at the cost of memory — the trade treeweave makes explicit.
+  low dimensions, at the cost of memory, the trade treeweave makes explicit.
 
 ### The math, briefly
 
 On each panel treeweave fits an order-`n` polynomial (degree `n − 1`). Working on
-the standard interval `[−1, 1]`, it samples `f` at the `n` **Chebyshev points**
+the standard interval `[−1, 1]`, it samples `f` at the `n` Chebyshev points
 
 $$
 t_j = \cos\!\frac{\pi j}{n - 1}, \qquad j = 0, 1, \dots, n - 1,
 $$
 
-which cluster toward the endpoints — the clustering that defeats the Runge
-phenomenon. A panel `[a, b]` is reached by the affine map (exactly treeweave's
-`midpoint` ± `half_length`)
+which cluster toward the endpoints, and that clustering defeats the Runge
+phenomenon. An affine map, exactly treeweave's `midpoint` ± `half_length`,
+carries `[−1, 1]` onto a panel `[a, b]`:
 
 $$
 x = \frac{a + b}{2} + \frac{b - a}{2}\, t, \qquad t \in [-1, 1].
 $$
 
-The interpolant is stored in the **monomial basis**, with coefficients `cₖ`
-solving the Vandermonde system `V c = f`:
+treeweave stores the interpolant in the monomial basis, with coefficients `cₖ`
+that solve the Vandermonde system `V c = f`:
 
 $$
 \tilde f(x) = \sum_{k=0}^{n-1} c_k\, x^k,
@@ -333,8 +332,8 @@ $$
 V_{jk} = x_j^{\,k}, \quad f_j = f(x_j).
 $$
 
-Rescaling each panel to `[−1, 1]` keeps that Vandermonde solve well-conditioned —
-which, with the low degrees treeweave uses, is why the monomial form stays
+Rescaling each panel to `[−1, 1]` keeps that Vandermonde solve well-conditioned.
+At the low degrees treeweave uses, that is why the monomial form stays
 accurate. The approximation error on a panel obeys the classical Chebyshev
 bounds:
 
@@ -347,7 +346,7 @@ $$
 \end{cases}
 $$
 
-The adaptive fit (Phase 1) simply subdivides any panel until its measured
+The adaptive fit (Phase 1) subdivides any panel until its measured
 $\lVert f - \tilde f \rVert_\infty \le \varepsilon$ (`tol`), so a near-singularity
 gets many small panels while smooth regions stay coarse. Evaluation (Phase 3) is
 then a tensor-product Horner sweep costing `Kⁿ − 1` FMAs per point, with

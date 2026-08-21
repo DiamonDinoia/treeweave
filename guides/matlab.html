@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -283,10 +288,10 @@
              
   <section id="matlab-octave">
 <h1>MATLAB / Octave<a class="headerlink" href="#matlab-octave" title="Link to this heading"></a></h1>
-<p>One source builds for both <strong>MATLAB</strong> (R2019b+) and <strong>GNU Octave</strong> (&gt;= 6). The
-binding is generated by <a class="reference external" href="https://github.com/zgimbutas/mwrap">mwrap</a> from a
-single <code class="docutils literal notranslate"><span class="pre">treeweave.mw</span></code> source; the user-facing <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> is a thin
-<code class="docutils literal notranslate"><span class="pre">classdef</span></code> holding the opaque C handle.</p>
+<p>One source builds for both MATLAB (R2019b+) and GNU Octave (&gt;= 6).
+<a class="reference external" href="https://github.com/zgimbutas/mwrap">mwrap</a> generates the binding from a
+single <code class="docutils literal notranslate"><span class="pre">treeweave.mw</span></code> source. The user-facing <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> is a thin
+<code class="docutils literal notranslate"><span class="pre">classdef</span></code> that holds the opaque C handle.</p>
 <section id="install-matlab">
 <h2>Install (MATLAB)<a class="headerlink" href="#install-matlab" title="Link to this heading"></a></h2>
 <p>With <a class="reference external" href="https://mip.sh/">mip</a>, from the <a class="reference external" href="https://github.com/mip-org/mip-labs">mip-org/labs</a> channel:</p>
@@ -297,8 +302,8 @@ single <code class="docutils literal notranslate"><span class="pre">treeweave.mw
 <p>Or download the bundle directly. Each release attaches a self-contained
 <code class="docutils literal notranslate"><span class="pre">treeweave-matlab-&lt;version&gt;-&lt;platform&gt;</span></code> bundle (<code class="docutils literal notranslate"><span class="pre">linux-x64</span></code>, <code class="docutils literal notranslate"><span class="pre">windows-x64</span></code>,
 <code class="docutils literal notranslate"><span class="pre">macos-arm64</span></code>, <code class="docutils literal notranslate"><span class="pre">macos-x64</span></code>) on the <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/releases">Releases page</a>. The MEX statically links
-the C ABI, so there are no runtime dependencies — download, extract, and
-<code class="docutils literal notranslate"><span class="pre">addpath</span></code> the extracted directory (which holds <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code>, the generated
+the C ABI, so the bundle has no runtime dependencies. Download it, extract it,
+and <code class="docutils literal notranslate"><span class="pre">addpath</span></code> the extracted directory (which holds <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code>, the generated
 <code class="docutils literal notranslate"><span class="pre">tw_*.m</span></code> stubs, and <code class="docutils literal notranslate"><span class="pre">treeweave_mex.&lt;ext&gt;</span></code>).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VER</span><span class="o">=</span>stable
 <span class="nv">PLATFORM</span><span class="o">=</span>linux-x64
@@ -336,14 +341,14 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-octav
 ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-octave<span class="w"> </span>-R<span class="w"> </span>matlab_treeweave<span class="w"> </span>--output-on-failure
 </pre></div>
 </div>
-<p>Requirements: MATLAB R2019b+ (tested on R2025a) <strong>or</strong> GNU Octave with
+<p>Requirements: MATLAB R2019b+ (tested on R2025a) or GNU Octave with
 <code class="docutils literal notranslate"><span class="pre">mkoctfile</span></code>, plus a C++20 toolchain and CMake &gt;= 3.25.</p>
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
 <p>Add the <code class="docutils literal notranslate"><span class="pre">treeweave.m</span></code> class directory and the generated MEX directory to the
 path, then fit and evaluate:</p>
-<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="c">% example_1d.m — 1-D scalar fit: exp(0.5*x)+sin(3*x) on [0,1]</span>
+<div class="highlight-matlab notranslate"><div class="highlight"><pre><span></span><span class="c">% example_1d.m: 1-D scalar fit of exp(0.5*x)+sin(3*x) on [0,1]</span>
 <span class="c">%</span>
 <span class="c">% Before running: the build tree (where treeweave_mex.mex/mexa64 and the</span>
 <span class="c">% tw_*.m stubs live) must already be on the MATLAB/Octave path, e.g.:</span>
@@ -369,8 +374,8 @@ path, then fit and evaluate:</p>
 <p>The callback receives a <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">x</span> <span class="pre">dim</span></code> row and returns a scalar or a
 <code class="docutils literal notranslate"><span class="pre">out_dim</span> <span class="pre">x</span> <span class="pre">1</span></code> column. The fit domain is <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b)</span></code>; evaluating exactly at the
 upper corner <code class="docutils literal notranslate"><span class="pre">b</span></code> returns the boundary value (the last cell’s polynomial).
-Every other out-of-domain point returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code> — below <code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf inputs alike — uniformly across the scalar, batch and sorted paths.</p>
+Every other out-of-domain point returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code>, below <code class="docutils literal notranslate"><span class="pre">a</span></code>, above <code class="docutils literal notranslate"><span class="pre">b</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code>/±Inf inputs alike, uniformly across the scalar, batch and sorted paths.</p>
 </section>
 <section id="evaluation-routes">
 <h2>Evaluation routes<a class="headerlink" href="#evaluation-routes" title="Link to this heading"></a></h2>
@@ -385,9 +390,10 @@ select the fast paths:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">'sorted',</span> <span class="pre">true</span></code> skips treeweave’s internal counting-sort and is ~3-4x faster
-when you can promise the column is ascending — common for <code class="docutils literal notranslate"><span class="pre">linspace</span></code> grids,
-quadrature nodes, and time series. The promise is unchecked: unsorted input
-gives wrong values, so use the plain batch call when unsure.</p>
+when the caller can promise the column is ascending, which covers <code class="docutils literal notranslate"><span class="pre">linspace</span></code>
+grids, quadrature nodes and time series. Nothing checks the promise, and
+unsorted input gives wrong values, so use the plain batch call when the order is
+unknown.</p>
 </section>
 <section id="multi-dimensional-fits">
 <h2>Multi-dimensional fits<a class="headerlink" href="#multi-dimensional-fits" title="Link to this heading"></a></h2>

@@ -28,10 +28,9 @@ Minimal example
 .. literalinclude:: ../../bindings/python/examples/simple_1d.py
    :language: python
 
-``fit`` infers the input/output dimensions by probing the callable, so the
-common case is just ``fit(f, a, b, tol=...)``. The fitted object is called
-directly for a single point or a batch. A C++ fit failure surfaces as a native
-Python exception.
+``fit`` infers the input and output dimensions by probing the callable, so the
+common case is ``fit(f, a, b, tol=...)``. Call the fitted object directly, with
+a single point or with a batch. A failing C++ fit raises a Python exception.
 
 Decorator form
 --------------
@@ -67,14 +66,16 @@ keyword flags select the fast paths:
    approx(xs, sorted=True)           # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
    approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)
 
-``sorted=True`` skips treeweave's internal counting-sort and is ~3–4× faster when
-you can promise ``xs`` is ascending — common for ``linspace`` grids, quadrature
-nodes, and time series. The promise is unchecked: unsorted input gives wrong
-values, so use the plain batch path when unsure. ``transposed=True`` returns each
-output component in its own contiguous row. Out-of-domain handling is uniform
-across paths: evaluating exactly at ``b`` returns the boundary value, and every
-other point outside ``[a, b]`` — below ``a``, above ``b``, or ``NaN``/±Inf —
-returns ``NaN``.
+``sorted=True`` skips treeweave's internal counting-sort and is ~3-4x faster
+when the caller can promise ``xs`` is ascending, which covers ``linspace``
+grids, quadrature nodes and time series. Nothing checks the promise, and
+unsorted input gives wrong values, so use the plain batch path when the order is
+unknown. ``transposed=True`` returns each output component in its own contiguous
+row.
+
+Every path handles out-of-domain input the same way. A point exactly at ``b``
+returns the boundary value. Points below ``a``, points above ``b``, and ``NaN``
+or ±Inf inputs all return ``NaN``.
 
 Multi-dimensional fits
 ----------------------

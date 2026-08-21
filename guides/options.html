@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -283,10 +288,11 @@
              
   <section id="fit-options">
 <h1>Fit options<a class="headerlink" href="#fit-options" title="Link to this heading"></a></h1>
-<p>Everything here is optional — the defaults are tuned to be good out of the box.</p>
-<p>Options are documented here once. Language guides show how to pass them, and
-use each language’s naming style: C++ uses <code class="docutils literal notranslate"><span class="pre">tol_kind</span></code>, Python/Julia/MATLAB use
-<code class="docutils literal notranslate"><span class="pre">tol_kind</span></code>, JavaScript uses <code class="docutils literal notranslate"><span class="pre">tolKind</span></code>, and C/Fortran use the C ABI fields.</p>
+<p>Every option here has a default that works. Set one only to override it.</p>
+<p>This page documents each option once. The language guides show how to pass
+them, in each language’s own naming style. C++, Python, Julia and MATLAB spell
+it <code class="docutils literal notranslate"><span class="pre">tol_kind</span></code>, JavaScript spells it <code class="docutils literal notranslate"><span class="pre">tolKind</span></code>, and C and Fortran use the C
+ABI fields.</p>
 <section id="common-fit-options">
 <h2>Common fit options<a class="headerlink" href="#common-fit-options" title="Link to this heading"></a></h2>
 <p>These apply to every language binding:</p>
@@ -305,7 +311,7 @@ use each language’s naming style: C++ uses <code class="docutils literal notra
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tol_kind</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">RelativeMax</span></code></p></td>
-<td><p>How <code class="docutils literal notranslate"><span class="pre">tol</span></code> is interpreted (see <a class="reference internal" href="#tolkind"><span class="std std-ref">TolKind</span></a>).</p></td>
+<td><p>How treeweave interprets <code class="docutils literal notranslate"><span class="pre">tol</span></code> (see <a class="reference internal" href="#tolkind"><span class="std std-ref">TolKind</span></a>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max_depth</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">50</span></code></p></td>
@@ -335,9 +341,9 @@ refinement only.</p></td>
 </tr>
 </tbody>
 </table>
-<p>The leaf polynomial <strong>degree</strong> is not a runtime option: in C++ it is a template
-parameter (<code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code>, default 7); the C ABI auto-selects a
-register-optimal degree for the detected CPU.</p>
+<p>The leaf polynomial degree is not a runtime option. In C++ it is a template
+parameter, <code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code>, default 7. The C ABI picks a register-optimal
+degree for the detected CPU.</p>
 </section>
 <section id="language-specific-options">
 <h2>Language-specific options<a class="headerlink" href="#language-specific-options" title="Link to this heading"></a></h2>
@@ -357,8 +363,8 @@ register-optimal degree for the detected CPU.</p>
 <tbody>
 <tr class="row-even"><td><p>Python, JavaScript</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">dim</span></code> / <code class="docutils literal notranslate"><span class="pre">out_dim</span></code> or <code class="docutils literal notranslate"><span class="pre">outDim</span></code></p></td>
-<td><p>Input/output dimensions can be inferred by probing the callback; set
-them explicitly when inference is ambiguous or expensive.</p></td>
+<td><p>A probe of the callback infers the input/output dimensions; set them
+explicitly when the probe is ambiguous or expensive.</p></td>
 </tr>
 <tr class="row-odd"><td><p>Python, JavaScript</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">dtype</span></code></p></td>
@@ -403,10 +409,10 @@ the C ABI’s CPU-selected degree.</p></td>
 <td><p>sample-grid L2 absolute error</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RelativeTail</span></code></p></td>
-<td><p>1-D only — relative coefficient-tail estimate</p></td>
+<td><p>1-D only, relative coefficient-tail estimate</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AbsoluteTail</span></code></p></td>
-<td><p>1-D only — absolute coefficient-tail estimate</p></td>
+<td><p>1-D only, absolute coefficient-tail estimate</p></td>
 </tr>
 </tbody>
 </table>

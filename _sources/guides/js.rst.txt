@@ -8,9 +8,9 @@ Install
 
    npm install @flatironinstitute/treeweave
 
-Prebuilt native N-API binaries ship for common Linux, macOS, and Windows
-platforms. A bundled WASM backend is used in browsers and hosts without a
-matching native prebuild.
+Prebuilt native N-API binaries ship for common Linux, macOS and Windows
+platforms. Browsers and hosts without a matching native prebuild fall back to
+the bundled WASM backend.
 
 Usage
 -----
@@ -32,9 +32,9 @@ Usage
 Options
 -------
 
-Pass a ``FitOptions`` object as the fifth argument to ``Treeweave.fit``. Shared
-fit options are documented in :doc:`options`; JavaScript uses lower camel case
-names such as ``tolKind`` and ``maxMemoryMib``.
+Pass a ``FitOptions`` object as the fifth argument to ``Treeweave.fit``.
+:doc:`options` documents the shared fit options. JavaScript spells them in lower
+camel case, such as ``tolKind`` and ``maxMemoryMib``.
 
 .. code-block:: ts
 
@@ -47,11 +47,11 @@ names such as ``tolKind`` and ``maxMemoryMib``.
 
 JavaScript-specific fields:
 
-- ``dim`` and ``outDim`` are inferred by default; set them only when probing the
-  callback at the box midpoint is not enough.
+- A probe of the callback at the box midpoint infers ``dim`` and ``outDim``; set
+  them explicitly when that probe is not enough.
 - ``dtype`` defaults to ``"f64"``; use ``"f32"`` for single precision.
-- ``backend`` defaults to ``"auto"``; force ``"native"`` or ``"wasm"`` when you
-  need a specific backend.
+- ``backend`` defaults to ``"auto"``; pass ``"native"`` or ``"wasm"`` to force one
+  backend.
 
 Source build
 ------------

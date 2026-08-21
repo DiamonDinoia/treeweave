@@ -1,7 +1,7 @@
 treeweave
 =========
 
-Treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
+treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
 
 .. code-block:: cpp
 
@@ -9,13 +9,13 @@ Treeweave turns repeated calls to a costly function into a one-time fit plus fas
    auto fn = treeweave::fit([](double s) { double a=0; for(int k=1;k<=1000;++k) a+=std::pow(k,-s); return a; }, 2.0, 10.0, 1e-10);
    double y = fn(3.5);   // evaluate a polynomial, not the original function
 
-Use it from **C++** (header-only or compiled) or from **C**, **Fortran**, **Python**, **Julia**, **MATLAB/Octave**, and **JavaScript/TypeScript** through a stable C ABI.
+Call it from C++, header-only or compiled. C, Fortran, Python, Julia, MATLAB/Octave and JavaScript/TypeScript call it through a stable C ABI.
 
 `GitHub <https://github.com/DiamonDinoia/treeweave>`_ · `Releases <https://github.com/DiamonDinoia/treeweave/releases>`_ · `Issues <https://github.com/DiamonDinoia/treeweave/issues>`_ · `License (BSD-3-Clause) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_ · `Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_
 
 .. toctree::
    :maxdepth: 2
-   :caption: Getting Started
+   :caption: Getting started
 
    install
 
@@ -44,6 +44,6 @@ Use it from **C++** (header-only or compiled) or from **C**, **Fortran**, **Pyth
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: API reference
 
    api/library_root

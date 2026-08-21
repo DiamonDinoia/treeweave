@@ -1,17 +1,15 @@
 # Known issues
 
-A short list of current limitations that are understood and tracked, but not yet
-fixed. None affect correctness; they are performance or ergonomics caveats.
+Current limitations, understood and tracked, not yet fixed. None affects
+correctness; each one is a performance or ergonomics caveat.
 
 ## MATLAB/Octave single-point eval overhead
 
-MATLAB/Octave **single-point** eval is bottlenecked by mwrap's generic R2008OO
-codegen, not by treeweave. Per call the handle is stored as a string in the
-`mwptr` property and re-parsed via `sscanf` (the `treeweave.mw` R2008OO
-convention), plus a temporary output buffer is allocated and copied. This is
-inherent to mwrap and is amortised to ~zero by the **batch** API — use the
-vectorized interface for hot loops.
+mwrap's generic R2008OO codegen, not treeweave, sets the cost of a
+single-point MATLAB/Octave eval. The `treeweave.mw` R2008OO convention stores
+the handle as a string in the `mwptr` property, so every call re-parses it with
+`sscanf`, and every call allocates and copies a temporary output buffer. The
+batch API pays that cost once for the whole array instead of once per point.
 
-The practical guidance is the same as everywhere else in treeweave: prefer the
-batch (`obj.eval(X)`) and sorted-batch paths over a scalar loop whenever you have
-more than a handful of points.
+For anything beyond a handful of points, call `obj.eval(X)` or the sorted-batch
+path rather than looping over scalars.

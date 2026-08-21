@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -288,23 +293,23 @@
 <p>The batch entry points (<code class="docutils literal notranslate"><span class="pre">treeweave_batch</span></code> / <code class="docutils literal notranslate"><span class="pre">treeweave_sorted</span></code> /
 <code class="docutils literal notranslate"><span class="pre">treeweave_transposed</span></code> in C; calling the fitted object with an array in the
 bindings) amortize leaf lookup and vectorize the polynomial evaluation across
-points. Prefer them to a scalar loop whenever you have more than a handful of
-points.</p>
+points. Prefer them to a scalar loop for anything beyond a handful of points.</p>
 <p>This matters most in MATLAB/Octave, where single-point eval carries an extra
-per-call overhead inherent to the mwrap binding layer (not treeweave) — see
-<a class="reference internal" href="../known-issues.html"><span class="doc">Known issues</span></a>. The batch path amortises it to ~zero.</p>
+per-call overhead from the mwrap binding layer, not from treeweave; see
+<a class="reference internal" href="../known-issues.html"><span class="doc">Known issues</span></a>. The batch path amortises that overhead to ~zero.</p>
 <section id="the-sorted-fast-path">
 <h3>The sorted fast path<a class="headerlink" href="#the-sorted-fast-path" title="Link to this heading"></a></h3>
 <p>The general batch path first bin-sorts the inputs by leaf so each leaf’s
 points are contiguous, runs one vectorized Horner stream per leaf, then permutes
 the results back to the caller’s order. When the inputs are <em>already</em> ascending,
-that sort and permute-back are pure overhead. The <code class="docutils literal notranslate"><span class="pre">sorted</span></code> path skips them and
-streams straight through the leaves — ~3–4× faster on a presorted 1-D batch.</p>
+that sort and permute-back are pure overhead. The <code class="docutils literal notranslate"><span class="pre">sorted</span></code> path skips both and
+streams straight through the leaves, ~3-4x faster on a presorted 1-D batch.</p>
 <p>Common cases where inputs are ascending for free: regular grids, <code class="docutils literal notranslate"><span class="pre">linspace</span></code>,
 quadrature nodes, time series, and parameter sweeps.</p>
-<p>The caller promises <code class="docutils literal notranslate"><span class="pre">x[i]</span> <span class="pre">&lt;=</span> <span class="pre">x[i+1]</span></code>; treeweave does not verify it, so unsorted
-input yields wrong values. When in doubt, use the plain batch path — it sorts
-internally and is always correct. Both NaN-fill out-of-domain points.</p>
+<p>The caller promises <code class="docutils literal notranslate"><span class="pre">x[i]</span> <span class="pre">&lt;=</span> <span class="pre">x[i+1]</span></code>; treeweave does not verify the promise, so
+unsorted input yields wrong values. Use the plain batch path when the order is
+unknown. It sorts internally and is always correct. Both paths NaN-fill
+out-of-domain points.</p>
 </section>
 </section>
 <section id="the-leaf-table-fast-path">
@@ -312,43 +317,43 @@ internally and is always correct. Both NaN-fill out-of-domain points.</p>
 <p><code class="docutils literal notranslate"><span class="pre">PolyTree::find_leaf_id</span></code> has a SIMD-quantize + table-lookup fast path: one
 <code class="docutils literal notranslate"><span class="pre">vcvttpd2qq</span></code> (or scalar <code class="docutils literal notranslate"><span class="pre">vcvttsd2si</span></code>) per point plus one <code class="docutils literal notranslate"><span class="pre">uint32_t</span></code> load
 from a <code class="docutils literal notranslate"><span class="pre">2^(input_dim</span> <span class="pre">*</span> <span class="pre">D)</span></code>-entry table, in place of recursive tree descent.
-The table is built automatically when <code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">*</span> <span class="pre">D</span> <span class="pre">&lt;=</span> <span class="pre">16</span></code> bits of leaf index
-<em>and</em> the tree refined uniformly to depth <code class="docutils literal notranslate"><span class="pre">D</span></code>.</p>
-<p>For smooth functions, tolerance-based refinement usually stops early and the
-tree never reaches uniform depth, so the fast path stays off. To drive it on:
-tighten <code class="docutils literal notranslate"><span class="pre">tol</span></code> until refinement is uniform, or set <code class="docutils literal notranslate"><span class="pre">min_uniform_depth</span></code>
-explicitly. <code class="docutils literal notranslate"><span class="pre">Function::print_stats()</span></code> reports <code class="docutils literal notranslate"><span class="pre">Leaf</span> <span class="pre">table:</span> <span class="pre">live</span> <span class="pre">(N</span> <span class="pre">entries,</span>
-<span class="pre">K</span> <span class="pre">KiB)</span></code> or <code class="docutils literal notranslate"><span class="pre">Leaf</span> <span class="pre">table:</span> <span class="pre">descent-only</span></code>. Table memory grows as
-<code class="docutils literal notranslate"><span class="pre">2^(input_dim</span> <span class="pre">*</span> <span class="pre">D)</span> <span class="pre">*</span> <span class="pre">4</span> <span class="pre">B</span></code> (capped ~256 KiB; past that the table is skipped).</p>
+treeweave builds the table when the leaf index needs at most 16 bits
+(<code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">*</span> <span class="pre">D</span> <span class="pre">&lt;=</span> <span class="pre">16</span></code>) <em>and</em> the tree refined uniformly to depth <code class="docutils literal notranslate"><span class="pre">D</span></code>.</p>
+<p>For smooth functions, tolerance-based refinement stops early and the tree never
+reaches uniform depth, so the fast path stays off. To turn it on, tighten
+<code class="docutils literal notranslate"><span class="pre">tol</span></code> until refinement is uniform, or set <code class="docutils literal notranslate"><span class="pre">min_uniform_depth</span></code> explicitly.
+<code class="docutils literal notranslate"><span class="pre">Function::print_stats()</span></code> reports <code class="docutils literal notranslate"><span class="pre">Leaf</span> <span class="pre">table:</span> <span class="pre">live</span> <span class="pre">(N</span> <span class="pre">entries,</span> <span class="pre">K</span> <span class="pre">KiB)</span></code> or
+<code class="docutils literal notranslate"><span class="pre">Leaf</span> <span class="pre">table:</span> <span class="pre">descent-only</span></code>. Table memory grows as <code class="docutils literal notranslate"><span class="pre">2^(input_dim</span> <span class="pre">*</span> <span class="pre">D)</span> <span class="pre">*</span> <span class="pre">4</span> <span class="pre">B</span></code>,
+capped at ~256 KiB; past that treeweave skips the table.</p>
 </section>
 <section id="memory-and-degree">
 <h2>Memory and degree<a class="headerlink" href="#memory-and-degree" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Tightening <code class="docutils literal notranslate"><span class="pre">tol</span></code>, raising <code class="docutils literal notranslate"><span class="pre">max_depth</span></code> / <code class="docutils literal notranslate"><span class="pre">max_memory_mib</span></code>, or enabling
 <code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code> all increase the leaf count and therefore memory.</p></li>
-<li><p>The default leaf degree (7) was chosen by a SIMD tuning campaign as the best
-across architectures and dimensions — the only spill-free degree in the
+<li><p>A SIMD tuning campaign picked the default leaf degree (7) as the best across
+architectures and dimensions, and the only spill-free degree in the
 register-pressured wide cells. Override it (C++ <code class="docutils literal notranslate"><span class="pre">fit&lt;N&gt;</span></code>) only with
 measurements in hand.</p></li>
-<li><p>Oscillatory or rapidly-varying functions can use a <em>lot</em> of memory. If your
-function is periodic, fit one period.</p></li>
+<li><p>Oscillatory or rapidly-varying functions can use a <em>lot</em> of memory. Fit one
+period of a periodic function.</p></li>
 </ul>
 </section>
 <section id="multi-threading">
 <h2>Multi-threading<a class="headerlink" href="#multi-threading" title="Link to this heading"></a></h2>
-<p>A fitted object is immutable; chunk your inputs and call the eval path from
-multiple threads (disjoint output slices). treeweave does not parallelize
+<p>A fitted object is immutable. Chunk the inputs and call the eval path from
+multiple threads, one disjoint output slice each. treeweave never parallelizes
 internally, which is what makes that contract safe.</p>
 </section>
 <section id="cross-language-throughput-and-latency">
 <h2>Cross-language throughput and latency<a class="headerlink" href="#cross-language-throughput-and-latency" title="Link to this heading"></a></h2>
 <p>Riemann-zeta sum benchmarked from all 7 bindings against native recomputation.
 Bars: Mevals/s (log scale); labels: within-language speedup.
-Cross-language Mevals/s is <strong>not</strong> comparable (different CI runners) — compare
-each language’s treeweave bar to its own native bar.
-Charts are regenerated by the <code class="docutils literal notranslate"><span class="pre">benchmark-showcase</span></code> CI matrix.</p>
+Cross-language Mevals/s is not comparable, because the CI runners differ.
+Compare each language’s treeweave bar to its own native bar.
+The <code class="docutils literal notranslate"><span class="pre">benchmark-showcase</span></code> CI matrix regenerates these charts.</p>
 <section id="throughput-mevals-s-higher-is-better">
-<h3>Throughput — Mevals/s, higher is better<a class="headerlink" href="#throughput-mevals-s-higher-is-better" title="Link to this heading"></a></h3>
+<h3>Throughput, Mevals/s, higher is better<a class="headerlink" href="#throughput-mevals-s-higher-is-better" title="Link to this heading"></a></h3>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg"><img alt="Riemann-zeta batch throughput" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_multi.svg" style="width: 100%;" />
 </a>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_sorted.svg"><img alt="Riemann-zeta sorted-batch throughput" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_sorted.svg" style="width: 100%;" />
@@ -357,7 +362,7 @@ Charts are regenerated by the <code class="docutils literal notranslate"><span c
 </a>
 </section>
 <section id="latency-ns-eval-lower-is-better">
-<h3>Latency — ns/eval, lower is better<a class="headerlink" href="#latency-ns-eval-lower-is-better" title="Link to this heading"></a></h3>
+<h3>Latency, ns/eval, lower is better<a class="headerlink" href="#latency-ns-eval-lower-is-better" title="Link to this heading"></a></h3>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_multi.svg"><img alt="Riemann-zeta batch latency" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_multi.svg" style="width: 100%;" />
 </a>
 <a class="reference internal image-reference" href="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_sorted.svg"><img alt="Riemann-zeta sorted-batch latency" src="https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/latency_sorted.svg" style="width: 100%;" />

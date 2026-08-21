@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -288,9 +293,9 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>npm<span class="w"> </span>install<span class="w"> </span>@flatironinstitute/treeweave
 </pre></div>
 </div>
-<p>Prebuilt native N-API binaries ship for common Linux, macOS, and Windows
-platforms. A bundled WASM backend is used in browsers and hosts without a
-matching native prebuild.</p>
+<p>Prebuilt native N-API binaries ship for common Linux, macOS and Windows
+platforms. Browsers and hosts without a matching native prebuild fall back to
+the bundled WASM backend.</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
@@ -310,9 +315,9 @@ matching native prebuild.</p>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
-<p>Pass a <code class="docutils literal notranslate"><span class="pre">FitOptions</span></code> object as the fifth argument to <code class="docutils literal notranslate"><span class="pre">Treeweave.fit</span></code>. Shared
-fit options are documented in <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a>; JavaScript uses lower camel case
-names such as <code class="docutils literal notranslate"><span class="pre">tolKind</span></code> and <code class="docutils literal notranslate"><span class="pre">maxMemoryMib</span></code>.</p>
+<p>Pass a <code class="docutils literal notranslate"><span class="pre">FitOptions</span></code> object as the fifth argument to <code class="docutils literal notranslate"><span class="pre">Treeweave.fit</span></code>.
+<a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> documents the shared fit options. JavaScript spells them in lower
+camel case, such as <code class="docutils literal notranslate"><span class="pre">tolKind</span></code> and <code class="docutils literal notranslate"><span class="pre">maxMemoryMib</span></code>.</p>
 <div class="highlight-ts notranslate"><div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">Treeweave</span><span class="p">.</span><span class="nx">fit</span><span class="p">(</span><span class="nx">f</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">tolKind</span><span class="o">:</span><span class="w"> </span><span class="s2">"absolute_max"</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">maxDepth</span><span class="o">:</span><span class="w"> </span><span class="kt">30</span><span class="p">,</span>
@@ -323,11 +328,11 @@ names such as <code class="docutils literal notranslate"><span class="pre">tolKi
 </div>
 <p>JavaScript-specific fields:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">dim</span></code> and <code class="docutils literal notranslate"><span class="pre">outDim</span></code> are inferred by default; set them only when probing the
-callback at the box midpoint is not enough.</p></li>
+<li><p>A probe of the callback at the box midpoint infers <code class="docutils literal notranslate"><span class="pre">dim</span></code> and <code class="docutils literal notranslate"><span class="pre">outDim</span></code>; set
+them explicitly when that probe is not enough.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dtype</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;f64&quot;</span></code>; use <code class="docutils literal notranslate"><span class="pre">&quot;f32&quot;</span></code> for single precision.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">backend</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>; force <code class="docutils literal notranslate"><span class="pre">&quot;native&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;wasm&quot;</span></code> when you
-need a specific backend.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">backend</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>; pass <code class="docutils literal notranslate"><span class="pre">&quot;native&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;wasm&quot;</span></code> to force one
+backend.</p></li>
 </ul>
 </section>
 <section id="source-build">

@@ -1,10 +1,10 @@
 Installation
 ============
 
-Precompiled binaries are available for most languages and systems; this is the
-recommended route. Start with the shortest install path and a tiny example.
-Each language guide has the other install routes, options, source builds, and
-larger examples.
+Most languages and systems have a precompiled binary. Prefer it. Each section
+below gives the shortest install path and a small example. The language guides
+cover the other install routes, the options, source builds and larger
+examples.
 
 Python
 ------
@@ -103,9 +103,9 @@ the DLL only through ``PATH``:
    set PATH=%CD%\bin;%PATH%
    example.exe
 
-The same applies to a ``find_package(treeweave)`` consumer: linking succeeds
-without ``PATH``, and the executable then fails to start. Either put ``bin\``
-on ``PATH``, copy the DLL next to the executable, or link
+A ``find_package(treeweave)`` consumer hits the same trap. Linking succeeds
+without ``PATH``, and the executable then fails to start. Put ``bin\`` on
+``PATH``, copy the DLL next to the executable, or link
 ``treeweave::treeweave_c_static``.
 
 See :doc:`guides/c`.

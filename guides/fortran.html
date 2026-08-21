@@ -46,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
@@ -94,7 +94,12 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
@@ -170,24 +175,24 @@
 <li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput — Mevals/s, higher is better</a></li>
-<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency — ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
 <li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-family-is-chosen">How the family is chosen</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1 — fit: adaptive paneling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2 — eval: descent</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3 — leaf evaluation: tensor-product Horner</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4 — batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
@@ -202,7 +207,7 @@
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
@@ -290,8 +295,8 @@ pointer and <code class="docutils literal notranslate"><span class="pre">context
 <h2>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h2>
 <section id="prebuilt-c-abi">
 <h3>Prebuilt C ABI<a class="headerlink" href="#prebuilt-c-abi" title="Link to this heading"></a></h3>
-<p>Fortran calls the C ABI, so the release C archive is enough when you already
-have your own Fortran wrapper or build setup:</p>
+<p>Fortran calls the C ABI, so the release C archive is enough alongside an
+existing Fortran wrapper or build setup:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VER</span><span class="o">=</span>stable
 <span class="nv">PLATFORM</span><span class="o">=</span>linux-x86_64
 <span class="nv">URL</span><span class="o">=</span><span class="s2">"https://github.com/DiamonDinoia/treeweave/releases/download/</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">/treeweave-</span><span class="si">${</span><span class="nv">VER</span><span class="si">}</span><span class="s2">-</span><span class="si">${</span><span class="nv">PLATFORM</span><span class="si">}</span><span class="s2">.tar.gz"</span>
@@ -309,13 +314,13 @@ cmake<span class="w"> </span>--preset<span class="w"> </span>bindings-fortran
 cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-fortran<span class="w"> </span>-j
 </pre></div>
 </div>
-<p>A missing Fortran compiler is skipped gracefully. The <code class="docutils literal notranslate"><span class="pre">treeweave</span></code> module is
-generated in the build tree.</p>
+<p>Without a Fortran compiler, CMake skips the Fortran targets. The build writes
+the generated <code class="docutils literal notranslate"><span class="pre">treeweave</span></code> module into the build tree.</p>
 </section>
 </section>
 <section id="minimal-example">
 <h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
-<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="c">! example.f90 — fit exp(x) and evaluate from Fortran via the treeweave C ABI.</span>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="c">! example.f90: fit exp(x) and evaluate from Fortran via the treeweave C ABI.</span>
 <span class="c">! Mirrors examples/C/simple.c: plain bind(C) callback, scalar eval, batch eval.</span>
 <span class="c">! For the context pattern see README.md § "The context pattern".</span>
 
@@ -411,7 +416,8 @@ generated in the build tree.</p>
 <span class="k">call </span><span class="n">treeweave_sorted</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">xs</span><span class="p">,</span><span class="w"> </span><span class="n">res</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w">   </span><span class="c">! promise xs(i) &lt;= xs(i+1), 1-D; ~3-4x faster</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">treeweave_sorted</span></code> requires 1-D input (<code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">==</span> <span class="pre">1</span></code>). The caller promises ascending order; treeweave does not verify it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">treeweave_sorted</span></code> requires 1-D input (<code class="docutils literal notranslate"><span class="pre">input_dim</span> <span class="pre">==</span> <span class="pre">1</span></code>). The caller
+promises ascending order, and treeweave does not verify it.</p>
 </section>
 <section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
@@ -434,7 +440,7 @@ cmake<span class="w"> </span>--build<span class="w"> </span>build/bindings-fortr
 ctest<span class="w"> </span>--test-dir<span class="w"> </span>build/bindings-fortran<span class="w"> </span>-R<span class="w"> </span>fortran_treeweave
 </pre></div>
 </div>
-<p>A missing Fortran compiler is skipped gracefully. Full example:
+<p>Without a Fortran compiler, CMake skips the Fortran targets. Full example:
 <a class="reference external" href="https://github.com/DiamonDinoia/treeweave/blob/main/bindings/fortran/example.f90">bindings/fortran/example.f90</a>.</p>
 </section>
 </section>
