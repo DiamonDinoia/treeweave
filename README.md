@@ -150,6 +150,9 @@ approx = fit(zeta, 2.0, 10.0, 1e-10)
 println(approx(3.5))
 ```
 
+`fit` takes the callable first, so a `do` block fits a function written on the
+spot: `approx = fit(2.0, 10.0, 1e-10) do s ... end`.
+
 Install:
 
 ```julia
