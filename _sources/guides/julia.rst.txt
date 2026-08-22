@@ -29,6 +29,16 @@ Minimal example
 ``fit(f, a, b, tol)``. Call the fitted object directly, with a point or with a
 batch. Tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
 
+``fit`` takes the callable first, so ``do``-block syntax fits a function
+defined at the call site. That is the Julia counterpart of the Python
+decorator:
+
+.. code-block:: julia
+
+   approx = fit(2.0, 10.0, 1e-10) do s
+       sum(k -> k^(-s), 1:1000)
+   end
+
 Evaluation routes
 -----------------
 
