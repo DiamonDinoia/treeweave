@@ -7,7 +7,7 @@ addpath(fileparts(fileparts(mfilename('fullpath'))));   % add bindings/matlab/ (
 f   = @(x) sin(x(1) + x(2));
 % Fit f(x, y) on [-1, 1]^2 syntax is
 % treeweave(callback, lower_bound, upper_bound, tolerance, name/value options).
-obj = treeweave(f, [-1,-1], [1,1], 1e-7, 'dim', 2, 'out_dim', 1);
+obj = treeweave(f, [-1,-1], [1,1], 1e-7);
 
 [gx, gy]  = meshgrid(linspace(-1,1,40));
 Xgrid     = [gx(:), gy(:)];

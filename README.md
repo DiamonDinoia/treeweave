@@ -167,7 +167,7 @@ Pkg.add(url="https://github.com/DiamonDinoia/treeweave",
 
 ```matlab
 zeta = @(x) sum((1:1000) .^ (-x(1)));
-approx = treeweave(zeta, [2], [10], 1e-10, 'dim', 1, 'out_dim', 1);
+approx = treeweave(zeta, 2, 10, 1e-10);   % dim and out_dim are inferred
 disp(approx(3.5));
 delete(approx);
 ```
@@ -204,7 +204,7 @@ Other platforms use the matching `treeweave-matlab-<version>-<platform>` asset f
 
 ```matlab
 zeta = @(x) sum((1:1000) .^ (-x(1)));
-approx = treeweave(zeta, [2], [10], 1e-10, 'dim', 1, 'out_dim', 1);
+approx = treeweave(zeta, 2, 10, 1e-10);   % dim and out_dim are inferred
 disp(approx(3.5));
 delete(approx);
 ```
