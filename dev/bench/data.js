@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786950097725,
+  "lastUpdate": 1787555055606,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3020,6 +3020,94 @@ window.BENCHMARK_DATA = {
             "value": 0.0004963145,
             "unit": "s/batch",
             "extra": "MdAPE=0.00241925859485012; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "e438b4d795cfe40d0c72824b9ffe52842a7a9399",
+          "message": "docs(matlab): drop the inferred dim and out_dim from the examples\n\nThe constructor already infers `dim` from `numel(a)` and `out_dim` from a\none-shot probe of the callable, so the first example a MATLAB or Octave user\nreads no longer passes either. Octave gives a bit-identical result for\n`treeweave(zeta, 2, 10, 1e-10)`.\n\nAssisted-by: Claude Opus 5 <noreply@anthropic.com>",
+          "timestamp": "2026-08-22T11:19:43Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/e438b4d795cfe40d0c72824b9ffe52842a7a9399"
+        },
+        "date": 1787555054158,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000539832,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00378964808067306; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.001001619625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0118654371278778; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000608802555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0130289747959443; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.0010139522,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0213970496060171; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00182358175,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0187225520942406; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.00296383288888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0162065469030869; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.015188166,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0236421206493927; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0010303922,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0057066279633263; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000259142111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00120343607373017; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000393944,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00279158485654306; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000376131111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00919674099549694; batch=65536 pts/call"
           }
         ]
       }
