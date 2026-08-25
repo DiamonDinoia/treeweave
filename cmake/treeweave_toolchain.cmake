@@ -43,10 +43,11 @@ include(GNUInstallDirs)
 #
 # TREEWEAVE_C_MULTIARCH also stays out, on every compiler. The fan-out compiles
 # one set of sources once per ISA level, each with its own -march//arch: flag,
-# and relies on the object boundary to keep those bodies apart. LTO dissolves
-# that boundary: it can inline an AVX-512 body into the baseline dispatcher, and
-# the result faults with an illegal instruction on any CPU below the top rung
-# (observed: clang-cl ThinLTO, MEX killed on a Zen 3 runner).
+# and keeps the bodies apart by linkage: the implementations sit in an anonymous
+# namespace and the one external factory per TU mangles xsimd::best_arch into its
+# name. LTO widens what the optimizer may merge across those objects, and any
+# body it lifts out of the top rung faults with an illegal instruction on a CPU
+# below it. This exclusion is precautionary, not a fix for a reproduced fault.
 if(
     TREEWEAVE_ENABLE_IPO
     AND NOT TREEWEAVE_C_MULTIARCH
