@@ -9,6 +9,22 @@ file(
     LIMIT_COUNT 1
 )
 string(STRIP "${TREEWEAVE_BASE_VERSION}" TREEWEAVE_BASE_VERSION)
+
+# Default build type, decided before project(). CMake's MSVC platform module
+# seeds CMAKE_BUILD_TYPE_INIT with Debug, so after project() the variable is
+# never empty on Windows and a "default to Release" test there never fires.
+# Before project() the cache holds only what the caller passed, so this honours
+# an explicit -DCMAKE_BUILD_TYPE on every platform and defaults to Release on
+# every platform.
+if(NOT DEFINED CACHE{CMAKE_BUILD_TYPE} AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "No build type specified. Defaulting to Release.")
+    set(CMAKE_BUILD_TYPE
+        Release
+        CACHE STRING
+        "Valid options: Debug, RelWithDebInfo, Release"
+    )
+endif()
+
 project(treeweave VERSION "${TREEWEAVE_BASE_VERSION}" LANGUAGES CXX)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/treeweave_generate_version.cmake")
 

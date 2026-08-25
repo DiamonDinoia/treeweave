@@ -1,5 +1,5 @@
-# treeweave_toolchain.cmake: language standard, build-type default, opt-in IPO,
-# and global -march/-mtune + FP-contraction flags.
+# treeweave_toolchain.cmake: language standard, opt-in IPO, and global
+# -march/-mtune + FP-contraction flags.
 
 include_guard(GLOBAL)
 
@@ -9,16 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # No C++20 modules → disable Ninja's per-TU scan (CMake 3.28+). Prevents
 # clang-scan-deps/PCH mismatch on CI.
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
-
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "No build type specified. Defaulting to Release.")
-    set(CMAKE_BUILD_TYPE
-        Release
-        CACHE STRING
-        "Valid options: Debug, RelWithDebInfo, Release"
-        FORCE
-    )
-endif()
 
 # CMake's default Debug is -O0, which leaves this header-only, deeply-inlined
 # code un-inlined and makes the compute-heavy tests crawl -- the slowest single
