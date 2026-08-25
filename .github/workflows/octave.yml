@@ -38,8 +38,11 @@ jobs:
       # runner image.
       - name: Install Octave + toolchain
         run: |
+          # ports.ubuntu.com serves an index stale enough to 404 a pool file
+          # often enough to fail a release gate. Refresh and retry once.
           sudo apt-get update
-          sudo apt-get install -y octave-dev
+          sudo apt-get install -y octave-dev ||
+            { sudo apt-get update; sudo apt-get install -y octave-dev; }
 
       # Builds libtreeweave_c, fetches the mwrap generator via CPM, generates the
       # gateway + tw_*.m from treeweave.mw, and compiles the Octave MEX with
