@@ -44,6 +44,14 @@ section verbatim into that release's GitHub Release notes.
   path ever loaded the MEX it packaged. The default is now decided before
   `project()` and holds on every platform, and an explicit
   `-DCMAKE_BUILD_TYPE` still wins.
+- The Python build requires `nanobind>=2.0,<3`. nanobind 3.0.0, released
+  2026-08-22, declares its Python slot aliases as
+  `inline constexpr ret (*name) args = &target;`. clang-cl rejects that: under
+  the MSVC ABI the address of a `dllimport` function is not a constant
+  expression. The Windows wheel builds with clang-cl, so an unpinned nanobind
+  broke it three days after the 3.0 release while every other platform kept
+  building.
+
 - The multi-arch C ABI no longer shares symbols between ISA levels.
   `TREEWEAVE_C_MULTIARCH` compiles the same sources once per ISA level. Symbols
   the fan-out names carry the level in their mangled name and never collide.

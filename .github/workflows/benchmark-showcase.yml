@@ -61,7 +61,7 @@ jobs:
 
       - name: Install Python deps
         if: matrix.lang == 'python'
-        run: python -m pip install --upgrade pip numpy "nanobind>=2.0"
+        run: python -m pip install --upgrade pip numpy "nanobind>=2.0,<3"
 
       - name: Set up Julia
         if: matrix.lang == 'julia'

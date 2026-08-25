@@ -65,7 +65,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install Python deps
-        run: python -m pip install --upgrade pip numpy "nanobind>=2.0"
+        run: python -m pip install --upgrade pip numpy "nanobind>=2.0,<3"
 
       - name: Configure + build
         run: |

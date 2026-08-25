@@ -1,5 +1,10 @@
+# nanobind is capped below 3.0. nanobind 3.0.0 defines its Python slot
+# aliases as `inline constexpr ret (*name) args = &target;`, and clang-cl
+# rejects that: the address of a dllimport function is not a constant
+# expression under the MSVC ABI. The Windows wheel builds with clang-cl, so
+# 3.0 breaks it while every other platform is unaffected.
 [build-system]
-requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.0,<3"]
 build-backend = "scikit_build_core.build"
 
 [project]
