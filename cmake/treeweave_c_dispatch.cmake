@@ -185,9 +185,46 @@ if(_treeweave_multiarch_family)
         endif()
     endforeach()
 
+    # Each rung compiles the same headers with its own ISA flag. Symbols the
+    # fan-out names carry the rung in their mangled name and never collide.
+    # Symbols instantiated from headers at global scope do collide: every rung
+    # emits the same weak name with different code and the linker keeps one
+    # arbitrary copy, so a higher rung's body can end up on a lower rung's path.
+    # Localizing every symbol but the factory gives each rung its own copy
+    # instead; see treeweave_localize.cmake. An OBJECT library takes no
+    # POST_BUILD command, so the localization runs as a separate target the
+    # consumers depend on; see treeweave_c_api.cmake.
+    # ELF only: COFF has no per-symbol binding to rewrite this way and
+    # llvm-objcopy's Mach-O support is partial, so those two rely on the check
+    # in .github/scripts/check_isa_leak.sh.
+    set(TREEWEAVE_C_LOCALIZE_OBJECTS "")
+    set(TREEWEAVE_C_LOCALIZE_TARGETS "")
+    set(_treeweave_localize FALSE)
+    if(NOT MSVC AND NOT APPLE)
+        find_program(TREEWEAVE_OBJCOPY NAMES llvm-objcopy objcopy)
+        if(TREEWEAVE_OBJCOPY)
+            set(_treeweave_localize TRUE)
+        else()
+            message(
+                STATUS
+                "treeweave: no objcopy found; the per-arch fan-out keeps its "
+                "shared weak symbols"
+            )
+        endif()
+    endif()
+
     foreach(_lvl IN LISTS _treeweave_arch_levels)
         string(REPLACE "-" "_" _tag "${_lvl}")
         _treeweave_add_c_object_lib(treeweave_c_variants_${_tag} ${_treeweave_variant_srcs})
+        if(_treeweave_localize)
+            list(
+                APPEND
+                TREEWEAVE_C_LOCALIZE_OBJECTS
+                "$<TARGET_OBJECTS:treeweave_c_variants_${_tag}>"
+            )
+            list(APPEND TREEWEAVE_C_LOCALIZE_TARGETS treeweave_c_variants_${_tag})
+        endif()
+
         # Last ISA flag wins; pins this variant regardless of TREEWEAVE_ARCH.
         if(_treeweave_flags_${_lvl})
             target_compile_options(

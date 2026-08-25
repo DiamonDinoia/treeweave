@@ -50,6 +50,26 @@ if(_tw_shared_ok)
 endif()
 
 add_library(treeweave_c_static STATIC ${_treeweave_c_objects})
+
+# Give every ISA rung its own copy of the weak symbols its headers instantiate,
+# so no rung can be linked against another rung's body. See
+# treeweave_c_dispatch.cmake for why the fan-out needs this. One target rather
+# than a PRE_LINK step per consumer: the shared and static libraries link in
+# parallel and would otherwise rewrite the same object files at the same time.
+if(TREEWEAVE_C_LOCALIZE_OBJECTS)
+    add_custom_target(
+        treeweave_c_localize
+        COMMAND
+            "${CMAKE_COMMAND}" "-DOBJCOPY=${TREEWEAVE_OBJCOPY}"
+            "-DOBJECTS=${TREEWEAVE_C_LOCALIZE_OBJECTS}" -P
+            "${CMAKE_CURRENT_LIST_DIR}/treeweave_localize.cmake"
+        VERBATIM
+        COMMENT "localizing hidden symbols in the per-arch objects"
+    )
+    add_dependencies(treeweave_c_localize ${TREEWEAVE_C_LOCALIZE_TARGETS})
+    add_dependencies(treeweave_c treeweave_c_localize)
+    add_dependencies(treeweave_c_static treeweave_c_localize)
+endif()
 add_library(treeweave::treeweave_c_static ALIAS treeweave_c_static)
 _treeweave_configure_c_target(treeweave_c_static)
 # On Windows the import .lib collides with the static .lib; use distinct basename.
