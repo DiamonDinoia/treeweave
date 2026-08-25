@@ -10,6 +10,8 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-08-25
+
 ### Added
 
 - Python: `treeweave.fit` doubles as a decorator when the callable is omitted.
@@ -17,6 +19,61 @@ section verbatim into that release's GitHub Release notes.
   fitted approximation, the `functools.cache` spelling. Every keyword option of
   the direct call applies unchanged, and the original callable stays reachable
   as `__wrapped__`.
+- `.github/scripts/check_isa_leak.sh` fails a build whose artifact contains a
+  shared symbol holding instructions above the family baseline. It runs on the
+  per-level objects and on the shipped library and MEX, on every platform, and
+  it is what covers Windows and macOS until the localization does.
+
+### Fixed
+
+- The Windows MATLAB MEX in v0.0.1, v0.0.2 and v0.0.3 was built without
+  optimization and linked against the debug C runtime (`MSVCP140D.dll`,
+  `VCRUNTIME140_1D.dll`, `ucrtbased.dll`). Those DLLs ship only with Visual
+  Studio, so that MEX could not load on a machine without it. The assets on
+  those three tags have been rebuilt and replaced. Two defects produced it:
+  CMake's MSVC platform module seeds `CMAKE_BUILD_TYPE_INIT` with `Debug`, so
+  the variable is never empty after `project()` on Windows and treeweave's
+  default-to-Release guard could never fire there; and nothing in the release
+  path ever loaded the MEX it packaged. The default is now decided before
+  `project()` and holds on every platform, and an explicit
+  `-DCMAKE_BUILD_TYPE` still wins.
+- The multi-arch C ABI no longer shares symbols between ISA levels.
+  `TREEWEAVE_C_MULTIARCH` compiles the same sources once per ISA level. Symbols
+  the fan-out names carry the level in their mangled name and never collide.
+  Symbols instantiated from headers at global scope do collide: every level
+  emits the same weak name holding different code, and the linker keeps one
+  arbitrary copy. Keep a copy from a higher level and it runs on every CPU that
+  loads the binary, including CPUs that trap the instruction. Measured on the
+  six variant translation units: 35 weak symbols per unit share a mangled name
+  between the baseline and AVX-512 objects, 18 differ in code, and 17 instances
+  across the six carry AVX-512 in the AVX-512 copy. One of them is
+  `poly_eval::detail::newtonToMonomial<7>`, which is numeric work rather than
+  an error path. Every symbol in an ISA level's objects except the factory is
+  now made local after compilation, so each level calls its own copy and no
+  level can be linked against another's body. ELF only: COFF has no per-symbol
+  binding to rewrite this way, and llvm-objcopy's Mach-O support is partial.
+
+### Changed
+
+- The packaging job now runs `test_treeweave` against the staged MEX bundle on
+  every platform, and refuses to package a Windows MEX that imports the debug
+  CRT. `matlab.yml` additionally builds on `windows-2022` and runs the test
+  under several MATLAB releases.
+- The Windows MEX builds with clang-cl instead of cl.exe. cl.exe spends over 40
+  minutes in its back end on a single dispatch translation unit at `/O2`, and
+  the multi-arch fan-out is 24 of them, so an optimized cl.exe MEX is not
+  reachable inside a CI job. clang-cl compiles the same target in 161 seconds
+  and targets the same MSVC ABI, so the binaries stay interchangeable.
+  Configuring the C ABI with cl.exe at anything other than `Debug` now prints a
+  warning that names clang-cl.
+- `-Werror` no longer applies under clang-cl: its MSVC-like driver enables an
+  `-Weverything`-family set (`c++98-compat`, `pre-c++17-compat`,
+  `unsafe-buffer-usage`) that the plain clang driver leaves off. Warning
+  hygiene stays enforced under `-Werror` by the Linux clang rows.
+- The multi-arch fan-out no longer shares a precompiled header and no longer
+  enables IPO. A precompiled header is built with one target's flags; IPO
+  widens what the optimizer may merge across the objects. Both exclusions are
+  precautionary.
 
 ## [0.0.2] - 2026-08-13
 
