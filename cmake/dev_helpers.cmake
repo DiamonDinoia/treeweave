@@ -5,6 +5,19 @@ include_guard(GLOBAL)
 
 include(FetchContent)
 
+# clang-cl is Clang with an MSVC-like driver, and that driver switches on a broad
+# -Weverything-family set the plain clang driver leaves off (c++98-compat,
+# unsafe-buffer-usage, exit-time-destructors). Under -Werror those reject the
+# whole codebase, so warnings-as-errors skips clang-cl. The Linux clang rows keep
+# the chosen flag set honest under -Werror.
+set(_tw_clang_cl FALSE)
+if(
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang"
+    AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"
+)
+    set(_tw_clang_cl TRUE)
+endif()
+
 include(CheckCXXCompilerFlag)
 set(_tw_additional_warnings_candidates
     -Wduplicated-cond
@@ -137,7 +150,7 @@ function(treeweave_enable_warnings target)
         list(APPEND _compile_options $<$<AND:${_lang_is_cxx},${_msvc}>:${flag}>)
     endforeach()
 
-    if(TREEWEAVE_WARNINGS_AS_ERRORS)
+    if(TREEWEAVE_WARNINGS_AS_ERRORS AND NOT _tw_clang_cl)
         list(
             APPEND _compile_options
             $<$<AND:${_lang_is_cxx},${_gnu_or_clang}>:-Werror>

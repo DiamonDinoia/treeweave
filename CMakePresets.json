@@ -115,13 +115,12 @@
     {
       "name": "ci-windows-clang",
       "displayName": "CI Windows (clang-cl, Ninja)",
-      "description": "clang-cl via Ninja for compile + test coverage of the Windows clang path. Warnings-as-errors is OFF here: clang-cl turns on a broad set of -Weverything-family warnings by default (unsafe-buffer-usage, exit-time-destructors, ...) that the plain clang driver does not, so -Werror would gate on clang-cl quirks rather than real issues. Warning hygiene for our chosen flag set is already enforced under -Werror by the five Linux clang rows; this row verifies the code compiles and the tests pass under clang-cl. Needs the MSVC environment (setup-cpp vcvarsall) on PATH.",
+      "description": "clang-cl via Ninja for compile + test coverage of the Windows clang path. dev_helpers.cmake drops -Werror under clang-cl (its driver enables an -Weverything-family set the plain clang driver does not), so this row verifies the code compiles and the tests pass; warning hygiene is enforced under -Werror by the Linux clang rows. Needs the MSVC environment (setup-cpp vcvarsall) on PATH.",
       "inherits": ["arch-x86-64-v3", "base"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl",
-        "TREEWEAVE_WARNINGS_AS_ERRORS": { "type": "BOOL", "value": "OFF" }
+        "CMAKE_CXX_COMPILER": "clang-cl"
       }
     },
 
