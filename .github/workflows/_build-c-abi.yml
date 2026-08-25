@@ -162,7 +162,14 @@ jobs:
           # find, not a glob: nullglob drops a pattern that matches nothing but
           # keeps a literal path with no wildcard in it, and -type f skips the
           # soname symlinks so each real file is read once.
-          mapfile -t libs < <(find dist -type f \
+          #
+          # A read loop, not mapfile: macOS ships bash 3.2, where mapfile does
+          # not exist. The step runs under `bash -e`, so the missing builtin
+          # exits 127 before the check ever runs.
+          libs=()
+          while IFS= read -r lib; do
+            libs+=("$lib")
+          done < <(find dist -type f \
             \( -name 'libtreeweave_c.so.*' -o -name 'libtreeweave_c*.dylib' \
                -o -name 'treeweave_c.dll' \))
           test "${#libs[@]}" -gt 0 || { echo "no installed library found"; exit 1; }
