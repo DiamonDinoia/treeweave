@@ -19,10 +19,10 @@ section verbatim into that release's GitHub Release notes.
   fitted approximation, the `functools.cache` spelling. Every keyword option of
   the direct call applies unchanged, and the original callable stays reachable
   as `__wrapped__`.
-- `.github/scripts/check_isa_leak.sh` fails a build whose artifact contains a
-  shared symbol holding instructions above the family baseline. It runs on the
-  per-level objects and on the shipped library and MEX, on every platform, and
-  it is what covers Windows and macOS until the localization does.
+- `.github/scripts/check_isa_leak.sh` fails a build whose shipped artifact
+  contains a symbol that no ISA level owns yet holds instructions above the
+  family baseline. It runs on the installed C ABI library and on the packaged
+  MEX, on every platform.
 
 ### Fixed
 
@@ -48,10 +48,11 @@ section verbatim into that release's GitHub Release notes.
   between the baseline and AVX-512 objects, 18 differ in code, and 17 instances
   across the six carry AVX-512 in the AVX-512 copy. One of them is
   `poly_eval::detail::newtonToMonomial<7>`, which is numeric work rather than
-  an error path. Every symbol in an ISA level's objects except the factory is
-  now made local after compilation, so each level calls its own copy and no
-  level can be linked against another's body. ELF only: COFF has no per-symbol
-  binding to rewrite this way, and llvm-objcopy's Mach-O support is partial.
+  an error path. The levels are now emitted baseline-first so the copy the
+  linker keeps is the baseline one, and the check above proves it on the linked
+  artifact instead of trusting the order: of 1595 symbols in
+  `libtreeweave_c.so`, the 201 that carry AVX-512 registers all belong to a
+  level that owns them by name.
 
 ### Changed
 

@@ -153,16 +153,17 @@ jobs:
           cmake --build build
           cmake --install build --prefix dist
 
-      # See .github/scripts/check_isa_leak.sh: the fan-out's per-rung objects share
-      # weak symbols that no ISA tag distinguishes, and the linker keeps one copy.
+      # See .github/scripts/check_isa_leak.sh: the fan-out's rungs share every
+      # weak symbol no rung name distinguishes, and the linker keeps one copy.
+      # Check the installed library, where that choice is already made.
       - name: Check for an ISA leak
         shell: bash
         run: |
-          shopt -s nullglob globstar
-          objs=(build/**/treeweave_c_variants_*.dir/**/*.o \
-                build/**/treeweave_c_variants_*.dir/**/*.obj)
-          libs=(dist/lib/libtreeweave_c.* dist/bin/treeweave_c.dll)
-          bash .github/scripts/check_isa_leak.sh "${objs[@]}" "${libs[@]}"
+          shopt -s nullglob
+          libs=(dist/lib/libtreeweave_c.so.* dist/lib/libtreeweave_c.*.dylib \
+                dist/bin/treeweave_c.dll)
+          test "${#libs[@]}" -gt 0 || { echo "no installed library found"; exit 1; }
+          bash .github/scripts/check_isa_leak.sh "${libs[@]}"
 
       - name: Smoke test (find_package + link)
         shell: bash

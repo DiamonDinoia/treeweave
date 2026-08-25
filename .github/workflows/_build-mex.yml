@@ -161,17 +161,14 @@ jobs:
               throw "debug CRT imported by $mex"
           }
 
-      # The per-arch fan-out compiles the same headers once per ISA rung. Symbols
-      # the fan-out controls encode the rung in their mangled name; symbols
-      # instantiated from headers at global scope do not, and the linker keeps one
-      # arbitrary copy. Check the rung objects and the shipped MEX.
+      # The per-arch fan-out compiles the same headers once per ISA rung, and
+      # the linker keeps one arbitrary copy of every symbol no rung name
+      # distinguishes. Check the MEX that ships, which is where that choice is
+      # already made.
       - name: Check for an ISA leak
         shell: bash
         run: |
-          shopt -s nullglob globstar
-          objs=(build/bindings-matlab/**/treeweave_c_variants_*.dir/**/*.o \
-                build/bindings-matlab/**/treeweave_c_variants_*.dir/**/*.obj)
-          bash .github/scripts/check_isa_leak.sh "${objs[@]}" \
+          bash .github/scripts/check_isa_leak.sh \
             "${{ steps.stage.outputs.pkg }}/treeweave_mex.${{ matrix.ext }}"
 
       # Nothing in the release path ever loaded the MEX it packages, which is how

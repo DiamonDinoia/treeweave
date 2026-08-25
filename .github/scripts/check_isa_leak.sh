@@ -9,14 +9,15 @@
 # arbitrary copy. A kept copy from a higher rung executes on every CPU that
 # loads the artifact, including CPUs that trap the instruction.
 #
+# Run this on a LINKED artifact (shared library, DLL, MEX), never on an object
+# file. Before the link every rung holds its own copy by design, so an object
+# file always looks like a leak. Only the link decides which copy survives.
+#
 # usage: check_isa_leak.sh <artifact> [more artifacts...]
 set -uo pipefail
 
 objdump=$(command -v llvm-objdump || command -v llvm-objdump-23 || command -v objdump)
 test -n "$objdump" || { echo "no objdump found"; exit 2; }
-
-tmp=$(mktemp)
-trap 'rm -f "$tmp"' EXIT
 
 rc=0
 for art in "$@"; do
@@ -30,19 +31,18 @@ for art in "$@"; do
         continue
     fi
 
-    # A local symbol is reachable only from the object that defines it, so a rung's
-    # private copy is correct by construction. Only a symbol the linker shares
-    # between rungs can carry a higher rung's code into a lower rung's path.
-    nm=$(command -v llvm-nm || command -v nm)
-    "$nm" "$art" 2>/dev/null | awk '$2 ~ /^[a-z]$/ {print $3}' | sort -u > "$tmp"
-
-    leaks=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk -v locals="$tmp" '
-        BEGIN { while ((getline l < locals) > 0) local[l] = 1 }
+    # Two kinds of symbol are per-rung by construction and carry a higher rung's
+    # code legitimately: the fan-out's own, which mangle the rung into the name,
+    # and anything in the variant TU's anonymous namespace, which mangles as
+    # _GLOBAL__N_1 and is reachable only from the rung that defines it. Binding
+    # cannot tell them apart from a leak: the fan-out builds with hidden
+    # visibility, so the linker makes every leaked symbol local too.
+    leaks=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk '
         /^[0-9a-f]+ [<(].*[>)]:$/ {
             sym = $0
             sub(/^[0-9a-f]+ [<(]/, "", sym)
             sub(/[>)]:$/, "", sym)
-            tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym in local)
+            tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/)
             next
         }
         tagged { next }
