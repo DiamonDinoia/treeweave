@@ -159,9 +159,12 @@ jobs:
       - name: Check for an ISA leak
         shell: bash
         run: |
-          shopt -s nullglob
-          libs=(dist/lib/libtreeweave_c.so.* dist/lib/libtreeweave_c.*.dylib \
-                dist/bin/treeweave_c.dll)
+          # find, not a glob: nullglob drops a pattern that matches nothing but
+          # keeps a literal path with no wildcard in it, and -type f skips the
+          # soname symlinks so each real file is read once.
+          mapfile -t libs < <(find dist -type f \
+            \( -name 'libtreeweave_c.so.*' -o -name 'libtreeweave_c*.dylib' \
+               -o -name 'treeweave_c.dll' \))
           test "${#libs[@]}" -gt 0 || { echo "no installed library found"; exit 1; }
           bash .github/scripts/check_isa_leak.sh "${libs[@]}"
 

@@ -190,9 +190,10 @@ if(_treeweave_multiarch_family)
     # own implementations sit in an anonymous namespace; neither can collide.
     # Symbols instantiated from headers at global scope do collide: every rung
     # emits the same weak name holding different code, and the linker keeps one
-    # arbitrary copy. Rungs are listed baseline-first so that copy comes from
-    # the baseline, and .github/scripts/check_isa_leak.sh proves it on the
-    # linked artifact rather than trusting the order.
+    # arbitrary copy. Rungs are listed baseline-first so a linker that keeps
+    # the first copy keeps the baseline one. No linker promises that rule, so
+    # .github/scripts/check_isa_leak.sh decides the question on the linked
+    # artifact rather than on the order.
     #
     # Do not try to fix this with objcopy. Making the rung's symbols local
     # leaves their sections in the COMDAT group, the linker still discards the

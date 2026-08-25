@@ -21,8 +21,15 @@ section verbatim into that release's GitHub Release notes.
   as `__wrapped__`.
 - `.github/scripts/check_isa_leak.sh` fails a build whose shipped artifact
   contains a symbol that no ISA level owns yet holds instructions above the
-  family baseline. It runs on the installed C ABI library and on the packaged
-  MEX, on every platform.
+  family baseline. A level owns a symbol when the mangled name carries the
+  level, or when the symbol survives once per level: GCC emits an `.isra` or
+  `.constprop` clone privately in each level, and an ELF-local reference
+  cannot bind outside its own object, so every level reaches its own copy.
+  The check runs on the installed C ABI library and on the packaged MEX. It
+  reports and skips an artifact it cannot decide: one built for a non-x86
+  family, and a Windows DLL, whose COFF symbol table is empty in a linked
+  image so that objdump labels every internal function with the export that
+  precedes it.
 
 ### Fixed
 
@@ -48,11 +55,11 @@ section verbatim into that release's GitHub Release notes.
   between the baseline and AVX-512 objects, 18 differ in code, and 17 instances
   across the six carry AVX-512 in the AVX-512 copy. One of them is
   `poly_eval::detail::newtonToMonomial<7>`, which is numeric work rather than
-  an error path. The levels are now emitted baseline-first so the copy the
-  linker keeps is the baseline one, and the check above proves it on the linked
-  artifact instead of trusting the order: of 1595 symbols in
-  `libtreeweave_c.so`, the 201 that carry AVX-512 registers all belong to a
-  level that owns them by name.
+  an error path. The levels are emitted baseline-first, so a linker that keeps
+  the first copy it sees keeps the baseline one. No linker promises that rule,
+  so the check above decides the question on the linked artifact rather than on
+  the order: of 1595 symbols in `libtreeweave_c.so`, the 201 that carry AVX-512
+  registers all belong to a level that owns them by name.
 
 ### Changed
 

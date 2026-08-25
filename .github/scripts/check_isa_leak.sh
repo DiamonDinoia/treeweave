@@ -16,6 +16,9 @@
 # usage: check_isa_leak.sh <artifact> [more artifacts...]
 set -uo pipefail
 
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
 objdump=$(command -v llvm-objdump || command -v llvm-objdump-23 || command -v objdump)
 test -n "$objdump" || { echo "no objdump found"; exit 2; }
 
@@ -37,12 +40,39 @@ for art in "$@"; do
     # _GLOBAL__N_1 and is reachable only from the rung that defines it. Binding
     # cannot tell them apart from a leak: the fan-out builds with hidden
     # visibility, so the linker makes every leaked symbol local too.
-    leaks=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk '
+    # Two properties come from the symbol table, both per name.
+    #
+    # Only code counts. Disassembling a data symbol yields bytes that decode as
+    # plausible instructions: the Windows DLL reported a VEX encoding inside
+    # treeweave_version_string. nm's type letter separates code from data.
+    #
+    # The copy count decides ownership. A leak is one symbol the linker chose
+    # among several levels' copies, so it appears exactly once. A symbol GCC
+    # emits privately per level, such as an .isra / .constprop clone, appears
+    # once per level, and an ELF-local reference cannot bind outside its own
+    # object, so each level reaches its own copy and no CPU meets another
+    # level's code.
+    nm=$(command -v llvm-nm || command -v nm)
+    "$nm" "$art" 2>/dev/null | awk 'tolower($2) == "t" {print $3}' |
+        sort | uniq -c | awk '{print $2, $1}' > "$tmp"
+
+    # A linked PE image carries an empty COFF symbol table, so the only names
+    # left are the exports. objdump then labels every internal function with
+    # the export that precedes it, and no instruction can be attributed to the
+    # symbol that owns it. Say so instead of reporting a clean artifact.
+    if [ ! -s "$tmp" ]; then
+        echo "$art: no symbol table, cannot attribute instructions, skipped"
+        continue
+    fi
+
+    leaks=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk -v textsyms="$tmp" '
+        BEGIN { while ((getline l < textsyms) > 0) { split(l, f, " "); text[f[1]] = f[2] } }
         /^[0-9a-f]+ [<(].*[>)]:$/ {
             sym = $0
             sub(/^[0-9a-f]+ [<(]/, "", sym)
             sub(/[>)]:$/, "", sym)
-            tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/)
+            tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/) \
+                     || !(sym in text) || text[sym] > 1
             next
         }
         tagged { next }
