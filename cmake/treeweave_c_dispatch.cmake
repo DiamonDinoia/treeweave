@@ -1,4 +1,6 @@
 # treeweave_c_dispatch.cmake: C-ABI TU generation and per-arch fan-out.
+# No precompiled header: a PCH is built with one target's flags, and this file
+# compiles the same sources once per ISA level with different flags.
 # 6 (dtype×dim) variant TUs; degree baked to 7. Multi-arch: 6×4=24 TUs on x86.
 # COMDAT dedup via phantom Arch template param on wrappers.
 
@@ -193,10 +195,6 @@ if(_treeweave_multiarch_family)
                 PRIVATE ${_treeweave_flags_${_lvl}}
             )
         endif()
-        target_precompile_headers(
-            treeweave_c_variants_${_tag}
-            PRIVATE <treeweave/detail/c_binding.hpp>
-        )
     endforeach()
 
     # Baseline dispatcher + shim: no SIMD, built at the portable family baseline.
@@ -228,9 +226,5 @@ else()
       ${_treeweave_variant_srcs}
       "${PROJECT_SOURCE_DIR}/src/capi/arch_single.cpp"
       "${PROJECT_SOURCE_DIR}/src/capi/treeweave.cpp"
-    )
-    target_precompile_headers(
-        treeweave_c_objects
-        PRIVATE <treeweave/detail/c_binding.hpp>
     )
 endif()
