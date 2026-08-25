@@ -52,11 +52,18 @@ jobs:
             ext: mexa64
             arch: x86-64
             matlab_release: latest
+          # clang-cl, not cl.exe: cl.exe does not finish optimizing one dispatch
+          # TU in 40 min and the fan-out is 24 of them, so an optimized cl.exe MEX
+          # is out of reach. clang-cl builds the same target in ~3 min and targets
+          # the same MSVC ABI. See cmake/treeweave_c_dispatch.cmake.
           - name: windows-x64
             runs-on: windows-2022
             ext: mexw64
             arch: x86-64
             matlab_release: latest
+            cmake_extra: >-
+              -DCMAKE_C_COMPILER=clang-cl
+              -DCMAKE_CXX_COMPILER=clang-cl
           - name: macos-arm64
             runs-on: macos-15
             ext: mexmaca64
@@ -117,7 +124,7 @@ jobs:
           cmake --preset bindings-matlab \
             -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
             -DTREEWEAVE_ARCH=${{ matrix.arch }} \
-            -DTREEWEAVE_C_MULTIARCH=ON
+            -DTREEWEAVE_C_MULTIARCH=ON ${{ matrix.cmake_extra || '' }}
           cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
 
       # Stage treeweave.m + the generated tw_*.m + the compiled MEX into one dir
@@ -138,6 +145,21 @@ jobs:
           cp "$mex" "$pkg/"
           ls -l "$pkg"
           echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+
+      # v0.0.1 through v0.0.3 shipped a Windows MEX linked against the debug CRT
+      # (MSVCP140D.dll, ucrtbased.dll). Those DLLs ship with Visual Studio and are
+      # not redistributable, so the MEX failed to load anywhere else. Fail the leg
+      # instead of publishing that again.
+      - name: Reject a debug-CRT MEX
+        if: matrix.name == 'windows-x64'
+        shell: pwsh
+        run: |
+          $mex = "${{ steps.stage.outputs.pkg }}/treeweave_mex.mexw64"
+          $deps = dumpbin /dependents $mex | Out-String
+          Write-Host $deps
+          if ($deps -match '(?i)(MSVCP\d+D|VCRUNTIME\d+(_1)?D|ucrtbased)\.dll') {
+              throw "debug CRT imported by $mex"
+          }
 
       - name: Package (tar.gz, Linux/macOS)
         if: matrix.name != 'windows-x64'

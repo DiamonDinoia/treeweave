@@ -5,6 +5,21 @@
 include_guard(GLOBAL)
 include(CheckCXXCompilerFlag)
 
+# cl.exe optimizes these dispatch TUs at a rate that makes an optimized C ABI
+# impractical: measured on windows-2022, one dispatch_f64_dim3 TU at /O2 spends
+# 1 s in the front end and does not leave the back end in 40 min, and the
+# multi-arch fan-out is 24 such TUs. clang-cl compiles the same target in 161 s.
+# Both toolsets target the same MSVC ABI, so the MEX and the DLL stay
+# interchangeable.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(
+        WARNING
+        "treeweave[c-abi]: cl.exe needs hours to optimize the dispatch TUs. "
+        "Configure with -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl "
+        "(Visual Studio generator: -T ClangCL) for a build of the same ABI in minutes."
+    )
+endif()
+
 set(_treeweave_variant_srcs "")
 set(_treeweave_gen_dir "${CMAKE_CURRENT_BINARY_DIR}/capi_gen")
 foreach(_dtype f64 f32)

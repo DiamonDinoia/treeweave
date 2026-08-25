@@ -60,6 +60,77 @@ jobs:
         continue-on-error: true
         run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
 
+  # Windows MEX, built and *run* under several MATLAB releases. Until v0.0.4 no
+  # Windows job ever loaded the MEX it built, and three releases shipped a MEX
+  # linked against the debug CRT that no machine without Visual Studio could
+  # load. This job is that missing check: it asserts the build is optimized, that
+  # the binary imports the redistributable CRT, and that the oldest MATLAB release
+  # setup-matlab installs still runs the suite against a clang-cl build.
+  matlab-windows:
+    name: Windows MEX / ${{ matrix.matlab }}
+    runs-on: windows-2022
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        matlab: [R2021a, R2022b, R2024b, latest]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          cmake: true
+          ninja: true
+          vcvarsall: true
+          cache-tools: true
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          release: ${{ matrix.matlab }}
+
+      # No CMAKE_BUILD_TYPE on purpose: the project defaults it to Release before
+      # project(), and the next step asserts that default survives on Windows.
+      - name: Configure + build the MATLAB MEX (clang-cl)
+        shell: pwsh
+        run: |
+          cmake --preset bindings-matlab `
+            -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `
+            -DTREEWEAVE_ARCH=x86-64 -DTREEWEAVE_C_MULTIARCH=ON
+          $bt = (Select-String -Path build/bindings-matlab/CMakeCache.txt `
+                   -Pattern '^CMAKE_BUILD_TYPE:').Line
+          Write-Host "cache: $bt"
+          if ($bt -notmatch 'Release') { throw "expected a Release default, got: $bt" }
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
+          if ($LASTEXITCODE -ne 0) { throw "build failed" }
+          $sw.Stop()
+          Write-Host ("MEX build: {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+
+      - name: Reject a debug-CRT MEX
+        shell: pwsh
+        run: |
+          $mex = Get-ChildItem build/bindings-matlab -Recurse -Filter treeweave_mex.mexw64 |
+                 Select-Object -First 1
+          if (-not $mex) { throw "treeweave_mex.mexw64 not found" }
+          $deps = dumpbin /dependents $mex.FullName | Out-String
+          Write-Host $deps
+          if ($deps -match '(?i)(MSVCP\d+D|VCRUNTIME\d+(_1)?D|ucrtbased)\.dll') {
+              throw "debug CRT imported by $($mex.FullName)"
+          }
+          "MEXDIR=$($mex.DirectoryName)" | Out-File -Append $env:GITHUB_ENV
+
+      # run-command, not `matlab -batch`: hosted licensing only grants a license
+      # through this action. test_treeweave calls error() on failure, so a
+      # non-zero exit is a real failure of the clang-cl MEX under this release.
+      - name: Run test_treeweave
+        uses: matlab-actions/run-command@v2
+        with:
+          command: addpath('bindings/matlab'); addpath(getenv('MEXDIR')); test_treeweave
+
   # The mwrap gateway (bindings/matlab/generated/) is checked in and compiled by
   # default. This job is the only thing keeping it in sync with treeweave.mw:
   # rerun mwrap and fail if the output differs from what's committed. Fast (no
