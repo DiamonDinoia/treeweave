@@ -51,10 +51,10 @@ section verbatim into that release's GitHub Release notes.
   expression. The Windows wheel builds with clang-cl, so an unpinned nanobind
   broke it three days after the 3.0 release while every other platform kept
   building.
-
-- The multi-arch C ABI no longer shares symbols between ISA levels.
-  `TREEWEAVE_C_MULTIARCH` compiles the same sources once per ISA level. Symbols
-  the fan-out names carry the level in their mangled name and never collide.
+- The multi-arch C ABI proves that no ISA level's code reaches a CPU that
+  cannot run it. `TREEWEAVE_C_MULTIARCH` compiles the same sources once per ISA
+  level. Symbols the fan-out names carry the level in their mangled name and
+  never collide.
   Symbols instantiated from headers at global scope do collide: every level
   emits the same weak name holding different code, and the linker keeps one
   arbitrary copy. Keep a copy from a higher level and it runs on every CPU that
