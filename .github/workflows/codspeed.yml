@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
@@ -51,7 +51,7 @@ jobs:
       # instruction-count report to app.codspeed.io (the repo is connected via
       # the CodSpeed GitHub App; auth is OIDC, see the id-token permission).
       - name: Run benchmark under CodSpeed
-        uses: CodSpeedHQ/action@4296e51e7041e24dadb86d1d6e8b9320d223dbe8  # v4
+        uses: CodSpeedHQ/action@v4
         with:
           mode: simulation
           run: ./build/codspeed/treeweave_codspeed_bench

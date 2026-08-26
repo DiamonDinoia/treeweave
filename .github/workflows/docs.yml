@@ -42,7 +42,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
@@ -54,7 +54,7 @@ jobs:
           python-version: '3.12'
 
       # Doxygen (XML for Breathe) + Graphviz for any diagrams.
-      - uses: ssciwr/doxygen-install@b5b80f5a60852f72d3c33f47fee9ddfb84a25929  # v2
+      - uses: ssciwr/doxygen-install@v2
         with:
           version: "1.13.2"
       - name: Install Graphviz
@@ -76,7 +76,7 @@ jobs:
       # publishing the freshly built site.
       - name: Publish to gh-pages
         if: github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453  # v4
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/docs/_build/html

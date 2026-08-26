@@ -180,7 +180,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
@@ -313,7 +313,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
@@ -399,7 +399,7 @@ jobs:
           ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32  # v3
+      - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
 
@@ -468,7 +468,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: gcc
           cmake: true
@@ -476,7 +476,7 @@ jobs:
           cache-tools: true
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f  # v3
+        uses: matlab-actions/setup-matlab@v3
 
       - name: Configure + build the MATLAB MEX
         run: |
@@ -532,7 +532,7 @@ jobs:
         # Default repository-url is the real PyPI (upload.pypi.org). A version
         # PyPI already has is immutable, so skip-existing stays off: a duplicate
         # upload should fail loudly rather than pass silently.
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.2
 
       - name: Rollback tag on PyPI failure
         if: failure() && steps.tag.outputs.pushed == 'true'

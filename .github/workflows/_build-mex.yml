@@ -91,7 +91,7 @@ jobs:
       # libstdc++); MSVC env on Windows so the preset's Ninja generator works like
       # every other platform; system clang on macOS.
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@8170d66c458f4a045220b7b0966c10940bb2a15d  # v1.8.1
+        uses: aminya/setup-cpp@v1.8.1
         with:
           compiler: ${{ matrix.name == 'linux-x64' && 'gcc' || '' }}
           cmake: true
@@ -105,7 +105,7 @@ jobs:
       # needed to *run*, which we do not do here. Intel macOS pins R2025b (the
       # last Intel-supported release); everything else takes the latest.
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f  # v3
+        uses: matlab-actions/setup-matlab@v3
         with:
           release: ${{ matrix.matlab_release }}
 
