@@ -10,6 +10,8 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-08-26
+
 ### Changed
 - Multi-arch C ABI restructured: only the hot loops compile per ISA rung.
   One new TU (`src/capi/kernels_arch.cpp`) compiles once per rung and
