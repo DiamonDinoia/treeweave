@@ -1,26 +1,27 @@
-// dispatch_variant.cpp.in: CMake template for one (dtype, input_dim)
-// C-ABI factory TU. configure_file() expands @TREEWEAVE_VT@ / @TREEWEAVE_VIN@
-// into 6 TUs (2 dtypes × 3 dims), compiled once (multiarch OFF) or four times
-// at distinct ISA levels (multiarch ON). Degree baked (= 7, see arch_degree_table.hpp).
-// COMDAT dedup and internal/external linkage split: see c_binding_detail.hpp.
-
-#include <xsimd/xsimd.hpp>
+// dispatch_variant.cpp.in: CMake template for one C-ABI factory TU.
+// configure_file() expands the TREEWEAVE_VINSTS placeholder (bottom of this
+// file) into the TU's explicit make_eval_one<T, IN, OUT> instantiations —
+// the shape set and the TU granularity live in
+// cmake/treeweave_c_dispatch.cmake (multi-arch: one TU
+// per (dtype, dim) holding all three output_dim pipelines; single-arch: one
+// TU per (dtype, dim, out) holding one pipeline). Each TU compiles ONCE: at
+// the family baseline -march in the multi-arch build (TREEWEAVE_C_KERNELSET;
+// the hot loops reach the per-ISA kernel TUs through `KernelSet` function
+// pointers) or at TREEWEAVE_ARCH in the single-arch build (`InlineKernels`,
+// fully inlined). Degree baked (= 7, see arch_degree_table.hpp). The
+// anonymous-namespace include keeps every fit/pipeline instantiation internal
+// to this TU.
 
 // Required by the explicit-instantiation below; include-cleaner can't see the indirect use.
-#include <treeweave/detail/c_binding.hpp>        // NOLINT(misc-include-cleaner)
+#include <treeweave/detail/c_binding.hpp>         // NOLINT(misc-include-cleaner)
 #include <treeweave/detail/arch_degree_table.hpp> // NOLINT(misc-include-cleaner)
 
 namespace treeweave::capi {
 namespace {
 #include <treeweave/detail/c_binding_detail.hpp> // EvalImpl / EvalFactory / wrap_callback
 } // namespace
-#include <treeweave/detail/c_binding_dispatch.hpp> // make_eval_for<Arch, …> body (external)
+#include <treeweave/detail/c_binding_dispatch.hpp> // make_eval_one<T, IN, OUT> body (external)
 
-// One external factory symbol per TU; best_arch == -march level → distinct mangled names.
-template auto
-make_eval_for<xsimd::best_arch, @TREEWEAVE_VT@, @TREEWEAVE_VIN@,
-              chosen_degree<xsimd::best_arch, @TREEWEAVE_VT@, @TREEWEAVE_VIN@>>(
-    int, c_func_t<@TREEWEAVE_VT@>, void *, const @TREEWEAVE_VT@ *,
-    const @TREEWEAVE_VT@ *, double, const treeweave::options &) -> IEval<@TREEWEAVE_VT@> *;
-
+// The TU's external factory symbols.
+@TREEWEAVE_VINSTS@
 } // namespace treeweave::capi

@@ -6,7 +6,7 @@
 /// dtype-checked eval / introspection / lifetime shims. No C++ exception is
 /// allowed to escape any function here.
 ///
-/// Degree is baked to chosen_degree<Arch,T,IN> (= 7 everywhere); these entry
+/// Degree is baked to chosen_degree (= 7, arch_degree_table.hpp); these entry
 /// points carry no degree argument and the opaque handle does not store one.
 
 #include <cstddef>

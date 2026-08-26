@@ -24,6 +24,7 @@
 #include <treeweave/detail/compiler_macros.hpp>
 #include <treeweave/detail/errors.hpp>
 #include <treeweave/detail/eval_policy.hpp>
+#include <treeweave/detail/kernels.hpp>
 #include <treeweave/detail/node.hpp>
 #include <treeweave/detail/numerics.hpp>
 #include <treeweave/detail/polytree.hpp>
@@ -523,11 +524,11 @@ class Function {
     /// @param res        `n_trg * output_dim` output buffer.
     /// @param n_trg      number of points to evaluate.
     /// @param allocator  allocator for the per-call scratch (optional).
-    template <class Allocator = std::allocator<value_type>>
+    template <class Allocator = std::allocator<value_type>, class K = detail::InlineKernels>
     TREEWEAVE_FLATTEN auto operator()(const value_type *xp, value_type *res, std::size_t n_trg,
-                                      const Allocator &allocator = {}) const -> void {
+                                      const Allocator &allocator = {}, const K &k = {}) const -> void {
         Scratch<Allocator> s(allocator);
-        eval_batch(xp, res, n_trg, s);
+        eval_batch(k, xp, res, n_trg, s);
     }
 
     /// SoA-output batch evaluation. Same pipeline as the AoS overload but
@@ -542,24 +543,26 @@ class Function {
     /// Only available when `output_dim > 1` — for scalar outputs the AoS
     /// and SoA layouts coincide, so the AoS overload is the canonical
     /// entry point.
-    template <class Allocator = std::allocator<value_type>>
+    template <class Allocator = std::allocator<value_type>, class K = detail::InlineKernels>
     TREEWEAVE_FLATTEN auto operator()(const value_type *xp, std::array<value_type *, output_dim> soa_out,
-                                      std::size_t n_trg, const Allocator &allocator = {}) const -> void
+                                      std::size_t n_trg, const Allocator &allocator = {}, const K &k = {}) const
+        -> void
         requires(output_dim > 1)
     {
         Scratch<Allocator> s(allocator);
-        eval_batch_soa(xp, soa_out, n_trg, s);
+        eval_batch_soa(k, xp, soa_out, n_trg, s);
     }
 
   private:
-    template <class Allocator>
-    TREEWEAVE_FLATTEN auto eval_batch_soa(const value_type *xp, std::array<value_type *, output_dim> soa_out,
-                                          std::size_t n_trg, Scratch<Allocator> &s) const -> void {
+    template <class K, class Allocator>
+    TREEWEAVE_FLATTEN auto eval_batch_soa(const K &k, const value_type *xp,
+                                          std::array<value_type *, output_dim> soa_out, std::size_t n_trg,
+                                          Scratch<Allocator> &s) const -> void {
         if (n_trg == 0) [[unlikely]]
             return;
         if (n_trg == 1) [[unlikely]] {
             const detail::Value<value_type, input_dim>  xi(xp);
-            const detail::Value<value_type, output_dim> tmp = (*this)(xi);
+            const detail::Value<value_type, output_dim> tmp = (*this)(xi, k);
             poet::static_for<output_dim>([&](auto D) -> void {
                 constexpr std::size_t d = D;
                 soa_out[d][0]           = tmp[d];
@@ -570,7 +573,7 @@ class Function {
         if (n_trg < kSortThreshold) {
             for (std::size_t i_trg = 0; i_trg < n_trg; ++i_trg) {
                 const detail::Value<value_type, input_dim>  xi(xp + (input_dim * i_trg));
-                const detail::Value<value_type, output_dim> tmp = (*this)(xi);
+                const detail::Value<value_type, output_dim> tmp = (*this)(xi, k);
                 poet::static_for<output_dim>([&](auto D) -> void {
                     constexpr std::size_t d = D;
                     soa_out[d][i_trg]       = tmp[d];
@@ -591,21 +594,21 @@ class Function {
                     constexpr std::size_t d = D;
                     tile_soa[d]             = soa_out[d] + tile_off;
                 });
-                eval_batch_tile_soa(xp + (input_dim * tile_off), tile_soa, tile_n, s);
+                eval_batch_tile_soa(k, xp + (input_dim * tile_off), tile_soa, tile_n, s);
             }
             return;
         }
-        eval_batch_tile_soa(xp, soa_out, n_trg, s);
+        eval_batch_tile_soa(k, xp, soa_out, n_trg, s);
     }
 
-    template <class Allocator>
-    TREEWEAVE_FLATTEN auto eval_batch(const value_type *xp, value_type *res, std::size_t n_trg,
+    template <class K, class Allocator>
+    TREEWEAVE_FLATTEN auto eval_batch(const K &k, const value_type *xp, value_type *res, std::size_t n_trg,
                                       Scratch<Allocator> &s) const -> void {
         if (n_trg == 0) [[unlikely]]
             return;
         if (n_trg == 1) [[unlikely]] {
             const detail::Value<value_type, input_dim>  xi(xp);
-            const detail::Value<value_type, output_dim> tmp = (*this)(xi);
+            const detail::Value<value_type, output_dim> tmp = (*this)(xi, k);
             std::copy(tmp.begin(), tmp.end(), res);
             return;
         }
@@ -615,7 +618,7 @@ class Function {
         if (n_trg < kSortThreshold) {
             for (std::size_t i_trg = 0; i_trg < n_trg; ++i_trg) {
                 const detail::Value<value_type, input_dim>  xi(xp + (input_dim * i_trg));
-                const detail::Value<value_type, output_dim> tmp = (*this)(xi);
+                const detail::Value<value_type, output_dim> tmp = (*this)(xi, k);
                 std::copy(tmp.begin(), tmp.end(), res + (i_trg * output_dim));
             }
             return;
@@ -636,11 +639,11 @@ class Function {
         if (n_trg > tile_K) {
             for (std::size_t tile_off = 0; tile_off < n_trg; tile_off += tile_K) {
                 const std::size_t tile_n = std::min(tile_K, n_trg - tile_off);
-                eval_batch_tile(xp + (input_dim * tile_off), res + (output_dim * tile_off), tile_n, s);
+                eval_batch_tile(k, xp + (input_dim * tile_off), res + (output_dim * tile_off), tile_n, s);
             }
             return;
         }
-        eval_batch_tile(xp, res, n_trg, s);
+        eval_batch_tile(k, xp, res, n_trg, s);
     }
 
   public:
@@ -682,8 +685,9 @@ class Function {
     /// per-component buffers — no permute, no scatter. Only available
     /// when `output_dim > 1`; for scalar outputs the AoS `sorted(...)`
     /// is canonical.
-    TREEWEAVE_FLATTEN auto sorted(const value_type *xp, std::array<value_type *, output_dim> soa_out,
-                                  std::size_t n) const -> void
+    template <class K = detail::InlineKernels>
+    TREEWEAVE_FLATTEN auto sorted(const value_type *xp, std::array<value_type *, output_dim> soa_out, std::size_t n,
+                                  const K &k = {}) const -> void
         requires(input_dim == 1 && output_dim > 1)
     {
         if (n == 0) [[unlikely]]
@@ -736,16 +740,17 @@ class Function {
                     constexpr std::size_t d = D;
                     run_soa[d]              = soa_out[d] + i;
                 });
-                polyfits_[id](reinterpret_cast<const CI *>(xp + i), run_soa, j - i);
+                k.run_soa(leaf_view_of(id), reinterpret_cast<const CI *>(xp + i), run_soa, j - i);
             } else {
                 static_assert(output_dim == 1, "scalar-input fits are 1-output by construction");
-                polyfits_[id](xp + i, soa_out[0] + i, j - i);
+                k.run(leaf_view_of(id), xp + i, soa_out[0] + i, j - i);
             }
             i = j;
         }
     }
 
-    TREEWEAVE_FLATTEN auto sorted(const value_type *xp, value_type *res, std::size_t n) const -> void
+    template <class K = detail::InlineKernels>
+    TREEWEAVE_FLATTEN auto sorted(const value_type *xp, value_type *res, std::size_t n, const K &k = {}) const -> void
         requires(input_dim == 1)
     {
         if (n == 0) [[unlikely]]
@@ -802,12 +807,58 @@ class Function {
             if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
                 using CI = poly_eval_type::CanonicalInput;
                 using CO = poly_eval_type::CanonicalOutput;
-                polyfits_[id](reinterpret_cast<const CI *>(xp + i), reinterpret_cast<CO *>(res + i * output_dim),
-                              j - i);
+                k.run_aos(leaf_view_of(id), reinterpret_cast<const CI *>(xp + i),
+                          reinterpret_cast<CO *>(res + i * output_dim), j - i);
             } else {
-                polyfits_[id](xp + i, res + i, j - i);
+                k.run(leaf_view_of(id), xp + i, res + i, j - i);
             }
             i = j;
+        }
+    }
+
+    /// POD view of leaf `id`'s polynomial for the kernel policy `K`. Built on
+    /// the fly (never stored): copying or moving the Function relocates
+    /// `polyfits_`, so a stored view would dangle. The loads are the same ones
+    /// the evaluator performs internally, so the fast path pays nothing.
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_view_of(std::uint32_t id) const noexcept {
+        const auto &pf = polyfits_[id];
+        if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
+            static_assert(std::is_same_v<typename poly_eval_type::CanonicalInput, std::array<value_type, input_dim>>);
+            static_assert(
+                std::is_same_v<typename poly_eval_type::CanonicalOutput, std::array<value_type, output_dim>>);
+            return detail::LeafND<value_type, input_dim, Degree>{pf.coeffsMdspan().data_handle(), pf.domainView()};
+        } else {
+            return detail::Leaf1D<value_type, Degree>{pf.coeffs().data(), pf.domainInvSpan(), pf.domainSumEndpoints(),
+                                                      pf.domainIsIdentity()};
+        }
+    }
+
+    /// Single-point leaf eval through the kernel policy. Canonicalises the
+    /// tuple-like input/output the same way `FuncEvalND::operator()` does.
+    template <class K>
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto eval_leaf(const K &k, std::uint32_t id, const input_type &x) const
+        noexcept -> output_type {
+        if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
+            std::array<value_type, input_dim> xa{};
+            poet::static_for<input_dim>([&](auto D) -> void {
+                constexpr std::size_t d = D;
+                xa[d]                   = x[d];
+            });
+            std::array<value_type, output_dim> r{};
+            k.eval_one(leaf_view_of(id), xa, r);
+            if constexpr (std::is_same_v<output_type, std::array<value_type, output_dim>>) {
+                return r;
+            } else {
+                output_type o{};
+                poet::static_for<output_dim>([&](auto D) -> void {
+                    constexpr std::size_t d = D;
+                    o[d]                    = r[d];
+                });
+                return o;
+            }
+        } else {
+            static_assert(output_dim == 1, "scalar-input fits are 1-output by construction");
+            return k.eval_one(leaf_view_of(id), x);
         }
     }
 
@@ -855,12 +906,11 @@ class Function {
     }
 
     /// Stages 1-3 (histogram → exclusive-scan → scatter into xp_packed + perm_inv).
-    /// 1D table path re-quantizes in pass 2 (not materialise): materialise wins
-    /// only <256 leaves (+15%) but regresses -9% to -37% above that (scatter bound
-    /// on counts[] RMW; re-quantize overlaps stalls for free).
-    template <class Allocator>
-    TREEWEAVE_ALWAYS_INLINE auto partition_into_leaves(const value_type *xp, std::size_t n_trg, Scratch<Allocator> &s,
-                                                       std::uint32_t ood_id) const -> void {
+    /// The 1D leaf-table path routes through `k.partition` (the SIMD bin sort in
+    /// quantize.hpp); the descent and ND paths are scalar tree walks and stay here.
+    template <class K, class Allocator>
+    TREEWEAVE_ALWAYS_INLINE auto partition_into_leaves(const K &k, const value_type *xp, std::size_t n_trg,
+                                                       Scratch<Allocator> &s, std::uint32_t ood_id) const -> void {
         const std::uint32_t n_leaves    = ood_id; // sentinel id == n_leaves
         auto               *perm_inv    = s.perm_inv();
         auto               *xp_packed   = s.xp_packed();
@@ -869,6 +919,16 @@ class Function {
 
         const bool table = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
 
+        // 1D leaf-table tile: the whole bin sort (histogram → scan → scatter)
+        // is one kernel call (`partition_1d_table` in quantize.hpp), so the
+        // multi-arch C ABI dispatches it per ISA rung.
+        if constexpr (input_dim == 1) {
+            if (table) {
+                k.partition(subtrees_.front().quantize_view(), xp, n_trg, counts, perm_inv, xp_packed, ood_id);
+                return;
+            }
+        }
+
         // `counts` is the only scratch buffer that needs reset between
         // tiles — the others are write-before-read.
         std::memset(counts, 0, (n_leaves + 1) * sizeof(std::uint32_t));
@@ -876,16 +936,11 @@ class Function {
         // Pass 1 — histogram. On the descent (`!table`) path, also store each
         // point's id in `leaf_ids` so pass 2 skips the second tree walk.
         if constexpr (input_dim == 1) {
-            if (table) {
-                subtrees_.front().for_each_leaf_id_batch(
-                    xp, ood_id, n_trg, [&](std::size_t /*i*/, std::uint32_t id) -> void { ++counts[id]; });
-            } else {
-                for (std::size_t i = 0; i < n_trg; ++i) {
-                    const detail::Value<value_type, input_dim> xi(xp + i);
-                    const std::uint32_t                        id = leaf_id_of(xi, ood_id, table);
-                    leaf_id_buf[i]                                = id;
-                    ++counts[id];
-                }
+            for (std::size_t i = 0; i < n_trg; ++i) {
+                const detail::Value<value_type, input_dim> xi(xp + i);
+                const std::uint32_t                        id = leaf_id_of(xi, ood_id, table);
+                leaf_id_buf[i]                                = id;
+                ++counts[id];
             }
         } else if (table) {
             // ND with a leaf table: re-quantize is cheap, so do not materialise.
@@ -908,25 +963,15 @@ class Function {
         // counts[k] will equal the one-past-end of that slice (Reinecke).
         std::exclusive_scan(counts, counts + n_leaves + 1, counts, std::uint32_t{0});
 
-        // Pass 2 — scatter. The 1D leaf-table path re-quantizes (cheap); the
-        // descent (`!table`) path reads the id stored in pass 1 (no re-walk).
-        // Place each point's coords at `xp_packed[counts[id]++]` and record the
-        // inverse mapping in `perm_inv`.
+        // Pass 2 — scatter. The descent (`!table`) path reads the id stored in
+        // pass 1 (no re-walk). Place each point's coords at
+        // `xp_packed[counts[id]++]` and record the inverse mapping in `perm_inv`.
         if constexpr (input_dim == 1) {
-            if (table) {
-                subtrees_.front().for_each_leaf_id_batch(xp, ood_id, n_trg,
-                                                         [&](std::size_t i, std::uint32_t id) -> void {
-                                                             const std::uint32_t dst = counts[id]++;
-                                                             perm_inv[i]             = dst;
-                                                             xp_packed[dst]          = xp[i];
-                                                         });
-            } else {
-                for (std::size_t i = 0; i < n_trg; ++i) {
-                    const std::uint32_t id  = leaf_id_buf[i];
-                    const std::uint32_t dst = counts[id]++;
-                    perm_inv[i]             = dst;
-                    xp_packed[dst]          = xp[i];
-                }
+            for (std::size_t i = 0; i < n_trg; ++i) {
+                const std::uint32_t id  = leaf_id_buf[i];
+                const std::uint32_t dst = counts[id]++;
+                perm_inv[i]             = dst;
+                xp_packed[dst]          = xp[i];
             }
         } else {
             for (std::size_t i = 0; i < n_trg; ++i) {
@@ -1038,13 +1083,13 @@ class Function {
     /// run in `partition_into_leaves` and stage 4 in `dispatch_packed_leaves`,
     /// both shared with the SoA twin; only the interleaved AoS write-back
     /// (OOD-fill + permute) is spelled here.
-    template <class Allocator>
-    auto eval_batch_tile(const value_type *xp, value_type *res, std::size_t n_trg, Scratch<Allocator> &s) const
-        -> void {
+    template <class K, class Allocator>
+    auto eval_batch_tile(const K &k, const value_type *xp, value_type *res, std::size_t n_trg,
+                         Scratch<Allocator> &s) const -> void {
         const auto          n_leaves = static_cast<std::uint32_t>(polyfits_.size());
         const std::uint32_t ood_id   = n_leaves; // sentinel bucket for out-of-domain
 
-        partition_into_leaves(xp, n_trg, s, ood_id);
+        partition_into_leaves(k, xp, n_trg, s, ood_id);
 
         auto *perm_inv   = s.perm_inv();
         auto *xp_packed  = s.xp_packed();
@@ -1059,9 +1104,9 @@ class Function {
                     using CO       = poly_eval_type::CanonicalOutput;
                     const CI *pts  = reinterpret_cast<const CI *>(xp_packed + (input_dim * off));
                     CO       *outs = reinterpret_cast<CO *>(out_packed + (output_dim * off));
-                    polyfits_[id](pts, outs, static_cast<std::size_t>(cnt));
+                    k.run_aos(leaf_view_of(id), pts, outs, static_cast<std::size_t>(cnt));
                 } else {
-                    polyfits_[id](xp_packed + off, out_packed + off, static_cast<std::size_t>(cnt));
+                    k.run(leaf_view_of(id), xp_packed + off, out_packed + off, static_cast<std::size_t>(cnt));
                 }
             });
 
@@ -1069,9 +1114,9 @@ class Function {
         const std::uint32_t ood_cnt = counts[ood_id] - ood_off;
         if (ood_cnt) {
             constexpr value_type nan_v = std::numeric_limits<value_type>::quiet_NaN();
-            for (std::uint32_t k = 0; k < ood_cnt; ++k)
+            for (std::uint32_t q = 0; q < ood_cnt; ++q)
                 for (std::size_t j = 0; j < output_dim; ++j)
-                    out_packed[output_dim * (ood_off + k) + j] = nan_v;
+                    out_packed[output_dim * (ood_off + q) + j] = nan_v;
         }
 
         // Permute outputs back to caller order.
@@ -1101,13 +1146,13 @@ class Function {
     /// interleaved store. The packed working set lives in `out_packed_`
     /// reinterpreted as OutputDim contiguous spans of `tile_cap()`
     /// elements (see `Scratch::out_soa_base`).
-    template <class Allocator>
-    auto eval_batch_tile_soa(const value_type *xp, std::array<value_type *, output_dim> soa_out, std::size_t n_trg,
-                             Scratch<Allocator> &s) const -> void {
+    template <class K, class Allocator>
+    auto eval_batch_tile_soa(const K &k, const value_type *xp, std::array<value_type *, output_dim> soa_out,
+                             std::size_t n_trg, Scratch<Allocator> &s) const -> void {
         const auto          n_leaves = static_cast<std::uint32_t>(polyfits_.size());
         const std::uint32_t ood_id   = n_leaves;
 
-        partition_into_leaves(xp, n_trg, s, ood_id);
+        partition_into_leaves(k, xp, n_trg, s, ood_id);
 
         auto *perm_inv  = s.perm_inv();
         auto *xp_packed = s.xp_packed();
@@ -1134,12 +1179,12 @@ class Function {
                         constexpr std::size_t d = D;
                         leaf_soa[d]             = out_soa_packed[d] + off;
                     });
-                    polyfits_[id](pts, leaf_soa, static_cast<std::size_t>(cnt));
+                    k.run_soa(leaf_view_of(id), pts, leaf_soa, static_cast<std::size_t>(cnt));
                 } else {
                     // Scalar 1D input: output_dim == 1 by construction, so the
                     // single SoA span IS the packed output buffer.
                     static_assert(output_dim == 1, "scalar-input fits are 1-output by construction");
-                    polyfits_[id](xp_packed + off, out_soa_packed[0] + off, static_cast<std::size_t>(cnt));
+                    k.run(leaf_view_of(id), xp_packed + off, out_soa_packed[0] + off, static_cast<std::size_t>(cnt));
                 }
             });
 
@@ -1150,8 +1195,8 @@ class Function {
             poet::static_for<output_dim>([&](auto D) -> void {
                 constexpr std::size_t d = D;
                 value_type           *p = out_soa_packed[d] + ood_off;
-                for (std::uint32_t k = 0; k < ood_cnt; ++k)
-                    p[k] = nan_v;
+                for (std::uint32_t q = 0; q < ood_cnt; ++q)
+                    p[q] = nan_v;
             });
         }
 
@@ -1183,7 +1228,9 @@ class Function {
     /// always-inlined upstream, so leaf eval keeps one `callq` per ND
     /// point. `TREEWEAVE_FLATTEN` here doesn't fix it — the durable fix is
     /// `PF_ALWAYS_INLINE` on `evalCanonical`.
-    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto operator()(const input_type &x) const noexcept -> output_type {
+    template <class K = detail::InlineKernels>
+    [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto operator()(const input_type &x, const K &k = {}) const noexcept
+        -> output_type {
         // NaN-fill every output component — matches the batch path's OOD bucket.
         // A bare `output_type{nan}` aggregate-initialises only the first element
         // of a multi-output `std::array`, leaving the rest zero (a scalar/batch
@@ -1213,7 +1260,7 @@ class Function {
             const std::uint32_t id     = subtrees_.front().find_leaf_id_with_ood(x, ood_id);
             if (id == ood_id) [[unlikely]]
                 return nan_out();
-            return polyfits_[id](x);
+            return eval_leaf(k, id, x);
         }
 
         // General path: per-axis OOD guard, then outer bin -> subtree -> leaf.
@@ -1238,7 +1285,7 @@ class Function {
         });
         if (ood) [[unlikely]]
             return nan_out();
-        return polyfits_[subtrees_[get_linear_bin(x)].find_leaf_id(x)](x);
+        return eval_leaf(k, subtrees_[get_linear_bin(x)].find_leaf_id(x), x);
     }
 
     /// Panels where adaptive paneling failed at `max_depth`. Always empty

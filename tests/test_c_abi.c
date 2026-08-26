@@ -888,6 +888,45 @@ static void test_max_memory_mib_zero(void) {
     }
 }
 
+/* ---- G8: max_depth exceeded fails the fit through the C ABI ------------ *
+ * Same rough function as G6 with allow_max_depth_leaves=0 (the default):
+ * the fit must return NULL and last_error must carry MaxDepthExceeded's
+ * message. Exercises the exception path of the baseline-compiled factory
+ * TUs of the multi-arch build. */
+
+static void test_max_depth_exceeded_error(void) {
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
+    opts.max_depth = 5; /* very shallow, hits the cap */
+
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_rough, 1, 1, &a, &b, 1e-12, NULL, &opts);
+    CHECK(h == NULL);
+    CHECK(strstr(treeweave_last_error(), "depth exceeded") != NULL);
+}
+
+/* ---- G9: memory budget exceeded fails the fit through the C ABI -------- *
+ * A frequency high enough that a 1 MiB leaf budget trips before the tree
+ * converges or reaches max_depth: the fit must return NULL and last_error
+ * must carry MemoryBudgetExceeded's message. Exercises the other
+ * exception path of the baseline-compiled factory TUs. */
+
+static void k_very_rough(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = sin(20000.0 * x[0]);
+}
+
+static void test_memory_budget_exceeded_error(void) {
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
+    opts.max_memory_mib = 1;
+
+    const double a = 0.0, b = 1.0;
+    treeweave_t  h = treeweave_fit(k_very_rough, 1, 1, &a, &b, 1e-12, NULL, &opts);
+    CHECK(h == NULL);
+    CHECK(strstr(treeweave_last_error(), "exceeded budget") != NULL);
+}
+
 /* ---- G11: (dim=1, out_dim=3) shape fit + eval -------------------------- */
 
 static void k_1d_3(const double *x, double *y, void *d) {
@@ -1008,6 +1047,8 @@ int main(void) {
     test_absolute_max_tol();
     test_allow_max_depth_leaves();
     test_max_memory_mib_zero();
+    test_max_depth_exceeded_error();
+    test_memory_budget_exceeded_error();
     test_1d_3out_shape();
     test_zero_batch_noop();
     test_f32_sorted_fast_path();

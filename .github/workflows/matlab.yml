@@ -97,9 +97,14 @@ jobs:
       - name: Configure + build the MATLAB MEX (clang-cl)
         shell: pwsh
         run: |
+          # TREEWEAVE_VERIFY_RUNGS: cross-rung symbol gate at build time — the
+          # bindings preset turns the test suite off (no ctest registration)
+          # and a linked PE keeps no symbol table for check_isa_leak.sh, so
+          # this is the only gate that covers a Windows multiarch build.
           cmake --preset bindings-matlab `
             -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `
-            -DTREEWEAVE_ARCH=x86-64 -DTREEWEAVE_C_MULTIARCH=ON
+            -DTREEWEAVE_ARCH=x86-64 -DTREEWEAVE_C_MULTIARCH=ON `
+            -DTREEWEAVE_VERIFY_RUNGS=ON
           $bt = (Select-String -Path build/bindings-matlab/CMakeCache.txt `
                    -Pattern '^CMAKE_BUILD_TYPE:').Line
           Write-Host "cache: $bt"

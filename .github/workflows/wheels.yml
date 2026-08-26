@@ -39,14 +39,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # TREEWEAVE_VERIFY_RUNGS on the multiarch legs: cibuildwheel builds
+          # in a container/venv this workflow's steps cannot reach, so the
+          # cross-rung symbol gate must run inside the build itself.
           - name: linux-x86_64
             runs-on: ubuntu-24.04
             cibw-arch: x86_64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64"
           - name: linux-aarch64
             runs-on: ubuntu-24.04-arm
             cibw-arch: aarch64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=armv8-a"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=armv8-a"
           - name: macos-arm64
             runs-on: macos-14
             cibw-arch: arm64
@@ -54,7 +57,7 @@ jobs:
           - name: macos-x86_64
             runs-on: macos-15-intel
             cibw-arch: x86_64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64"
           # Multiarch OFF: static-linked into the extension it faults with an
           # illegal instruction inside treeweave_fit under every arch, sse2
           # included. The same C ABI as a DLL passes. Windows runs SSE2-only.
@@ -109,6 +112,24 @@ jobs:
           # here, not by users. {package} is the package-dir (bindings/python).
           CIBW_TEST_REQUIRES: pytest numpy
           CIBW_TEST_COMMAND: pytest {package}/tests
+
+      # Second line of defence on the linked artifact (the build-time rung
+      # gate above runs on the objects): the fan-out's rungs share every weak
+      # symbol no rung name distinguishes, and the linker keeps one copy.
+      # Check the extension that ships, where that choice is already made.
+      - name: Check for an ISA leak
+        if: contains(matrix.cmake-args, 'TREEWEAVE_VERIFY_RUNGS=ON')
+        shell: bash
+        run: |
+          mkdir -p /tmp/whl-audit
+          for w in wheelhouse/*.whl; do unzip -oq "$w" -d /tmp/whl-audit; done
+          # A read loop, not mapfile: macOS ships bash 3.2 (see _build-c-abi.yml).
+          libs=()
+          while IFS= read -r lib; do
+            libs+=("$lib")
+          done < <(find /tmp/whl-audit -type f \( -name '*.so' -o -name '*.dylib' \))
+          test "${#libs[@]}" -gt 0 || { echo "no extension library found"; exit 1; }
+          bash .github/scripts/check_isa_leak.sh "${libs[@]}"
 
       # The cibuildwheel action runs from the repo root, so wheelhouse/ lands there.
       - uses: actions/upload-artifact@v7

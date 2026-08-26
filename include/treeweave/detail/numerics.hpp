@@ -52,6 +52,8 @@ struct Box {
     Value<T, Dim> center;
     Value<T, Dim> half_length;
 
+    // Default construction: deque<Box>::resize default-inserts.
+    Box() = default;
     Box(const auto &x, const auto &hl) : center{x}, half_length{hl} {}
 };
 

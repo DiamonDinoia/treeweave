@@ -383,7 +383,7 @@ jobs:
       # Exact match: the dispatched binary runs natively here. (Avoid the
       # valgrind variant, which can't execute an AVX-512 dispatch target.)
       - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch -R '^test_c_abi$' --output-on-failure
+        run: ctest --test-dir build/multiarch -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure
 
   multiarch-arm:
     name: Multiarch dispatch smoke (aarch64)
@@ -431,4 +431,4 @@ jobs:
           echo "FORCE_ARCH=arm64+neon exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
 
       - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch-arm -R '^test_c_abi$' --output-on-failure
+        run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure

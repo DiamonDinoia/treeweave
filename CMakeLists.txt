@@ -69,6 +69,13 @@ option(TREEWEAVE_GENERATE_DOCS "Build docs targets" OFF)
 # (GCC/Clang: SSE2/SSE4.2/AVX2/AVX-512; MSVC ABI: SSE2/AVX/AVX2/AVX-512). On
 # unsupported platforms it falls back to the normal single-arch C ABI build.
 option(TREEWEAVE_C_MULTIARCH "Runtime ISA dispatch" OFF)
+# Fail the build if any symbol shared across the multi-arch ISA rungs differs
+# between them (a leak the linker could ship at the wrong ISA). Runs
+# .github/scripts/check_rung_symbols.sh on the object files whenever
+# treeweave_c / treeweave_c_static builds. Needs bash + nm + objdump. Intended
+# for release pipelines where TREEWEAVE_BUILD_TESTS=OFF skips the equivalent
+# ctest; errors out if set without an active multi-arch fan-out.
+option(TREEWEAVE_VERIFY_RUNGS "Cross-rung symbol gate at build time" OFF)
 # Treat project warnings as errors. Dependency warnings are kept out of this
 # policy; this is intended to keep treeweave's own code clean.
 option(TREEWEAVE_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)

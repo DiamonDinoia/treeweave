@@ -64,6 +64,17 @@ endif()
 # Consumers of the static archive must see TREEWEAVE_EXPORT as no-op (no dllimport):
 # the symbols are linked directly, not imported from a DLL.
 target_compile_definitions(treeweave_c_static INTERFACE TREEWEAVE_STATIC)
+
+# TREEWEAVE_VERIFY_RUNGS (see treeweave_c_dispatch.cmake): run the cross-rung
+# symbol gate before either library links, so any `cmake --build` of a
+# consumer target — even `--target <binding>` — fails on an ISA leak.
+# (`cmake --install` alone builds nothing and runs no gate.)
+if(TARGET treeweave_verify_rungs)
+    if(TARGET treeweave_c)
+        add_dependencies(treeweave_c treeweave_verify_rungs)
+    endif()
+    add_dependencies(treeweave_c_static treeweave_verify_rungs)
+endif()
 set_property(
     GLOBAL
     APPEND

@@ -121,6 +121,9 @@ jobs:
           # where that is the convention, so a lib64 layout makes
           # find_package(treeweave) fail for Debian/Ubuntu consumers of the
           # relocatable tarball. lib/ is searched everywhere.
+          # TREEWEAVE_VERIFY_RUNGS runs the cross-rung symbol gate at build
+          # time (tests are OFF here, so the ctest registration never fires;
+          # the artifact-producing tree is the one that must be clean).
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_LIBDIR=lib \
@@ -128,6 +131,7 @@ jobs:
             -DTREEWEAVE_BUILD_EXAMPLES=OFF \
             -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
             -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} \
+            -DTREEWEAVE_VERIFY_RUNGS=${{ matrix.multiarch }} \
             -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build -j
           cmake --install build --prefix dist

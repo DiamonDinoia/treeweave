@@ -138,12 +138,15 @@ jobs:
               "-DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
             )
           fi
+          # TREEWEAVE_VERIFY_RUNGS runs the cross-rung symbol gate at build
+          # time (tests are OFF here, so the ctest registration never fires).
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DTREEWEAVE_BUILD_TESTS=OFF \
             -DTREEWEAVE_BUILD_EXAMPLES=OFF \
             -DTREEWEAVE_BUILD_JS=ON \
             -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} \
+            -DTREEWEAVE_VERIFY_RUNGS=${{ matrix.multiarch }} \
             -DTREEWEAVE_ARCH=${{ matrix.arch }} \
             "${extra[@]}"
           cmake --build build -j --target treeweave_node
@@ -156,6 +159,16 @@ jobs:
           mkdir -p "prebuilds/${{ matrix.platdir }}"
           cp bindings/js/dist/treeweave.node "prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
           ls -l "prebuilds/${{ matrix.platdir }}"
+
+      # Second line of defence on the linked artifact (the build-time rung
+      # gate runs on the objects): check the addon that ships, where the
+      # linker's one-copy choice is already made.
+      - name: Check for an ISA leak
+        if: matrix.multiarch == 'ON'
+        shell: bash
+        run: |
+          bash .github/scripts/check_isa_leak.sh \
+            "prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
 
       # The addon compiles with clang-cl but must stay a plain MSVC-ABI DLL: the
       # import table may name only the CRT and node.exe that a cl.exe build names.

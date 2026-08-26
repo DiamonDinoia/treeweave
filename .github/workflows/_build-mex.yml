@@ -121,10 +121,16 @@ jobs:
       - name: Configure + build the MATLAB MEX
         shell: bash
         run: |
+          # TREEWEAVE_VERIFY_RUNGS runs the cross-rung symbol gate at build
+          # time. The bindings preset turns the test suite off, so the ctest
+          # registration never fires here; objects keep full symbol tables on
+          # ELF, Mach-O and COFF, so this is the only gate that covers the
+          # Windows MEX (a linked PE has no symbol table for check_isa_leak.sh).
           cmake --preset bindings-matlab \
             -DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }} \
             -DTREEWEAVE_ARCH=${{ matrix.arch }} \
-            -DTREEWEAVE_C_MULTIARCH=ON ${{ matrix.cmake_extra || '' }}
+            -DTREEWEAVE_C_MULTIARCH=ON \
+            -DTREEWEAVE_VERIFY_RUNGS=ON ${{ matrix.cmake_extra || '' }}
           cmake --build build/bindings-matlab --target treeweave_mex_matlab -j
 
       # Stage treeweave.m + the generated tw_*.m + the compiled MEX into one dir
@@ -161,8 +167,8 @@ jobs:
               throw "debug CRT imported by $mex"
           }
 
-      # The per-arch fan-out compiles the same headers once per ISA rung, and
-      # the linker keeps one arbitrary copy of every symbol no rung name
+      # The per-arch fan-out compiles the hot-loop kernels once per ISA rung,
+      # and the linker keeps one arbitrary copy of every symbol no rung name
       # distinguishes. Check the MEX that ships, which is where that choice is
       # already made.
       - name: Check for an ISA leak
