@@ -20,15 +20,24 @@ tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
 objdump=$(command -v llvm-objdump || command -v llvm-objdump-23 || command -v objdump)
-test -n "$objdump" || { echo "no objdump found"; exit 2; }
+test -n "$objdump" || {
+    echo "no objdump found"
+    exit 2
+}
 
 rc=0
 for art in "$@"; do
-    test -f "$art" || { echo "not a file: $art"; exit 2; }
+    test -f "$art" || {
+        echo "not a file: $art"
+        exit 2
+    }
 
     # AArch64 and RISC-V build a single rung, so no two copies can differ.
     fmt=$("$objdump" -f "$art" 2>/dev/null | head -20)
-    test -n "$fmt" || { echo "$art: objdump read nothing"; exit 2; }
+    test -n "$fmt" || {
+        echo "$art: objdump read nothing"
+        exit 2
+    }
     if ! grep -qiE 'x86[-_]?64|i386' <<<"$fmt"; then
         echo "$art: not x86, single-rung, skipped"
         continue
@@ -54,7 +63,7 @@ for art in "$@"; do
     # level's code.
     nm=$(command -v llvm-nm || command -v nm)
     "$nm" "$art" 2>/dev/null | awk 'tolower($2) == "t" {print $3}' |
-        sort | uniq -c | awk '{print $2, $1}' > "$tmp"
+        sort | uniq -c | awk '{print $2, $1}' >"$tmp"
 
     # A linked PE image carries an empty COFF symbol table, so the only names
     # left are the exports. objdump then labels every internal function with
@@ -65,12 +74,13 @@ for art in "$@"; do
         continue
     fi
 
-    leaks=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk -v textsyms="$tmp" '
+    report=$("$objdump" -d --no-show-raw-insn "$art" 2>/dev/null | awk -v textsyms="$tmp" '
         BEGIN { while ((getline l < textsyms) > 0) { split(l, f, " "); text[f[1]] = f[2] } }
         /^[0-9a-f]+ [<(].*[>)]:$/ {
             sym = $0
             sub(/^[0-9a-f]+ [<(]/, "", sym)
             sub(/[>)]:$/, "", sym)
+            labels++
             tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/) \
                      || !(sym in text) || text[sym] > 1
             next
@@ -80,8 +90,26 @@ for art in "$@"; do
         /%zmm|%k[1-7]/ { bad[sym] = "AVX-512"; next }
         # VEX: a v-prefixed mnemonic on a vector register is AVX or higher.
         /\yv[a-z0-9]+[[:space:]]+.*%[xyz]mm/ { if (!(sym in bad)) bad[sym] = "AVX" }
-        END { for (s in bad) printf "%-8s %s\n", bad[s], s }
-    ' | sort)
+        END { printf "LABELS %d\n", labels; for (s in bad) printf "%-8s %s\n", bad[s], s }
+    ')
+    labels=$(awk '$1 == "LABELS" {print $2}' <<<"$report")
+    leaks=$(grep -v '^LABELS ' <<<"$report" | sort)
+
+    # A Mach-O bundle keeps only its exports, so objdump labels the whole text
+    # section with the single one and charges every instruction in the image to
+    # it. That is the same misattribution as the empty COFF table above, reached
+    # with a non-empty table: the macOS x86_64 wheel reported AVX-512 inside
+    # _PyInit__treeweave, the module entry point, which holds no vector code.
+    # A handful of names cannot own a whole library, so counts this low mean the
+    # artifact is unattributable, neither clean nor leaking. The object-level
+    # gate (check_rung_symbols.sh, TREEWEAVE_VERIFY_RUNGS) reads symbol tables
+    # that survive on every format and covers these trees.
+    nsyms=$(grep -c '' <"$tmp")
+    if ((labels < 16 || nsyms < 16)); then
+        echo "$art: $nsyms text symbols and $labels function labels for the whole image," \
+            "cannot attribute instructions, skipped"
+        continue
+    fi
 
     if [ -n "$leaks" ]; then
         echo "$art: ISA leak, untagged symbols carrying above-baseline instructions"
