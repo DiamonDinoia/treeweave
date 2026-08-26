@@ -112,4 +112,3 @@ TREEWEAVE_KERNELS_FOR(float, 3, 3)
 #undef TREEWEAVE_KERNELS_FOR
 
 } // namespace treeweave::detail
-

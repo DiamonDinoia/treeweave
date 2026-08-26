@@ -72,7 +72,7 @@ struct LeafND {
 /// Evaluate the leaf polynomial at `n` points, `out[i] = p(xp[i])`.
 template <class T, std::size_t NC>
 static auto leaf_run(const Leaf1D<T, NC> &lv, const T *xp, T *out, std::size_t n) noexcept -> void {
-    poly_eval::horner<NC, false, false, 0>(xp, out, n, lv.coeffs, NC, [&](const auto v) {
+    poly_eval::horner<NC, false, false, 0>(xp, out, n, lv.coeffs, NC, [&](const auto v) -> auto {
         if (lv.identity) return v;
         return polyfit::internal::helpers::mapFromDomainScalar(v, lv.inv_span, lv.sum_endpoints);
     });

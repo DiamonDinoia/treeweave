@@ -29,8 +29,14 @@ nm=$(command -v llvm-nm || command -v llvm-nm-23 || command -v nm)
 objdump=$(command -v llvm-objdump || command -v llvm-objdump-23 || command -v objdump)
 # A missing tool must fail, never skip: a silent pass here is the exact hole
 # this gate exists to close.
-[[ -n "${nm:-}" && -n "${objdump:-}" ]] || { echo "check_rung_symbols: FAIL: no nm/objdump on PATH"; exit 2; }
-(($# >= 2)) || { echo "check_rung_symbols: FAIL: need at least two <rung>=<objects> sets"; exit 2; }
+[[ -n "${nm:-}" && -n "${objdump:-}" ]] || {
+    echo "check_rung_symbols: FAIL: no nm/objdump on PATH"
+    exit 2
+}
+(($# >= 2)) || {
+    echo "check_rung_symbols: FAIL: need at least two <rung>=<objects> sets"
+    exit 2
+}
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -46,7 +52,10 @@ for arg in "$@"; do
     "$nm" --defined-only --extern-only "${objs[@]}" 2>/dev/null |
         awk '$2 ~ /^[TW]$/ {print $3}' | sort -u >"$work/$rung.syms"
     [[ -s "$work/$rung.syms" ]] ||
-        { echo "check_rung_symbols: FAIL: rung '$rung' yields no external text symbols (bad paths or tool)"; exit 2; }
+        {
+            echo "check_rung_symbols: FAIL: rung '$rung' yields no external text symbols (bad paths or tool)"
+            exit 2
+        }
     # Locals (lowercase nm type), for the local-ref rule below.
     "$nm" --defined-only "${objs[@]}" 2>/dev/null |
         awk '$2 ~ /^[a-z]/ {print $3}' | sort -u >"$work/$rung.locals"
@@ -135,7 +144,10 @@ done
 # All-empty streams mean the disassembly matched nothing: the procedure broke
 # (format change, alias-only labels). Refuse the vacuous pass.
 ((n_compared > 0)) ||
-    { echo "check_rung_symbols: FAIL: none of the $n_shared shared symbols disassembled"; exit 2; }
+    {
+        echo "check_rung_symbols: FAIL: none of the $n_shared shared symbols disassembled"
+        exit 2
+    }
 
 if ((fail)); then
     echo "check_rung_symbols: FAIL: shared symbols differ or reference TU-locals (see DIFFERS/LOCAL-REF above)"
