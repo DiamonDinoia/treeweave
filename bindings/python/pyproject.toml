@@ -4,7 +4,7 @@
 # expression under the MSVC ABI. The Windows wheel builds with clang-cl, so
 # 3.0 breaks it while every other platform is unaffected.
 [build-system]
-requires = ["scikit-build-core>=0.10", "nanobind>=2.0,<3"]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.0,<4"]
 build-backend = "scikit_build_core.build"
 
 [project]
