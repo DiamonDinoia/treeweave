@@ -10,7 +10,7 @@
 ///
 /// The heavy machinery is split out so the dispatcher / entry-point TUs stay
 /// instantiation-free:
-///   * c_binding_detail.hpp: `EvalImpl` / `EvalFactory` / `wrap_callback`,
+///   * c_binding_detail.hpp: `EvalImpl` / `make_eval_impl` / `wrap_callback`,
 ///     pulled into an anonymous namespace by each baseline factory TU so its
 ///     instantiations get *internal* linkage.
 ///   * c_binding_dispatch.hpp: the body of `make_eval_one<T, IN, OUT>`, the
@@ -22,7 +22,7 @@
 /// the leaf kernels once per rung, and `select_kernels` (defined in
 /// arch_dispatch.cpp) picks one `KernelSet` of function pointers per handle
 /// via `xsimd::dispatch`. Single-arch builds skip the indirection entirely:
-/// `EvalFactory` falls back to the header-only `InlineKernels` policy
+/// `make_eval_impl` falls back to the header-only `InlineKernels` policy
 /// (`TREEWEAVE_C_KERNELSET` undefined).
 ///
 /// Degree is baked to `chosen_degree` (= 7; see

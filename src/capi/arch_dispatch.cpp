@@ -67,7 +67,7 @@ auto select_kernels() -> detail::KernelSet<T, IN, NC, OUT> {
     return xsimd::dispatch<dispatch_arch_list>(SelectKernelsFn<T, IN, NC, OUT>{})();
 }
 
-// The shapes EvalFactory can request. Single source of truth: the foreach
+// The shapes make_eval_impl can request. Single source of truth: the foreach
 // lists in cmake/treeweave_c_dispatch.cmake — keep this list and
 // kernels_arch.cpp's TREEWEAVE_KERNELS_FOR list in sync with them.
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) — explicit-instantiation list.

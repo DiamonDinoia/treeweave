@@ -18,7 +18,7 @@
 
 namespace treeweave::capi {
 namespace {
-#include <treeweave/detail/c_binding_detail.hpp> // EvalImpl / EvalFactory / wrap_callback
+#include <treeweave/detail/c_binding_detail.hpp> // EvalImpl / make_eval_impl / wrap_callback
 } // namespace
 #include <treeweave/detail/c_binding_dispatch.hpp> // make_eval_one<T, IN, OUT> body (external)
 

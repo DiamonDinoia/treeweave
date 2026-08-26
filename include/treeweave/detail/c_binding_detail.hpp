@@ -2,7 +2,7 @@
 //
 // NO include guard / #includes / namespace by design: textually included
 // inside an anonymous namespace in each baseline variant TU so EvalImpl /
-// EvalFactory / wrap_callback — and every treeweave/polyfit template they
+// make_eval_impl / wrap_callback — and every treeweave/polyfit template they
 // instantiate — get internal linkage. The hot loops are NOT here: EvalImpl
 // threads a kernel policy through the `Function` pipeline, either
 // `InlineKernels` (single-arch build: full inlining at TREEWEAVE_ARCH) or a
@@ -132,30 +132,21 @@ struct EvalImpl final : IEval<T> {
     K    ks_;
 };
 
-/// poet::dispatch functor for the output_dim switch within one fixed
-/// (value_type, input_dim, degree). `operator()<Out>()` selects the kernel
-/// policy and builds the concrete `EvalImpl` for the matched output_dim;
-/// poet returns nullptr for any output_dim outside the instantiated range.
-template <class T, std::size_t IN, int Deg>
-struct EvalFactory {
-    c_func_t<T>               f;
-    void                     *data;
-    const T                  *a;
-    const T                  *b;
-    double                    tol;
-    const treeweave::options &opts;
-
-    template <int Out>
-    auto operator()() const -> IEval<T> * {
+/// Selects the kernel policy and builds the concrete `EvalImpl` for one fixed
+/// shape (value_type, input_dim, degree, output_dim). A free function, not a
+/// functor: cppcheck misparses an explicit template argument list on
+/// `operator()` and reports constStatement on the call.
+template <class T, std::size_t IN, int Deg, int Out>
+auto make_eval_impl(c_func_t<T> f, void *data, const T *a, const T *b, double tol,
+                    const treeweave::options &opts) -> IEval<T> * {
 #ifdef TREEWEAVE_C_KERNELSET
-        using K =
-            detail::KernelSet<T, IN, static_cast<std::size_t>(Deg), static_cast<std::size_t>(Out)>;
-        const K ks = select_kernels<T, IN, static_cast<std::size_t>(Deg), static_cast<std::size_t>(Out)>();
+    using K =
+        detail::KernelSet<T, IN, static_cast<std::size_t>(Deg), static_cast<std::size_t>(Out)>;
+    const K ks = select_kernels<T, IN, static_cast<std::size_t>(Deg), static_cast<std::size_t>(Out)>();
 #else
-        using K = detail::InlineKernels;
-        const K ks{};
+    using K = detail::InlineKernels;
+    const K ks{};
 #endif
-        return EvalImpl<T, Deg, IN, static_cast<std::size_t>(Out), EvalPolicy::Balanced, K>::create(f, data, a, b,
-                                                                                                    tol, opts, ks);
-    }
-};
+    return EvalImpl<T, Deg, IN, static_cast<std::size_t>(Out), EvalPolicy::Balanced, K>::create(f, data, a, b, tol,
+                                                                                                opts, ks);
+}
