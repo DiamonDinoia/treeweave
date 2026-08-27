@@ -63,7 +63,7 @@ class Node {
             return false;
         };
 
-        auto &polyfit = polyfits.emplace_back(func, lb, ub);
+        const auto &polyfit = polyfits.emplace_back(func, lb, ub);
 
         // tail_error reads coefficients out of polyfit's 1D `FuncEval` and is
         // not meaningful for the ND / array-output path (which uses
