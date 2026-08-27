@@ -51,7 +51,7 @@ jobs:
       # instruction-count report to app.codspeed.io (the repo is connected via
       # the CodSpeed GitHub App; auth is OIDC, see the id-token permission).
       - name: Run benchmark under CodSpeed
-        uses: CodSpeedHQ/action@v4
+        uses: CodSpeedHQ/action@v5
         with:
           mode: simulation
           run: ./build/codspeed/treeweave_codspeed_bench
