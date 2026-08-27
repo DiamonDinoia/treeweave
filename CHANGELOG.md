@@ -10,6 +10,16 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+### Fixed
+
+- `tail_error_exceeds_tol` read two coefficients from a degree-1 fit, which
+  holds one. ASan reports a `READ of size 8` past the `FuncEval` for
+  `fit<1>` with `TolKind::AbsoluteTail`; the read is now bounded by
+  `Polyfit::NCOEFFS`. The same change compiles the coefficient reference as a
+  pointer, so GCC 16 no longer folds this body across degrees and charges one
+  degree's array extent to another (`-Werror=array-bounds` under
+  `-march=native`).
+
 ## [0.0.5] - 2026-08-26
 
 ### Changed

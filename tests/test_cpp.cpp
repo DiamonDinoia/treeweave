@@ -85,6 +85,18 @@ TEST_CASE("1D tail-tolerance convergence (AbsoluteTail)", "[treeweave][smooth][t
     REQUIRE(max_rel_err_1d(f, fn, a + 1e-6, b - 1e-6, N_SAMPLE) < 1e-6);
 }
 
+TEST_CASE("degree-1 tail tolerance reads only the coefficient it has", "[treeweave][tail]") {
+    // A degree-1 fit holds a single coefficient, so tail_error_exceeds_tol has
+    // one element to read, not two. The read past the end is invisible without
+    // a sanitizer: the ASan CI rows are what makes this case fail.
+    auto f = [](double x) { return x * x; };
+
+    auto fn =
+        fit<1>(f, 0.0, 1.0, /*tol=*/1e-3,
+               options{.tol_kind = treeweave::TolKind::AbsoluteTail, .max_depth = 4, .allow_max_depth_leaves = true});
+    REQUIRE(std::isfinite(fn(0.5)));
+}
+
 TEST_CASE("2D smooth polynomial, compile-time degree 8", "[treeweave][smooth][2d]") {
     // polyfit's FuncEvalND requires a tuple-like output even for a single
     // scalar; wrap in std::array<double, 1>.

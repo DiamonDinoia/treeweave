@@ -77,8 +77,14 @@ auto tail_error_exceeds_tol(double tol, const Polyfit &polyfit) -> bool {
     // Tail tolerance is absolute today; RelativeTail scaling was never implemented.
     T maxcoeff{0.0};
 
-    const auto &coeffs = polyfit.coeffs();
-    for (std::size_t i = 0; i < 2; ++i)
+    // A one-coefficient fit is a constant, so its single coefficient is the
+    // whole tail and `coeffs[1]` would read past the buffer. `.data()` keeps the
+    // array extent out of the type: GCC folds the identical instantiations of
+    // this body across degrees and then charges one degree's extent to another.
+    constexpr std::size_t n_tail = std::min<std::size_t>(2, Polyfit::NCOEFFS);
+
+    const auto *coeffs = polyfit.coeffs().data();
+    for (std::size_t i = 0; i < n_tail; ++i)
         maxcoeff = std::max(std::abs(coeffs[i]), maxcoeff);
 
     return static_cast<double>(maxcoeff) > tol;
