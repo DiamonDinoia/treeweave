@@ -14,11 +14,10 @@
 ///     and `perm`. No allocation inside.
 ///   * convenience: same, but allocates `counts`/`perm` per call.
 ///
-/// Numbers: see `bench/baseline_pack_scatter_nb.txt`. The hand-rolled
-/// `for (i) ys[i] = (*fits[fit_ids[i]])(xs[i])` (scatter_naive) still
-/// wins on raw throughput at small `n / n_fits` ratios; counting-sort
-/// pays off when grouping unlocks the per-fit SIMD batch path (~1024
-/// evals per fit) or when fits spill L2 and per-fit locality matters.
+/// The naive per-pair loop `for (i) ys[i] = (*fits[fit_ids[i]])(xs[i])`
+/// is faster at small `n / n_fits` ratios; counting-sort pays off when
+/// grouping unlocks the per-fit SIMD batch path (~1024 evals per fit)
+/// or when fits spill L2 and per-fit locality matters.
 
 #include <cassert>
 #include <cstddef>
@@ -40,11 +39,9 @@ namespace treeweave {
 /// `std::ranges::fill(counts.first(n_fits), 0u)` first.
 ///
 /// Algorithm: FINUFFT `bin_sort_singlethread_impl` pattern (finufft
-/// spread.hpp:421). `uint32_t` counts halves cache footprint vs
-/// `BIGINT`, `std::exclusive_scan` for offsets in place (Reinecke's
-/// trick), scalar histogram/placement (SIMD scatter to `counts` loses
-/// to duplicate-bin serialisation; clang dead-store-eliminates any
-/// xsimd round-trip wrapper anyway).
+/// spread.hpp:421). `uint32_t` counts halve the cache footprint vs
+/// `BIGINT`; `std::exclusive_scan` turns counts into offsets in place
+/// (Reinecke's trick); histogram and placement stay scalar.
 // double-only today; template on value_type if float scatter is ever needed.
 template <std::size_t Degree, class Func>
 auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, std::span<const std::uint32_t> fit_ids,
@@ -96,7 +93,7 @@ auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, st
 
 /// Convenience overload: allocates `counts` and `perm` per call. Use
 /// the scratch-span overload above when calling repeatedly to amortise
-/// the two allocations (~50–100 ns flat on glibc).
+/// the two allocations.
 template <std::size_t Degree, class Func>
 auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, std::span<const std::uint32_t> fit_ids,
                          std::span<const double> xs, std::span<double> ys, std::uint32_t n_fits) -> void {

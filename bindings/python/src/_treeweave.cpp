@@ -9,7 +9,6 @@
 
 #include <treeweave.h>
 
-#include <cmath>   // std::numeric_limits
 #include <cstring> // std::memcpy
 #include <limits>
 #include <stdexcept>
@@ -342,20 +341,6 @@ static nb::object fit_impl(nb::object callable, int input_dim, int output_dim, s
     return nb::cast(new TreeweaveFunction(handle), nb::rv_policy::take_ownership);
 }
 
-static nb::object fit_f64(nb::object callable, int input_dim, int output_dim, std::vector<double> a,
-                          std::vector<double> b, double tol, int tol_kind_int, int max_depth, int max_memory_mib,
-                          int allow_max_depth_leaves, int min_uniform_depth) {
-    return fit_impl<double>(callable, input_dim, output_dim, std::move(a), std::move(b), tol, tol_kind_int, max_depth,
-                            max_memory_mib, allow_max_depth_leaves, min_uniform_depth);
-}
-
-static nb::object fit_f32(nb::object callable, int input_dim, int output_dim, std::vector<float> a,
-                          std::vector<float> b, double tol, int tol_kind_int, int max_depth, int max_memory_mib,
-                          int allow_max_depth_leaves, int min_uniform_depth) {
-    return fit_impl<float>(callable, input_dim, output_dim, std::move(a), std::move(b), tol, tol_kind_int, max_depth,
-                           max_memory_mib, allow_max_depth_leaves, min_uniform_depth);
-}
-
 NB_MODULE(_treeweave, m) {
     m.doc() = "Low-level nanobind bindings for the treeweave C ABI.";
 
@@ -387,9 +372,9 @@ NB_MODULE(_treeweave, m) {
         .def_prop_ro("memory_usage", &TreeweaveFunction::memory_usage)
         .def_prop_ro("dtype", &TreeweaveFunction::dtype_str);
 
-    m.def("fit_f64", &fit_f64, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a, "tol_kind"_a,
-          "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
+    m.def("fit_f64", &fit_impl<double>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a,
+          "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
 
-    m.def("fit_f32", &fit_f32, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a, "tol_kind"_a,
+    m.def("fit_f32", &fit_impl<float>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a, "tol_kind"_a,
           "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
 }

@@ -34,10 +34,10 @@ TEST_CASE("1D1 evaluations", "[treeweave_template]") {
 }
 
 // Vector-valued 1D fit: array<double, 1> input + array<double, K> output.
-// Regression test for the leaf-table / Value-cast / tail-error gates that
-// previously rejected this shape outright. The scalar-input + array-output
-// spelling stays unsupported (polyfit's compensated_horner doesn't operate
-// on array OutputType); users must spell the input as array<double, 1>.
+// Regression test for the leaf-table / Value-cast / tail-error gates on
+// this shape. The scalar-input + array-output spelling is unsupported
+// (polyfit's compensated_horner doesn't operate on array OutputType);
+// users must spell the input as array<double, 1>.
 TEST_CASE("1D array->array evaluations", "[treeweave_template]") {
     auto f = [](std::array<double, 1> x) -> std::array<double, 4> {
         const double v = x[0];
@@ -64,10 +64,9 @@ TEST_CASE("1D array->array evaluations", "[treeweave_template]") {
             REQUIRE(std::fabs(y_appx[k] - y_exact[k]) < 1e3 * tol);
     }
 
-    // Batch pointer overloads on a 1D vector-output Function. Previously
-    // the sorted overload mixed value_type and input_type, and the
-    // FuncEvalND batch entry rejected raw `double*`. The overloads now
-    // reinterpret the layout-equivalent buffers at the polyfit boundary.
+    // Batch pointer overloads on a 1D vector-output Function: they
+    // reinterpret the layout-equivalent buffers at the polyfit boundary,
+    // so both unsorted and sorted must agree with per-point eval.
     SECTION("unsorted and sorted batch overloads match per-point eval") {
         constexpr std::size_t N = 256;
         std::vector<double>   xs(N);

@@ -31,8 +31,8 @@
 #include <treeweave/detail/tol_kind.hpp>
 #include <treeweave/detail/value.hpp>
 
-// Benchmark-only: the Phase 0 bin-sort harness (examples/c++/treeweave_bench_binsort.cpp)
-// defines TREEWEAVE_BENCH_PARTITION_HOOK to compile in `bench_partition_phases`,
+// The bin-sort harness (benchmarks/treeweave_bench_binsort.cpp) is the only TU
+// that defines TREEWEAVE_BENCH_PARTITION_HOOK, compiling in `bench_partition_phases`,
 // which times the quantize / histogram / scatter sub-phases separately via the
 // x86 cycle counter (__rdtsc) — so it is inherently x86-only. Honour the request
 // only on x86; TREEWEAVE_PARTITION_HOOK gates both the intrinsics include and the

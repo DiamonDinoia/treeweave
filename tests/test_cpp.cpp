@@ -495,10 +495,9 @@ TEST_CASE("Batch vs single evaluation agree -- 3D scalar output", "[treeweave][b
 }
 
 TEST_CASE("Batch vs single evaluation agree across L4 tile boundary", "[treeweave][batch][tile]") {
-    // Phase 16 / Layer L4: the batch path now tiles when n_trg exceeds
-    // tile_K (default 64 K). Pin the boundary by feeding a batch large
-    // enough to span multiple tiles and assert per-point agreement with
-    // the scalar path.
+    // The batch path tiles when n_trg exceeds tile_K (default 64 K). Pin
+    // the boundary by feeding a batch large enough to span multiple tiles
+    // and assert per-point agreement with the scalar path.
     auto f  = [](double x) { return std::sin(4.0 * x) + std::cos(7.0 * x); };
     auto fn = fit<8>(f, 0.0, 1.0, /*tol=*/1e-10);
 
@@ -790,17 +789,15 @@ TEST_CASE("eval_scatter_sorted counting-sort matches per-pair scalar", "[treewea
     check(ids, xs);
 }
 
-// Pin the leaf-table build threshold: fits that land at max_depth up
-// to 16 (in 1D) must still get a table, the descent fallback otherwise
-// drops IPC from ~4.5 to ~1.9 and lights up branch-mispredict (measured
-// in bench_pack_scatter on tanh500_deep / tanh1000_deep).
+// Pin the leaf-table build threshold: 1D fits that land at max_depth up
+// to 16 must still get a table rather than the descent fallback.
 TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table]") {
     // tanh500 at tol=1e-12 deg=6 lands at depth ~16; the table threshold
     // must cover that depth.
     auto fn = fit<6>([](double x) { return std::tanh(500.0 * x); }, -1.0, 1.0, /*tol=*/1e-12);
     REQUIRE(fn.has_fast_quantize());
 
-    // Sanity at the previously-supported depth too, must not regress.
+    // A shallow fit must keep the fast path too.
     auto shallow = fit<8>([](double x) { return 1.0 / (1.0 + 25.0 * x * x); }, -1.0, 1.0, /*tol=*/1e-10);
     REQUIRE(shallow.has_fast_quantize());
 }

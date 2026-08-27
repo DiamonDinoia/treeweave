@@ -98,27 +98,23 @@ struct EvalImpl final : IEval<T> {
 
     void eval_multi(const T *x, T *res, std::size_t n) const override { fn_(x, res, n, {}, ks_); }
 
-    void eval_sorted(const T *x, T *res, std::size_t n) const override {
+    void eval_sorted([[maybe_unused]] const T *x, [[maybe_unused]] T *res,
+                     [[maybe_unused]] std::size_t n) const override {
         if constexpr (IN == 1) {
             fn_.sorted(x, res, n, ks_);
         } else {
-            (void)x;
-            (void)res;
-            (void)n;
             set_last_error("treeweave_sorted: only input_dim == 1 is supported");
         }
     }
 
-    void eval_multi_soa(const T *x, T *const *soa, std::size_t n) const override {
+    void eval_multi_soa([[maybe_unused]] const T *x, [[maybe_unused]] T *const *soa,
+                        [[maybe_unused]] std::size_t n) const override {
         if constexpr (OUT > 1) {
             std::array<T *, OUT> bufs{};
             for (std::size_t j = 0; j < OUT; ++j)
                 bufs[j] = soa[j];
             fn_(x, bufs, n, {}, ks_);
         } else {
-            (void)x;
-            (void)soa;
-            (void)n;
             set_last_error("treeweave_transposed: only output_dim > 1 is supported");
         }
     }

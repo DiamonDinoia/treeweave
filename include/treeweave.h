@@ -2,8 +2,7 @@
  *
  * This surface mirrors the C++ `treeweave::fit(f, a, b, tol, options)` API
  * (see include/treeweave/treeweave.hpp): the domain is given as its lower/upper
- * corners `a`/`b` and the fit knobs live in `treeweave_opts`. It is *not* the
- * legacy `treeweave_input_t` / `treeweave_init` shape.
+ * corners `a`/`b` and the fit knobs live in `treeweave_opts`.
  *
  * Precision lives in the library prefix, FINUFFT/FFTW style: the `treeweave_*`
  * entry points operate on `double`, the `treeweavef_*` twins on `float`. Only
@@ -44,8 +43,8 @@
 /* Symbol visibility. libtreeweave_c is built with hidden default visibility
  * (-fvisibility=hidden on GCC/Clang), so the library exports only the
  * TREEWEAVE_EXPORT-tagged entry points below and every internal symbol stays
- * local. TREEWEAVE_C_BUILD
- * is defined by the build only while compiling the library's own objects.
+ * local. TREEWEAVE_C_BUILD is defined only while compiling the library's own
+ * objects.
  * Consumers of the shared library leave it unset (they import); consumers of
  * the static archive define TREEWEAVE_STATIC (no decoration). */
 #if defined(TREEWEAVE_STATIC)

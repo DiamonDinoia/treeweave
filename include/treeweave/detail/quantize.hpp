@@ -60,9 +60,9 @@ template <class T, std::size_t IN>
     }
 }
 
-/// double→int32: vcvttpd2dq (7c lat/1CPI on SKX, half-width ymm) via direct
-/// intrinsic — xsimd has no lane-matched double→int32 cast. Stub declared on
-/// non-AVX2 so discarded if-constexpr arms still compile.
+/// double→int32 narrowing via direct vcvttpd2dq intrinsic — xsimd has no
+/// lane-matched double→int32 cast. Stub declared on non-AVX2 so discarded
+/// if-constexpr arms still compile.
 [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto
 narrow_trunc_to_u32([[maybe_unused]] xsimd::batch<double> fq) noexcept {
 #ifdef __AVX512F__
@@ -90,8 +90,8 @@ gather_leaf_ids(const std::uint32_t *table, xsimd::batch<T> x_v, xsimd::batch<T>
 }
 
 /// SIMD quantize over batch lanes + scalar `on_id` callback per lane.
-/// Gather/scatter to shared counters serialises (bank conflicts, FINUFFT
-/// spread.hpp:454); hence scalar callback, not vector scatter.
+/// Vector scatter to shared counters serialises on lane conflicts, so the
+/// consumer stays scalar.
 template <class T, class OnId>
 TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v, const T *xp, std::uint32_t ood_id,
                                                     std::size_t n, OnId on_id) -> void {
@@ -100,9 +100,9 @@ TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v,
     // cppcheck-suppress unreadVariable  ; read only through alignas below, which cppcheck does not count
     constexpr std::size_t aligned = batch_t::arch_type::alignment();
 
-    // Conversion strategy: f32→vcvttps2dq (lane-matched, no ISA gate, xsimd
-    // emulates below SSE2); f64→vcvttpd2dq+scalar loads on AVX2/AVX-512 (narrowing
-    // lat 1c vs 4c for int64; vpgatherdd rejected >256 leaves).
+    // Conversion strategy: f32 → lane-matched vcvttps2dq (no ISA gate, xsimd
+    // emulates below SSE2); f64 on AVX2/AVX-512 → narrowing vcvttpd2dq +
+    // scalar table loads (vpgatherdd loses once the table spills L1).
 #if defined(__AVX512F__) || defined(__AVX2__)
     constexpr bool kFastGatherF64 = std::is_same_v<T, double>;
 #else
@@ -137,9 +137,9 @@ TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v,
     using int_t = xsimd::as_integer_t<T>;
 
     if constexpr (kFastInt32) {
-        // f32: vpgatherdd of W ids (no ISA gate; xsimd scalar-loop below AVX2
-        // still beats per-lane sweep ~1.7x). Consumer stays scalar — cross-lane
-        // RMW can't scatter.
+        // f32: vpgatherdd of W ids (no ISA gate; xsimd's scalar-loop
+        // emulation below AVX2 still beats the per-lane sweep). Consumer
+        // stays scalar — cross-lane RMW can't scatter.
         const auto mask_v = xsimd::batch<std::uint32_t>::broadcast(static_cast<std::uint32_t>(mask));
         const auto ood_v  = xsimd::batch<std::uint32_t>::broadcast(ood_id);
         alignas(aligned) std::array<std::uint32_t, lanes> id_arr{};
@@ -149,7 +149,7 @@ TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v,
             poet::static_for<static_cast<std::ptrdiff_t>(lanes)>([&](auto J) -> void { on_id(i + J, id_arr[J]); });
         }
     } else if constexpr (kFastGatherF64) {
-        // f64 AVX2/AVX-512: vcvttpd2dq (lat 1c) → scalar table loads. No
+        // f64 AVX2/AVX-512: narrowing vcvttpd2dq → scalar table loads. No
         // vpgatherdd: the gathered table spills L1 at high leaf counts and
         // loses to scalar loads there.
         using idx_batch_t = decltype(narrow_trunc_to_u32(std::declval<batch_t>()));
@@ -206,8 +206,8 @@ TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v,
     }
 }
 
-/// Write leaf ids for `n` points into `out`. f32: fully vectorized gather + store
-/// (~4x vs scalar); f64: falls back to the generic callback.
+/// Write leaf ids for `n` points into `out`. f32: fully vectorized
+/// gather + store; f64: falls back to the generic callback.
 template <class T>
 auto leaf_ids_batch(const QuantizeView<T, 1> &v, const T *xp, std::uint32_t *out, std::uint32_t ood_id, std::size_t n)
     -> void {

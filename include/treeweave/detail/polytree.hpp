@@ -141,8 +141,9 @@ struct PolyTree {
             half_width = half_width * value_type{0.5};
         }
 
-        // Build a quantize-to-leaf table for shallow subtrees (cap: 64 K uint32
-        // entries, 256 KiB). Replaces per-level descent (~3x slower at depth 15-16).
+        // Build a quantize-to-leaf table for shallow subtrees, replacing
+        // per-level descent. `total_bits <= 16` already caps the table at 64 K
+        // uint32 entries (256 KiB), so kTableMaxEntries never rejects one.
         constexpr std::size_t kTableMaxEntries = std::size_t{1} << 16; // 256 KiB / 4 B
         if (max_depth_ > 0) {
             const std::size_t total_bits = input_dim * max_depth_;
@@ -327,8 +328,7 @@ struct PolyTree {
     std::vector<std::uint32_t> leaf_table_;
     std::size_t                leaf_table_depth_ = 0;
     // Precomputed `(1.0 / span) * 2^depth` per axis so the per-point
-    // quantize is a multiply (vmulsd, lat 3) instead of a divide
-    // (vdivsd, lat 14).
+    // quantize is a multiply instead of a divide.
     std::array<value_type, input_dim> inv_span_bins_{};
     std::vector<NonConvergedPanel>    non_converged_panels_;
 };

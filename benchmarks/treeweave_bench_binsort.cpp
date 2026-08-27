@@ -1,5 +1,5 @@
-// Bin-sort optimization harness: Phase 1 (f32 int32 quantize) and Phase 2 (descent leaf-id
-// materialization) shipped; Phase 3 (radix) reverted 2–5× slower on 2 MiB-L2.
+// Bin-sort harness: times the quantize / histogram / scatter sub-phases of
+// the batch-eval partition separately (via TREEWEAVE_BENCH_PARTITION_HOOK).
 
 // The per-phase split uses the x86 cycle counter (__rdtsc), so this benchmark
 // is x86-only; on other architectures it compiles to a no-op skip.
@@ -154,7 +154,7 @@ void run_descent(const char *tag) {
 } // namespace
 
 int main() {
-    std::printf("# treeweave bin-sort Phase 0 harness\n");
+    std::printf("# treeweave bin-sort harness\n");
     run_dtype<double>("f64");
     run_dtype<float>("f32");
     run_descent<double>("f64");

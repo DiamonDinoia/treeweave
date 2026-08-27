@@ -12,7 +12,7 @@ over a box-shaped domain in 1–3 dimensions, with 1–3 output components.
 
 The function `f` passed to `fit` must accept:
 - `dim == 1`: a single `Float64` (or `Float32`) scalar.
-- `dim > 1`: a `NTuple{dim, Float64}` (or `Float32`) of coordinates.
+- `dim > 1`: `dim` scalar arguments, one per coordinate (called as `f(x, y, ...)`).
 
 It must return:
 - `out_dim == 1`: a scalar.
@@ -158,7 +158,7 @@ end
 # Treeweave handle struct
 
 """
-    Treeweave{T}
+    TreeweaveFn{T}
 
 Opaque wrapper around a `treeweave_t` handle.  `T` is `Float64` or `Float32`.
 Call the handle directly as a function: `b(x)`, `b(x; sorted=true)`, or

@@ -589,9 +589,9 @@ static void test_by_value_eval(void) {
 /* ---- X2: NULL-handle introspection is safe ----------------------------- */
 
 static void test_null_introspection(void) {
-    /* treeweave_dtype/input_dim/output_dim used to dereference NULL.
-     * They now guard and return a safe sentinel (dtype=TREEWEAVE_F64=0,
-     * dim=0) and set last_error: consistent with treeweave_memory_usage. */
+    /* treeweave_dtype/input_dim/output_dim must tolerate a NULL handle:
+     * return a safe sentinel (dtype=TREEWEAVE_F64=0, dim=0) and set
+     * last_error, consistent with treeweave_memory_usage. */
     treeweave_dtype_t dt = treeweave_dtype(NULL);
     CHECK(dt == TREEWEAVE_F64); /* sentinel: zero enumerator */
     CHECK(strlen(treeweave_last_error()) > 0);

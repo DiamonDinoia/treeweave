@@ -16,20 +16,18 @@ namespace treeweave {
 /// the scalar path through `ScalarKernel::Horner`. The distinctions are
 /// reserved for future tuning (see the per-enumerator notes below).
 ///
-/// - `Latency`   : reserved for a future Hybrid mapping. `HybridK<2>`
-///                 measured slower than Horner on the scalar path, so this
-///                 policy stays at `ScalarKernel::Horner`, equivalent to
-///                 `Balanced`.
+/// - `Latency`   : reserved for a future Hybrid mapping; stays at
+///                 `ScalarKernel::Horner` today, equivalent to `Balanced`.
 /// - `Throughput`: maximise per-call ILP across SIMD lanes / outer loops.
 ///                 polyfit's `evalBatch` is hardwired to Horner-SIMD today;
 ///                 the scalar entry stays at `Horner` for the same reason.
-/// - `Balanced`  : established no-regression default (`ScalarKernel::Horner`).
+/// - `Balanced`  : the default (`ScalarKernel::Horner`).
 enum class EvalPolicy : std::uint8_t { Latency, Throughput, Balanced };
 
 namespace detail {
 
 /// Scalar kernel selection per policy. All three policies route to `Horner`
-/// today (see the rev-2 note on `EvalPolicy::Latency`).
+/// today (see the `EvalPolicy` notes).
 template <EvalPolicy /*P*/>
 inline constexpr poly_eval::ScalarKernel scalar_kernel_for_policy_v = poly_eval::ScalarKernel::Horner;
 

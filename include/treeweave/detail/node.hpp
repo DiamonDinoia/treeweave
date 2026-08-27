@@ -49,8 +49,8 @@ class Node {
     auto set_poly_eval_id(std::uint32_t v) noexcept -> void { poly_eval_id_ = v; }
 
     /// Fit this node to the requested tolerance. On success, stores the
-    /// poly_eval_id into polyfits and returns true. Center/half_length are
-    /// passed in (the runtime Node no longer carries `center`).
+    /// poly_eval_id into polyfits and returns true; on failure, rolls the
+    /// appended evaluator back off `polyfits`.
     auto fit(const TreeInput &input, const Func &func, const Value<value_type, input_dim> &center,
              const Value<value_type, input_dim> &half_length, std::vector<poly_eval_type> &polyfits) -> bool {
         const auto       n_polyfit_before = polyfits.size();
@@ -63,32 +63,28 @@ class Node {
             return false;
         };
 
-        auto polyfit = polyfits.emplace_back(func, lb, ub);
+        polyfits.emplace_back(func, lb, ub);
 
-        // tail_error reads coefficients out of polyfit's 1D `FuncEval` and is
-        // not meaningful for the ND / array-output path (which uses
+        // tail_error reads coefficients out of the appended 1D `FuncEval` and
+        // is not meaningful for the ND / array-output path (which uses
         // `FuncEvalND` with multi-axis coefficient storage). Gate the call so
         // array/ND fits still compile, and fail loudly at runtime if the user
         // asks for a Tail TolKind on an unsupported shape.
         constexpr bool kTailErrorSupported =
             !poly_eval::detail::hasTupleSize_v<input_type> && !poly_eval::detail::hasTupleSize_v<output_type>;
         const bool wants_tail = input.tol_kind == TolKind::RelativeTail || input.tol_kind == TolKind::AbsoluteTail;
-        if constexpr (kTailErrorSupported) {
-            if (wants_tail) {
-                if (tail_error_exceeds_tol(input.tol, polyfit))
+        if (wants_tail) {
+            if constexpr (kTailErrorSupported) {
+                if (tail_error_exceeds_tol(input.tol, polyfits.back()))
                     return rollback_and_fail();
-            } else if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
-                                                polyfit)) {
-                return rollback_and_fail();
-            }
-        } else {
-            if (wants_tail)
+            } else {
                 throw std::runtime_error("Treeweave fit error: TolKind::RelativeTail / AbsoluteTail "
                                          "is only supported for 1D scalar→scalar fits; use a "
                                          "sample-based TolKind for array-valued or ND fits");
-            if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
-                                         polyfit))
-                return rollback_and_fail();
+            }
+        } else if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
+                                            polyfits.back())) {
+            return rollback_and_fail();
         }
 
         poly_eval_id_ = static_cast<std::uint32_t>(n_polyfit_before);

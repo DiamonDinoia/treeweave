@@ -13,6 +13,12 @@ section verbatim into that release's GitHub Release notes.
 ## [0.0.5] - 2026-08-27
 
 ### Changed
+- Comments across the headers, benchmarks and tests no longer carry
+  benchmark receipts or development history ("Phase N", "previously", cycle
+  latencies, speedup ratios); that evidence belongs in the logbook, not in
+  the source. `(void)x` discards in the C ABI eval shims became
+  `[[maybe_unused]]` parameters, and two Python forwarding shims that only
+  called `fit_impl` were replaced by binding `fit_impl` directly.
 - Multi-arch C ABI restructured: only the hot loops compile per ISA rung.
   One new TU (`src/capi/kernels_arch.cpp`) compiles once per rung and
   exports one Arch-mangled kernel-table factory per (dtype, dim, output)
@@ -52,6 +58,14 @@ section verbatim into that release's GitHub Release notes.
   budget exceeded must fail the fit and set `treeweave_last_error()`.
 
 ### Fixed
+- `Node::fit` bound the freshly appended evaluator by value
+  (`auto polyfit = polyfits.emplace_back(...)`), copying a whole `FuncEval`
+  on every node of every fit. The tolerance checks now read
+  `polyfits.back()`.
+- The Julia module docstring said a `dim > 1` function receives an
+  `NTuple{dim,T}` and named the handle type `Treeweave{T}`. `fit` calls
+  `f(coords...)`, so the arguments arrive as `dim` scalars, and the type is
+  `TreeweaveFn{T}`.
 - `tail_error_exceeds_tol` read two coefficients from a degree-1 fit, which
   holds one. ASan reports a `READ of size 8` past the `FuncEval` for `fit<1>`
   with a Tail `TolKind`; the read is now bounded by `Polyfit::NCOEFFS`. The

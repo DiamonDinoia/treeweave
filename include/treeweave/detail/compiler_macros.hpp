@@ -12,9 +12,8 @@
 // annotated eval methods. That is a runtime-throughput win in optimized builds,
 // but it produces enormous functions that are very slow and memory-hungry to
 // compile, enough to make Debug builds take tens of minutes and OOM CI runners.
-// Debug builds do not care about runtime speed, so enable flatten only in
-// optimized (NDEBUG) builds; it expands to nothing in Debug. This changes
-// inlining only, never behavior, so tests are unaffected.
+// Debug builds do not care about runtime speed, so flatten expands to
+// nothing outside NDEBUG builds.
 #ifdef NDEBUG
 #define TREEWEAVE_FLATTEN [[gnu::flatten]]
 #else

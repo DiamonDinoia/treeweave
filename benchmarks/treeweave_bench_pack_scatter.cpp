@@ -36,10 +36,9 @@ auto make_tanh_sharp1d() {
 auto make_erf1d() {
     return [](double x) { return std::erf(x); };
 }
-// Borderline-deep kernels: sharper tanh + tighter tol pushes max_depth
-// past 14 (the current leaf-table build threshold), so find_leaf_id
-// runs the descent fallback per call. Plan Phase 1 widens that
-// threshold; these cases are the regression-trackable witness.
+// Borderline-deep kernels: sharper tanh + tighter tol pushes max_depth to
+// the leaf-table build threshold (input_dim * max_depth <= 16); these cases
+// track the deep end of the table path.
 auto make_tanh500() {
     return [](double x) { return std::tanh(500.0 * x); };
 }
