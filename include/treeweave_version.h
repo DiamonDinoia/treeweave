@@ -14,18 +14,18 @@
 
 #define TREEWEAVE_VERSION_MAJOR 0
 #define TREEWEAVE_VERSION_MINOR 0
-#define TREEWEAVE_VERSION_PATCH 5
+#define TREEWEAVE_VERSION_PATCH 6
 
 /* Combined integer, MAJOR*10000 + MINOR*100 + PATCH, for easy `>=` comparisons.
  * (e.g. 1.2.3 -> 10203; 0.0.0 -> 0.) */
 #define TREEWEAVE_VERSION (TREEWEAVE_VERSION_MAJOR * 10000 + TREEWEAVE_VERSION_MINOR * 100 + TREEWEAVE_VERSION_PATCH)
 
 /* Dotted release string, e.g. "1.2.3". */
-#define TREEWEAVE_VERSION_STRING "0.0.5"
+#define TREEWEAVE_VERSION_STRING "0.0.6"
 
 /* Full version including a dev suffix off a release tag, e.g. "1.2.3-dev.42";
  * equals TREEWEAVE_VERSION_STRING on an exact release commit. */
-#define TREEWEAVE_VERSION_FULL "0.0.5-dev.1"
+#define TREEWEAVE_VERSION_FULL "0.0.6-dev.102"
 
 /* Compile-time guard: nonzero iff the treeweave headers are at least
  * `maj.min.pat`. Consumers gate a hard requirement on it, FINUFFT/zlib style:

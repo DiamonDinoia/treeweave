@@ -8,9 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The Release workflow (`.github/workflows/release.yml`) copies the `## [X.Y.Z]`
 section verbatim into that release's GitHub Release notes.
 
-## [Unreleased]
+## [0.0.6] - 2026-08-27
 
 ### Changed
+- Windows ships multi-arch. The wheel, the C ABI tarball and the node prebuild
+  all built single-arch, so Windows ran the SSE2 baseline while every other
+  platform dispatched by ISA at runtime. Only the wheel recorded a reason: the
+  multi-arch C ABI static-linked into the extension faulted with an illegal
+  instruction inside `treeweave_fit` at every level, because the ISA rungs
+  shared weak symbols and the linker kept an AVX-512 copy. The 0.0.5 fan-out
+  defines those once in a baseline TU, and `check_rung_symbols` now reports no
+  symbol defined by more than one rung under clang-cl, with the wheel's own
+  suite passing on a Windows runner.
+- `cmake/treeweave_c_dispatch.cmake` refuses `TREEWEAVE_C_MULTIARCH` under
+  cl.exe instead of warning that cl.exe is slow. Build time was the old reason
+  and it no longer holds: cl.exe compiles the whole fan-out in 8 min. It emits
+  the `poly_eval::detail::horner_impl` lambdas and the MSVC STL bit helpers as
+  external COMDATs once per rung, so the linker picks one copy of the
+  evaluation core arbitrarily and `check_rung_symbols` fails. clang-cl inlines
+  them, targets the same MSVC ABI, and stays the Windows compiler.
 - The nanobind build requirement excludes the 3.0 line
   (`nanobind>=2.0,!=3.0.*`) instead of capping below 3.0, so a later 3.x is
   allowed once its slot aliases are clang-cl safe. nanobind 3.0 aliases its
