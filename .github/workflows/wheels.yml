@@ -11,9 +11,9 @@ name: Wheels
 # extension (see bindings/python/treeweave_python.cmake), so there is no external
 # shared library to vendor: wheels carry only the system C/C++ runtimes.
 #
-# Linux and macOS wheels enable TREEWEAVE_C_MULTIARCH at their family baseline,
-# so one wheel dispatches by ISA at runtime. Apple silicon builds single-arch at
-# apple-m1; Windows is SSE2-only, see the windows-x64 matrix entry.
+# Every wheel except Apple silicon enables TREEWEAVE_C_MULTIARCH at its family
+# baseline, so one wheel dispatches by ISA at runtime. Apple silicon builds
+# single-arch at apple-m1: the platform has one ISA level.
 on:
   workflow_call:
     inputs:
@@ -58,13 +58,15 @@ jobs:
             runs-on: macos-15-intel
             cibw-arch: x86_64
             cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64"
-          # Multiarch OFF: static-linked into the extension it faults with an
-          # illegal instruction inside treeweave_fit under every arch, sse2
-          # included. The same C ABI as a DLL passes. Windows runs SSE2-only.
+          # Multiarch static-linked into the extension used to fault with an
+          # illegal instruction inside treeweave_fit at every level, sse2
+          # included: the rungs shared weak symbols and the linker kept an
+          # AVX-512 copy. The 0.0.5 fan-out defines those once in a baseline TU
+          # and check_rung_symbols gates the objects, so the wheel dispatches.
           - name: windows-x64
             runs-on: windows-2022
             cibw-arch: AMD64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=OFF -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -127,7 +129,8 @@ jobs:
           libs=()
           while IFS= read -r lib; do
             libs+=("$lib")
-          done < <(find /tmp/whl-audit -type f \( -name '*.so' -o -name '*.dylib' \))
+          done < <(find /tmp/whl-audit -type f \
+            \( -name '*.so' -o -name '*.dylib' -o -name '*.pyd' \))
           test "${#libs[@]}" -gt 0 || { echo "no extension library found"; exit 1; }
           bash .github/scripts/check_isa_leak.sh "${libs[@]}"
 

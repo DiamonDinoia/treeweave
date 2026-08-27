@@ -75,7 +75,7 @@ jobs:
           - name: windows-x64
             runs-on: windows-2022
             container: ''
-            multiarch: 'OFF'
+            multiarch: 'ON'
             arch: x86-64
     steps:
       - name: Checkout
@@ -153,7 +153,9 @@ jobs:
             -DTREEWEAVE_BUILD_TESTS=OFF `
             -DTREEWEAVE_BUILD_EXAMPLES=OFF `
             "-DTREEWEAVE_RELEASE_VERSION=${{ inputs.version }}" `
-            -DTREEWEAVE_C_MULTIARCH=OFF
+            -DTREEWEAVE_C_MULTIARCH=${{ matrix.multiarch }} `
+            -DTREEWEAVE_VERIFY_RUNGS=${{ matrix.multiarch }} `
+            -DTREEWEAVE_ARCH=${{ matrix.arch }}
           cmake --build build
           cmake --install build --prefix dist
 
