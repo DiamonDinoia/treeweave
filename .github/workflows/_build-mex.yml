@@ -52,10 +52,10 @@ jobs:
             ext: mexa64
             arch: x86-64
             matlab_release: latest
-          # clang-cl, not cl.exe: cl.exe does not finish optimizing one dispatch
-          # TU in 40 min and the fan-out is 24 of them, so an optimized cl.exe MEX
-          # is out of reach. clang-cl builds the same target in ~3 min and targets
-          # the same MSVC ABI. See cmake/treeweave_c_dispatch.cmake.
+          # clang-cl, not cl.exe, because that is what the release ships. Both
+          # build the fan-out soundly now that each ISA rung gets private symbol
+          # names (cmake/treeweave_c_dispatch.cmake), and both target the same
+          # MSVC ABI, so the MEX is interchangeable.
           - name: windows-x64
             runs-on: windows-2022
             ext: mexw64

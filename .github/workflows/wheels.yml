@@ -81,8 +81,8 @@ jobs:
         shell: bash
         run: python .github/scripts/set_dev_version.py "${{ inputs.dev-version }}"
 
-      # cl.exe blows the 90 min cap on the dim3 dispatch TUs, and multiarch
-      # compiles them once per ISA level. cibuildwheel builds in the host
+      # clang-cl, not cl.exe, because that is what the release ships; both are
+      # sound since the rung rename. cibuildwheel builds in the host
       # environment on Windows, so vcvarsall and LLVM here reach the build.
       - name: Setup clang-cl + Ninja (Windows)
         if: matrix.name == 'windows-x64'

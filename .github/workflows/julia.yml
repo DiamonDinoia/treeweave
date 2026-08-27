@@ -33,11 +33,9 @@ jobs:
           - { name: macos-14-arm64,   runs-on: macos-14,         compiler: apple-clang }
           - { name: macos-15-arm64,   runs-on: macos-15,         compiler: apple-clang }
           - { name: macos-15-x86_64,  runs-on: macos-15-intel,   compiler: apple-clang }
-          # clang-cl, not cl.exe. This preset carries no CMAKE_BUILD_TYPE, so
-          # before the Release default was fixed this leg silently built Debug
-          # and finished in ~3 min. At Release cl.exe needs ~54 min on this
-          # codebase where clang-cl needs ~4 (ci.yml, 2026-08-24), well past
-          # this job's 30 min cap. Same MSVC ABI either way.
+          # clang-cl, not cl.exe, to match what the release ships. This leg is
+          # single-arch, where the rung rename does not apply. Same MSVC ABI
+          # either way.
           - { name: windows-x64,      runs-on: windows-2022,     compiler: llvm,
               cmake_extra: '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' }
     steps:

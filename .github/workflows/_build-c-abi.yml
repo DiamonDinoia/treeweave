@@ -99,8 +99,10 @@ jobs:
         with:
           cmake: true
           ninja: true
-          # cl.exe needs ~58 min on one dispatch TU at the SSE2 baseline and
-          # blows the 90 min cap; clang-cl needs ~24 s.
+          # clang-cl, not cl.exe, because that is what the release ships. Both
+          # build the multi-arch fan-out soundly now that each ISA rung gets
+          # private symbol names (cmake/treeweave_c_dispatch.cmake), and both
+          # target the same MSVC ABI.
           compiler: ${{ matrix.name == 'windows-x64' && 'llvm' || '' }}
           vcvarsall: ${{ matrix.name == 'windows-x64' }}
 

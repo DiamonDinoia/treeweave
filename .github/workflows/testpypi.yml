@@ -64,8 +64,8 @@ jobs:
 
   # The wheel/sdist matrix lives in wheels.yml, the same one the real PyPI
   # release uses. Duplicating it here let the Windows entry drift: it kept
-  # cl.exe + multiarch long after wheels.yml moved to clang-cl, which both
-  # blows the build time cap and ships a wheel that faults on import.
+  # cl.exe + multiarch long after wheels.yml moved to clang-cl, and back then
+  # that combination shipped a wheel that faulted on import.
   build:
     name: build
     needs: version
