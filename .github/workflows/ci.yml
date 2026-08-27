@@ -439,3 +439,73 @@ jobs:
 
       - name: Run C-ABI test (exercises runtime ISA dispatch)
         run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure
+
+  multiarch-windows:
+    name: Multiarch dispatch smoke (${{ matrix.compiler }})
+    runs-on: windows-2022
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [cl, clang-cl]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: msvc
+          cmake: true
+          ninja: true
+          vcvarsall: true
+          cache-tools: true
+
+      # COFF has no hidden visibility, so a multi-arch Windows build renames each
+      # rung's shared symbols (cmake/treeweave_c_dispatch.cmake). That needs
+      # llvm-nm and llvm-objcopy, and the gate needs llvm-objdump.
+      - name: Put the LLVM binutils on PATH
+        shell: pwsh
+        run: |
+          $llvm = "C:\Program Files\LLVM\bin"
+          if (Test-Path $llvm) { Add-Content $env:GITHUB_PATH $llvm }
+          $env:PATH = "$llvm;$env:PATH"
+          foreach ($t in @("llvm-nm", "llvm-objcopy", "llvm-objdump", "clang-cl")) {
+            if (-not (Get-Command $t -ErrorAction SilentlyContinue)) { throw "$t not found on PATH" }
+          }
+
+      # Both toolsets need the rename, so both are gated. cl.exe defines its
+      # whole external surface once per rung; clang-cl defines less of it but not
+      # none, and which of those diverge is not a property to leave ungated.
+      - name: Configure (multiarch dispatch)
+        shell: pwsh
+        run: >
+          cmake -S . -B build/multiarch-win -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=${{ matrix.compiler }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DTREEWEAVE_ARCH=x86-64
+          -DTREEWEAVE_C_MULTIARCH=ON
+          -DTREEWEAVE_VERIFY_RUNGS=ON
+          -DTREEWEAVE_BUILD_TESTS=ON
+          -DTREEWEAVE_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build/multiarch-win
+
+      # The gate proves the rungs share no symbol; running the suite once per
+      # rung proves the renamed code still executes, including the throwing
+      # paths whose RTTI records the rename duplicates. force_select ignores an
+      # arch the host lacks, so avx512bw is attempted, not asserted.
+      - name: Run the C ABI suite once per rung
+        shell: pwsh
+        run: |
+          $fail = 0
+          foreach ($arch in @("", "sse2", "avx", "fma3+avx2", "avx512bw")) {
+            if ($arch) { $env:TREEWEAVE_FORCE_ARCH = $arch } else { Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue }
+            ctest --test-dir build/multiarch-win -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure
+            if ($LASTEXITCODE -ne 0) { "RUNG_FAIL $arch"; $fail = 1 } else { "RUNG_OK $(if ($arch) { $arch } else { 'default' })" }
+          }
+          Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue
+          if ($fail -ne 0) { throw "at least one rung failed its tests" }

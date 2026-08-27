@@ -42,6 +42,11 @@ section verbatim into that release's GitHub Release notes.
   and it no longer holds. A multi-arch Windows configure now requires `llvm-nm`
   and `llvm-objcopy` on PATH and fails at configure time without them, rather
   than producing an artifact whose rungs silently share code.
+- `ci.yml` gates the multi-arch Windows build under both cl.exe and clang-cl
+  (`multiarch-windows`): configure, build, `check_rung_symbols`, then the C ABI
+  suite once per rung so the throwing paths cross a renamed rung boundary.
+  Neither toolset was gated in this configuration before, which is how the
+  collision survived a release.
 - The nanobind build requirement excludes the 3.0 line
   (`nanobind>=2.0,!=3.0.*`) instead of capping below 3.0, so a later 3.x is
   allowed once its slot aliases are clang-cl safe. nanobind 3.0 aliases its
