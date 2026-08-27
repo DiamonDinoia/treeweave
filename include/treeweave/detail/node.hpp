@@ -63,10 +63,10 @@ class Node {
             return false;
         };
 
-        polyfits.emplace_back(func, lb, ub);
+        auto &polyfit = polyfits.emplace_back(func, lb, ub);
 
-        // tail_error reads coefficients out of the appended 1D `FuncEval` and
-        // is not meaningful for the ND / array-output path (which uses
+        // tail_error reads coefficients out of polyfit's 1D `FuncEval` and is
+        // not meaningful for the ND / array-output path (which uses
         // `FuncEvalND` with multi-axis coefficient storage). Gate the call so
         // array/ND fits still compile, and fail loudly at runtime if the user
         // asks for a Tail TolKind on an unsupported shape.
@@ -75,7 +75,7 @@ class Node {
         const bool wants_tail = input.tol_kind == TolKind::RelativeTail || input.tol_kind == TolKind::AbsoluteTail;
         if (wants_tail) {
             if constexpr (kTailErrorSupported) {
-                if (tail_error_exceeds_tol(input.tol, polyfits.back()))
+                if (tail_error_exceeds_tol(input.tol, polyfit))
                     return rollback_and_fail();
             } else {
                 throw std::runtime_error("Treeweave fit error: TolKind::RelativeTail / AbsoluteTail "
@@ -83,7 +83,7 @@ class Node {
                                          "sample-based TolKind for array-valued or ND fits");
             }
         } else if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
-                                            polyfits.back())) {
+                                            polyfit)) {
             return rollback_and_fail();
         }
 

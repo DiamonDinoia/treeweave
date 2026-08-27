@@ -255,8 +255,7 @@ class Function {
                 box_t const current_box = q.front();
                 q.pop();
 
-                nodes.emplace_back();
-                auto &node = nodes.back();
+                auto &node = nodes.emplace_back();
                 dummy.clear();
                 node.fit(input, func, current_box.center, current_box.half_length, dummy);
                 if (node.poly_eval_id() != 0u)

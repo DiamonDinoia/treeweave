@@ -60,8 +60,8 @@ section verbatim into that release's GitHub Release notes.
 ### Fixed
 - `Node::fit` bound the freshly appended evaluator by value
   (`auto polyfit = polyfits.emplace_back(...)`), copying a whole `FuncEval`
-  on every node of every fit. The tolerance checks now read
-  `polyfits.back()`.
+  on every node of every fit. `emplace_back` returns a reference, so the
+  tolerance checks now bind it.
 - The Julia module docstring said a `dim > 1` function receives an
   `NTuple{dim,T}` and named the handle type `Treeweave{T}`. `fit` calls
   `f(coords...)`, so the arguments arrive as `dim` scalars, and the type is
