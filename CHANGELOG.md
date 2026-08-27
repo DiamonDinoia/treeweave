@@ -10,6 +10,15 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+### Changed
+- The nanobind build requirement excludes the 3.0 line
+  (`nanobind>=2.0,!=3.0.*`) instead of capping below 3.0, so a later 3.x is
+  allowed once its slot aliases are clang-cl safe. nanobind 3.0 aliases its
+  Python slots as `inline constexpr ret (*name) args = &target;` with target a
+  CPython API function, which is `__declspec(dllimport)` under the MSVC ABI,
+  and the address of a dllimport function is not a constant expression, so
+  clang-cl rejects the header and only the Windows wheel breaks.
+
 ## [0.0.5] - 2026-08-27
 
 ### Changed

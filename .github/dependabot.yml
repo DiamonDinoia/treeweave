@@ -22,6 +22,11 @@ updates:
     directory: "/bindings/python"
     schedule:
       interval: "weekly"
+    ignore:
+      # nanobind 3.0 breaks the clang-cl Windows wheel; see the comment at the
+      # top of bindings/python/pyproject.toml. Later 3.x is allowed.
+      - dependency-name: "nanobind"
+        versions: ["==3.0.*"]
     groups:
       python-pip:
         patterns:
