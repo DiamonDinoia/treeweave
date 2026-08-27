@@ -11,16 +11,23 @@
 include_guard(GLOBAL)
 include(CheckCXXCompilerFlag)
 
-# cl.exe's back end does not finish optimizing one dim3 dispatch TU at /O2
-# within a CI job; clang-cl compiles the same target in minutes. Both toolsets
-# target the same MSVC ABI, so the MEX and the DLL stay interchangeable.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(
-        WARNING
-        "treeweave[c-abi]: cl.exe needs hours to optimize the dispatch TUs. "
-        "Configure with -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl "
-        "(Visual Studio generator: -T ClangCL) for a build of the same ABI in minutes."
-    )
+# COFF has no hidden visibility, so a multi-arch Windows build privatizes each
+# rung's shared symbols after compiling it (rename_rung_symbols.sh). That needs
+# llvm-nm and llvm-objcopy; resolve them at configure time so a missing tool
+# fails here rather than half way through the build.
+if(WIN32 AND TREEWEAVE_C_MULTIARCH)
+    find_program(TREEWEAVE_LLVM_NM NAMES llvm-nm)
+    find_program(TREEWEAVE_LLVM_OBJCOPY NAMES llvm-objcopy)
+    if(NOT TREEWEAVE_LLVM_NM OR NOT TREEWEAVE_LLVM_OBJCOPY)
+        message(
+            FATAL_ERROR
+            "treeweave[c-abi]: the multi-arch Windows build needs llvm-nm and "
+            "llvm-objcopy to give each ISA rung private symbol names; COFF has no "
+            "hidden visibility, so without them the linker keeps one arbitrary copy "
+            "of the evaluation core. Install LLVM and put it on PATH, or build "
+            "single-arch with -DTREEWEAVE_C_MULTIARCH=OFF."
+        )
+    endif()
 endif()
 
 set(_treeweave_is_x86 FALSE)
@@ -234,20 +241,30 @@ if(_treeweave_multiarch_family)
         endif()
     endforeach()
 
-    # Each rung compiles only kernels_arch.cpp with its own ISA flag. Its sole
-    # external symbols are the make_kernels_for<Arch, …> instantiations, whose
-    # mangled names carry the rung's Arch; everything else in that TU is
-    # internal (anonymous namespace + the ArchTag linkage anchor), so rungs
-    # cannot collide. The check_rung_symbols ctest below proves any residue
-    # byte-identical on the objects; .github/scripts/check_isa_leak.sh
-    # re-checks the linked artifact.
+    # Each rung compiles only kernels_arch.cpp with its own ISA flag. On ELF its
+    # sole external symbols are the make_kernels_for<Arch, …> instantiations,
+    # whose mangled names carry the rung's Arch: hidden visibility makes the
+    # rest local, so the rungs cannot collide.
     #
-    # Do not try to fix a collision with objcopy. Making the rung's symbols
-    # local leaves their sections in the COMDAT group, the linker still
-    # discards the group, and the local reference then points into a discarded
-    # section. GNU ld rejects that ("defined in discarded section"); mold
-    # accepts it, so the breakage only shows up on some linkers.
+    # COFF has no visibility control, so that does not hold on Windows. Both
+    # cl.exe and clang-cl emit every inline function, template instantiation,
+    # RTTI record and float-pool entry as an external COMDAT, and the linker
+    # keeps one arbitrary copy of each. rename_rung_symbols.sh below gives each
+    # rung its own copies. clang-cl needs it as much as cl.exe does: it happens
+    # to leak nothing today only because /O2 inlines these away, which one
+    # non-inlinable function would undo.
+    #
+    # On ELF, do not reach for objcopy --localize-symbol to get the same
+    # effect. Making a rung's symbols local leaves their sections in the COMDAT
+    # group, the linker still discards the group, and the local reference then
+    # points into a discarded section. GNU ld rejects that ("defined in
+    # discarded section"); mold accepts it, so the breakage shows up on only
+    # some linkers. Renaming keeps the symbol external, so nothing is merged.
+    #
+    # The check_rung_symbols ctest below is the gate either way;
+    # .github/scripts/check_isa_leak.sh re-checks the linked artifact.
     set(_treeweave_kernel_tgts "")
+    set(_treeweave_rename_tgts "")
     foreach(_lvl IN LISTS _treeweave_arch_levels)
         string(REPLACE "-" "_" _tag "${_lvl}")
         _treeweave_add_c_object_lib(
@@ -260,6 +277,37 @@ if(_treeweave_multiarch_family)
                 treeweave_c_kernels_${_tag}
                 PRIVATE ${_treeweave_flags_${_lvl}}
             )
+        endif()
+        # COFF only: give this rung private names for everything it shares with
+        # the other rungs, so no link can substitute another rung's code. The
+        # kernel-table factory keeps its name -- the baseline TUs call it.
+        #
+        # A stamped custom command, not POST_BUILD: CMake rejects PRE_BUILD /
+        # PRE_LINK / POST_BUILD on an OBJECT library. The rename rewrites the
+        # objects in place, so an incremental build can recompile one and undo
+        # it; the stamp then goes stale and the rename runs again. It is
+        # idempotent, so the extra pass costs nothing.
+        if(WIN32)
+            set(_stamp "${CMAKE_CURRENT_BINARY_DIR}/rung-renamed-${_tag}.stamp")
+            add_custom_command(
+                OUTPUT "${_stamp}"
+                COMMAND
+                    "${CMAKE_COMMAND}" -E env "LLVM_NM=${TREEWEAVE_LLVM_NM}"
+                    "LLVM_OBJCOPY=${TREEWEAVE_LLVM_OBJCOPY}" bash
+                    "${PROJECT_SOURCE_DIR}/.github/scripts/rename_rung_symbols.sh"
+                    "${_tag}" "make_kernels_for"
+                    "$<TARGET_OBJECTS:treeweave_c_kernels_${_tag}>"
+                COMMAND "${CMAKE_COMMAND}" -E touch "${_stamp}"
+                DEPENDS
+                    treeweave_c_kernels_${_tag}
+                    "$<TARGET_OBJECTS:treeweave_c_kernels_${_tag}>"
+                    "${PROJECT_SOURCE_DIR}/.github/scripts/rename_rung_symbols.sh"
+                COMMENT "Privatizing shared symbols in the ${_lvl} rung (COFF)"
+                COMMAND_EXPAND_LISTS
+                VERBATIM
+            )
+            add_custom_target(treeweave_c_rename_${_tag} DEPENDS "${_stamp}")
+            list(APPEND _treeweave_rename_tgts treeweave_c_rename_${_tag})
         endif()
         list(APPEND _treeweave_kernel_tgts treeweave_c_kernels_${_tag})
     endforeach()
@@ -324,10 +372,13 @@ if(_treeweave_multiarch_family)
             COMMENT "Checking cross-rung symbols (TREEWEAVE_VERIFY_RUNGS)"
             VERBATIM
         )
+        # The rename targets too: the gate reads the objects, so it must not
+        # run before they carry their private names.
         add_dependencies(
             treeweave_verify_rungs
             treeweave_c_baseline
             ${_treeweave_kernel_tgts}
+            ${_treeweave_rename_tgts}
         )
     endif()
 else()

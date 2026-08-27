@@ -2,12 +2,17 @@
 //
 // The multi-arch build compiles this TU once per ISA rung (its own -march);
 // the rest of the C ABI — fit, tree build, pipeline glue — compiles once at
-// baseline and calls in here through `KernelSet` function pointers. The only
-// external symbols are the `make_kernels_for<xsimd::best_arch, …>`
-// instantiations at the bottom: `best_arch` differs per rung, so their
-// mangled names never collide. Everything else is internal: the wrappers sit
-// in the anonymous namespace, and `ArchTag` pushes internal linkage down
-// into the polyfit instantiations (see kernels.hpp / horner_nd_batch.hpp).
+// baseline and calls in here through `KernelSet` function pointers. The
+// `make_kernels_for<xsimd::best_arch, …>` instantiations at the bottom are the
+// intended exports: `best_arch` differs per rung, so their mangled names never
+// collide. The wrappers sit in the anonymous namespace, and `ArchTag` pushes
+// internal linkage down into the polyfit instantiations (see kernels.hpp /
+// horner_nd_batch.hpp).
+//
+// That leaves nothing else external on ELF only, where hidden visibility
+// applies. COFF has none, so a Windows rung also exports every inline
+// function, template instantiation and RTTI record it touches; the build
+// renames those per rung afterwards (cmake/treeweave_c_dispatch.cmake).
 
 #include <array>
 #include <cstddef>

@@ -75,6 +75,15 @@ if(TARGET treeweave_verify_rungs)
     endif()
     add_dependencies(treeweave_c_static treeweave_verify_rungs)
 endif()
+# COFF rung rename (treeweave_c_dispatch.cmake): both libraries link the rung
+# objects, so both must wait for the objects to carry their private names. The
+# gate is optional, this is not.
+if(_treeweave_rename_tgts)
+    if(TARGET treeweave_c)
+        add_dependencies(treeweave_c ${_treeweave_rename_tgts})
+    endif()
+    add_dependencies(treeweave_c_static ${_treeweave_rename_tgts})
+endif()
 set_property(
     GLOBAL
     APPEND
