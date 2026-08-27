@@ -130,6 +130,8 @@ jobs:
     name: Static Analysis
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      CPPCHECK_VERSION: '2.21.0'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -144,13 +146,33 @@ jobs:
       # clang-tidy comes from pip (pinned 22.*), not apt: the apt clang-tidy
       # 18 misattributes libstdc++'s own `namespace std` to user code under
       # CI's forced PCH and fires a false cert-dcl58-cpp. The analysis preset
-      # also disables the PCH, so clang-tidy sees every header per-TU. cppcheck
-      # is not on PyPI, so it stays from apt; clang is the compiler.
+      # also disables the PCH, so clang-tidy sees every header per-TU. clang is
+      # the compiler.
       - name: Install tooling
         run: |
           pip install 'clang-tidy==22.*'
           sudo apt-get update
-          sudo apt-get install -y clang cppcheck ninja-build cmake
+          sudo apt-get install -y clang ninja-build cmake
+
+      # cppcheck comes from conda-forge, not apt: noble's 2.13 and the newest
+      # PyPI wheel (2.17) both segfault on a generated dispatch TU, which
+      # combines explicit instantiations with an anonymous-namespace include.
+      # 2.21 parses it. micromamba is fetched directly rather than through an
+      # action, so the version below is the only pin involved.
+      - name: Install cppcheck
+        run: |
+          curl -sL https://micro.mamba.pm/api/micromamba/linux-64/latest \
+            | tar -xj -C /tmp bin/micromamba
+          /tmp/bin/micromamba create -y -q -p "$HOME/cppcheck" \
+            -c conda-forge "cppcheck=$CPPCHECK_VERSION"
+
+      # Asserts the version string, not just a zero exit, so the analysis can
+      # never run vacuously against some other cppcheck.
+      - name: Check cppcheck
+        run: |
+          got=$($HOME/cppcheck/bin/cppcheck --version)
+          echo "$got"
+          test "$got" = "Cppcheck $CPPCHECK_VERSION"
 
       # Pin the clang-tidy CMake finds to the pip shim explicitly: find_program
       # otherwise prefers a clang-tidy sitting next to the chosen clang++.
@@ -158,7 +180,10 @@ jobs:
         env:
           CC: clang
           CXX: clang++
-        run: cmake --preset analysis -DTREEWEAVE_CLANG_TIDY_EXE="$(command -v clang-tidy)"
+        run: |
+          cmake --preset analysis \
+            -DTREEWEAVE_CLANG_TIDY_EXE="$(command -v clang-tidy)" \
+            -DTREEWEAVE_CPPCHECK_EXE="$HOME/cppcheck/bin/cppcheck"
 
       - name: Build (analysis)
         env:

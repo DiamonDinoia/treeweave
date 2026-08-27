@@ -15,7 +15,7 @@ namespace treeweave {
 struct NonConvergedPanel {
     std::vector<double> a;     ///< Lower bound of the half-open panel.
     std::vector<double> b;     ///< Upper bound of the half-open panel.
-    std::size_t         depth; ///< Tree depth at which convergence failed.
+    std::size_t         depth{}; ///< Tree depth at which convergence failed.
 };
 
 /// Thrown when adaptive paneling hits `options.max_depth` without converging.

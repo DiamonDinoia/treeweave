@@ -51,6 +51,14 @@ section verbatim into that release's GitHub Release notes.
 - C ABI tests for the throwing error paths: `max_depth` exceeded and memory
   budget exceeded must fail the fit and set `treeweave_last_error()`.
 
+### Fixed
+- `NonConvergedPanel::depth` is value-initialized by default, so a
+  default-constructed panel no longer carries an indeterminate depth.
+- The Static Analysis CI leg pins cppcheck 2.21 from conda-forge instead of
+  taking the distribution 2.13: 2.13 and 2.17 both segfault on a generated
+  dispatch TU, which pairs explicit instantiations with an
+  anonymous-namespace include.
+
 ## [0.0.4] - 2026-08-25
 
 ### Added

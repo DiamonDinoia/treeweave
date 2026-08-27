@@ -14,8 +14,8 @@
 /// Scalar (1D→1D) callable: T(T).
 template <class T>
 struct CFuncScalar {
-    c_func_t<T> f;
-    void       *data;
+    c_func_t<T> f    = nullptr;
+    void       *data = nullptr;
     auto        operator()(T x) const -> T {
         T y;
         f(&x, &y, data);
@@ -26,8 +26,8 @@ struct CFuncScalar {
 /// ND callable: array<T,OUT>(array<T,IN>).
 template <class T, std::size_t IN, std::size_t OUT>
 struct CFuncND {
-    c_func_t<T> f;
-    void       *data;
+    c_func_t<T> f    = nullptr;
+    void       *data = nullptr;
     auto        operator()(std::array<T, IN> x) const -> std::array<T, OUT> {
         std::array<T, OUT> y{};
         f(x.data(), y.data(), data);

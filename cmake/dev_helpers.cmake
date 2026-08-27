@@ -249,6 +249,16 @@ if(TREEWEAVE_ENABLE_CPPCHECK)
             "--suppress=noExplicitConstructor"
             # useStlAlgorithm: hot-path raw loops; rewriting would obscure intent.
             "--suppress=useStlAlgorithm"
+            # bitwiseOnBoolean: xsimd batch_bool combines with & and ~; the
+            # short-circuit operators are not defined for a batch.
+            "--suppress=bitwiseOnBoolean"
+            # missingReturn: cppcheck loses the return type of a member written
+            # `auto f(...) const -> void requires(...)`. -Wreturn-type under
+            # -Werror already rejects a genuine missing return.
+            "--suppress=missingReturn"
+            # shadowFunction: value parameters are named after the helper that
+            # computes them (half_length). -Wshadow covers real shadowing.
+            "--suppress=shadowFunction"
             "--error-exitcode=1"
         )
     else()

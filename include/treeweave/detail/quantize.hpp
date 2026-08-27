@@ -97,6 +97,7 @@ TREEWEAVE_ALWAYS_INLINE auto for_each_leaf_id_batch(const QuantizeView<T, 1> &v,
                                                     std::size_t n, OnId on_id) -> void {
     using batch_t                 = xsimd::batch<T>;
     constexpr std::size_t lanes   = batch_t::size;
+    // cppcheck-suppress unreadVariable  ; read only through alignas below, which cppcheck does not count
     constexpr std::size_t aligned = batch_t::arch_type::alignment();
 
     // Conversion strategy: f32→vcvttps2dq (lane-matched, no ISA gate, xsimd

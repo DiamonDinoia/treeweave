@@ -287,6 +287,7 @@ class AdaptedFunction {
 template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalPolicy::Balanced, class Func,
           class Domain>
     requires Fittable<std::remove_cvref_t<Func>, Domain>
+// cppcheck-suppress passedByValue  ; options is 20 B and trivially copyable, and `= {}` needs a value
 [[nodiscard]] auto fit(Func &&f, Domain a, Domain b, double tol, options opts = {}) {
     if (!(tol > 0.0))
         throw std::invalid_argument("treeweave::fit: tolerance must be > 0");
