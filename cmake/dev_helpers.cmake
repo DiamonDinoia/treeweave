@@ -104,6 +104,13 @@ function(treeweave_enable_warnings target)
 
     list(APPEND _warnings_clang_like ${_tw_additional_warnings_supported})
 
+    # clang 23 moved -Wunused-template into -Wunused. The kernels are `static`
+    # templates in a header so that each TU gets its own internal-linkage copy
+    # (ISA isolation), and a TU that uses one shape instantiates none of the
+    # others, so the diagnostic fires by construction. GNU has no such flag and
+    # rejects an unknown -Wno- once any other diagnostic fires, hence clang only.
+    set(_warnings_clang_only -Wno-unused-template)
+
     set(_warnings_gnu_only -Wmisleading-indentation -Wsuggest-override)
 
     set(_warnings_msvc
@@ -141,6 +148,12 @@ function(treeweave_enable_warnings target)
         list(
             APPEND _compile_options
             $<$<AND:${_lang_is_cxx},${_gnu_or_clang}>:${flag}>
+        )
+    endforeach()
+    foreach(flag IN LISTS _warnings_clang_only)
+        list(
+            APPEND _compile_options
+            $<$<AND:${_lang_is_cxx},${_clang_like}>:${flag}>
         )
     endforeach()
     foreach(flag IN LISTS _warnings_gnu_only)

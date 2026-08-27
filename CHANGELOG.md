@@ -10,17 +10,7 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
-### Fixed
-
-- `tail_error_exceeds_tol` read two coefficients from a degree-1 fit, which
-  holds one. ASan reports a `READ of size 8` past the `FuncEval` for
-  `fit<1>` with `TolKind::AbsoluteTail`; the read is now bounded by
-  `Polyfit::NCOEFFS`. The same change compiles the coefficient reference as a
-  pointer, so GCC 16 no longer folds this body across degrees and charges one
-  degree's array extent to another (`-Werror=array-bounds` under
-  `-march=native`).
-
-## [0.0.5] - 2026-08-26
+## [0.0.5] - 2026-08-27
 
 ### Changed
 - Multi-arch C ABI restructured: only the hot loops compile per ISA rung.
@@ -62,6 +52,17 @@ section verbatim into that release's GitHub Release notes.
   budget exceeded must fail the fit and set `treeweave_last_error()`.
 
 ### Fixed
+- `tail_error_exceeds_tol` read two coefficients from a degree-1 fit, which
+  holds one. ASan reports a `READ of size 8` past the `FuncEval` for `fit<1>`
+  with a Tail `TolKind`; the read is now bounded by `Polyfit::NCOEFFS`. The
+  same change reads the coefficients through a pointer, so GCC 16 no longer
+  folds this body across degrees and charges one degree's array extent to
+  another object (`-Werror=array-bounds` under `-march=native`).
+- clang 23 moved `-Wunused-template` into `-Wunused`, which the warning set
+  enables, so every consumer building the C ABI with clang 23 failed: the
+  kernels are `static` templates in a header and a TU that uses one shape
+  instantiates none of the others. Suppressed for clang only, since GNU has no
+  such flag and rejects an unknown `-Wno-` once any other diagnostic fires.
 - `NonConvergedPanel::depth` is value-initialized by default, so a
   default-constructed panel no longer carries an indeterminate depth.
 - `check_isa_leak.sh` decides attributability from the symbol table instead of
