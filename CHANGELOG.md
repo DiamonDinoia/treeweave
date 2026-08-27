@@ -54,6 +54,12 @@ section verbatim into that release's GitHub Release notes.
 ### Fixed
 - `NonConvergedPanel::depth` is value-initialized by default, so a
   default-constructed panel no longer carries an indeterminate depth.
+- `check_isa_leak.sh` decides attributability from the symbol table instead of
+  a label-count threshold: an artifact with no local text symbols is reported as
+  unattributable and skipped. The rungs build with hidden visibility, so once a
+  strip removes the local names objdump charges each export the instructions of
+  whatever follows it, and the macOS x86_64 wheel was reported as leaking
+  AVX-512 out of its module entry point. `check_rung_symbols` gates those trees.
 - The Static Analysis CI leg pins cppcheck 2.21 from conda-forge instead of
   taking the distribution 2.13: 2.13 and 2.17 both segfault on a generated
   dispatch TU, which pairs explicit instantiations with an

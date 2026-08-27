@@ -65,12 +65,16 @@ for art in "$@"; do
     "$nm" "$art" 2>/dev/null | awk 'tolower($2) == "t" {print $3}' |
         sort | uniq -c | awk '{print $2, $1}' >"$tmp"
 
-    # A linked PE image carries an empty COFF symbol table, so the only names
-    # left are the exports. objdump then labels every internal function with
-    # the export that precedes it, and no instruction can be attributed to the
-    # symbol that owns it. Say so instead of reporting a clean artifact.
-    if [ ! -s "$tmp" ]; then
-        echo "$art: no symbol table, cannot attribute instructions, skipped"
+    # Every symbol the fan-out could leak has local linkage: the rungs build with
+    # hidden visibility and the variant TU's names live in an anonymous namespace.
+    # With the local names stripped, objdump labels each internal function with
+    # whichever export precedes it, so an export is charged instructions it does
+    # not own and no verdict is possible either way. A linked PE carries an empty
+    # COFF table, and delocate / auditwheel strip the wheels down to exports.
+    # check_rung_symbols.sh (TREEWEAVE_VERIFY_RUNGS) gates those trees instead: it
+    # reads symbol tables that survive on every format.
+    if [ "$("$nm" "$art" 2>/dev/null | awk '$2 == "t"' | wc -l)" -eq 0 ]; then
+        echo "$art: no local text symbols, cannot attribute instructions, skipped"
         continue
     fi
 
@@ -80,7 +84,6 @@ for art in "$@"; do
             sym = $0
             sub(/^[0-9a-f]+ [<(]/, "", sym)
             sub(/[>)]:$/, "", sym)
-            labels++
             tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/) \
                      || !(sym in text) || text[sym] > 1
             next
@@ -90,26 +93,9 @@ for art in "$@"; do
         /%zmm|%k[1-7]/ { bad[sym] = "AVX-512"; next }
         # VEX: a v-prefixed mnemonic on a vector register is AVX or higher.
         /\yv[a-z0-9]+[[:space:]]+.*%[xyz]mm/ { if (!(sym in bad)) bad[sym] = "AVX" }
-        END { printf "LABELS %d\n", labels; for (s in bad) printf "%-8s %s\n", bad[s], s }
+        END { for (s in bad) printf "%-8s %s\n", bad[s], s }
     ')
-    labels=$(awk '$1 == "LABELS" {print $2}' <<<"$report")
-    leaks=$(grep -v '^LABELS ' <<<"$report" | sort)
-
-    # A Mach-O bundle keeps only its exports, so objdump labels the whole text
-    # section with the single one and charges every instruction in the image to
-    # it. That is the same misattribution as the empty COFF table above, reached
-    # with a non-empty table: the macOS x86_64 wheel reported AVX-512 inside
-    # _PyInit__treeweave, the module entry point, which holds no vector code.
-    # A handful of names cannot own a whole library, so counts this low mean the
-    # artifact is unattributable, neither clean nor leaking. The object-level
-    # gate (check_rung_symbols.sh, TREEWEAVE_VERIFY_RUNGS) reads symbol tables
-    # that survive on every format and covers these trees.
-    nsyms=$(grep -c '' <"$tmp")
-    if ((labels < 16 || nsyms < 16)); then
-        echo "$art: $nsyms text symbols and $labels function labels for the whole image," \
-            "cannot attribute instructions, skipped"
-        continue
-    fi
+    leaks=$(sort <<<"$report")
 
     if [ -n "$leaks" ]; then
         echo "$art: ISA leak, untagged symbols carrying above-baseline instructions"
