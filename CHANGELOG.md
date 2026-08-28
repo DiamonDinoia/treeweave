@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The Release workflow (`.github/workflows/release.yml`) copies the `## [X.Y.Z]`
 section verbatim into that release's GitHub Release notes.
 
-## [0.0.6] - 2026-08-27
+## [0.0.6] - 2026-08-28
 
 ### Changed
 - Windows ships multi-arch. The wheel, the C ABI tarball and the node prebuild
@@ -51,6 +51,10 @@ section verbatim into that release's GitHub Release notes.
   collision survived a release. Every filtered `ctest` call in that leg passes
   `--no-tests=error`, since `ctest` exits 0 when a `-R` regex selects nothing
   and a renamed test would otherwise reduce the gate to a silent pass.
+- The polyfit pin moves to `v0.0.5`, which drops dead code (`referenceHorner`,
+  a `run_portable_benchmark` overload, `getAlignment` and `countr_zero`) and
+  force-inlines the `horner_impl` compile-time-path lambda for consistency with
+  the rest of that function family.
 - The nanobind build requirement excludes the 3.0 line
   (`nanobind>=2.0,!=3.0.*`) instead of capping below 3.0, so a later 3.x is
   allowed once its slot aliases are clang-cl safe. nanobind 3.0 aliases its

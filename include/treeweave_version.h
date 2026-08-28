@@ -25,7 +25,7 @@
 
 /* Full version including a dev suffix off a release tag, e.g. "1.2.3-dev.42";
  * equals TREEWEAVE_VERSION_STRING on an exact release commit. */
-#define TREEWEAVE_VERSION_FULL "0.0.6-dev.110"
+#define TREEWEAVE_VERSION_FULL "0.0.6-dev.111"
 
 /* Compile-time guard: nonzero iff the treeweave headers are at least
  * `maj.min.pat`. Consumers gate a hard requirement on it, FINUFFT/zlib style:
