@@ -9,6 +9,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Branch runs: this workflow gates the release and fires on push to main
+  # only, so a change to it has no other way to run before it lands.
+  workflow_dispatch:
 
 concurrency:
   group: octave-${{ github.ref }}
