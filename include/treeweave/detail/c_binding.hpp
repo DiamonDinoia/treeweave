@@ -143,6 +143,14 @@ auto make_eval_f32_dim2(int output_dim, treeweavef_func_t f, void *data, const f
 auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
                         const treeweave::options &opts) -> IEval<float> *;
 
+/// Name of the ISA rung this build runs, read from that rung's own object.
+/// Defined beside the factories above, in the same entry-point TU.
+auto active_arch() -> const char *;
+
+/// 1 when `name` is a ladder rung this host can run, 0 when the ladder has it
+/// but the host cannot, -1 when the ladder has no rung of that name.
+auto arch_available(const char *name) -> int;
+
 } // namespace treeweave::capi
 
 #endif // TREEWEAVE_DETAIL_C_BINDING_HPP

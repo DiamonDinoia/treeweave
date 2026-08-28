@@ -175,6 +175,9 @@ struct KernelSet {
     void (*run_soa)(const LeafND<T, IN, NC> &, const std::array<T, IN> *, const std::array<T *, OUT> &,
                     std::size_t) noexcept = nullptr;
     void (*eval_one)(const LeafND<T, IN, NC> &, const std::array<T, IN> &, std::array<T, OUT> &) noexcept = nullptr;
+    /// The rung that built this table, from its own object. A caller that gets
+    /// a name it did not select is reading another rung's code.
+    const char *arch = nullptr;
 };
 
 /// 1D input, multi-output: the ND run kernels (the input is tuple-like, so
@@ -188,6 +191,7 @@ struct KernelSet<T, 1, NC, OUT> {
     void (*run_soa)(const LeafND<T, 1, NC> &, const std::array<T, 1> *, const std::array<T *, OUT> &,
                     std::size_t) noexcept = nullptr;
     void (*eval_one)(const LeafND<T, 1, NC> &, const std::array<T, 1> &, std::array<T, OUT> &) noexcept = nullptr;
+    const char *arch                                                                                    = nullptr;
 };
 
 /// Scalar 1D->1D shape: the bin sort plus the scalar-input `Leaf1D` kernels.
@@ -197,6 +201,7 @@ struct KernelSet<T, 1, NC, 1> {
                       std::uint32_t) noexcept = nullptr;
     void (*run)(const Leaf1D<T, NC> &, const T *, T *, std::size_t) noexcept   = nullptr;
     T (*eval_one)(const Leaf1D<T, NC> &, T) noexcept                           = nullptr;
+    const char *arch                                                           = nullptr;
 };
 
 /// One external factory per (Arch, shape). Defined in src/capi/kernels_arch.cpp,

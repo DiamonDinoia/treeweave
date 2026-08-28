@@ -246,6 +246,21 @@ TREEWEAVE_EXPORT int treeweave_version(void);
 /** @brief Linked library version as a dotted string, e.g. "1.2.3". */
 TREEWEAVE_EXPORT const char *treeweave_version_string(void);
 
+/** @brief Name of the ISA rung this build runs, e.g. "avx2" or "sse2".
+ *
+ * Multi-arch builds report the rung runtime dispatch selected, read from that
+ * rung's own object; single-arch builds report their one compiled arch. Never
+ * NULL. A name other than the one TREEWEAVE_FORCE_ARCH asked for means the
+ * host cannot run that rung. */
+TREEWEAVE_EXPORT const char *treeweave_active_arch(void);
+
+/** @brief Whether `name` is a dispatch rung this host can run.
+ *
+ * @return 1 when the ladder has the rung and the host supports it, 0 when the
+ * ladder has it but the host does not, -1 when no rung carries that name (or
+ * `name` is NULL). Single-arch builds have a one-rung ladder. */
+TREEWEAVE_EXPORT int treeweave_arch_available(const char *name);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

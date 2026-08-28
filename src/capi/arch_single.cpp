@@ -10,6 +10,10 @@
 // This TU instantiates no kernels: it only references declared-only
 // `make_eval_for` externals, whose definitions live in the variant TUs.
 
+#include <string_view>
+
+#include <xsimd/xsimd.hpp>
+
 #include <treeweave.h>
 
 #include <treeweave/detail/c_binding.hpp>
@@ -40,6 +44,16 @@ auto make_eval_f32_dim2(int output_dim, treeweavef_func_t f, void *data, const f
 auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
                         const treeweave::options &opts) -> IEval<float> * {
     return make_eval_for<float, 3>(output_dim, f, data, a, b, tol, opts);
+}
+
+// Introspection. The ladder is one rung here: the arch this TU and every
+// variant TU compile at.
+auto active_arch() -> const char * { return xsimd::best_arch::name(); }
+
+auto arch_available(const char *name) -> int {
+    if (name == nullptr)
+        return -1;
+    return std::string_view{name} == xsimd::best_arch::name() ? 1 : -1;
 }
 
 } // namespace treeweave::capi

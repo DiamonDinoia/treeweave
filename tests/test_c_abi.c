@@ -1027,6 +1027,34 @@ static void test_f32_sorted_fast_path(void) {
     treeweave_free(h);
 }
 
+/* The rung actually selected must be the rung asked for. `active_arch` reads
+ * the name out of the selected rung's own object, so a mismatch on a host that
+ * supports the requested rung means the linker resolved that rung's kernels to
+ * another rung's code. An unavailable rung is a skip, an unknown name a bug. */
+static void test_active_arch_matches_forced(void) {
+    const char *want = getenv("TREEWEAVE_FORCE_ARCH");
+    const char *got  = treeweave_active_arch();
+    CHECK(got != NULL);
+    CHECK(got != NULL && got[0] != '\0');
+    CHECK(got != NULL && treeweave_arch_available(got) == 1);
+    CHECK(treeweave_arch_available("not-an-isa") == -1);
+    CHECK(treeweave_arch_available(NULL) == -1);
+    if (want == NULL || want[0] == '\0') {
+        printf("active arch %s (default dispatch)\n", got == NULL ? "(null)" : got);
+        return;
+    }
+    const int state = treeweave_arch_available(want);
+    CHECK(state >= 0); /* -1: TREEWEAVE_FORCE_ARCH names no rung in the ladder */
+    if (state == 1) {
+        CHECK(got != NULL && strcmp(want, got) == 0);
+        printf("active arch %s (forced)\n", got == NULL ? "(null)" : got);
+    } else if (state == 0) {
+        printf("active arch %s (host cannot run %s)\n", got == NULL ? "(null)" : got, want);
+    } else {
+        printf("active arch %s (no rung named %s)\n", got == NULL ? "(null)" : got, want);
+    }
+}
+
 int main(void) {
     test_1d_scalar_auto_degree();
     test_auto_degree_meets_tol();
@@ -1052,6 +1080,7 @@ int main(void) {
     test_1d_3out_shape();
     test_zero_batch_noop();
     test_f32_sorted_fast_path();
+    test_active_arch_matches_forced();
 
     printf("%d failures\n", g_failures);
     return g_failures;

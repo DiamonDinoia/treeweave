@@ -59,6 +59,19 @@ section verbatim into that release's GitHub Release notes.
   and the address of a dllimport function is not a constant expression, so
   clang-cl rejects the header and only the Windows wheel breaks.
 
+### Added
+- `treeweave_active_arch()` and `treeweave_arch_available()` report which ISA
+  rung the library runs and whether the host can run a named rung. The name is
+  recorded inside the rung's own object, where `xsimd::best_arch` is that
+  rung's arch, so a reported name the caller did not select proves the linker
+  resolved one rung's kernels to another rung's code. `check_rung_symbols`
+  catches that at link time; these two catch it at run time.
+- `test_c_abi` fails when `TREEWEAVE_FORCE_ARCH` names a rung the host reports
+  available and `treeweave_active_arch()` returns a different one, and fails
+  when it names no rung at all. `force_select` ignores an unavailable rung and
+  falls back to default dispatch, so the per-rung CI loops used to print
+  `RUNG_OK` for a rung they never ran.
+
 ## [0.0.5] - 2026-08-27
 
 ### Changed

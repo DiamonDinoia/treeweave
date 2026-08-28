@@ -33,6 +33,15 @@ struct SelectKernelsFn {
     }
 };
 
+/// Call `f.template operator()<Arch>()` once per rung of `dispatch_arch_list`,
+/// widest first. The fold over the arch list is the only way to iterate it.
+template <class F>
+void for_each_ladder_arch(F &&f) {
+    [&]<class... Arch>(xsimd::arch_list<Arch...> /*tag*/) -> void {
+        (f.template operator()<Arch>(), ...);
+    }(dispatch_arch_list{});
+}
+
 /// Testing-only: if TREEWEAVE_FORCE_ARCH names a supported ladder arch, fill
 /// `out` with its kernel table so one capable host can exercise every
 /// fallback. Unset / unknown / unsupported → false (caller falls back to
@@ -41,15 +50,12 @@ template <class T, std::size_t IN, std::size_t NC, std::size_t OUT>
 auto force_select(std::string_view want, detail::KernelSet<T, IN, NC, OUT> &out) -> bool {
     const auto archs = xsimd::available_architectures();
     bool       found = false;
-    auto       visit = [&]<class Arch>() -> void {
+    for_each_ladder_arch([&]<class Arch>() -> void {
         if (!found && want == Arch::name() && archs.has(Arch{})) {
             out   = detail::make_kernels_for<Arch, T, IN, NC, OUT>();
             found = true;
         }
-    };
-    [&]<class... Arch>(xsimd::arch_list<Arch...> /*tag*/) -> void {
-        (visit.template operator()<Arch>(), ...);
-    }(dispatch_arch_list{});
+    });
     return found;
 }
 
@@ -119,6 +125,26 @@ auto make_eval_f32_dim2(int output_dim, treeweavef_func_t f, void *data, const f
 auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
                         const treeweave::options &opts) -> IEval<float> * {
     return make_eval_for<float, 3>(output_dim, f, data, a, b, tol, opts);
+}
+
+// Introspection. The name comes from the rung's own object, so a name the
+// caller did not select means the linker resolved a rung's kernels to another
+// rung's code — the COFF duplicate-COMDAT failure, caught at runtime.
+auto active_arch() -> const char * {
+    return select_kernels<double, 1, static_cast<std::size_t>(chosen_degree), 1>().arch;
+}
+
+auto arch_available(const char *name) -> int {
+    if (name == nullptr)
+        return -1;
+    const auto             archs = xsimd::available_architectures();
+    const std::string_view want{name};
+    int                    state = -1;
+    for_each_ladder_arch([&]<class Arch>() -> void {
+        if (state == -1 && want == Arch::name())
+            state = archs.has(Arch{}) ? 1 : 0;
+    });
+    return state;
 }
 
 } // namespace treeweave::capi

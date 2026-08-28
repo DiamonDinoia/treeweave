@@ -79,12 +79,14 @@ auto k_eval_one_nd(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> &x, st
 template <class Arch, class T, std::size_t IN, std::size_t NC, std::size_t OUT>
 auto make_kernels_for() noexcept -> KernelSet<T, IN, NC, OUT> {
     static_assert(NC == kDeg, "kernel TUs instantiate the baked degree only (arch_degree_table.hpp)");
+    // Arch::name() comes from this TU, compiled at this rung's ISA level, so the
+    // name travels with the table and identifies which rung the caller reached.
     if constexpr (IN == 1 && OUT == 1) {
-        return {&k_partition<T>, &k_run<T>, &k_eval_one<T>};
+        return {&k_partition<T>, &k_run<T>, &k_eval_one<T>, Arch::name()};
     } else if constexpr (IN == 1) {
-        return {&k_partition<T>, &k_run_aos<T, 1, OUT>, &k_run_soa<T, 1, OUT>, &k_eval_one_nd<T, 1, OUT>};
+        return {&k_partition<T>, &k_run_aos<T, 1, OUT>, &k_run_soa<T, 1, OUT>, &k_eval_one_nd<T, 1, OUT>, Arch::name()};
     } else {
-        return {&k_run_aos<T, IN, OUT>, &k_run_soa<T, IN, OUT>, &k_eval_one_nd<T, IN, OUT>};
+        return {&k_run_aos<T, IN, OUT>, &k_run_soa<T, IN, OUT>, &k_eval_one_nd<T, IN, OUT>, Arch::name()};
     }
 }
 

@@ -341,4 +341,7 @@ auto treeweave_last_error(void) -> const char * { return error_buffer().c_str();
 auto treeweave_version(void) -> int { return TREEWEAVE_VERSION; }
 auto treeweave_version_string(void) -> const char * { return TREEWEAVE_VERSION_STRING; }
 
+auto treeweave_active_arch(void) -> const char * { return treeweave::capi::active_arch(); }
+auto treeweave_arch_available(const char *name) -> int { return treeweave::capi::arch_available(name); }
+
 } // extern "C"

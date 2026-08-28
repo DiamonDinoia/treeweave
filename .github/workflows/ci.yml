@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Branch runs: the six gate workflows fire on push to main only, so a change
+  # to a leg that main does not have yet has no other way to run.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -382,7 +385,7 @@ jobs:
           echo "-- default dispatch --"
           "$bin" >/tmp/fa.out 2>&1; ec=$?
           echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          for arch in sse2 sse4.2 avx2 fma3+avx2 avx512bw; do
+          for arch in sse2 sse4.2 fma3+avx2 avx512bw; do
             TREEWEAVE_FORCE_ARCH="$arch" "$bin" >/tmp/fa.out 2>&1; ec=$?
             echo "FORCE_ARCH=$arch exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
           done
@@ -496,8 +499,10 @@ jobs:
 
       # The gate proves the rungs share no symbol; running the suite once per
       # rung proves the renamed code still executes, including the throwing
-      # paths whose RTTI records the rename duplicates. force_select ignores an
-      # arch the host lacks, so avx512bw is attempted, not asserted.
+      # paths whose RTTI records the rename duplicates. test_c_abi compares
+      # treeweave_active_arch() against TREEWEAVE_FORCE_ARCH and fails on a
+      # mismatch whenever the host reports the rung available, so a rung the
+      # runner can run is asserted, not merely attempted.
       - name: Run the C ABI suite once per rung
         shell: pwsh
         run: |
