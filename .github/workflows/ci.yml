@@ -393,7 +393,7 @@ jobs:
       # Exact match: the dispatched binary runs natively here. (Avoid the
       # valgrind variant, which can't execute an AVX-512 dispatch target.)
       - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure --no-tests=error
+        run: ctest --test-dir build/multiarch -R '^(test_c_abi|check_rung_symbols)$' -V --no-tests=error
 
   multiarch-arm:
     name: Multiarch dispatch smoke (aarch64)
@@ -441,7 +441,7 @@ jobs:
           echo "FORCE_ARCH=arm64+neon exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
 
       - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure --no-tests=error
+        run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols)$' -V --no-tests=error
 
   multiarch-windows:
     name: Multiarch dispatch smoke (${{ matrix.compiler }})
@@ -509,7 +509,7 @@ jobs:
           $fail = 0
           foreach ($arch in @("", "sse2", "avx", "fma3+avx2", "avx512bw")) {
             if ($arch) { $env:TREEWEAVE_FORCE_ARCH = $arch } else { Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue }
-            ctest --test-dir build/multiarch-win -R '^(test_c_abi|check_rung_symbols)$' --output-on-failure --no-tests=error
+            ctest --test-dir build/multiarch-win -R '^(test_c_abi|check_rung_symbols)$' -V --no-tests=error
             if ($LASTEXITCODE -ne 0) { "RUNG_FAIL $arch"; $fail = 1 } else { "RUNG_OK $(if ($arch) { $arch } else { 'default' })" }
           }
           Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue
