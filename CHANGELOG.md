@@ -28,9 +28,11 @@ section verbatim into that release's GitHub Release notes.
   --redefine-syms`, leaving only the `make_kernels_for<Arch, …>` factory
   callable from the baseline TUs, so each rung reaches its own code. ELF needs
   none of this, where the rungs already build with hidden visibility.
-  `-fvisibility=hidden` has no effect on COFF: clang-cl defines nothing twice
-  today only because `/O2` inlines the shared code away, which one
-  non-inlinable function in any dependency would undo.
+  `-fvisibility=hidden` has no effect on COFF. clang-cl was never clean either:
+  it defines 14 to 39 external symbols per rung, against cl.exe's 3379 to 3487,
+  and passed the gate only because none of its duplicates happened to diverge.
+  That is a property of the optimizer's inlining decisions, not a guarantee any
+  compiler or dependency bump preserves.
 - The rename does not localize. `llvm-objcopy` supports only `--redefine-sym`
   on COFF, and localizing is the wrong tool on ELF anyway: it leaves the
   section in its COMDAT group, the linker still discards the group, and the
@@ -46,7 +48,9 @@ section verbatim into that release's GitHub Release notes.
   (`multiarch-windows`): configure, build, `check_rung_symbols`, then the C ABI
   suite once per rung so the throwing paths cross a renamed rung boundary.
   Neither toolset was gated in this configuration before, which is how the
-  collision survived a release.
+  collision survived a release. Every filtered `ctest` call in that leg passes
+  `--no-tests=error`, since `ctest` exits 0 when a `-R` regex selects nothing
+  and a renamed test would otherwise reduce the gate to a silent pass.
 - The nanobind build requirement excludes the 3.0 line
   (`nanobind>=2.0,!=3.0.*`) instead of capping below 3.0, so a later 3.x is
   allowed once its slot aliases are clang-cl safe. nanobind 3.0 aliases its

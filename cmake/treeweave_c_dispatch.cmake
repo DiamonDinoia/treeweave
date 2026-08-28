@@ -250,9 +250,9 @@ if(_treeweave_multiarch_family)
     # cl.exe and clang-cl emit every inline function, template instantiation,
     # RTTI record and float-pool entry as an external COMDAT, and the linker
     # keeps one arbitrary copy of each. rename_rung_symbols.sh below gives each
-    # rung its own copies. clang-cl needs it as much as cl.exe does: it happens
-    # to leak nothing today only because /O2 inlines these away, which one
-    # non-inlinable function would undo.
+    # rung its own copies. clang-cl needs it as much as cl.exe does: it defines
+    # fewer of these than cl.exe, never none, and which ones diverge is not a
+    # property to leave to the optimizer.
     #
     # On ELF, do not reach for objcopy --localize-symbol to get the same
     # effect. Making a rung's symbols local leaves their sections in the COMDAT
