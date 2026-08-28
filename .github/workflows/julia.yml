@@ -64,4 +64,4 @@ jobs:
           cmake --build build/bindings-julia -j --target treeweave_c
 
       - name: Run Julia suite (julia_treeweave)
-        run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure --no-tests=error

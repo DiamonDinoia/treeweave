@@ -450,7 +450,7 @@ jobs:
           cmake --build build/bindings-octave -j
 
       - name: Run Octave suite (matlab_treeweave)
-        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure --no-tests=error
 
   # Best-effort: the build is a gate but running needs a license MathWorks'
   # hosted licensing does not reliably grant outside matlab-actions. NOT in
@@ -485,7 +485,7 @@ jobs:
 
       - name: Run MATLAB suite (matlab_treeweave)
         continue-on-error: true
-        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure --no-tests=error
 
   # Tag + PyPI publish live in the SAME job so they share a success boundary: if
   # PyPI publish fails, the tag is rolled back immediately. "Tag exists" is

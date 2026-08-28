@@ -52,4 +52,4 @@ jobs:
 
       # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
       - name: Run Fortran test (fortran_treeweave)
-        run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure --no-tests=error

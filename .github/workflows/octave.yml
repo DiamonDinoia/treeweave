@@ -59,4 +59,4 @@ jobs:
 
       # test_treeweave.m calls error() on any failure -> octave exits non-zero.
       - name: Run Octave suite (matlab_treeweave)
-        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure --no-tests=error

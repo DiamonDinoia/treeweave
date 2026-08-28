@@ -33,10 +33,12 @@ section verbatim into that release's GitHub Release notes.
   and passed the gate only because none of its duplicates happened to diverge.
   That is a property of the optimizer's inlining decisions, not a guarantee any
   compiler or dependency bump preserves.
-- The rename does not localize. `llvm-objcopy` supports only `--redefine-sym`
-  on COFF, and localizing is the wrong tool on ELF anyway: it leaves the
-  section in its COMDAT group, the linker still discards the group, and the
-  local reference then points into a discarded section. GNU ld rejects that;
+- The rename does not localize. `llvm-objcopy` leaves every symbol-visibility
+  operation unimplemented on COFF: `--localize-symbol`, `--keep-global-symbol`
+  and `--weaken` all fail with "option is not supported for COFF", while
+  `--redefine-syms` works. Localizing is the wrong tool on ELF anyway: it
+  leaves the section in its COMDAT group, the linker still discards the group,
+  and the local reference then points into a discarded section. GNU ld rejects that;
   mold accepts it, so the breakage would appear on only some linkers. Renaming
   keeps the symbol external, so no group is merged away.
 - `TREEWEAVE_C_MULTIARCH` under cl.exe is supported again, so Windows keeps
@@ -71,8 +73,10 @@ section verbatim into that release's GitHub Release notes.
   installed on those runners because the rename runs `llvm-nm` and
   `llvm-objcopy`. cl.exe defines no `[[gnu::flatten]]` equivalent, so the hot
   eval methods lose recursive force-inlining there; an interleaved A/B of that
-  attribute under clang-19 put every benchmark inside the resolution floor of
-  an unchanged control arm, so the cost is unresolved rather than measured.
+  attribute under clang-19 left ten of eleven benchmarks inside the resolution
+  floor of an unchanged control arm, the exception being `eval/1d/runge-deep/f32`
+  at a no-flatten/control ratio of 1.121/1.058, so the cost is unresolved on
+  that machine rather than measured as zero.
 
 ### Added
 - `treeweave_active_arch()` and `treeweave_arch_available()` report which ISA

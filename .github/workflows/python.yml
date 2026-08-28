@@ -55,4 +55,4 @@ jobs:
           cmake --build build/bindings-python -j
 
       - name: Run pytest suite (python_treeweave)
-        run: ctest --test-dir build/bindings-python -R python_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-python -R python_treeweave --output-on-failure --no-tests=error

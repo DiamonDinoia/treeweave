@@ -58,7 +58,7 @@ jobs:
       # runner (the Octave job is the blocking runtime gate). Build above stays a gate.
       - name: Run MATLAB suite (matlab_treeweave)
         continue-on-error: true
-        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure
+        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure --no-tests=error
 
   # Windows MEX, built and *run* under several MATLAB releases. Until v0.0.4 no
   # Windows job ever loaded the MEX it built, and three releases shipped a MEX
