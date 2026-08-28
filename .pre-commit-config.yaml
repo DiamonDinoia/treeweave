@@ -102,8 +102,9 @@ repos:
         # generated / vendored.
         exclude: '^(bench/|build/|extern/)'
         # Domain false positives: "nd" = N-dimensional; "re-using" is correct;
-        # "inout" is the Fortran intent(inout) keyword.
-        args: [-L, "nd,re-using,inout"]
+        # "inout" is the Fortran intent(inout) keyword; "fo" is MSVC's /Fo
+        # object-output flag.
+        args: [-L, "nd,re-using,inout,fo"]
   # --- Python package metadata validation ---
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.25

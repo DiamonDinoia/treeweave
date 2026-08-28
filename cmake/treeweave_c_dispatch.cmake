@@ -356,6 +356,21 @@ if(_treeweave_multiarch_family)
                 bash "${PROJECT_SOURCE_DIR}/.github/scripts/check_rung_symbols.sh"
                 ${_treeweave_rung_sets}
         )
+        # The gate's own positive control. A gate that has only ever passed is
+        # indistinguishable from one that cannot fail, so this builds fixture
+        # objects that must trip DIFFERS and LOCAL-REF and two that must not.
+        if(MSVC)
+            set(_treeweave_gate_msvc 1)
+        else()
+            set(_treeweave_gate_msvc 0)
+        endif()
+        add_test(
+            NAME check_rung_symbols_selftest
+            COMMAND
+                bash
+                "${PROJECT_SOURCE_DIR}/.github/scripts/test_check_rung_symbols.sh"
+                "${CMAKE_C_COMPILER}" ${_treeweave_gate_msvc}
+        )
     endif()
     # Release pipelines configure with TREEWEAVE_BUILD_TESTS=OFF, so the ctest
     # above never registers there. TREEWEAVE_VERIFY_RUNGS runs the same gate

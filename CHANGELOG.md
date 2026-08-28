@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The Release workflow (`.github/workflows/release.yml`) copies the `## [X.Y.Z]`
 section verbatim into that release's GitHub Release notes.
 
+## [Unreleased]
+
+### Fixed
+- `check_rung_symbols.sh`'s local-reference rule was inert for the shape it
+  exists to catch. A call or jump to a TU-local symbol in the same section
+  carries no relocation, and the rule read targets only from relocation
+  entries, while the normalization that makes the byte-compare robust
+  (`<...>` collapsed to `<>`) erased the callee name from the instruction
+  stream. Two rungs whose shared function was byte-identical but called
+  different private helpers therefore compared equal and passed. The rule now
+  also records the symbolic target objdump prints for a direct branch.
+- `--no-tests=error` on every filtered `ctest -R` call in the workflow tree.
+  `bf53bf7` added it to the three multiarch legs only, leaving nine calls
+  across seven files that would turn into silent passes on a test rename.
+
+### Added
+- `check_rung_symbols_selftest`, a positive control for the gate above,
+  registered wherever the gate itself is. It builds fixture objects with the
+  project's own C compiler and asserts the gate exits 1 on differing bodies
+  and on the local-reference stub, 0 on identical bodies and on disjoint
+  symbol sets, and 2 on misuse. A gate that has only ever passed cannot be
+  distinguished from a gate that cannot fail; this one had never been proven
+  to fail, and the control found the defect above on its first run.
+
 ## [0.0.6] - 2026-08-28
 
 ### Changed

@@ -98,6 +98,14 @@ for rung in "${rungs[@]}"; do
                 line = $0
                 sub(/^[ \t]+[0-9a-f]+:[ \t]*/, "", line)  # instruction offset
                 sub(/[ \t]*(#|\/\/).*$/, "", line)        # objdump comments
+                # A call or jump to a local symbol in the same section carries
+                # no relocation, so the refs file would never see it; record
+                # the symbolic target before the normalization below erases it.
+                if (match(line, /<[^>]*>/)) {
+                    tgt = substr(line, RSTART + 1, RLENGTH - 2)
+                    sub(/[+-]0x[0-9a-fA-F]+$/, "", tgt)
+                    if (tgt != "") print cur "\t" tgt > refs
+                }
                 gsub(/<[^>]*>/, "<>", line)               # relocation targets
                 gsub(/0x[0-9a-fA-F]+/, "0x_", line)       # addresses, immediates
                 gsub(/[ \t]+/, " ", line)
