@@ -62,7 +62,6 @@ section verbatim into that release's GitHub Release notes.
   CPython API function, which is `__declspec(dllimport)` under the MSVC ABI,
   and the address of a dllimport function is not a constant expression, so
   clang-cl rejects the header and only the Windows wheel breaks.
-
 - Every Windows release artifact compiles with cl.exe instead of clang-cl: the
   wheel, the C ABI tarball, the node prebuild, the MEX, the Julia leg and the
   install smoke test. MSVC is the toolchain Windows consumers already have, so
