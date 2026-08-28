@@ -63,9 +63,9 @@ jobs:
           echo "Derived dev version: ${base}.dev${n}"
 
   # The wheel/sdist matrix lives in wheels.yml, the same one the real PyPI
-  # release uses. Duplicating it here let the Windows entry drift: it kept
-  # cl.exe + multiarch long after wheels.yml moved to clang-cl, and back then
-  # that combination shipped a wheel that faulted on import.
+  # release uses. Duplicating it here let the Windows entry drift once, into a
+  # combination that shipped a wheel faulting on import, so this workflow now
+  # calls wheels.yml instead of restating it.
   build:
     name: build
     needs: version

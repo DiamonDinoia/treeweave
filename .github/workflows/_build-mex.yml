@@ -52,18 +52,18 @@ jobs:
             ext: mexa64
             arch: x86-64
             matlab_release: latest
-          # clang-cl, not cl.exe, because that is what the release ships. Both
-          # build the fan-out soundly now that each ISA rung gets private symbol
-          # names (cmake/treeweave_c_dispatch.cmake), and both target the same
-          # MSVC ABI, so the MEX is interchangeable.
+          # cl.exe: MATLAB's own supported Windows compiler, so the .mexw64
+          # matches what MATLAB builds MEX files with. The per-rung symbol rename
+          # (cmake/treeweave_c_dispatch.cmake) runs llvm-nm and llvm-objcopy from
+          # the runner image's LLVM.
           - name: windows-x64
             runs-on: windows-2022
             ext: mexw64
             arch: x86-64
             matlab_release: latest
             cmake_extra: >-
-              -DCMAKE_C_COMPILER=clang-cl
-              -DCMAKE_CXX_COMPILER=clang-cl
+              -DCMAKE_C_COMPILER=cl
+              -DCMAKE_CXX_COMPILER=cl
           - name: macos-arm64
             runs-on: macos-15
             ext: mexmaca64

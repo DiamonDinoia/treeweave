@@ -98,7 +98,8 @@ jobs:
 
       # macOS/Windows: CMake + Ninja via setup-cpp, with the MSVC environment on
       # Windows so the addon builds with Ninja (single-config) like everywhere else.
-      # Windows also installs LLVM; the addon compiles with clang-cl, not cl.exe.
+      # Windows also installs LLVM, whose llvm-nm and llvm-objcopy the per-rung
+      # symbol rename needs; the addon itself compiles with cl.exe.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.platdir, 'linux') }}
         uses: aminya/setup-cpp@v1.8.1
@@ -127,15 +128,15 @@ jobs:
             curl -fL -o node.lib "https://nodejs.org/dist/${nodever}/win-x64/node.lib"
             curl -fL -o node-headers.tar.gz "https://nodejs.org/dist/${nodever}/node-${nodever}-headers.tar.gz"
             tar xzf node-headers.tar.gz
-            # clang-cl, not cl.exe, because that is what the release ships. Both
-            # build the fan-out soundly now that each ISA rung gets private symbol
-            # names (cmake/treeweave_c_dispatch.cmake); clang-cl also keeps the
-            # flatten path. Warnings-as-errors off, as in ci-windows-clang.
+            # cl.exe: MSVC is the reference Windows toolchain, so the prebuilt
+            # addon matches what node consumers link against. cl.exe defines no
+            # [[gnu::flatten]] equivalent, measured as unresolved against the
+            # benchmark noise floor. Warnings-as-errors off, as on the clang leg.
             extra+=(
               "-DTREEWEAVE_NODE_LIB=$PWD/node.lib"
               "-DTREEWEAVE_NODE_INCLUDE=$PWD/node-${nodever}/include/node"
-              "-DCMAKE_C_COMPILER=clang-cl"
-              "-DCMAKE_CXX_COMPILER=clang-cl"
+              "-DCMAKE_C_COMPILER=cl"
+              "-DCMAKE_CXX_COMPILER=cl"
               "-DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
             )
           fi
@@ -171,7 +172,7 @@ jobs:
           bash .github/scripts/check_isa_leak.sh \
             "prebuilds/${{ matrix.platdir }}/treeweave.napi.node"
 
-      # The addon compiles with clang-cl but must stay a plain MSVC-ABI DLL: the
+      # The addon compiles with cl.exe and must stay a plain MSVC-ABI DLL: the
       # import table may name only the CRT and node.exe that a cl.exe build names.
       # An LLVM/libc++/compiler-rt import would mean an extra install dependency.
       - name: Check the Windows addon imports no LLVM runtime

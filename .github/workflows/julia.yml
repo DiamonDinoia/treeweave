@@ -33,11 +33,10 @@ jobs:
           - { name: macos-14-arm64,   runs-on: macos-14,         compiler: apple-clang }
           - { name: macos-15-arm64,   runs-on: macos-15,         compiler: apple-clang }
           - { name: macos-15-x86_64,  runs-on: macos-15-intel,   compiler: apple-clang }
-          # clang-cl, not cl.exe, to match what the release ships. This leg is
-          # single-arch, where the rung rename does not apply. Same MSVC ABI
-          # either way.
-          - { name: windows-x64,      runs-on: windows-2022,     compiler: llvm,
-              cmake_extra: '-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl' }
+          # cl.exe, to match what the release ships. This leg is single-arch,
+          # where the rung rename does not apply.
+          - { name: windows-x64,      runs-on: windows-2022,     compiler: msvc,
+              cmake_extra: '-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl' }
     steps:
       - uses: actions/checkout@v7
         with:

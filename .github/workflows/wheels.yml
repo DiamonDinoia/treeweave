@@ -66,7 +66,7 @@ jobs:
           - name: windows-x64
             runs-on: windows-2022
             cibw-arch: AMD64
-            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
+            cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=x86-64 -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -81,10 +81,11 @@ jobs:
         shell: bash
         run: python .github/scripts/set_dev_version.py "${{ inputs.dev-version }}"
 
-      # clang-cl, not cl.exe, because that is what the release ships; both are
-      # sound since the rung rename. cibuildwheel builds in the host
-      # environment on Windows, so vcvarsall and LLVM here reach the build.
-      - name: Setup clang-cl + Ninja (Windows)
+      # The wheel compiles with cl.exe, the reference Windows toolchain. LLVM
+      # is still installed: the per-rung symbol rename runs llvm-nm and
+      # llvm-objcopy. cibuildwheel builds in the host environment on Windows,
+      # so vcvarsall and LLVM here reach the build.
+      - name: Setup MSVC + LLVM binutils + Ninja (Windows)
         if: matrix.name == 'windows-x64'
         uses: aminya/setup-cpp@v1.8.1
         with:

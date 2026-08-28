@@ -68,12 +68,12 @@ jobs:
 
       - name: Build + install the C ABI to a prefix
         run: |
-          # clang-cl, as the release job does. This leg is single-arch, where
-          # the rung rename does not apply at all; it matches the release only so
-          # the smoke test covers the shipped toolchain.
+          # cl.exe, as the release job does. This leg is single-arch, where the
+          # rung rename does not apply at all; it matches the release only so the
+          # smoke test covers the shipped toolchain.
           extra=()
           if [ "$RUNNER_OS" = "Windows" ]; then
-            extra+=(-DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
+            extra+=(-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
                     -DTREEWEAVE_WARNINGS_AS_ERRORS=OFF)
           fi
           cmake -S . -B build -G Ninja \

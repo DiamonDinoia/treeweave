@@ -59,6 +59,18 @@ section verbatim into that release's GitHub Release notes.
   and the address of a dllimport function is not a constant expression, so
   clang-cl rejects the header and only the Windows wheel breaks.
 
+- Every Windows release artifact compiles with cl.exe instead of clang-cl: the
+  wheel, the C ABI tarball, the node prebuild, the MEX, the Julia leg and the
+  install smoke test. MSVC is the toolchain Windows consumers already have, so
+  the shipped binary matches what they compile against. clang-cl stayed the
+  default only because the multi-arch fan-out used to need it; the per-rung
+  symbol rename made both toolsets sound, and `ci.yml` gates both. LLVM stays
+  installed on those runners because the rename runs `llvm-nm` and
+  `llvm-objcopy`. cl.exe defines no `[[gnu::flatten]]` equivalent, so the hot
+  eval methods lose recursive force-inlining there; an interleaved A/B of that
+  attribute under clang-19 put every benchmark inside the resolution floor of
+  an unchanged control arm, so the cost is unresolved rather than measured.
+
 ### Added
 - `treeweave_active_arch()` and `treeweave_arch_available()` report which ISA
   rung the library runs and whether the host can run a named rung. The name is
