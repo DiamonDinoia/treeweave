@@ -54,6 +54,10 @@ Functions
 ---------
 
 
+- :ref:`exhale_function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94`
+
+- :ref:`exhale_function_treeweave_8h_1ac415500fc3051431d177cdfcbe830c2c`
+
 - :ref:`exhale_function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad`
 
 - :ref:`exhale_function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0`

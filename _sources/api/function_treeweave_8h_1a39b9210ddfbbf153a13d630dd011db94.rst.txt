@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94:
+
+Function treeweave_active_arch
+==============================
+
+- Defined in :ref:`file_include_treeweave.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave_active_arch(void)
+   :project: treeweave
