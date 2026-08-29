@@ -21,7 +21,7 @@
 /// leaf count `L`. The Function holds one persistent allocation: the tree
 /// itself, `O(L)`, shared by all threads and reported by
 /// `Function::print_stats()` / `memory_usage()`. Each batch call
-/// allocates a stack-local scratch of roughly
+/// allocates and frees on return a scratch of roughly
 /// `tile_K * (4 + (input_dim + output_dim) * sizeof(value_type))` plus
 /// `4 * (L + 1)` bytes (with `tile_K = max(65536, 32 * L)`) and frees it
 /// on return.
@@ -45,6 +45,12 @@
 #include <treeweave/detail/function_impl.hpp>
 
 namespace treeweave {
+
+/// The default inline kernel policy used across the batch and guru APIs.
+/// (Defined under treeweave::detail; the alias is the documented spelling for
+/// callers that reference the default type in their own wrappers.)
+using default_kernel_policy = detail::InlineKernels;
+
 
 /// Library version, sourced from the CMake-generated <treeweave_version.h>
 /// (single source of truth: `project(VERSION)`); identical to the C-ABI

@@ -11,6 +11,11 @@ section verbatim into that release's GitHub Release notes.
 ## [Unreleased]
 
 ### Fixed
+- `Function::leaf_id`'s descent-mode OOD gate used negative logic, letting
+  `NaN` fall through to `get_linear_bin(NaN)` (a UB narrowing conversion plus
+  an out-of-bounds subtree index; segfaults observed). The descent gate is now
+  the same positive logic the table path has always used, matching the
+  documented sentinel semantics.
 - `check_rung_symbols.sh`'s local-reference rule was inert for the shape it
   exists to catch. A call or jump to a TU-local symbol in the same section
   carries no relocation, and the rule read targets only from relocation
@@ -24,6 +29,20 @@ section verbatim into that release's GitHub Release notes.
   across seven files that would turn into silent passes on a test rename.
 
 ### Added
+- `<treeweave/guru.hpp>` (`treeweave::guru`): the guru interface (after
+  FFTW's) — the batch pipeline as public stages with caller-owned scratch and
+  no per-call allocation. `counting_sort`/`histogram`/`exclusive_scan`/
+  `scatter` (counting sort over caller-produced u32 keys, span-based),
+  `gather` (the `rank`-driven writeback, prefetch owned), `for_each_run`
+  (`fn(id, begin, count)`, the same callback shape as `for_each_sorted_run`),
+  `eval_leaf_aos`/`eval_leaf_soa` (per-leaf SIMD eval through the polyfit
+  kernels), `fill_out_of_domain` (the out-of-domain bucket's NaN writeback),
+  and `for_each_sorted_run` (the sorted-run walk). `Function` gains
+  `out_of_domain_id()`, the sentinel id for points the fit cannot evaluate.
+  `Function::sorted`'s kernel dispatch runs on the canonical
+  `for_each_sorted_run_1d` walk and the same `fill_out_of_domain` definition
+  the guru entry points forward to — one implementation for library and
+  callers.
 - `check_rung_symbols_selftest`, a positive control for the gate above,
   registered wherever the gate itself is. It builds fixture objects with the
   project's own C compiler and asserts the gate exits 1 on differing bodies
@@ -275,6 +294,11 @@ section verbatim into that release's GitHub Release notes.
   enables IPO. A precompiled header is built with one target's flags; IPO
   widens what the optimizer may merge across the objects. Both exclusions are
   precautionary.
+
+## [0.0.3] - 2026-08-19
+
+### Changed
+- The polyfit pin moves to `v0.0.3`.
 
 ## [0.0.2] - 2026-08-13
 

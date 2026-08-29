@@ -49,6 +49,77 @@
 
 namespace treeweave {
 
+namespace detail {
+
+/// Prefetch distance of the inverse-permutation writeback; `guru::gather` and
+/// `Function::kLookahead` both alias this single definition.
+inline constexpr std::size_t kLookahead = 32;
+
+/// The canonical out-of-domain writeback: `n * output_dim` quiet NaNs into
+/// interleaved AoS `out`. One definition for `Function::sorted`'s sentinel
+/// runs and the public `guru::fill_out_of_domain`.
+template <class F>
+auto fill_out_of_domain(const F &, typename F::value_type *out, std::size_t n) -> void {
+    std::fill_n(out, n * F::output_dim, std::numeric_limits<typename F::value_type>::quiet_NaN());
+}
+
+/// SoA twin: `n` quiet NaNs into each of the `output_dim` component buffers.
+template <class F>
+auto fill_out_of_domain(const F &, std::array<typename F::value_type *, F::output_dim> out, std::size_t n) -> void
+    requires(F::output_dim > 1)
+{
+    for (auto *component : out)
+        std::fill_n(component, n, std::numeric_limits<typename F::value_type>::quiet_NaN());
+}
+
+} // namespace detail
+
+/// The canonical ascending-run walk over a 1D fit: `fn(id, begin, count)` per
+/// maximal run of points sharing a leaf id — positively-gated OOD handling,
+/// `out_of_domain_id()` sentinel callbacks (prefix/suffix aggregated, interior
+/// NaN singletons), closed upper endpoint in-domain. This is the one
+/// definition of the sorted driver's walk: `Function::sorted` dispatches its
+/// kernels through it, and the public `treeweave::guru::for_each_sorted_run`
+/// forwards to it — no internal/external distinction.
+template <class F, class Fn>
+auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::size_t n, Fn &fn) -> void
+    requires(F::input_dim == 1)
+{
+    static_assert(std::is_arithmetic_v<typename F::value_type>);
+    const auto [lower, upper]  = f.get_bounds();
+    const auto          lo     = lower[0];
+    const auto          hi     = upper[0];
+    const auto          ood_id = f.out_of_domain_id();
+    const auto         &subs   = f.get_subtrees();
+    const bool          fast   = subs.size() == 1 && subs.front().has_leaf_table();
+
+    std::size_t i = 0;
+    while (i < n && xs[i] < lo) // OOD prefix: contiguous under ascending order.
+        ++i;
+    if (i > 0)
+        fn(ood_id, 0, i);
+
+    while (i < n) {
+        // `>` not `>=`: the closed upper endpoint x == hi stays in-domain; NaN
+        // fails the test and falls through to the sentinel path below.
+        if (xs[i] > hi) [[unlikely]] {
+            fn(ood_id, i, n - i); // OOD suffix: contiguous to the end.
+            return;
+        }
+        const std::uint32_t id = f.sorted_leaf_id_at(xs, i, ood_id, fast);
+        if (id == ood_id) [[unlikely]] {
+            fn(ood_id, i, 1); // interior NaN; one point per call.
+            ++i;
+            continue;
+        }
+        std::size_t j = i + 1;
+        while (j < n && f.sorted_leaf_id_at(xs, j, ood_id, fast) == id)
+            ++j;
+        fn(id, i, j - i);
+        i = j;
+    }
+}
+
 /// Adaptive piecewise-polynomial approximation of a user function. The fit
 /// is materialized at construction (via `treeweave::fit`) into a flat array of
 /// subtrees over a uniform top-level grid, each subtree built BFS to the
@@ -86,7 +157,7 @@ class Function {
     /// Minimum expected points per leaf; sets the adaptive tile-size floor.
     static constexpr std::size_t kMinPtsPerLeaf = 32;
     /// Prefetch distance in the inverse-permutation writeback stage.
-    static constexpr std::size_t kLookahead = 32;
+    static constexpr std::size_t kLookahead = detail::kLookahead;
 
     /// Approximate resident bytes — including subtree node arrays and the
     /// shared polyfit coefficient store. Useful for budget validation in
@@ -103,6 +174,14 @@ class Function {
     /// by the leaf id the bin sort assigns. Equals the counting-sort bin count.
     [[nodiscard]] auto num_leaves() const noexcept -> std::size_t { return polyfits_.size(); }
 
+    /// The sentinel id classification assigns to an out-of-domain (OOD) point
+    /// — below `lower`, above `upper`, or NaN/±Inf: `num_leaves()` as u32, one
+    /// past the last real leaf. It carries no coefficients; the batch paths
+    /// NaN-fill its bucket (`guru::fill_out_of_domain`).
+    [[nodiscard]] auto out_of_domain_id() const noexcept -> std::uint32_t {
+        return static_cast<std::uint32_t>(polyfits_.size());
+    }
+
     /// True when every subtree carries a live quantize-to-leaf table, i.e. the
     /// batch path takes the single-quantize fast bin sort rather than per-point
     /// tree descent.
@@ -115,7 +194,7 @@ class Function {
     /// Leaf-table index for `x`, or `num_leaves()` sentinel when OOD/NaN/±Inf.
     /// Scalar twin of one `leaf_ids` SIMD lane; parity oracle for quantize tests.
     [[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_id(const input_type &x) const -> std::uint32_t {
-        const auto                                 ood_id = static_cast<std::uint32_t>(polyfits_.size());
+        const auto                                 ood_id = out_of_domain_id();
         const bool                                 table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
         const detail::Value<value_type, input_dim> xi(x);
         return leaf_id_of(xi, ood_id, table);
@@ -124,7 +203,7 @@ class Function {
     /// Write per-point leaf ids into `out[0..n)`. Same vectorized quantize as
     /// the batch evaluator; exposes the binning stage standalone. AoS input.
     auto leaf_ids(const value_type *xp, std::uint32_t *out, std::size_t n) const -> void {
-        const auto ood_id = static_cast<std::uint32_t>(polyfits_.size());
+        const auto ood_id = out_of_domain_id();
         const bool table  = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
         if constexpr (input_dim == 1) {
             if (table) {
@@ -434,8 +513,7 @@ class Function {
             Buf(const Buf &)                     = delete;
             auto operator=(const Buf &) -> Buf & = delete;
             // Owns a raw allocation and is only ever used as a pinned Scratch
-            // member (Scratch is thread_local, never moved), so moves are deleted
-            // too rather than implemented.
+            // member, so moves are deleted rather than implemented.
             Buf(Buf &&)                     = delete;
             auto operator=(Buf &&) -> Buf & = delete;
 
@@ -689,114 +767,43 @@ class Function {
                                   const K &k = {}) const -> void
         requires(input_dim == 1 && output_dim > 1)
     {
-        if (n == 0) [[unlikely]]
-            return;
-
-        constexpr value_type nan_v     = std::numeric_limits<value_type>::quiet_NaN();
-        auto                 write_nan = [&](std::size_t i) -> void {
-            poet::static_for<output_dim>([&](auto D) -> void {
-                constexpr std::size_t d = D;
-                soa_out[d][i]           = nan_v;
-            });
-        };
-
-        const auto          n_leaves = static_cast<std::uint32_t>(polyfits_.size());
-        const std::uint32_t ood_id   = n_leaves;
-        const bool          fast     = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
-
-        std::size_t i = 0;
-        while (i < n && xp[i] < lower_left_[0]) {
-            write_nan(i);
-            ++i;
-        }
-
-        while (i < n) {
-            // `>` not `>=`: the closed upper endpoint `x == upper` is evaluated
-            // (clamped to the last leaf); the OOD-high suffix starts strictly
-            // above it. NaN fails this check (NaN > hi is false) so NaN falls
-            // through to `sorted_leaf_id_at`, which rejects it via the positive-logic guard.
-            if (xp[i] > upper_right_[0]) [[unlikely]] {
-                do {
-                    write_nan(i);
-                    ++i;
-                } while (i < n);
-                break;
+        const auto ood_id = out_of_domain_id();
+        auto       on_run = [&](std::uint32_t id, std::size_t base, std::size_t cnt) -> void {
+            if (id == ood_id) {
+                std::array<value_type *, output_dim> run_soa{};
+                poet::static_for<output_dim>([&](auto D) -> void {
+                    constexpr std::size_t d = D;
+                    run_soa[d]              = soa_out[d] + base;
+                });
+                detail::fill_out_of_domain(*this, run_soa, cnt);
+                return;
             }
-            const std::uint32_t id = sorted_leaf_id_at(xp, i, ood_id, fast);
-            if (id == ood_id) [[unlikely]] {
-                write_nan(i);
-                ++i;
-                continue;
-            }
-            std::size_t j = i + 1;
-            while (j < n && sorted_leaf_id_at(xp, j, ood_id, fast) == id)
-                ++j;
-
             if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
                 using CI = poly_eval_type::CanonicalInput;
                 std::array<value_type *, output_dim> run_soa{};
                 poet::static_for<output_dim>([&](auto D) -> void {
                     constexpr std::size_t d = D;
-                    run_soa[d]              = soa_out[d] + i;
+                    run_soa[d]              = soa_out[d] + base;
                 });
-                k.run_soa(leaf_view_of(id), reinterpret_cast<const CI *>(xp + i), run_soa, j - i);
+                k.run_soa(leaf_view_of(id), reinterpret_cast<const CI *>(xp + base), run_soa, cnt);
             } else {
                 static_assert(output_dim == 1, "scalar-input fits are 1-output by construction");
-                k.run(leaf_view_of(id), xp + i, soa_out[0] + i, j - i);
+                k.run(leaf_view_of(id), xp + base, soa_out[0] + base, cnt);
             }
-            i = j;
-        }
+        };
+        for_each_sorted_run_1d(*this, xp, n, on_run);
     }
 
     template <class K = detail::InlineKernels>
     TREEWEAVE_FLATTEN auto sorted(const value_type *xp, value_type *res, std::size_t n, const K &k = {}) const -> void
         requires(input_dim == 1)
     {
-        if (n == 0) [[unlikely]]
-            return;
-
-        constexpr value_type nan_v     = std::numeric_limits<value_type>::quiet_NaN();
-        auto                 write_nan = [&](std::size_t i) -> void {
-            for (std::size_t j = 0; j < output_dim; ++j)
-                res[i * output_dim + j] = nan_v;
-        };
-
-        const auto          n_leaves = static_cast<std::uint32_t>(polyfits_.size());
-        const std::uint32_t ood_id   = n_leaves;
-        const bool          fast     = subtrees_.size() == 1 && subtrees_.front().has_leaf_table();
-
-        std::size_t i = 0;
-        // OOD prefix: sorted input means anything below lower_left_[0]
-        // is contiguous at the front.
-        while (i < n && xp[i] < lower_left_[0]) {
-            write_nan(i);
-            ++i;
-        }
-
-        while (i < n) {
-            // `>` not `>=`: the closed upper endpoint `x == upper` is evaluated
-            // (clamped to the last leaf); the OOD-high suffix starts strictly
-            // above it.
-            if (xp[i] > upper_right_[0]) [[unlikely]] {
-                // OOD suffix begins here (and continues to the end).
-                do {
-                    write_nan(i);
-                    ++i;
-                } while (i < n);
-                break;
+        const auto ood_id = out_of_domain_id();
+        auto       on_run = [&](std::uint32_t id, std::size_t base, std::size_t cnt) -> void {
+            if (id == ood_id) {
+                detail::fill_out_of_domain(*this, res + base * output_dim, cnt);
+                return;
             }
-            const std::uint32_t id = sorted_leaf_id_at(xp, i, ood_id, fast);
-            if (id == ood_id) [[unlikely]] {
-                // Fast-path quantize wrap can flag points slightly above
-                // the upper bound that survived the explicit prefix
-                // guards (e.g. NaN). Fall back to a per-point NaN here.
-                write_nan(i);
-                ++i;
-                continue;
-            }
-            std::size_t j = i + 1;
-            while (j < n && sorted_leaf_id_at(xp, j, ood_id, fast) == id)
-                ++j;
             // Array-spelled 1D goes through polyfit's FuncEvalND, whose
             // batch overload takes (CanonicalInput*, CanonicalOutput*, n).
             // `array<value_type, 1>` and `array<value_type, OUT_DIM>` are
@@ -806,13 +813,13 @@ class Function {
             if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
                 using CI = poly_eval_type::CanonicalInput;
                 using CO = poly_eval_type::CanonicalOutput;
-                k.run_aos(leaf_view_of(id), reinterpret_cast<const CI *>(xp + i),
-                          reinterpret_cast<CO *>(res + i * output_dim), j - i);
+                k.run_aos(leaf_view_of(id), reinterpret_cast<const CI *>(xp + base),
+                          reinterpret_cast<CO *>(res + base * output_dim), cnt);
             } else {
-                k.run(leaf_view_of(id), xp + i, res + i, j - i);
+                k.run(leaf_view_of(id), xp + base, res + base, cnt);
             }
-            i = j;
-        }
+        };
+        for_each_sorted_run_1d(*this, xp, n, on_run);
     }
 
     /// POD view of leaf `id`'s polynomial for the kernel policy `K`. Built on
@@ -874,10 +881,10 @@ class Function {
         bool in_domain = true;
         poet::static_for<input_dim>([&](auto D) -> void {
             constexpr std::size_t d = D;
-            // Positive-logic gate: NaN fails this as well, while the old
-            // `x < lo || x > hi` check let NaN through to `get_linear_bin(NaN)`
-            // (UB narrowing conversion + out-of-bounds subtree index; observed
-            // as a segfault on clang). OOD-low and finite `x > upper` fall to
+            // Positive-logic gate: `!(x >= lo && x <= hi)` is true for NaN as
+            // well, while the old `x < lo || x > hi` check let NaN through to
+            // `get_linear_bin(NaN)` (a UB int cast + OOB subtree index — clang
+            // segfaulted on it). OOD-low and finite `x > upper` fall to
             // `ood_id`; the closed upper endpoint stays in (same condition).
             if (!(xi[d] >= lower_left_[d] && xi[d] <= upper_right_[d]))
                 in_domain = false;
@@ -1257,7 +1264,7 @@ class Function {
         // gate as the general path below, so OOD-low / finite OOD-high / NaN /
         // ±Inf all map to `ood_id` -> NaN, point-for-point identical.
         if (subtrees_.size() == 1 && subtrees_.front().has_leaf_table()) {
-            const auto          ood_id = static_cast<std::uint32_t>(polyfits_.size());
+            const auto          ood_id = out_of_domain_id();
             const std::uint32_t id     = subtrees_.front().find_leaf_id_with_ood(x, ood_id);
             if (id == ood_id) [[unlikely]]
                 return nan_out();

@@ -217,9 +217,13 @@ points by leaf fixes that.
 ```
 
 Leaf coefficients stay loaded across all points in that leaf's run, so the
-AVX2 FMA kernel runs at peak. Per-call scratch (`leaf_ids`, `counts`,
-`offsets`, `perm`, `xp_packed`, `out_packed`) is `thread_local` so threaded
-callers don't contend.
+vectorized FMA kernel runs at peak. The scratch (the packed input and output
+buffers, `counts` — which double as the bin offsets after the scan — and the
+inverse permutation `perm_inv`, plus a `leaf_ids` staging buffer on the
+descent path) is allocated per call through the caller-supplied allocator and
+freed on return, so threaded callers never share state. Callers that cannot
+pay that allocation per call drive the same pipeline over caller-owned buffers
+through `<treeweave/guru.hpp>` (the guru interface).
 
 ## What costs what
 

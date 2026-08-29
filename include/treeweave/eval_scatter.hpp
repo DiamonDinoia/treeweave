@@ -68,6 +68,9 @@ auto eval_scatter_sorted(std::span<const Function<Degree, Func> *const> fits, st
     std::exclusive_scan(counts.begin(), counts.begin() + n_fits, counts.begin(), std::uint32_t{0});
 
     // Placement: write only the original-order index at the bin cursor.
+    // `perm` is the FORWARD permutation — `perm[k]` is the original index of
+    // packed slot k — the opposite convention from `guru::scatter`'s `rank`,
+    // whose `rank[i]` is the packed slot of original index i.
     // The dispatch loop reads xs[perm[k]] directly, so no fit-grouped
     // `xs_sorted` scratch is needed. That trades sequential xs_sorted reads
     // for scattered reads of xs, but dispatch already writes ys[perm[k]]

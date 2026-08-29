@@ -4,6 +4,7 @@ OUTPUT_DIRECTORY       = "@CMAKE_BINARY_DIR@/docs"
 # Public surface only: the C++ umbrella tree + the C ABI header. The detail/
 # subtree is excluded by EXCLUDE_SYMBOLS below.
 INPUT                  = "@CMAKE_SOURCE_DIR@/include/treeweave/treeweave.hpp" \
+                         "@CMAKE_SOURCE_DIR@/include/treeweave/guru.hpp" \
                          "@CMAKE_SOURCE_DIR@/include/treeweave/detail/tol_kind.hpp" \
                          "@CMAKE_SOURCE_DIR@/include/treeweave.h"
 RECURSIVE              = NO
