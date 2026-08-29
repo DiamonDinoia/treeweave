@@ -874,10 +874,12 @@ class Function {
         bool in_domain = true;
         poet::static_for<input_dim>([&](auto D) -> void {
             constexpr std::size_t d = D;
-            // Inclusive high bound: `x == upper_right_` stays in-domain and
-            // feeds the clamped `get_linear_bin` + `find_leaf_id` (closed upper
-            // endpoint). OOD-low and finite `x > upper` fall to `ood_id`.
-            if (xi[d] < lower_left_[d] || xi[d] > upper_right_[d])
+            // Positive-logic gate: NaN fails this as well, while the old
+            // `x < lo || x > hi` check let NaN through to `get_linear_bin(NaN)`
+            // (UB narrowing conversion + out-of-bounds subtree index; observed
+            // as a segfault on clang). OOD-low and finite `x > upper` fall to
+            // `ood_id`; the closed upper endpoint stays in (same condition).
+            if (!(xi[d] >= lower_left_[d] && xi[d] <= upper_right_[d]))
                 in_domain = false;
         });
         return in_domain ? subtrees_[get_linear_bin(xi)].find_leaf_id(xi) : ood_id;
