@@ -326,9 +326,23 @@ if(TREEWEAVE_GENERATE_DOCS)
     )
 
     add_custom_target(docs DEPENDS sphinx)
+
+    # FINUFFT-style docs server: `cmake --build <dir> --target web` builds the
+    # HTML and serves it at http://127.0.0.1:8000 until interrupted.
+    add_custom_target(
+        web
+        DEPENDS sphinx
+        COMMAND
+            ${CMAKE_COMMAND} -E echo
+            "Serving docs at http://127.0.0.1:8000 - Ctrl-C to stop"
+        COMMAND ${Python_EXECUTABLE} -m http.server 8000
+                --directory ${PROJECT_BINARY_DIR}/docs/_build/html
+        COMMENT "Building and serving the docs locally"
+    )
+
     message(
         STATUS
-        "TREEWEAVE: Documentation targets enabled (doxygen, sphinx, docs)"
+        "TREEWEAVE: Documentation targets enabled (doxygen, sphinx, docs, web)"
     )
 endif()
 
