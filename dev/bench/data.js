@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787555055606,
+  "lastUpdate": 1788181665268,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3108,6 +3108,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000376131111111111,
             "unit": "s/batch",
             "extra": "MdAPE=0.00919674099549694; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "a49ae99164bf161761bcf5d6e9270253d278820f",
+          "message": "fix: make the rung gate's self-test build its fixtures under MSVC\n\nMSYS bash rewrites any argument that starts with \"/\", so cl.exe received\nneither /nologo nor the /Fo object path, and every fixture path was POSIX.\nUse the \"-\" option form and keep all fixture paths relative to the work\ndirectory. Report the compiler's own error instead of discarding it.",
+          "timestamp": "2026-08-28T15:05:03Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/a49ae99164bf161761bcf5d6e9270253d278820f"
+        },
+        "date": 1788181664336,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.00051060225,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00271395334337149; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.000773087125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0074168808229975; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000397306555555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00598426552572405; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.00074823425,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00419839593292767; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.001684580375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00164560363602373; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.0025613594,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0217454621346313; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.00683199925,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00644040169232856; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00084169625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000667253778754863; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000251179666666667,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00161707139824007; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000426955,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00379329135225702; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.00036592475,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00367747898975269; batch=65536 pts/call"
           }
         ]
       }
