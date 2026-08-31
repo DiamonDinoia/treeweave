@@ -105,6 +105,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#lower-level-the-guru-interface">Lower-level: the guru interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/c.html">C</a><ul>
@@ -188,6 +189,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/guru.html">Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#when-to-use-it">When to use it</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#the-helpers">The helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#rules-worth-pinning">Rules worth pinning</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
@@ -215,6 +222,17 @@
 <li class="toctree-l2 current"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="library_root.html#functions">Functions</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html">Function treeweave::guru::exclusive_scan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, typename F::value_type *, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, std::array&lt;typename F::value_type *, F::output_dim&gt;, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html">Template Function treeweave::guru::for_each_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2.html">Template Function treeweave::guru::for_each_sorted_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html">Template Function treeweave::guru::gather</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html">Function treeweave::guru::histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html">Template Function treeweave::guru::scatter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94.html">Function treeweave_active_arch</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">Function treeweave_arch_available</a></li>
@@ -253,6 +271,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_guru.hpp.html">File guru.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave.h.html">File treeweave.h</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>

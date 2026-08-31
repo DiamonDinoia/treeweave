@@ -21,6 +21,7 @@ Subdirectories
 Files
 -----
 
+- :ref:`file_include_treeweave_guru.hpp`
 - :ref:`file_include_treeweave_treeweave.hpp`
 
 

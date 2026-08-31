@@ -1,0 +1,14 @@
+.. _exhale_typedef_treeweave_8hpp_1a74962e80c1aa96734c5084a7060116cf:
+
+Typedef treeweave::default_kernel_policy
+========================================
+
+- Defined in :ref:`file_include_treeweave_treeweave.hpp`
+
+
+Typedef Documentation
+---------------------
+
+
+.. doxygentypedef:: treeweave::default_kernel_policy
+   :project: treeweave

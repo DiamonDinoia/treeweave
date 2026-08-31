@@ -102,6 +102,7 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/cpp.html#lower-level-the-guru-interface">Lower-level: the guru interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="guides/c.html">C</a><ul>
@@ -185,6 +186,12 @@
 <li class="toctree-l2"><a class="reference internal" href="guides/dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="guides/guru.html">Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guides/guru.html#when-to-use-it">When to use it</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/guru.html#the-helpers">The helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guides/guru.html#rules-worth-pinning">Rules worth pinning</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="how-treeweave-works.html">How treeweave works</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
@@ -212,6 +219,17 @@
 <li class="toctree-l2"><a class="reference internal" href="api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html">Function treeweave::guru::exclusive_scan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, typename F::value_type *, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, std::array&lt;typename F::value_type *, F::output_dim&gt;, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html">Template Function treeweave::guru::for_each_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2.html">Template Function treeweave::guru::for_each_sorted_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html">Template Function treeweave::guru::gather</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html">Function treeweave::guru::histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html">Template Function treeweave::guru::scatter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94.html">Function treeweave_active_arch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/function_treeweave_8h_1ac415500fc3051431d177cdfcbe830c2c.html">Function treeweave_arch_available</a></li>
@@ -250,6 +268,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="api/library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave_guru.hpp.html">File guru.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave.h.html">File treeweave.h</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>
@@ -295,7 +314,23 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/typedef_treeweave_8hpp_1a74962e80c1aa96734c5084a7060116cf.html#_CPPv4N9treeweave21default_kernel_policyE">treeweave::default_kernel_policy (C++ type)</a>
+</li>
       <li><a href="api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html#_CPPv4I_NSt6size_tE_10EvalPolicy00EN9treeweave3fitEDaRR4Func6Domain6Domaind7options">treeweave::fit (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html#_CPPv4I_NSt6ranges16contiguous_rangeE_NSt6ranges16contiguous_rangeEEN9treeweave4guru13counting_sortEvNSt4spanIKNSt8uint32_tEEERR2InRR6PackedNSt4spanINSt8uint32_tEEENSt4spanINSt8uint32_tEEE">treeweave::guru::counting_sort (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html#_CPPv4I00EN9treeweave4guru13eval_leaf_aosEvRK1FNSt8uint32_tEPKN1F10value_typeEPN1F10value_typeENSt6size_tERK1K">treeweave::guru::eval_leaf_aos (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html#_CPPv4N9treeweave4guru14exclusive_scanENSt4spanINSt8uint32_tEEE">treeweave::guru::exclusive_scan (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html#_CPPv4I0EN9treeweave4guru12for_each_runEvNSt4spanIKNSt8uint32_tEEERR2Fn">treeweave::guru::for_each_run (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html#_CPPv4I_NSt6ranges16contiguous_rangeE_NSt6ranges16contiguous_rangeEEN9treeweave4guru6gatherEvNSt4spanIKNSt8uint32_tEEERR6PackedRR3Out">treeweave::guru::gather (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html#_CPPv4N9treeweave4guru9histogramENSt4spanIKNSt8uint32_tEEENSt4spanINSt8uint32_tEEE">treeweave::guru::histogram (C++ function)</a>
+</li>
+      <li><a href="api/function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html#_CPPv4I_NSt6ranges16contiguous_rangeE_NSt6ranges16contiguous_rangeEEN9treeweave4guru7scatterEvNSt4spanIKNSt8uint32_tEEERR2InRR6PackedNSt4spanINSt8uint32_tEEENSt4spanINSt8uint32_tEEE">treeweave::guru::scatter (C++ function)</a>
 </li>
       <li><a href="api/structtreeweave_1_1options.html#_CPPv4N9treeweave7optionsE">treeweave::options (C++ struct)</a>
 </li>
@@ -353,6 +388,8 @@
 </li>
       <li><a href="api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html#_CPPv414treeweave_eval11treeweave_tPKdPd">treeweave_eval (C++ function)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html#_CPPv417treeweave_eval_1d11treeweave_td">treeweave_eval_1d (C++ function)</a>
 </li>
       <li><a href="api/function_treeweave_8h_1ae536acf26d3a49fba52abc0a43a5db04.html#_CPPv417treeweave_eval_2d11treeweave_tdd">treeweave_eval_2d (C++ function)</a>
@@ -361,8 +398,6 @@
 </li>
       <li><a href="api/function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669.html#_CPPv413treeweave_fit16treeweave_func_tiiPKdPKddPvPK14treeweave_opts">treeweave_fit (C++ function)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html#_CPPv414treeweave_free11treeweave_t">treeweave_free (C++ function)</a>
 </li>
       <li><a href="api/typedef_treeweave_8h_1ad095928a162fe6d6917a1c96f51bf3cc.html#_CPPv416treeweave_func_t">treeweave_func_t (C++ type)</a>

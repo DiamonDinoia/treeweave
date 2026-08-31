@@ -13,6 +13,16 @@ Namespaces
 
    namespace_treeweave.rst
 
+.. toctree::
+   :maxdepth: 5
+
+   namespace_treeweave__guru.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_treeweave__guru__gdetail.rst
+
 Classes and Structs
 *******************
 
@@ -78,6 +88,11 @@ Variables
 Typedefs
 ********
 
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_treeweave_8hpp_1a74962e80c1aa96734c5084a7060116cf.rst
 
 .. toctree::
    :maxdepth: 5

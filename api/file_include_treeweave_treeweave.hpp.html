@@ -104,6 +104,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#options">Options</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#thread-safety">Thread safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/cpp.html#lower-level-the-guru-interface">Lower-level: the guru interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../guides/c.html">C</a><ul>
@@ -187,6 +188,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/guru.html">Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#when-to-use-it">When to use it</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#the-helpers">The helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/guru.html#rules-worth-pinning">Rules worth pinning</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
@@ -214,6 +221,17 @@
 <li class="toctree-l2 current"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html">Function treeweave::guru::exclusive_scan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, typename F::value_type *, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, std::array&lt;typename F::value_type *, F::output_dim&gt;, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html">Template Function treeweave::guru::for_each_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2.html">Template Function treeweave::guru::for_each_sorted_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html">Template Function treeweave::guru::gather</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html">Function treeweave::guru::histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html">Template Function treeweave::guru::scatter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94.html">Function treeweave_active_arch</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8h_1ac415500fc3051431d177cdfcbe830c2c.html">Function treeweave_arch_available</a></li>
@@ -252,6 +270,7 @@
 </ul>
 </li>
 <li class="toctree-l3 current"><a class="reference internal" href="library_root.html#files">Files</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_guru.hpp.html">File guru.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave.h.html">File treeweave.h</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">File treeweave.hpp</a></li>
@@ -298,10 +317,12 @@
 <li><p><a class="reference internal" href="#definition-include-treeweave-treeweave-hpp" id="id1">Definition (<code class="docutils literal notranslate"><span class="pre">include/treeweave/treeweave.hpp</span></code>)</a></p></li>
 <li><p><a class="reference internal" href="#detailed-description" id="id2">Detailed Description</a></p></li>
 <li><p><a class="reference internal" href="#includes" id="id3">Includes</a></p></li>
-<li><p><a class="reference internal" href="#namespaces" id="id4">Namespaces</a></p></li>
-<li><p><a class="reference internal" href="#classes" id="id5">Classes</a></p></li>
-<li><p><a class="reference internal" href="#functions" id="id6">Functions</a></p></li>
-<li><p><a class="reference internal" href="#variables" id="id7">Variables</a></p></li>
+<li><p><a class="reference internal" href="#included-by" id="id4">Included By</a></p></li>
+<li><p><a class="reference internal" href="#namespaces" id="id5">Namespaces</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id6">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id7">Functions</a></p></li>
+<li><p><a class="reference internal" href="#typedefs" id="id8">Typedefs</a></p></li>
+<li><p><a class="reference internal" href="#variables" id="id9">Variables</a></p></li>
 </ul>
 </nav>
 <section id="definition-include-treeweave-treeweave-hpp">
@@ -310,7 +331,7 @@
 <section id="detailed-description">
 <h2>Detailed Description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
 <p>Thread safety. Once <code class="docutils literal notranslate"><span class="pre">treeweave::fit(...)</span></code> returns, the resulting Function is immutable through its <code class="docutils literal notranslate"><span class="pre">operator()</span></code> overloads, which are safe to call concurrently from multiple threads provided each call writes to a disjoint output slice. The batch path allocates and frees its scratch on each call via the caller-supplied allocator (default <code class="docutils literal notranslate"><span class="pre">std::allocator&lt;value_type&gt;</span></code>); no state is carried between calls. For pooled reuse, pass a stateful allocator; <code class="docutils literal notranslate"><span class="pre">std::pmr::polymorphic_allocator</span></code> over a <code class="docutils literal notranslate"><span class="pre">monotonic_buffer_resource</span></code> is the idiomatic choice. See <code class="docutils literal notranslate"><span class="pre">tests/test_threadsafe.cpp</span></code>.</p>
-<p>Memory cost. Tightening <code class="docutils literal notranslate"><span class="pre">tol</span></code>, raising <code class="docutils literal notranslate"><span class="pre">max_depth</span></code>, raising <code class="docutils literal notranslate"><span class="pre">max_memory_mib</span></code>, or enabling <code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code> all increase the leaf count <code class="docutils literal notranslate"><span class="pre">L</span></code>. The Function holds one persistent allocation: the tree itself, <code class="docutils literal notranslate"><span class="pre">O(L)</span></code>, shared by all threads and reported by <code class="docutils literal notranslate"><span class="pre">Function::print_stats()</span></code> / <code class="docutils literal notranslate"><span class="pre">memory_usage()</span></code>. Each batch call allocates a stack-local scratch of roughly <code class="docutils literal notranslate"><span class="pre">tile_K</span> <span class="pre">*</span> <span class="pre">(4</span> <span class="pre">+</span> <span class="pre">(input_dim</span> <span class="pre">+</span> <span class="pre">output_dim)</span> <span class="pre">*</span> <span class="pre">sizeof(value_type))</span></code> plus <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">(L</span> <span class="pre">+</span> <span class="pre">1)</span></code> bytes (with <code class="docutils literal notranslate"><span class="pre">tile_K</span> <span class="pre">=</span> <span class="pre">max(65536,</span> <span class="pre">32</span> <span class="pre">*</span> <span class="pre">L)</span></code>) and frees it on return.</p>
+<p>Memory cost. Tightening <code class="docutils literal notranslate"><span class="pre">tol</span></code>, raising <code class="docutils literal notranslate"><span class="pre">max_depth</span></code>, raising <code class="docutils literal notranslate"><span class="pre">max_memory_mib</span></code>, or enabling <code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code> all increase the leaf count <code class="docutils literal notranslate"><span class="pre">L</span></code>. The Function holds one persistent allocation: the tree itself, <code class="docutils literal notranslate"><span class="pre">O(L)</span></code>, shared by all threads and reported by <code class="docutils literal notranslate"><span class="pre">Function::print_stats()</span></code> / <code class="docutils literal notranslate"><span class="pre">memory_usage()</span></code>. Each batch call allocates and frees on return a scratch of roughly <code class="docutils literal notranslate"><span class="pre">tile_K</span> <span class="pre">*</span> <span class="pre">(4</span> <span class="pre">+</span> <span class="pre">(input_dim</span> <span class="pre">+</span> <span class="pre">output_dim)</span> <span class="pre">*</span> <span class="pre">sizeof(value_type))</span></code> plus <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">(L</span> <span class="pre">+</span> <span class="pre">1)</span></code> bytes (with <code class="docutils literal notranslate"><span class="pre">tile_K</span> <span class="pre">=</span> <span class="pre">max(65536,</span> <span class="pre">32</span> <span class="pre">*</span> <span class="pre">L)</span></code>) and frees it on return.</p>
 </section>
 <section id="includes">
 <h2>Includes<a class="headerlink" href="#includes" title="Link to this heading"></a></h2>
@@ -330,6 +351,12 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">utility</span></code></p></li>
 </ul>
 </section>
+<section id="included-by">
+<h2>Included By<a class="headerlink" href="#included-by" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="file_include_treeweave_guru.hpp.html#file-include-treeweave-guru-hpp"><span class="std std-ref">File guru.hpp</span></a></p></li>
+</ul>
+</section>
 <section id="namespaces">
 <h2>Namespaces<a class="headerlink" href="#namespaces" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -347,6 +374,12 @@
 <ul class="simple">
 <li><p><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html#exhale-function-treeweave-8hpp-1a19caefbd448da9f139ffd2b4474acb9b"><span class="std std-ref">Template Function treeweave::fit</span></a></p></li>
 <li><p><a class="reference internal" href="function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html#exhale-function-treeweave-8hpp-1a9bb0daaf3e51cd75d1efc976cb5f4382"><span class="std std-ref">Function treeweave::version_at_least</span></a></p></li>
+</ul>
+</section>
+<section id="typedefs">
+<h2>Typedefs<a class="headerlink" href="#typedefs" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="typedef_treeweave_8hpp_1a74962e80c1aa96734c5084a7060116cf.html#exhale-typedef-treeweave-8hpp-1a74962e80c1aa96734c5084a7060116cf"><span class="std std-ref">Typedef treeweave::default_kernel_policy</span></a></p></li>
 </ul>
 </section>
 <section id="variables">

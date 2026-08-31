@@ -1,0 +1,132 @@
+
+.. _file_include_treeweave_guru.hpp:
+
+File guru.hpp
+=============
+
+|exhale_lsh| :ref:`Parent directory <dir_include_treeweave>` (``include/treeweave``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+
+
+The guru interface: the batch pipeline as public, caller-driven stages — caller-owned scratch, caller-driven fusion, no per-call allocation. Named after FFTW's guru interface, the established precedent for an expert API exposing the planner/executor internals. 
+
+
+
+.. contents:: Contents
+   :local:
+   :backlinks: none
+
+Definition (``include/treeweave/guru.hpp``)
+-------------------------------------------
+
+
+
+
+Detailed Description
+--------------------
+
+The public ``Function`` batch evaluators fuse the stages (classify -> histogram -> scan -> scatter -> per-leaf SIMD eval -> gather back) into one call. That composition is right for most uses, but a caller that fits several Functions over sub-ranges of one domain (e.g. a hard function partitioned into regimes — the standard treeweave methodology: split at the singularities/asymptotes, subtract the singular part so each piece fits a polynomial, evaluate the piecewise part per regime, then add the analytically-known part back) re-pays the crossing costs: a range-partition sweep plus per-range scatter, a separate post-processing sweep, fresh allocations every call. The pieces here re-expose the stages so such callers can:
+
+
+
+- classify each point once into one combined key (``key = range_base + f.leaf_id(x)`` for the regime's fit — the classification machinery is the public ``Function`` interface: ``leaf_id``/``leaf_ids``, the quantize view via ``get_subtrees()``, ``has_fast_quantize()``, ``num_leaves()``, ``out_of_domain_id()``),
+
+- run ONE counting sort over those keys, on caller-owned buffers that persist across calls (``exclusive_scan`` + ``scatter`` when the histogram is fused into the classify sweep, otherwise the one-shot ``counting_sort``),
+
+- evaluate each packed run straight through polyfit's SIMD kernel and fuse their own elementwise post-processing while the run's data is still in registers (``eval_leaf_aos`` / ``eval_leaf_soa`` on the runs of ``for_each_run``, ``fill_out_of_domain`` on the out-of-domain bucket), then ``gather`` back through ``rank``,
+
+- do the same run-level fusion on sorted input with zero scratch (``for_each_sorted_run``: sorted input needs no counting sort at all).
+
+
+
+Preconditions mirror the library's: ids and ranks are ``std::uint32_t``, so a tile stays below 2^32 points. Classification semantics are identical to the public paths point-for-point. A point is out-of-domain (OOD) when the fit cannot evaluate it — below ``lower``, above ``upper``, or NaN/±Inf; classification maps it to the sentinel id ``f.out_of_domain_id()`` (== ``num_leaves()``), via the positive-logic gate that keeps the closed upper endpoint in-domain.
+
+Thread safety: everything here is reentrant and stateless; the buffers are caller arguments. The usual rule applies — disjoint output slices and disjoint scratch per thread.
+
+Combined-key rules, in one place:
+
+
+
+- Keys are fit-local ids with the fit's OWN sentinel FIRST folded, then offset per regime: ``key = (id == f.out_of_domain_id()) ? my_ood_bucket / : (range_base + id)``. The fold compares against the fit's own sentinel — never against an offset number. Lay the per-regime spaces back-to-back without holes (hank105's layout; the aggregated OOD bucket comes last).
+
+- After the sort, ``rank[i]`` holds the packed slot of point i — the INVERSE permutation, which the writeback consumes directly: ``out[i] = packed_out[rank[i]]`` per output component (``gather``), unconditionally — every slot belongs to exactly one bin, so OOD buckets too. (``eval_scatter_sorted`` in ``<treeweave/eval_scatter.hpp>`` records the opposite, FORWARD permutation: its ``perm[k]`` is the original index of packed slot k.)
+
+- Tile at what keeps the per-point scratch (keys 4 B + rank 4 B + packed in and out streams) L2-resident; on a 2 MiB L2 host the valley is 2^14 points for a 4-output fit (sweep {16384, 32768, 65536} when the layout differs).
+
+- Contract violations (key >= counts.size() into ``scatter``, the OOD sentinel into ``eval_leaf_*``) are assert-guarded: they fail cleanly in Debug and undefined in NDEBUG — build Debug/ASan when wiring a new caller.
+
+- Classification is SIMD when ``f.has_fast_quantize()`` (``leaf_id`` / ``leaf_ids``, and any tables fused from the fit's quantize view) and per-point tree descent otherwise; the ids are identical either way, only the cost moves. ARM/NEON, wasm, and x86 below AVX2 run the same semantics entirely through the public scalar machinery. 
+
+
+
+
+
+
+Includes
+--------
+
+
+- ``algorithm``
+
+- ``array``
+
+- ``cassert``
+
+- ``concepts``
+
+- ``cstddef``
+
+- ``cstdint``
+
+- ``ranges``
+
+- ``span``
+
+- ``treeweave/treeweave.hpp`` (:ref:`file_include_treeweave_treeweave.hpp`)
+
+- ``type_traits``
+
+
+
+
+
+
+Namespaces
+----------
+
+
+- :ref:`namespace_treeweave`
+
+- :ref:`namespace_treeweave__guru`
+
+- :ref:`namespace_treeweave__guru__gdetail`
+
+
+Functions
+---------
+
+
+- :ref:`exhale_function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33`
+
+- :ref:`exhale_function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3`
+
+- :ref:`exhale_function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f`
+
+- :ref:`exhale_function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae`
+
+- :ref:`exhale_function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b`
+
+- :ref:`exhale_function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d`
+
+- :ref:`exhale_function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f`
+
+- :ref:`exhale_function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2`
+
+- :ref:`exhale_function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1`
+
+- :ref:`exhale_function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a`
+
+- :ref:`exhale_function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4`
+

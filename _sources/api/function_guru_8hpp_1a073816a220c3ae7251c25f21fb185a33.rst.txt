@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33:
+
+Template Function treeweave::guru::counting_sort
+================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::counting_sort(std::span<const std::uint32_t>, In&&, Packed&&, std::span<std::uint32_t>, std::span<std::uint32_t>)
+   :project: treeweave

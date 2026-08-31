@@ -1,0 +1,455 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guru interface (treeweave::guru) &mdash; treeweave  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=7dbac3f1" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/collapsible-lists/js/CollapsibleLists.compressed.js?v=73120307"></script>
+      <script src="../_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How treeweave works" href="../how-treeweave-works.html" />
+    <link rel="prev" title="Runtime ISA dispatch" href="dispatch.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            treeweave
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#python">Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#c">C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#id1">C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#julia">Julia</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#matlab">MATLAB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#octave">Octave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#fortran">Fortran</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#javascript-typescript">JavaScript / TypeScript</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../install.html#cmake">CMake</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Language guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python.html">Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="python.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#decorator-form">Decorator form</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html#further">Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="julia.html">Julia</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="matlab.html">MATLAB / Octave</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#install-matlab">Install (MATLAB)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#install-octave">Install (Octave)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#evaluation-routes">Evaluation routes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="matlab.html#further">Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cpp.html">C++</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#download-headers-no-cmake">Download headers, no CMake</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-fetchcontent">CMake, FetchContent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpp.html#cmake-cpm">CMake, CPM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#d-fit">1-D fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#multi-dimensional-fit">Multi-dimensional fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#build-from-source">Build from source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpp.html#lower-level-the-guru-interface">Lower-level: the guru interface</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="c.html">C</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="c.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#direct-tarball">Direct tarball</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#cmake-package">CMake package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#source-build">Source build</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#evaluation-entry-points">Evaluation entry points</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="c.html#handle-and-callbacks">Handle and callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#fit">Fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#evaluate">Evaluate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#by-value-scalar-eval">By-value scalar eval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="c.html#introspection-and-teardown">Introspection and teardown</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#multi-arch-dispatch">Multi-arch dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#thread-safety">Thread safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="c.html#further">Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fortran.html">Fortran</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#install">Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#prebuilt-c-abi">Prebuilt C ABI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fortran.html#source-build">Source build</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="js.html">JavaScript / TypeScript</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="js.html#install">Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="js.html#source-build">Source build</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="options.html">Fit options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="options.html#common-fit-options">Common fit options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="options.html#language-specific-options">Language-specific options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="options.html#tolkind"><code class="docutils literal notranslate"><span class="pre">TolKind</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cmake.html">CMake</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#vendored-c">Vendored C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#targets">Targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#profiles">Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#installed-package">Installed package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmake.html#source-build">Source build</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="performance.html">Performance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#batch-over-scalar">Batch over scalar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#the-sorted-fast-path">The sorted fast path</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#the-leaf-table-fast-path">The leaf-table fast path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#memory-and-degree">Memory and degree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#multi-threading">Multi-threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="performance.html#cross-language-throughput-and-latency">Cross-language throughput and latency</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#throughput-mevals-s-higher-is-better">Throughput, Mevals/s, higher is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#latency-ns-eval-lower-is-better">Latency, ns/eval, lower is better</a></li>
+<li class="toctree-l3"><a class="reference internal" href="performance.html#batch-vs-sorted-batch">Batch vs sorted batch</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dispatch.html">Runtime ISA dispatch</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#how-the-build-chooses-the-family">How the build chooses the family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#why-no-sve-on-arm">Why no SVE on ARM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html#forcing-an-isa-for-testing">Forcing an ISA for testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#when-to-use-it">When to use it</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-helpers">The helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rules-worth-pinning">Rules worth pinning</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-3-leaf-evaluation-tensor-product-horner">Phase 3, leaf evaluation: tensor-product Horner</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-4-batched-eval-counting-sort-by-leaf">Phase 4, batched eval: counting sort by leaf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#what-costs-what">What costs what</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#tl-dr">TL;DR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#degree-selection-c-abi-vs-c-header-api">Degree selection: C ABI vs C++ header API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#background-and-further-reading">Background and further reading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../how-treeweave-works.html#the-math-briefly">The math, briefly</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../known-issues.html">Known issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../known-issues.html#matlab-octave-single-point-eval-overhead">MATLAB/Octave single-point eval overhead</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/library_root.html">treeweave API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#class-hierarchy">Class Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html">Function treeweave::guru::exclusive_scan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, typename F::value_type *, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d.html">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, std::array&lt;typename F::value_type *, F::output_dim&gt;, std::size_t)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html">Template Function treeweave::guru::for_each_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2.html">Template Function treeweave::guru::for_each_sorted_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html">Template Function treeweave::guru::gather</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html">Function treeweave::guru::histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html">Template Function treeweave::guru::scatter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382.html">Function treeweave::version_at_least</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a39b9210ddfbbf153a13d630dd011db94.html">Function treeweave_active_arch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ac415500fc3051431d177cdfcbe830c2c.html">Function treeweave_arch_available</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a813f4168f29dce9bc658d12caa901cad.html">Function treeweave_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1acd589eb837325d26c1f37af323af57b0.html">Function treeweave_default_opts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a97e40316b2b10a4d0a8586d574c9bca8.html">Function treeweave_dtype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1dd8b3ffdb48f4e71f9777178d7966c4.html">Function treeweave_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a788b57df76c1ffde0aab371be170c9ba.html">Function treeweave_eval_1d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ae536acf26d3a49fba52abc0a43a5db04.html">Function treeweave_eval_2d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a880504eff15c60717e73f7a0adb779c6.html">Function treeweave_eval_3d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a7f1653c91da65b312b4fc79dbc3ab669.html">Function treeweave_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a3a8a450fb84bce7141d491bdc721f497.html">Function treeweave_free</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a95b15169a05e04ce66999163e109c141.html">Function treeweave_input_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a56e4cab59185eda104f5b7590840ba0b.html">Function treeweave_last_error</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a5dccb13cc6f838eda1f9380fec949649.html">Function treeweave_memory_usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a560b7f8c70a2eb3e73a9bd3c15872fad.html">Function treeweave_output_dim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a3ffa3fb807c2e09959257a9eb68ab8d7.html">Function treeweave_print_stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a06335223edd24e51dd20b5d38e0b5ebd.html">Function treeweave_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a70269d9adb4d14c844d432cadf2e23dc.html">Function treeweave_transposed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ae6ab9211327d2b23d033b40d3fd5763c.html">Function treeweave_version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad774756632d22f71f85e1aed995644fa.html">Function treeweave_version_string</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1ad4dc99ddf455a59575513ddd177d708e.html">Function treeweavef_batch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1afd119db9d9cfa1a7c1c801b4ceeddc87.html">Function treeweavef_eval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a209a7982345f9248ad19c93e7e2b6f1e.html">Function treeweavef_eval_1d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a1e6967002857dc83037a5aa27b6fdd74.html">Function treeweavef_eval_2d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a3094b50df96798cc0695dd9891547cb9.html">Function treeweavef_eval_3d</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1aad5911412b8ba621b5fd197a30699833.html">Function treeweavef_fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a4fe6e28cdf97f79437b3f4b82c78c1c7.html">Function treeweavef_sorted</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8h_1a6eb917e13d058193f365f4fb235c568a.html">Function treeweavef_transposed</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#directories">Directories</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/dir_include.html">Directory include</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/dir_include_treeweave.html">Directory treeweave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/dir_include_treeweave_detail.html">Directory detail</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/file_include_treeweave_guru.hpp.html">File guru.hpp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/file_include_treeweave.h.html">File treeweave.h</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">treeweave</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/guides/guru.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="guru-interface-treeweave-guru">
+<h1>Guru interface (<code class="docutils literal notranslate"><span class="pre">treeweave::guru</span></code>)<a class="headerlink" href="#guru-interface-treeweave-guru" title="Link to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;treeweave/guru.hpp&gt;</span></code> is treeweave’s guru interface — named after FFTW’s
+guru interface, the established precedent for an expert API that exposes the
+planner/executor internals. It re-exposes the C++ batch pipeline’s stages for
+caller-driven fusion: caller-owned scratch, caller-chosen keys, no per-call
+allocation. Everything here is reentrant and stateless; the buffers are caller
+arguments. The public <code class="docutils literal notranslate"><span class="pre">Function::sorted</span></code> kernel dispatch runs on the same
+canonical walk this interface exposes, so library and user code share one path.</p>
+<section id="when-to-use-it">
+<h2>When to use it<a class="headerlink" href="#when-to-use-it" title="Link to this heading"></a></h2>
+<p>Use it when one fit is not enough: approximating a function with singularities,
+asymptotic regimes, or scale changes. The standard construction:</p>
+<ol class="arabic simple">
+<li><p><strong>Split the domain into regimes.</strong> Cut at singularities, at scale changes,
+anywhere the fit tree must get deep.</p></li>
+<li><p><strong>Fit each regime separately.</strong> Subtract or factor out the singular part so
+each regime’s leftover is polynomial-friendly; keep the analytically-known
+part as a cheap elementwise fixup to apply after each regime’s fit.</p></li>
+<li><p><strong>Evaluate through one sort.</strong> Per point compute one combined key
+<code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">=</span> <span class="pre">range_base</span> <span class="pre">+</span> <span class="pre">f.leaf_id(x)</span></code> for the regime’s fit. One counting sort
+over those keys packs every regime’s points into contiguous runs. Evaluate
+each run with the polyfit SIMD kernel and fuse its regime’s fixup while the
+data is still hot. Restore caller order with <code class="docutils literal notranslate"><span class="pre">gather</span></code> through the sort’s
+<code class="docutils literal notranslate"><span class="pre">rank</span></code>.</p></li>
+</ol>
+<p>Fully sorted input skips the sort entirely: leaf ids are monotone so runs are
+already contiguous (<code class="docutils literal notranslate"><span class="pre">guru::for_each_sorted_run</span></code>).</p>
+<p>The worked example is <code class="docutils literal notranslate"><span class="pre">tests/test_guru.cpp</span></code> in the source tree — including
+a two-fit combined-key sort with per-run fused post-processing. The pattern at
+production scale lives in the hank105 evaluator of the
+<a class="reference external" href="https://github.com/DiamonDinoia/treeweave-functions">treeweave-functions</a>
+repository.</p>
+</section>
+<section id="the-helpers">
+<h2>The helpers<a class="headerlink" href="#the-helpers" title="Link to this heading"></a></h2>
+<p>Classification stays the public <code class="docutils literal notranslate"><span class="pre">Function</span></code> machinery — <code class="docutils literal notranslate"><span class="pre">leaf_id</span></code> /
+<code class="docutils literal notranslate"><span class="pre">leaf_ids</span></code>, <code class="docutils literal notranslate"><span class="pre">num_leaves()</span></code>, <code class="docutils literal notranslate"><span class="pre">out_of_domain_id()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">has_fast_quantize()</span></code>: the SIMD batch form runs when the fit has a live leaf
+table, the per-point descent otherwise; the ids are identical either way. A
+point is out-of-domain (OOD) when the fit cannot evaluate it — below
+<code class="docutils literal notranslate"><span class="pre">lower</span></code>, above <code class="docutils literal notranslate"><span class="pre">upper</span></code>, or NaN/±Inf; classification maps it to the
+sentinel id <code class="docutils literal notranslate"><span class="pre">out_of_domain_id()</span></code> (== <code class="docutils literal notranslate"><span class="pre">num_leaves()</span></code>).</p>
+<p>The sort blocks are generic u32 counting-sort primitives. The u32 buffers are
+concrete <code class="docutils literal notranslate"><span class="pre">std::span</span></code>s (a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> or <code class="docutils literal notranslate"><span class="pre">std::array</span></code> converts
+implicitly); the value buffers accept any contiguous range with matching
+element types — pointer callers wrap <code class="docutils literal notranslate"><span class="pre">std::span{p,</span> <span class="pre">n}</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">counting_sort(keys,</span> <span class="pre">in,</span> <span class="pre">packed,</span> <span class="pre">counts,</span> <span class="pre">rank)</span></code> — one shot
+(<code class="docutils literal notranslate"><span class="pre">histogram</span></code> → <code class="docutils literal notranslate"><span class="pre">exclusive_scan</span></code> → <code class="docutils literal notranslate"><span class="pre">scatter</span></code>). On return <code class="docutils literal notranslate"><span class="pre">counts[b]</span></code>
+is bin <code class="docutils literal notranslate"><span class="pre">b</span></code>’s ending offset (feed to <code class="docutils literal notranslate"><span class="pre">for_each_run</span></code>), <code class="docutils literal notranslate"><span class="pre">packed</span></code> is
+bin-ordered, and <code class="docutils literal notranslate"><span class="pre">rank[i]</span></code> is point <code class="docutils literal notranslate"><span class="pre">i</span></code>’s packed slot — the inverse
+permutation, consumed directly by <code class="docutils literal notranslate"><span class="pre">gather</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">histogram(keys,</span> <span class="pre">counts)</span></code> + <code class="docutils literal notranslate"><span class="pre">exclusive_scan(counts)</span></code> +
+<code class="docutils literal notranslate"><span class="pre">scatter(keys,</span> <span class="pre">in,</span> <span class="pre">packed,</span> <span class="pre">counts,</span> <span class="pre">rank)</span></code> — the split form for callers
+that fuse the histogram into their own classify sweep. <code class="docutils literal notranslate"><span class="pre">scatter</span></code> keeps its
+literature name (the counting sort’s placement pass); unlike
+<code class="docutils literal notranslate"><span class="pre">thrust::scatter</span></code>, the destination map comes from <code class="docutils literal notranslate"><span class="pre">keys</span></code> + <code class="docutils literal notranslate"><span class="pre">counts</span></code>,
+not from the caller.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gather(rank,</span> <span class="pre">packed,</span> <span class="pre">out)</span></code> — <code class="docutils literal notranslate"><span class="pre">out[i]</span> <span class="pre">=</span> <span class="pre">packed[rank[i]]</span></code>
+(<code class="docutils literal notranslate"><span class="pre">thrust::gather</span></code>-exact), one call per output component; owns the
+gathered-read prefetch.</p></li>
+</ul>
+<p>The run evaluators call the polyfit kernels directly:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">eval_leaf_aos(f,</span> <span class="pre">id,</span> <span class="pre">x,</span> <span class="pre">out,</span> <span class="pre">n[,</span> <span class="pre">k])</span></code> — interleaved
+<code class="docutils literal notranslate"><span class="pre">out[q</span> <span class="pre">*</span> <span class="pre">output_dim</span> <span class="pre">+</span> <span class="pre">d]</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">eval_leaf_soa(f,</span> <span class="pre">id,</span> <span class="pre">x,</span> <span class="pre">out,</span> <span class="pre">n[,</span> <span class="pre">k])</span></code> — per-component spans
+(<code class="docutils literal notranslate"><span class="pre">output_dim</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fill_out_of_domain(f,</span> <span class="pre">out,</span> <span class="pre">n)</span></code> — the OOD bucket’s writeback:
+<code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">*</span> <span class="pre">output_dim</span></code> quiet NaNs (AoS overload; SoA twin takes the component
+pointer array). <code class="docutils literal notranslate"><span class="pre">Function::sorted</span></code> runs on the same definition.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">for_each_run(ends,</span> <span class="pre">fn)</span></code> — <code class="docutils literal notranslate"><span class="pre">fn(id,</span> <span class="pre">begin,</span> <span class="pre">count)</span></code> once per non-empty
+bin, ascending id order.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">for_each_sorted_run(f,</span> <span class="pre">xs,</span> <span class="pre">n,</span> <span class="pre">fn)</span></code> — sorted input, zero scratch; the
+same <code class="docutils literal notranslate"><span class="pre">fn(id,</span> <span class="pre">begin,</span> <span class="pre">count)</span></code> callback. OOD points arrive with
+<code class="docutils literal notranslate"><span class="pre">id</span> <span class="pre">==</span> <span class="pre">f.out_of_domain_id()</span></code> — the callback owns their fill
+(<code class="docutils literal notranslate"><span class="pre">fill_out_of_domain</span></code>); <code class="docutils literal notranslate"><span class="pre">eval_leaf_*</span></code> on the sentinel is a contract
+violation (asserted in Debug).</p></li>
+</ul>
+</section>
+<section id="rules-worth-pinning">
+<h2>Rules worth pinning<a class="headerlink" href="#rules-worth-pinning" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Key layout.</strong> Fold each fit’s OWN sentinel first, then offset per regime:
+<code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">=</span> <span class="pre">(id</span> <span class="pre">==</span> <span class="pre">f.out_of_domain_id())</span> <span class="pre">?</span> <span class="pre">ood_bucket</span> <span class="pre">:</span> <span class="pre">range_base</span> <span class="pre">+</span> <span class="pre">id</span></code> —
+never compare against an offset number. Lay the per-regime key spaces
+back-to-back without holes; put the shared OOD bucket last. Neighbourhood:
+<code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">&lt;</span> <span class="pre">counts.size()</span></code> everywhere, every tile stays below <code class="docutils literal notranslate"><span class="pre">2^32</span></code> points.</p></li>
+<li><p><strong>Writeback.</strong> <code class="docutils literal notranslate"><span class="pre">gather(rank,</span> <span class="pre">packed_out,</span> <span class="pre">out)</span></code> unconditionally, per
+output component. Every slot belongs to exactly one bin — the OOD buckets
+included. (<code class="docutils literal notranslate"><span class="pre">eval_scatter_sorted</span></code> in <code class="docutils literal notranslate"><span class="pre">&lt;treeweave/eval_scatter.hpp&gt;</span></code>
+records the opposite, forward permutation: its <code class="docutils literal notranslate"><span class="pre">perm[k]</span></code> is the original
+index of packed slot <code class="docutils literal notranslate"><span class="pre">k</span></code>.)</p></li>
+<li><p><strong>Tiles.</strong> Process the batch in tiles sized to keep per-point scratch
+(<code class="docutils literal notranslate"><span class="pre">keys</span></code> 4 B + <code class="docutils literal notranslate"><span class="pre">rank</span></code> 4 B + packed in/out streams) L2-resident. On a
+2 MiB L2 host the measured valley is <code class="docutils literal notranslate"><span class="pre">2^14</span></code> points for a 4-output fit;
+sweep <code class="docutils literal notranslate"><span class="pre">{16384,</span> <span class="pre">32768,</span> <span class="pre">65536}</span></code> if your layout differs.</p></li>
+<li><p><strong>Contract errors.</strong> <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">&gt;=</span> <span class="pre">counts.size()</span></code> into the sort and the OOD
+sentinel into <code class="docutils literal notranslate"><span class="pre">eval_leaf_*</span></code> are assert-guarded: clean failure in Debug,
+undefined behaviour in NDEBUG. Wire new callers up under a Debug or
+sanitizer build first.</p></li>
+<li><p><strong>ISA expectations.</strong> SIMD classification needs the fit’s leaf table
+(<code class="docutils literal notranslate"><span class="pre">has_fast_quantize()</span></code>); otherwise the work degenerates to per-point tree
+descent with identical ids. The numeric kernels are ISA-generic; ports below
+AVX2 run every piece on the public scalar machinery.</p></li>
+</ul>
+<p>The default kernel-policy parameter (<code class="docutils literal notranslate"><span class="pre">k</span></code>) spells
+<code class="docutils literal notranslate"><span class="pre">treeweave::default_kernel_policy</span></code> — an alias of the library’s internal
+<code class="docutils literal notranslate"><span class="pre">detail::InlineKernels</span></code> — and exists for callers that pass a custom policy;
+nobody else should pass it.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dispatch.html" class="btn btn-neutral float-left" title="Runtime ISA dispatch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../how-treeweave-works.html" class="btn btn-neutral float-right" title="How treeweave works" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, Marco Barbone and the treeweave authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

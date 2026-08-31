@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4:
+
+Template Function treeweave::guru::scatter
+==========================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::scatter(std::span<const std::uint32_t>, In&&, Packed&&, std::span<std::uint32_t>, std::span<std::uint32_t>)
+   :project: treeweave

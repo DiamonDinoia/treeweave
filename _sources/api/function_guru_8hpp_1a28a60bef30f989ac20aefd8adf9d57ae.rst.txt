@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae:
+
+Function treeweave::guru::exclusive_scan
+========================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::exclusive_scan(std::span<std::uint32_t>)
+   :project: treeweave

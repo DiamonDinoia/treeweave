@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a:
+
+Function treeweave::guru::histogram
+===================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::histogram(std::span<const std::uint32_t>, std::span<std::uint32_t>)
+   :project: treeweave

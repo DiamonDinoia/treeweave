@@ -1,0 +1,47 @@
+
+.. _namespace_treeweave__guru:
+
+Namespace treeweave::guru
+=========================
+
+
+.. contents:: Contents
+   :local:
+   :backlinks: none
+
+
+
+
+
+Namespaces
+----------
+
+
+- :ref:`namespace_treeweave__guru__gdetail`
+
+
+Functions
+---------
+
+
+- :ref:`exhale_function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33`
+
+- :ref:`exhale_function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3`
+
+- :ref:`exhale_function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f`
+
+- :ref:`exhale_function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae`
+
+- :ref:`exhale_function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b`
+
+- :ref:`exhale_function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d`
+
+- :ref:`exhale_function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f`
+
+- :ref:`exhale_function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2`
+
+- :ref:`exhale_function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1`
+
+- :ref:`exhale_function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a`
+
+- :ref:`exhale_function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4`

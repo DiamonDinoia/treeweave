@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3:
+
+Template Function treeweave::guru::eval_leaf_aos
+================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::eval_leaf_aos(const F&, std::uint32_t, const typename F::value_type *, typename F::value_type *, std::size_t, const K&)
+   :project: treeweave

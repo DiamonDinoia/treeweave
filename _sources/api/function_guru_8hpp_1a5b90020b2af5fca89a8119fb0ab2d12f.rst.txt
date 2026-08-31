@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f:
+
+Template Function treeweave::guru::eval_leaf_soa
+================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::eval_leaf_soa(const F&, std::uint32_t, const typename F::value_type *, std::array<typename F::value_type *, F::output_dim>, std::size_t, const K&)
+   :project: treeweave

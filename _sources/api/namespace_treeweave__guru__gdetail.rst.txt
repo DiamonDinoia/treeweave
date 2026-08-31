@@ -1,0 +1,13 @@
+
+.. _namespace_treeweave__guru__gdetail:
+
+Namespace treeweave::guru::gdetail
+==================================
+
+
+.. contents:: Contents
+   :local:
+   :backlinks: none
+
+
+

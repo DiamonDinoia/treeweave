@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2:
+
+Template Function treeweave::guru::for_each_sorted_run
+======================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::for_each_sorted_run(const F&, const typename F::value_type *, std::size_t, Fn&&)
+   :project: treeweave

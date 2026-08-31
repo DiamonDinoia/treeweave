@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1:
+
+Template Function treeweave::guru::gather
+=========================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::gather(std::span<const std::uint32_t>, Packed&&, Out&&)
+   :project: treeweave

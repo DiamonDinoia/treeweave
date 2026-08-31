@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f:
+
+Template Function treeweave::guru::for_each_run
+===============================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::for_each_run(std::span<const std::uint32_t>, Fn&&)
+   :project: treeweave

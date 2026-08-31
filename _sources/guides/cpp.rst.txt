@@ -109,3 +109,15 @@ its own ``-march``. See :doc:`dispatch`.
 
 Runnable sources:
 `examples/c++/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B>`_.
+
+Lower-level: the guru interface
+-------------------------------
+
+``treeweave/guru.hpp`` — the guru interface, after FFTW's — re-exposes the
+C++ batch pipeline's stages for caller-driven fusion: one classify sweep per
+point, one combined-key counting sort across several fits, per-run SIMD eval
+with each regime's post-processing fused while the data is still hot, and a
+``gather`` writeback — all on caller-owned scratch, no per-call allocation.
+The sorted run walk is the same one ``Function::sorted`` dispatches from, so
+library and user code share one path. See :doc:`guru` for the recipe, the
+key-layout rules, and the worked example.
