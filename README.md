@@ -137,7 +137,8 @@ into regimes: at singularities, at scale changes, anywhere the fit tree must get
 Second, subtract or factor out the singular part so each regime's leftover is
 polynomial-friendly, fit each regime separately, and keep the analytically-known part as
 a cheap elementwise fixup. Third, at evaluation: one classify sweep computes each point's
-combined key (`key = range_base + leaf_id`). One counting sort over those keys packs every
+combined key (`key = range_base + leaf_id`; `guru::LaneQuantizer` is the SIMD lane-level
+twin of `leaf_id`, for folding the key in registers). One counting sort over those keys packs every
 regime's points into contiguous runs (`counting_sort`, or `histogram` +
 `exclusive_scan` + `scatter` split apart). Each packed run calls polyfit's SIMD kernel
 *plus* its regime's fixup while the data is still hot (`for_each_run` +

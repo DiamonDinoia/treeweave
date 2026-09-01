@@ -29,6 +29,18 @@ section verbatim into that release's GitHub Release notes.
   across seven files that would turn into silent passes on a test rename.
 
 ### Added
+- `guru::LaneQuantizer<T, Arch>`: the SIMD lane-level twin of
+  `Function::leaf_id` for a single-subtree fit with a live leaf table.
+  `in_domain(x)` and `ids(x)` classify one `xsimd::batch` into the lane mask
+  and the lane-matched integer ids, identical lane for lane to `leaf_id`, so
+  a multi-regime caller folds its combined key with `xsimd::select` in
+  registers. Pure xsimd, no ISA gate; `tests/test_guru.cpp` pins the parity on
+  f64, f64 1D->4D and f32 fits including the OOD, endpoint and non-finite
+  lanes.
+- The polyfit pin moves to `017921d` (branch `horner-batch-eval`): `poly_eval::horner`
+  takes an `xsimd::batch` argument, and xsimd comes from the `DiamonDinoia/xsimd`
+  fork at `97fe968`, which adds the vector double -> int64 `fast_cast` and the
+  u32 -> i64 widening `gather` that `LaneQuantizer::ids` relies on.
 - `<treeweave/guru.hpp>` (`treeweave::guru`): the guru interface (after
   FFTW's) — the batch pipeline as public stages with caller-owned scratch and
   no per-call allocation. `counting_sort`/`histogram`/`exclusive_scan`/
