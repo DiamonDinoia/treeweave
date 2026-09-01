@@ -561,3 +561,75 @@ TEST_CASE("guru two-fit combined key matches per-fit reference", "[guru][combine
         REQUIRE(std::abs(out[i] - want) < ((i % 2) ? 1e-11 : 1e-12));
     }
 }
+
+namespace {
+
+// Lane-for-lane parity of LaneQuantizer with the scalar leaf_id on a whole
+// batch: fold the in-domain mask onto the ids exactly as a caller would.
+template <class F>
+auto check_lane_parity(const F &f, std::vector<typename F::value_type> xs) -> void {
+    using T    = typename F::value_type;
+    using Q    = treeweave::guru::LaneQuantizer<T>;
+    using B    = typename Q::batch_type;
+    using I    = typename Q::id_batch_type;
+    using id_t = typename Q::id_type;
+    REQUIRE(Q::supports(f));
+    const Q        q(f);
+    const auto     ood = static_cast<id_t>(f.out_of_domain_id());
+    constexpr auto W   = B::size;
+    xs.resize((xs.size() + W - 1) / W * W, T{0.5}); // pad to whole batches
+    for (std::size_t i = 0; i < xs.size(); i += W) {
+        const B x   = B::load_unaligned(xs.data() + i);
+        const I ids = xsimd::select(xsimd::batch_bool_cast<id_t>(q.in_domain(x)), q.ids(x), I(ood));
+        for (std::size_t l = 0; l < W; ++l) {
+            const auto want = f.leaf_id(typename F::input_type{xs[i + l]});
+            REQUIRE(ids.get(l) == static_cast<id_t>(want));
+        }
+    }
+}
+
+template <class T>
+auto lane_probe_points(std::mt19937 &gen, T lo, T hi) -> std::vector<T> {
+    std::uniform_real_distribution<T> d(lo - (hi - lo) / 4, hi + (hi - lo) / 4); // 1/4 of the mass lands OOD
+    std::vector<T>                    xs(4096);
+    for (auto &x : xs)
+        x = d(gen);
+    const T adversarial[] = {lo,
+                             hi,
+                             std::nextafter(lo, hi),
+                             std::nextafter(hi, lo),
+                             std::nextafter(lo, lo - 1),
+                             std::nextafter(hi, hi + 1),
+                             T{0},
+                             -T{0},
+                             std::numeric_limits<T>::quiet_NaN(),
+                             std::numeric_limits<T>::infinity(),
+                             -std::numeric_limits<T>::infinity(),
+                             std::numeric_limits<T>::max(),
+                             std::numeric_limits<T>::denorm_min()};
+    xs.insert(xs.end(), std::begin(adversarial), std::end(adversarial));
+    return xs;
+}
+
+} // namespace
+
+TEST_CASE("guru LaneQuantizer lanes match leaf_id (f64 scalar, f64 1D->4D, f32)", "[guru][classify][lanes]") {
+    std::mt19937 gen(29);
+    {
+        auto f = make_table_f64();
+        check_lane_parity(f, lane_probe_points<double>(gen, 0.0, 1.0));
+    }
+    {
+        auto f = make_out4_f64();
+        check_lane_parity(f, lane_probe_points<double>(gen, 0.0, 2.0));
+    }
+    {
+        treeweave::options opts;
+        opts.max_memory_mib    = 0;
+        opts.min_uniform_depth = 5;
+        auto f                 = treeweave::fit<6>([](float x) { return std::exp(x); }, -1.0f, 1.0f, 1e-5f, opts);
+        check_lane_parity(f, lane_probe_points<float>(gen, -1.0f, 1.0f));
+    }
+    // The descent-mode fit has no leaf table: the precondition must say so.
+    REQUIRE(!treeweave::guru::LaneQuantizer<double>::supports(make_descent_f64()));
+}

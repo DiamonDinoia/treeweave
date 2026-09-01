@@ -23,7 +23,7 @@ set_directory_properties(PROPERTIES COMPILE_OPTIONS "" LINK_OPTIONS "")
 FetchContent_Declare(
     polyfit
     GIT_REPOSITORY https://github.com/DiamonDinoia/polyfit.git
-    GIT_TAG v0.0.5
+    GIT_TAG 017921de9e0fd8eee8ce7d644d3908a74d639905 # horner-batch-eval: batch Horner, xsimd fork pin
     GIT_SHALLOW TRUE
     SYSTEM
 )

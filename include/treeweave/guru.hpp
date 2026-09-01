@@ -22,8 +22,9 @@
 ///   * classify each point once into one combined key
 ///     (`key = range_base + f.leaf_id(x)` for the regime's fit — the
 ///     classification machinery is the public `Function` interface:
-///     `leaf_id`/`leaf_ids`, the quantize view via `get_subtrees()`,
-///     `has_fast_quantize()`, `num_leaves()`, `out_of_domain_id()`),
+///     `leaf_id`/`leaf_ids`, `has_fast_quantize()`, `num_leaves()`,
+///     `out_of_domain_id()`; `LaneQuantizer` is the SIMD lane-level twin of
+///     `leaf_id`, so the combined key folds branchlessly in registers),
 ///   * run ONE counting sort over those keys, on caller-owned buffers that
 ///     persist across calls (`exclusive_scan` + `scatter` when the histogram
 ///     is fused into the classify sweep, otherwise the one-shot
@@ -87,6 +88,9 @@
 #include <span>
 #include <type_traits>
 
+#include <xsimd/xsimd.hpp>
+
+#include <treeweave/detail/quantize.hpp>
 #include <treeweave/treeweave.hpp>
 
 namespace treeweave::guru {
@@ -203,6 +207,59 @@ auto for_each_run(std::span<const std::uint32_t> ends, Fn &&fn) -> void {
         beg = std::max(beg, end);
     }
 }
+
+// ---------------------------------------------------------------------------
+// Lane-level classification: the SIMD twin of Function::leaf_id
+// ---------------------------------------------------------------------------
+
+/// One 1D fit's leaf-table quantize with its constants hoisted into
+/// registers. `ids(x)` and `in_domain(x)` classify a batch of points lane
+/// for lane identical to `Function::leaf_id`, so a caller fusing several
+/// regimes folds the lanes with `xsimd::select` while they are still in
+/// registers — branchless whatever a compiler makes of the scalar ternary.
+/// Precondition `supports(f)`: one subtree with a live leaf table (assert-
+/// guarded in the constructor). xsimd only: every ISA xsimd targets runs it.
+template <class T, class Arch = xsimd::default_arch>
+class LaneQuantizer {
+  public:
+    using batch_type    = xsimd::batch<T, Arch>;
+    using mask_type     = typename batch_type::batch_bool_type;
+    using id_type       = xsimd::as_integer_t<T>; // lane-matched: int32 for float, int64 for double
+    using id_batch_type = xsimd::batch<id_type, Arch>;
+
+    template <class F>
+        requires(F::input_dim == 1 && std::same_as<typename F::value_type, T>)
+    [[nodiscard]] static auto supports(const F &f) -> bool {
+        return f.get_subtrees().size() == 1 && f.has_fast_quantize();
+    }
+
+    template <class F>
+        requires(F::input_dim == 1 && std::same_as<typename F::value_type, T>)
+    explicit LaneQuantizer(const F &f) : LaneQuantizer(f.get_subtrees().front().quantize_view()) {
+        assert(supports(f) && "guru::LaneQuantizer: the fit needs one subtree with a live leaf table");
+    }
+
+    explicit LaneQuantizer(const detail::QuantizeView<T, 1> &v)
+        : table_(v.table), lo_(v.lower[0]), hi_(v.upper[0]), inv_(v.inv_span_bins[0]),
+          last_(static_cast<T>((std::size_t{1} << v.bits) - 1)) {}
+
+    /// `lower <= x <= upper` per lane; NaN and ±Inf fail (positive logic).
+    [[nodiscard]] auto in_domain(batch_type x) const noexcept -> mask_type { return (x >= lo_) & (x <= hi_); }
+
+    /// Leaf id per lane. An out-of-domain lane reads a clamped, valid table
+    /// entry — mask it with `in_domain`.
+    [[nodiscard]] auto ids(batch_type x) const noexcept -> id_batch_type {
+        const batch_type q =
+            xsimd::min(xsimd::select(in_domain(x), xsimd::floor((x - lo_) * inv_), batch_type(T{0})), last_);
+        // q is integral and non-negative, so the truncating cast is exact.
+        const id_batch_type qi = xsimd::batch_cast<id_type>(q);
+        return id_batch_type::gather(table_, qi);
+    }
+
+  private:
+    const std::uint32_t *table_;
+    batch_type           lo_, hi_, inv_, last_;
+};
 
 // ---------------------------------------------------------------------------
 // Packed-run leaf evaluation
