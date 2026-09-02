@@ -42,6 +42,12 @@ Documentation contents
    known-issues
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Development
+
+   releasing
+
+.. toctree::
    :maxdepth: 1
    :caption: Experimental
 
