@@ -145,8 +145,39 @@ if(TREEWEAVE_BUILD_TESTS)
     # instrumented binary (the two shadow-memory schemes collide), so the run
     # spuriously fails even though the program is clean. The sanitizer build
     # already covers the same memory checks.
+    #
+    # valgrind also has no AVX-512 support: a binary whose baseline is AVX-512
+    # (TREEWEAVE_ARCH=native on a recent Xeon, or x86-64-v4) dies with SIGILL in
+    # the first wide kernel, which reads as a leak-check failure and makes the
+    # documented `ctest --test-dir build/dev-release` fail on the developer's own
+    # machine. Register the check only where valgrind can execute the binary;
+    # `cmake --preset valgrind` pins x86-64-v3 for exactly this reason.
     find_program(TREEWEAVE_VALGRIND valgrind)
-    if(TREEWEAVE_VALGRIND AND NOT TREEWEAVE_ENABLE_SANITIZERS)
+    include(CheckCXXSourceCompiles)
+    string(JOIN " " _tw_probe_flags ${_treeweave_arch_flags})
+    # The probe result is cached, so key the cache entry on the flags it was
+    # measured with: a reconfigure with a different TREEWEAVE_ARCH then probes
+    # again instead of reusing the old answer.
+    string(
+        MAKE_C_IDENTIFIER
+        "TREEWEAVE_VALGRIND_RUNNABLE_${_tw_probe_flags}"
+        _tw_probe_var
+    )
+    set(_tw_saved_required_flags "${CMAKE_REQUIRED_FLAGS}")
+    set(CMAKE_REQUIRED_FLAGS "${_tw_probe_flags}")
+    check_cxx_source_compiles(
+        "#ifdef __AVX512F__
+#error AVX-512 baseline: valgrind cannot run this binary
+#endif
+int main() {}"
+        ${_tw_probe_var}
+    )
+    set(CMAKE_REQUIRED_FLAGS "${_tw_saved_required_flags}")
+    if(
+        TREEWEAVE_VALGRIND
+        AND ${_tw_probe_var}
+        AND NOT TREEWEAVE_ENABLE_SANITIZERS
+    )
         add_test(
             NAME test_c_abi_valgrind
             COMMAND
