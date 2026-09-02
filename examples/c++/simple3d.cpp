@@ -40,5 +40,5 @@ int main() {
     std::cout << "MEvals/s: " << N / (dt * 1e6) << "\n";
     std::cout << "max relative error: " << mx << "\n";
     std::cout << "ignore: " << acc << "\n";
-    return 0;
+    return mx < 1e-6 ? 0 : 1;
 }
