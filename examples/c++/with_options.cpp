@@ -28,5 +28,20 @@ int main() {
     auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8);
     // Evaluate fn on (1.0) and print the result.
     std::cout << "converged fit at x=1.0: fn=" << fn(1.0) << "  exact=" << f(1.0) << "\n";
+
+    // Options carry the tolerance kind and the memory budget.
+    // BEGIN DOCS_OPTIONS
+    treeweave::options opts;
+    opts.tol_kind       = treeweave::TolKind::AbsoluteMax;
+    opts.max_memory_mib = 64;
+    auto capped = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8, opts);
+    // END DOCS_OPTIONS
+    std::cout << "absolute-max fit at x=1.0: " << capped(1.0) << "\n";
+
+    // The leaf polynomial degree is the leading template parameter.
+    // BEGIN DOCS_DEGREE
+    auto deg5 = treeweave::fit<5>(f, 0.01, 5.0, /*tol=*/1e-8); // degree-5 leaves
+    // END DOCS_DEGREE
+    std::cout << "degree-5 fit at x=1.0: " << deg5(1.0) << "\n";
     return 0;
 }

@@ -64,6 +64,7 @@ foreach(
     IN
     ITEMS
         decorator_1d
+        eval_routes
         float32_fit
         simple_1d
         simple_2d

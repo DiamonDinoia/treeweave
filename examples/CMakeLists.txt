@@ -33,5 +33,34 @@ _treeweave_add_cpp_example(simple2d c++/simple2d.cpp)
 _treeweave_add_cpp_example(simple3d c++/simple3d.cpp)
 _treeweave_add_cpp_example(with_options c++/with_options.cpp)
 _treeweave_add_cpp_example(vector_output c++/vector_output.cpp)
+_treeweave_add_cpp_example(panels1d c++/panels1d.cpp)
+_treeweave_add_cpp_example(singularity c++/singularity.cpp)
 _treeweave_add_cpp_example(hankel c++/hankel.cpp)
 _treeweave_add_cpp_example(guru c++/guru.cpp)
+
+# Doc figures generated from the examples themselves, so a picture in the docs
+# is literally what the shipped program prints. Sphinx reads docs/ from the
+# source tree, so the output lands there (git-ignored) and the sphinx target
+# waits for it.
+if(TREEWEAVE_GENERATE_DOCS AND TARGET sphinx)
+    set(_tw_docs_gen "${PROJECT_SOURCE_DIR}/docs/_generated")
+    set(_tw_docs_figures "")
+    # Each entry is an example target whose stdout the docs literalinclude as
+    # <target>.txt. Add a target here to publish its output.
+    foreach(_fig IN ITEMS panels1d singularity)
+        add_custom_command(
+            OUTPUT ${_tw_docs_gen}/${_fig}.txt
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${_tw_docs_gen}
+            COMMAND
+                ${CMAKE_COMMAND} -DEXE=$<TARGET_FILE:${_fig}>
+                -DOUT=${_tw_docs_gen}/${_fig}.txt -P
+                ${CMAKE_CURRENT_SOURCE_DIR}/capture_output.cmake
+            DEPENDS ${_fig}
+            COMMENT "Capturing ${_fig} output for the docs"
+            VERBATIM
+        )
+        list(APPEND _tw_docs_figures ${_tw_docs_gen}/${_fig}.txt)
+    endforeach()
+    add_custom_target(docs_example_output DEPENDS ${_tw_docs_figures})
+    add_dependencies(sphinx docs_example_output)
+endif()

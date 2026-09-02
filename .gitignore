@@ -46,3 +46,6 @@ Testing/
 scratch/
 devel/*
 .ccache/
+
+# Doc figures captured from the examples at docs-build time.
+docs/_generated/

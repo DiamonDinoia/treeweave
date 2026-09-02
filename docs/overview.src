@@ -1,0 +1,269 @@
+.. front-page content, minus the title, which index.rst supplies. Mirrors
+   FINUFFT's docs/overview.src.
+
+`treeweave <https://github.com/DiamonDinoia/treeweave>`_ replaces a costly
+function ``f`` on a box by a piecewise polynomial that evaluates in a few
+nanoseconds and agrees with ``f`` to a tolerance the caller picks. The fit is
+automatic: treeweave subdivides the box until every panel meets the tolerance,
+so the caller supplies ``f``, the corners and ``tol``, and nothing else. It
+works in **one, two and three dimensions from every language** (C, C++,
+Fortran, Python, Julia, MATLAB/Octave, JavaScript/TypeScript) and in
+**arbitrary dimension from C++**, where the dimension is a template parameter.
+Single and double precision are both supported, scalar and vector valued ``f``
+alike. A fitted object is immutable and its evaluators are thread-safe. The
+library is C++20, gets its portable SIMD from
+`xsimd <https://github.com/xtensor-stack/xsimd>`_ and
+`POET <https://github.com/flatironinstitute/poet>`_, has no runtime dependency
+beyond libm, and is `BSD-3-Clause licensed
+<https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_. It is developed
+at the `Center for Computational Mathematics
+<https://www.simonsfoundation.org/flatiron/center-for-computational-mathematics/>`_
+of the `Flatiron Institute <https://www.simonsfoundation.org/flatiron>`_ and
+succeeds `baobzi <https://github.com/flatironinstitute/baobzi>`_.
+
+Jump to :doc:`install` for the shortest working example in your language.
+
+.. _what:
+
+What does treeweave do?
+-----------------------
+
+Given :math:`f : [a, b]^d \to \mathbb{R}^m` and a tolerance :math:`\varepsilon`, treeweave
+builds an approximant :math:`\tilde f` with
+
+.. math:: \max_{x \in [a,b]^d} \lVert \tilde f(x) - f(x) \rVert \;\le\; \varepsilon \max_{x} \lVert f(x) \rVert ~,
+   :label: goal
+
+and the program then evaluates :math:`\tilde f` wherever it used to call :math:`f`.
+:math:`\tilde f` is a *piecewise* polynomial. The box is cut into panels; each panel
+carries one fixed-degree tensor-product polynomial fitted at Chebyshev nodes.
+One evaluation is a tree descent to the panel containing :math:`x`, then a Horner
+sweep over that panel's :math:`(\text{degree}+1)^d` coefficients. Neither step calls
+:math:`f`.
+
+The panels are **not** a uniform grid. treeweave starts with the whole box,
+tries a fit, and splits any panel whose measured error exceeds :math:`\varepsilon`.
+That is the entire algorithm, and it is what makes the accuracy request
+meaningful: the caller asks for :math:`\varepsilon` and gets :math:`\varepsilon`, with no
+grid, degree, knot vector or smoothing parameter to choose.
+
+The picture in one dimension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``examples/c++/panels1d.cpp`` fits :math:`f(x) = 1/(x - 1.05)` on :math:`[-1, 1]`: smooth
+everywhere on the domain, but with a pole just past the right end, so its
+derivatives blow up as :math:`x \to 1`. The program recovers the panel boundaries
+through the public API alone and prints them. This is its actual output,
+captured when these docs were built:
+
+.. literalinclude:: _generated/panels1d.txt
+   :language: text
+
+Panels stay coarse on the left, where :math:`f` is nearly flat, and halve repeatedly
+toward the right, where it is not. That is adaptive paneling, and it is the one
+picture worth carrying: **refinement buys accuracy only where accuracy is
+expensive.** The source is short:
+
+.. literalinclude:: ../examples/c++/panels1d.cpp
+   :language: cpp
+
+:doc:`how-treeweave-works` covers the same construction in 2-D and 3-D, where a
+split makes 4 or 8 children instead of 2, and gives the numerical analysis and
+the references.
+
+.. _sings:
+
+Singularities: what happens, and what to do
+-------------------------------------------
+
+A polynomial is smooth everywhere. The function you want to fit may not be.
+Everything interesting about treeweave's behaviour follows from how far the
+trouble is from the domain, and ``examples/c++/singularity.cpp`` walks the three
+cases in order. This is its output:
+
+.. literalinclude:: _generated/singularity.txt
+   :language: text
+
+Read it as a story in three acts.
+
+**Act one: the pole is outside the domain, and adaptivity just works.** Move the
+pole from a distance of 1 down to 1e-4 and the panel count goes 11, 33, 56, 103.
+Ten times closer costs roughly twenty more panels, not ten times more, because
+halving a panel halves its width while its distance to the pole barely changes,
+and the Chebyshev error on that panel drops geometrically. The cost is the
+*logarithm* of the distance. This is the case almost every real function is in:
+a Bessel function near its argument's origin, a Green's function near contact, a
+partition function near a phase boundary. You do nothing, and it works.
+
+That act has an ending, though. At a gap of 1e-8 the fit stops and throws
+``MemoryBudgetExceeded``. The logarithm is cheap but it is not free, and the
+default budget in one dimension is 4 MiB. Raise ``max_memory_mib`` if the memory
+is worth it to you; the point is that treeweave makes you decide, rather than
+deciding quietly on your behalf.
+
+**Act two: the pole is on the boundary, and refinement never terminates.** The
+panel touching :math:`x = 1` contains the singularity no matter how small it
+gets, so its error never falls below the tolerance and the tree keeps splitting
+until a limit stops it. treeweave throws. The fix is one character of arithmetic:
+fit on ``[-1, 0.9]`` instead, and the same function needs 33 panels and 5.7 KiB.
+``examples/c++/hankel.cpp`` does exactly this, fitting :math:`H_0^{(1)}` on
+:math:`[1, 30]` because :math:`Y_0` diverges at the origin.
+
+**Act three: the pole is strictly inside, and no panel layout can help.** Here
+treeweave throws ``MaxDepthExceeded``, and the fix is to split the domain at the
+singularity and fit each side, which turns act three into two copies of act two:
+71 panels and 11.3 KiB each. If the singular factor is known analytically,
+better still is to divide it out and fit only the smooth cofactor, which costs
+nothing extra at evaluation time.
+
+The thread running through all three acts is that **treeweave never returns a
+quietly wrong answer.** A fit either meets the tolerance you asked for or raises.
+If you would rather inspect the damage than handle an exception, set
+``allow_max_depth_leaves`` and the non-converged panels come back through
+``Function::non_converged_panels()``. :doc:`guides/options` documents both knobs.
+
+.. _why:
+
+Why treeweave? Comparison against other interpolation approaches
+----------------------------------------------------------------
+
+Adaptive piecewise Chebyshev interpolation is textbook numerical analysis, not
+a new idea; :doc:`how-treeweave-works` cites the sources. What treeweave adds
+is an error-driven fit wired to an evaluation path written for a vector unit,
+behind one API in seven languages.
+
+Here is the whole argument in one table. ``benchmarks/compare_interpolators.py``
+fits each target with treeweave and with ``scipy.interpolate.CubicSpline``,
+growing the spline's uniform grid until it *meets* the same accuracy, so every
+row is measured at the accuracy it achieved:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 10 14 12 14 16
+
+   * - Target, fitted to 1e-10
+     - method
+     - calls to :math:`f`
+     - memory
+     - Meval/s
+     - achieved
+   * - :math:`\zeta(s)`, 1000 terms, on [2, 10]
+     - treeweave
+     - 601
+     - 3.0 KiB
+     - 224
+     - 5.1e-11
+   * -
+     - CubicSpline
+     - 2048
+     - 80 KiB
+     - 14
+     - 7.7e-11
+   * - :math:`1/(x - 1.05)` on [-1, 1]
+     - treeweave
+     - 1201
+     - 5.9 KiB
+     - 271
+     - 5.5e-11
+   * -
+     - CubicSpline
+     - 16384
+     - 640 KiB
+     - 11
+     - 2.4e-11
+
+108x less memory on the near-singular target, 14x fewer calls to :math:`f`, and
+16x to 25x the evaluation throughput. :doc:`guides/performance` runs the same
+comparison against sixteen other methods in four languages, and it is where the
+cases treeweave loses are written down: on ``sin(30 x)`` at 1e-6, oscillation
+with no local structure, a uniform grid is already the right answer and the
+spline needs fewer samples, and on any target analytic across the whole domain
+a single global Chebyshev series stores less than treeweave does. Where the
+numbers come from:
+
+* **The caller states accuracy, not resolution.** ``scipy``'s ``CubicSpline``
+  and ``RegularGridInterpolator``, GSL's splines, and every grid-based
+  interpolator ask *where* to sample and then deliver whatever error follows
+  from that choice. treeweave asks *how accurate* and refines until it gets
+  there. There is nothing to tune, and no way to be three digits off because
+  one corner of the domain was under-resolved.
+
+* **Exponential, not algebraic, convergence.** A cubic spline's error decays
+  like :math:`h^4`, so each extra digit of accuracy costs 1.8x the knots,
+  forever. A Chebyshev panel on an analytic :math:`f` converges *exponentially*
+  in the degree, which is why treeweave reaches :math:`10^{-14}` at degree 7 on
+  a modest number of panels, and why asking a spline for machine precision is
+  not a reasonable thing to do.
+
+* **The function is the input, not a table.** ``scipy.interpolate`` and
+  ``sklearn`` take samples, which means the caller has already fixed the sample
+  locations and absorbed the resulting error. treeweave takes the callable and
+  samples it where its own error estimate says to. That is what lets it report
+  an error bound at all.
+
+* **Evaluation is built for throughput.** The tree is a flat array of indices;
+  a leaf polynomial is a degree-7 monomial, one SIMD lane wide; and the batch
+  path counting-sorts query points by panel so each panel's coefficients are
+  loaded once and stay hot in L1.
+
+* **One implementation, seven languages.** Every wrapper calls the same C ABI,
+  so an accuracy or throughput result carries between languages. A pure-Python
+  or pure-Julia adaptive interpolator does not carry over into a C++ solver's
+  inner loop.
+
+What treeweave deliberately does not do: extrapolate (out-of-domain input
+returns ``NaN``), resolve interior singularities, interpolate scattered data,
+fit unbounded domains, or use a GPU. :doc:`related` lists packages that cover
+some of that.
+
+.. _need:
+
+Do I even need treeweave?
+-------------------------
+
+Two numbers decide it: :math:`C_f`, the cost of one call to :math:`f`, and :math:`N`, how many
+evaluations the program makes. The fit costs about
+:math:`C_f \times (\text{panels}) \times (\text{degree}+1)^d` once; each evaluation
+afterwards costs one tree descent plus :math:`(\text{degree}+1)^d - 1` FMAs.
+
+* **:math:`N` large and :math:`C_f` well above a few nanoseconds** (a special function, a
+  quadrature, a series, a small linear solve, a table lookup with
+  interpolation): this is the case treeweave is for. For scale,
+  ``benchmarks/zeta_bench.cpp`` fits a truncated Riemann-zeta sum on :math:`[2, 10]`
+  to :math:`10^{-10}` and measures 147 Mevals/s single-point and 280 Mevals/s on a
+  sorted batch, against 0.78 Mevals/s for the sum itself: 188x and 357x
+  (one core, x86-64, GCC 15, ``-O3 -march=native``).
+* **:math:`f` already cheap**, a handful of arithmetic operations: skip it. Nothing
+  beats evaluating :math:`f`.
+* **:math:`N` small**, fewer evaluations than the fit's own sample count: skip it.
+  The fit will not amortize.
+* **:math:`f` changes every call, or the domain is not known ahead of time**: skip it.
+  treeweave fits once, over a fixed box.
+* **:math:`d \ge 4`**: available from C++, but weigh it first. Leaf storage grows as
+  :math:`(\text{degree}+1)^d` per panel and a split makes :math:`2^d` children, so memory,
+  fit time and compile time all grow geometrically. Fitting
+  :math:`e^{-\lVert x \rVert^2}` on the unit box to :math:`10^{-8}` at the default degree
+  measures as:
+
+  .. list-table::
+     :header-rows: 1
+     :widths: 12 30 30
+
+     * - :math:`d`
+       - compile time
+       - leaf coefficients
+     * - 1
+       - 2.0 s
+       - 680 B
+     * - 2
+       - 2.9 s
+       - 7.6 KiB
+     * - 3
+       - 3.9 s
+       - 181 KiB
+     * - 4
+       - 19.1 s
+       - 4.9 MiB
+
+  (one translation unit, GCC 15, ``-O2``, x86-64.) Past about :math:`d = 4`, low-rank
+  methods such as tensor trains or sparse grids are the better trade.

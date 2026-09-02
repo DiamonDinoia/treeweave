@@ -115,43 +115,12 @@ target_link_libraries(my_app PRIVATE treeweave::treeweave)
 
 The CMake section below contains more details, or download `treeweave-cxx-headers.tar.gz` from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases) and compile with
-`-std=c++20 -Iinclude`. Note: `treeweave::treeweave` exists in FetchContent/CPM (and
-tree-level `add_subdirectory`) builds; the *installed* export provides
-`treeweave::treeweave_c` / `treeweave::treeweave_c_static` for the C API plus the
-consolidated header tree for header-only C++ use.
+`-std=c++20 -Iinclude`. `treeweave::treeweave` is available from every route:
+FetchContent, CPM, tree-level `add_subdirectory`, and `find_package` against an
+installed prefix. The installed package adds `treeweave::treeweave_c` /
+`treeweave::treeweave_c_static` for the C API.
 
 [C++ guide](https://diamondinoia.github.io/treeweave/guides/cpp.html)
-
-### Lower-level: the guru interface
-
-`<treeweave/guru.hpp>` is treeweave's guru interface (named after FFTW's guru interface,
-the established precedent for an expert API exposing the planner/executor internals). It
-re-exposes the batch pipeline's stages for caller-driven fusion: caller-owned scratch,
-caller-chosen keys, no per-call allocation. The public `sorted()` kernel dispatch itself
-runs on the canonical implementation shared with `guru::for_each_sorted_run`, so library
-and user code share one path.
-
-**The recipe** (the standard procedure this interface exists for). When one Function
-cannot fit the whole domain, this is the standard construction. First, split the domain
-into regimes: at singularities, at scale changes, anywhere the fit tree must get deep.
-Second, subtract or factor out the singular part so each regime's leftover is
-polynomial-friendly, fit each regime separately, and keep the analytically-known part as
-a cheap elementwise fixup. Third, at evaluation: one classify sweep computes each point's
-combined key (`key = range_base + leaf_id`). One counting sort over those keys packs every
-regime's points into contiguous runs (`counting_sort`, or `histogram` +
-`exclusive_scan` + `scatter` split apart). Each packed run calls polyfit's SIMD kernel
-*plus* its regime's fixup while the data is still hot (`for_each_run` +
-`eval_leaf_aos/soa`, `fill_out_of_domain` on the out-of-domain bucket). A final
-`gather` through the sort's `rank` restores caller order. On fully sorted input skip the
-sort entirely (`for_each_sorted_run`: the leaf ids are monotone, so runs are already
-contiguous).
-
-Classification semantics — the positive-logic out-of-domain (OOD) gate, the
-`out_of_domain_id()` sentinel, the closed upper endpoint — match the public paths
-point-for-point.
-
-The tests (`tests/test_guru.cpp`) are the worked example of the recipe, including a
-two-fit combined-key sort with per-run fused post-processing.
 
 ### C
 
@@ -178,11 +147,10 @@ int main(void) {
 Install the C ABI tarball directly:
 
 ```bash
-VER=stable
 PLATFORM=linux-x86_64
-URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-${VER}-${PLATFORM}.tar.gz"
+URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
 curl -fLO "$URL" || wget "$URL"
-tar xzf "treeweave-${VER}-${PLATFORM}.tar.gz"
+tar xzf "treeweave-${PLATFORM}.tar.gz"
 gcc example.c -Iinclude -Llib -ltreeweave_c -lm -o example
 LD_LIBRARY_PATH=lib ./example
 ```
@@ -233,15 +201,15 @@ mip load treeweave
 Or download the MATLAB bundle directly:
 
 ```bash
-VER=stable
 PLATFORM=linux-x64
-URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-matlab-${PLATFORM}.tar.gz"
 curl -fLO "$URL" || wget "$URL"
-tar xzf "treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+mkdir -p treeweave-matlab
+tar xzf "treeweave-matlab-${PLATFORM}.tar.gz" --strip-components=1 -C treeweave-matlab
 ```
 
 ```matlab
-addpath('treeweave-matlab-stable-linux-x64')
+addpath('treeweave-matlab')
 ```
 
 Other platforms use the matching `treeweave-matlab-<version>-<platform>` asset from
@@ -261,11 +229,10 @@ delete(approx);
 Install:
 
 ```bash
-VER=stable
-URL="https://github.com/DiamonDinoia/treeweave/archive/refs/tags/${VER}.tar.gz"
-curl -fL "$URL" -o "treeweave-${VER}-source.tar.gz" || wget -O "treeweave-${VER}-source.tar.gz" "$URL"
-tar xzf "treeweave-${VER}-source.tar.gz"
-cd "treeweave-${VER}"
+URL="https://github.com/DiamonDinoia/treeweave/archive/refs/heads/stable.tar.gz"
+curl -fL "$URL" -o treeweave-source.tar.gz || wget -O treeweave-source.tar.gz "$URL"
+tar xzf treeweave-source.tar.gz
+cd treeweave-stable
 cmake --preset bindings-octave
 cmake --build build/bindings-octave -j
 ```
@@ -348,12 +315,25 @@ npm install @flatironinstitute/treeweave
 Source builds, release channels, and package details are in the [install guide](https://diamondinoia.github.io/treeweave/install.html).
 
 
+## Experimental: the guru interface
+
+`<treeweave/guru.hpp>` re-exposes the batch pipeline's stages (classify, counting sort,
+per-run SIMD evaluation, gather) over caller-owned buffers, so several fits can share one
+sort and fuse their own post-processing while the data is still hot. It exists for
+functions that need several fits stitched together, one per asymptotic regime for
+instance. `tests/test_guru.cpp` is the worked example.
+
+It is experimental: signatures, headers and semantics can change in any release, with no
+deprecation period. Nothing above needs it.
+
+[Guru interface guide](https://diamondinoia.github.io/treeweave/guides/guru.html)
+
 ## CMake
 
 For C++, CPM is enough:
 
 ```cmake
-CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
+CPMAddPackage("gh:DiamonDinoia/treeweave#stable")
 add_executable(my_app example.cpp)
 target_link_libraries(my_app PRIVATE treeweave::treeweave)
 ```

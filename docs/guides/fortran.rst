@@ -16,11 +16,10 @@ existing Fortran wrapper or build setup:
 
 .. code-block:: bash
 
-   VER=stable
    PLATFORM=linux-x86_64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-${VER}-${PLATFORM}.tar.gz"
+   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
    curl -fLO "$URL" || wget "$URL"
-   tar xzf "treeweave-${VER}-${PLATFORM}.tar.gz"
+   tar xzf "treeweave-${PLATFORM}.tar.gz"
 
 Source build
 ^^^^^^^^^^^^
@@ -43,28 +42,38 @@ Minimal example
 .. literalinclude:: ../../bindings/fortran/example.f90
    :language: fortran
 
-Carrying parameters through ``context``:
+Carrying parameters through ``context``. Declare a ``bind(C)`` type:
 
-.. code-block:: fortran
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
+   :start-after: ! BEGIN DOCS_CONTEXT_TYPE
+   :end-before: ! END DOCS_CONTEXT_TYPE
+   :dedent: 4
 
-   type, bind(C) :: params_t
-       real(c_double) :: amplitude, frequency
-   end type params_t
-   ! ... in the callback:
-   type(params_t), pointer :: p
-   call c_f_pointer(context, p)
-   y(1) = p%amplitude * sin(p%frequency * x(1))
-   ! ... at the call site: pass c_loc(params) as the context argument.
+Recover it inside the callback with ``c_f_pointer``:
+
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
+   :start-after: ! BEGIN DOCS_CONTEXT_KERNEL
+   :end-before: ! END DOCS_CONTEXT_KERNEL
+   :dedent: 4
+
+At the call site, pass ``c_loc`` of a ``target`` instance as the context argument:
+
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
+   :start-after: ! BEGIN DOCS_CONTEXT_CALL
+   :end-before: ! END DOCS_CONTEXT_CALL
+   :dedent: 4
 
 Batch & sorted eval
 -------------------
 
-.. code-block:: fortran
-
-   real(c_double) :: xs(1000), res(1000)
-   integer(c_size_t) :: n = 1000_c_size_t
-   call treeweave_batch(h, xs, res, n)    ! batch: many points, any order
-   call treeweave_sorted(h, xs, res, n)   ! promise xs(i) <= xs(i+1), 1-D; ~3-4x faster
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
+   :start-after: ! BEGIN DOCS_SORTED
+   :end-before: ! END DOCS_SORTED
+   :dedent: 4
 
 ``treeweave_sorted`` requires 1-D input (``input_dim == 1``). The caller
 promises ascending order, and treeweave does not verify it.
@@ -72,17 +81,14 @@ promises ascending order, and treeweave does not verify it.
 Options
 -------
 
-Pass an options struct via the last argument (or ``c_null_ptr`` for defaults):
+Pass ``c_loc`` of a ``target`` ``treeweave_opts`` as the last argument (or
+``c_null_ptr`` for the defaults):
 
-.. code-block:: fortran
-
-   use treeweave
-   type(treeweave_opts_t) :: opts
-   opts = treeweave_default_opts()
-   opts%tol_kind       = TREEWEAVE_ABSOLUTE_MAX
-   opts%max_memory_mib = 64
-   h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
-                     c_null_ptr, c_loc(opts))
+.. literalinclude:: ../../bindings/fortran/example.f90
+   :language: fortran
+   :start-after: ! BEGIN DOCS_OPTIONS
+   :end-before: ! END DOCS_OPTIONS
+   :dedent: 4
 
 See :doc:`options` for the full description of each field and tolerance kind.
 

@@ -1,6 +1,11 @@
 Julia
 =====
 
+The Julia binding is a pure-Julia ``ccall`` wrapper over ``libtreeweave_c``,
+shipped as the ``Treeweave`` package. ``fit`` takes a callable and returns a
+callable object that evaluates scalars, vectors and matrices. Inputs are 1-D,
+2-D or 3-D.
+
 Install
 -------
 
@@ -9,6 +14,8 @@ environment variable, then a sibling ``build*/`` directory for developers, then
 a prebuilt download from the GitHub Release.
 
 The normal install uses the prebuilt release binary:
+
+.. not-run-in-ci: fetches a published release; the same path is exercised by julia-smoke.yml.
 
 .. code-block:: julia
 
@@ -33,11 +40,10 @@ batch. Tune the fit with ``TreeweaveOptions`` (see :doc:`options`).
 defined at the call site. That is the Julia counterpart of the Python
 decorator:
 
-.. code-block:: julia
-
-   approx = fit(2.0, 10.0, 1e-10) do s
-       sum(k -> k^(-s), 1:1000)
-   end
+.. literalinclude:: ../../bindings/julia/Treeweave/examples/example_1d.jl
+   :language: julia
+   :start-after: # BEGIN DOCS_DO_BLOCK
+   :end-before: # END DOCS_DO_BLOCK
 
 Evaluation routes
 -----------------
@@ -45,12 +51,10 @@ Evaluation routes
 Calling the handle dispatches on its argument, and two keyword flags select the
 fast paths:
 
-.. code-block:: julia
-
-   approx(3.5)                       # single point  -> scalar (or Vector)
-   approx(xs)                        # batch (Vector) -> Vector / n×out_dim
-   approx(xs; sorted = true)         # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
-   approx(xs; transposed = true)     # batch -> out_dim×n  (requires out_dim > 1)
+.. literalinclude:: ../../bindings/julia/Treeweave/examples/example_routes.jl
+   :language: julia
+   :start-after: # BEGIN DOCS_ROUTES
+   :end-before: # END DOCS_ROUTES
 
 ``sorted = true`` skips treeweave's internal bin-sort and is ~3-4x faster when
 the caller can promise ``xs`` is ascending, which covers ``range`` grids,
@@ -69,26 +73,20 @@ Multi-dimensional fits
 Pass vector corners; the callback takes ``dim`` scalar arguments and returns a
 scalar or a length-``out_dim`` tuple:
 
-.. code-block:: julia
-
-   # 2-D input -> 3-D vector output (out_dim inferred by probing the midpoint)
-   approx = fit((x, y) -> (sin(x) * cos(y), x + y, x * y), [0.0, 0.0], [1.0, 1.0], 1e-8)
-
-   approx([0.3, 0.7])                # single point -> length-3 Vector
-   X = rand(100, 2)
-   approx(X)                         # batch -> 100×3 Matrix
-   approx(X; transposed = true)      # batch -> 3×100 Matrix
+.. literalinclude:: ../../bindings/julia/Treeweave/examples/example_2d_vector.jl
+   :language: julia
+   :start-after: # BEGIN DOCS_MULTIDIM
+   :end-before: # END DOCS_MULTIDIM
 
 Options
 -------
 
-Pass a ``TreeweaveOptions`` as the fifth argument to ``fit``:
+Pass a ``TreeweaveOptions`` as the ``options`` keyword of ``fit``:
 
-.. code-block:: julia
-
-   using Treeweave
-   opts = TreeweaveOptions(tol_kind="absolute_max", max_depth=30, max_memory_mib=64)
-   approx = fit(f, 2.0, 10.0, 1e-10, opts)
+.. literalinclude:: ../../bindings/julia/Treeweave/examples/example_1d.jl
+   :language: julia
+   :start-after: # BEGIN DOCS_OPTIONS
+   :end-before: # END DOCS_OPTIONS
 
 Available fields (all keyword-only, all have defaults):
 
@@ -100,9 +98,10 @@ Available fields (all keyword-only, all have defaults):
      - Default
      - Meaning
    * - ``tol_kind``
-     - ``"relative_max"``
-     - Tolerance interpretation. One of ``"relative_max"``, ``"absolute_max"``,
-       ``"relative_l2"``, ``"absolute_l2"``, ``"relative_tail"``, ``"absolute_tail"``.
+     - ``TREEWEAVE_RELATIVE_MAX``
+     - Tolerance interpretation. One of the exported constants
+       ``TREEWEAVE_RELATIVE_MAX``, ``TREEWEAVE_ABSOLUTE_MAX``, ``TREEWEAVE_RELATIVE_L2``,
+       ``TREEWEAVE_ABSOLUTE_L2``, ``TREEWEAVE_RELATIVE_TAIL``, ``TREEWEAVE_ABSOLUTE_TAIL``.
    * - ``max_depth``
      - ``50``
      - Tree-depth ceiling.
@@ -131,6 +130,8 @@ sibling build:
    cd treeweave
    cmake --preset bindings-julia
    cmake --build build/bindings-julia -j --target treeweave_c
+
+.. not-run-in-ci: developer install; julia.yml builds the same sibling target and runs the suite.
 
 .. code-block:: julia
 

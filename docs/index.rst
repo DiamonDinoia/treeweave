@@ -1,33 +1,32 @@
-treeweave
-=========
+.. treeweave documentation master file. This is also the front HTML page: the
+   prose lives in overview.src so latexindex.rst can reuse it.
 
-treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
+.. _index:
 
-.. code-block:: cpp
+treeweave: adaptive polynomial approximation of expensive functions
+===================================================================
 
-   #include <treeweave/treeweave.hpp>
-   auto fn = treeweave::fit([](double s) { double a=0; for(int k=1;k<=1000;++k) a+=std::pow(k,-s); return a; }, 2.0, 10.0, 1e-10);
-   double y = fn(3.5);   // evaluate a polynomial, not the original function
+.. include:: overview.src
 
-Call it from C++, header-only or compiled. C, Fortran, Python, Julia, MATLAB/Octave and JavaScript/TypeScript call it through a stable C ABI.
-
-`GitHub <https://github.com/DiamonDinoia/treeweave>`_ · `Releases <https://github.com/DiamonDinoia/treeweave/releases>`_ · `Issues <https://github.com/DiamonDinoia/treeweave/issues>`_ · `License (BSD-3-Clause) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_ · `Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_
+Documentation contents
+======================
 
 .. toctree::
    :maxdepth: 2
    :caption: Getting started
 
    install
+   guides/options
 
 .. toctree::
    :maxdepth: 2
    :caption: Language guides
 
+   guides/cpp
+   guides/c
    guides/python
    guides/julia
    guides/matlab
-   guides/cpp
-   guides/c
    guides/fortran
    guides/js
 
@@ -35,16 +34,30 @@ Call it from C++, header-only or compiled. C, Fortran, Python, Julia, MATLAB/Oct
    :maxdepth: 2
    :caption: Reference
 
-   guides/options
-   guides/cmake
-   guides/performance
-   guides/dispatch
-   guides/guru
    how-treeweave-works
+   guides/performance
+   guides/cmake
+   guides/dispatch
+   related
    known-issues
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Experimental
+
+   guides/guru
 
 .. toctree::
    :maxdepth: 2
    :caption: API reference
 
    api/library_root
+
+Links
+=====
+
+`GitHub <https://github.com/DiamonDinoia/treeweave>`_ ·
+`Releases <https://github.com/DiamonDinoia/treeweave/releases>`_ ·
+`Issues <https://github.com/DiamonDinoia/treeweave/issues>`_ ·
+`Benchmarks dashboard <https://diamondinoia.github.io/treeweave/dev/bench/>`_ ·
+`License (BSD-3-Clause) <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_

@@ -314,14 +314,23 @@ if(TREEWEAVE_GENERATE_DOCS)
         COMMENT "Generating API documentation with Doxygen"
     )
 
+    # -W makes an unsuppressed Sphinx warning fatal; --keep-going reports every
+    # one in a single run. It is not enough on its own: conf.py suppresses the
+    # `docutils` category to silence Exhale's generated-API noise, and a missing
+    # literalinclude source falls in that same category. check_docs_code.py is
+    # the gate: it resolves every literalinclude and matches every inline C
+    # declaration against include/treeweave.h.
     add_custom_target(
         sphinx
         DEPENDS doxygen
         COMMAND
+            ${Python_EXECUTABLE}
+            ${PROJECT_SOURCE_DIR}/scripts/check_docs_code.py
+        COMMAND
             ${CMAKE_COMMAND} -E env
             DOXYGEN_XML_OUTPUT=${PROJECT_BINARY_DIR}/docs/xml
-            ${SPHINX_BUILD_EXECUTABLE} -b html ${PROJECT_SOURCE_DIR}/docs
-            ${PROJECT_BINARY_DIR}/docs/_build/html
+            ${SPHINX_BUILD_EXECUTABLE} -b html -W --keep-going
+            ${PROJECT_SOURCE_DIR}/docs ${PROJECT_BINARY_DIR}/docs/_build/html
         COMMENT "Generating HTML documentation with Sphinx"
     )
 

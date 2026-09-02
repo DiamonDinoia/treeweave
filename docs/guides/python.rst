@@ -1,6 +1,10 @@
 Python
 ======
 
+The Python binding wraps the C ABI with nanobind. ``treeweave.fit`` takes a
+callable and returns an object that evaluates NumPy arrays in one call.
+Inputs are 1-D, 2-D or 3-D.
+
 Install
 -------
 
@@ -42,11 +46,12 @@ spelling. The decorated name becomes the fitted approximation:
    :language: python
 
 ``fit(a, b, tol)`` and ``fit(a, b, tol=...)`` are both accepted, and every
-keyword option below applies unchanged::
+keyword option below applies unchanged:
 
-   @treeweave.fit([0.0, 0.0], [1.0, 1.0], tol=1e-6, dtype="f32")
-   def surface(x):
-       return math.cos(x[0] - x[1])
+.. literalinclude:: ../../bindings/python/examples/decorator_1d.py
+   :language: python
+   :start-after: # BEGIN DOCS_DECORATOR_2D
+   :end-before: # END DOCS_DECORATOR_2D
 
 The decorated object is an ordinary ``TreeweaveFunction``, so ``sorted=`` /
 ``transposed=`` and the properties all work on it. ``__name__`` and ``__doc__``
@@ -59,12 +64,10 @@ Evaluation routes
 Calling the fitted object dispatches on the shape of its argument, and two
 keyword flags select the fast paths:
 
-.. code-block:: python
-
-   approx(3.5)                       # single point  -> scalar (or (out_dim,))
-   approx(xs)                        # batch (N,)     -> (N,) / (N, out_dim)
-   approx(xs, sorted=True)           # promise xs is non-decreasing, xs[i] <= xs[i+1] (dim == 1)
-   approx(xs, transposed=True)       # batch -> (out_dim, N)  (requires out_dim > 1)
+.. literalinclude:: ../../bindings/python/examples/eval_routes.py
+   :language: python
+   :start-after: # BEGIN DOCS_ROUTES
+   :end-before: # END DOCS_ROUTES
 
 ``sorted=True`` skips treeweave's internal counting-sort and is ~3-4x faster
 when the caller can promise ``xs`` is ascending, which covers ``linspace``
@@ -83,13 +86,10 @@ Multi-dimensional fits
 Pass sequence corners; the callback receives a length-``dim`` row and returns a
 scalar or a length-``out_dim`` sequence:
 
-.. code-block:: python
-
-   def bump(x):
-       return math.exp(-100 * (x[0] - 0.5) ** 2 - (x[1] - 0.5) ** 2)
-
-   approx = treeweave.fit(bump, [0.0, 0.0], [1.0, 1.0], tol=1e-8)
-   y = approx(np.array([[0.4, 0.6]]))   # shape (N, dim) -> (N, out_dim)
+.. literalinclude:: ../../bindings/python/examples/simple_2d.py
+   :language: python
+   :start-after: # BEGIN DOCS_MULTIDIM
+   :end-before: # END DOCS_MULTIDIM
 
 Options
 -------

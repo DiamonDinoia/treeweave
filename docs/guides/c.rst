@@ -20,11 +20,10 @@ Download the Linux x86-64 tarball from the `Releases page
 
 .. code-block:: bash
 
-   VER=stable
    PLATFORM=linux-x86_64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-${VER}-${PLATFORM}.tar.gz"
+   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
    curl -fLO "$URL" || wget "$URL"
-   tar xzf "treeweave-${VER}-${PLATFORM}.tar.gz"   # extracts include/ lib/ into ./
+   tar xzf "treeweave-${PLATFORM}.tar.gz"   # extracts include/ lib/ into ./
    gcc examples/C/simple.c -Iinclude -Llib -ltreeweave_c -lm -o simple
    LD_LIBRARY_PATH=lib ./simple
 
@@ -35,10 +34,12 @@ Other platforms: ``linux-aarch64``, ``macos-arm64``, ``macos-x86_64``, ``windows
 CMake package
 ^^^^^^^^^^^^^
 
-.. code-block:: cmake
+The tarball ships a ``find_package(treeweave)`` package. This is the whole
+consumer project, run by ``tools/ci/install-test.sh`` on every pull request:
 
-   find_package(treeweave REQUIRED)
-   target_link_libraries(my_app PRIVATE treeweave::treeweave_c)
+.. literalinclude:: ../../examples/quickstart/c-find_package/CMakeLists.txt
+   :language: cmake
+   :lines: 4-
 
 Source build
 ^^^^^^^^^^^^

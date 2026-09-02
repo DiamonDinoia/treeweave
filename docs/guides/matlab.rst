@@ -12,6 +12,8 @@ Install (MATLAB)
 With `mip <https://mip.sh/>`_, from the `mip-org/labs
 <https://github.com/mip-org/mip-labs>`_ channel:
 
+.. not-run-in-ci: installs a published channel package; the MEX bundle itself is built and tested by matlab.yml.
+
 .. code-block:: matlab
 
    mip install --channel mip-org/labs treeweave
@@ -27,15 +29,17 @@ and ``addpath`` the extracted directory (which holds ``treeweave.m``, the genera
 
 .. code-block:: bash
 
-   VER=stable
    PLATFORM=linux-x64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/download/${VER}/treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-matlab-${PLATFORM}.tar.gz"
    curl -fLO "$URL" || wget "$URL"
-   tar xzf "treeweave-matlab-${VER}-${PLATFORM}.tar.gz"
+   mkdir -p treeweave-matlab
+   tar xzf "treeweave-matlab-${PLATFORM}.tar.gz" --strip-components=1 -C treeweave-matlab
+
+.. not-run-in-ci: path setup for an extracted release bundle; release-install.yml exercises the bundle.
 
 .. code-block:: matlab
 
-   addpath('treeweave-matlab-stable-linux-x64')
+   addpath('treeweave-matlab')
 
 Install (Octave)
 ----------------
@@ -45,11 +49,10 @@ MEX. Download the source release and build against your local Octave:
 
 .. code-block:: bash
 
-   VER=stable
-   URL="https://github.com/DiamonDinoia/treeweave/archive/refs/tags/${VER}.tar.gz"
-   curl -fL "$URL" -o "treeweave-${VER}-source.tar.gz" || wget -O "treeweave-${VER}-source.tar.gz" "$URL"
-   tar xzf "treeweave-${VER}-source.tar.gz"
-   cd "treeweave-${VER}"
+   URL="https://github.com/DiamonDinoia/treeweave/archive/refs/heads/stable.tar.gz"
+   curl -fL "$URL" -o treeweave-source.tar.gz || wget -O treeweave-source.tar.gz "$URL"
+   tar xzf treeweave-source.tar.gz
+   cd treeweave-stable
    cmake --preset bindings-octave
    cmake --build build/bindings-octave -j
 
@@ -91,14 +94,10 @@ Evaluation routes
 The object is callable directly (or via ``obj.eval``), and two name/value flags
 select the fast paths:
 
-.. code-block:: matlab
-
-   X = linspace(2, 10, 1000)';           % N x dim
-
-   obj(X)                                % batch:  N x dim -> N x out_dim
-   obj.eval(X)                           % identical to obj(X)
-   obj(X, 'sorted', true)                % promise X is non-decreasing, X(i) <= X(i+1) (dim == 1)
-   obj(X, 'transposed', true)            % batch -> out_dim x N (out_dim > 1)
+.. literalinclude:: ../../bindings/matlab/examples/example_routes.m
+   :language: matlab
+   :start-after: % BEGIN DOCS_ROUTES
+   :end-before: % END DOCS_ROUTES
 
 ``'sorted', true`` skips treeweave's internal counting-sort and is ~3-4x faster
 when the caller can promise the column is ascending, which covers ``linspace``
@@ -112,27 +111,20 @@ Multi-dimensional fits
 Pass row-vector corners; the callback takes a ``1 x dim`` row and returns an
 ``out_dim x 1`` column:
 
-.. code-block:: matlab
-
-   % 2-D input -> 3-D vector output (out_dim inferred by probing the midpoint)
-   g    = @(x) [sin(x(1)+x(2)); cos(x(1)-x(2)); x(1)*x(2)];
-   obj2 = treeweave(g, [-1 -1], [1 1], 1e-6, 'max_memory_mib', 64);
-
-   [gx, gy] = meshgrid(linspace(-1, 1, 50));
-   Y  = obj2([gx(:), gy(:)]);                    % 2500 x 3
-   Yt = obj2([gx(:), gy(:)], 'transposed', true); % 3 x 2500 (struct-of-arrays)
-
-   fprintf('Memory: %.1f KiB\n', obj2.memory_usage() / 1024);
-   delete(obj2);
+.. literalinclude:: ../../bindings/matlab/examples/example_vector.m
+   :language: matlab
+   :start-after: % BEGIN DOCS_MULTIDIM
+   :end-before: % END DOCS_MULTIDIM
 
 Options
 -------
 
 Pass name-value pairs after ``tol`` to ``treeweave(...)`` to override defaults:
 
-.. code-block:: matlab
-
-   obj = treeweave(f, 2, 10, 1e-10, 'tol_kind', 'absolute_max', 'max_memory_mib', 64);
+.. literalinclude:: ../../bindings/matlab/examples/example_1d.m
+   :language: matlab
+   :start-after: % BEGIN DOCS_OPTIONS
+   :end-before: % END DOCS_OPTIONS
 
 Available options:
 
@@ -144,9 +136,10 @@ Available options:
      - Default
      - Meaning
    * - ``'tol_kind'``
-     - ``'relative_max'``
-     - Tolerance interpretation. One of ``'relative_max'``, ``'absolute_max'``,
-       ``'relative_l2'``, ``'absolute_l2'``, ``'relative_tail'``, ``'absolute_tail'``.
+     - ``2`` (relative max)
+     - Tolerance interpretation, as the numeric ``treeweave_tol_kind_t``:
+       ``0`` relative tail, ``1`` absolute tail, ``2`` relative max,
+       ``3`` absolute max, ``4`` relative L2, ``5`` absolute L2.
    * - ``'max_depth'``
      - ``50``
      - Tree-depth ceiling.

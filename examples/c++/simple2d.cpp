@@ -8,12 +8,17 @@
 #include <vector>
 
 int main() {
+    // BEGIN DOCS_MULTIDIM
     auto bump = [](std::array<double, 2> x) -> std::array<double, 1> {
         return {std::exp(-100.0 * (x[0] - 0.5) * (x[0] - 0.5) - (x[1] - 0.5) * (x[1] - 0.5))};
     };
     // Fit bump(x, y) on [0, 1]^2 syntax is fit(callback, lower_bound, upper_bound, tolerance).
     auto fn = treeweave::fit(bump, std::array{0.0, 0.0}, std::array{1.0, 1.0},
                              /*tol=*/1e-8);
+    // Evaluate fn on one point; the result is a std::array<double, 1>.
+    const std::array<double, 1> y = fn(std::array{0.4, 0.6});
+    // END DOCS_MULTIDIM
+    std::cout << "fn(0.4, 0.6) = " << y[0] << "\n";
 
     std::mt19937                           gen(1);
     std::uniform_real_distribution<double> d(0.001, 0.999);

@@ -11,7 +11,7 @@ CPM.cmake:
 
 .. code-block:: cmake
 
-   CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
+   CPMAddPackage("gh:DiamonDinoia/treeweave#stable")
    add_executable(my_app example.cpp)
    target_link_libraries(my_app PRIVATE treeweave::treeweave)
 
@@ -42,7 +42,9 @@ Targets
      - Notes
    * - C++
      - ``treeweave::treeweave``
-     - Header/interface target for ``#include <treeweave/treeweave.hpp>``.
+     - Header/interface target for ``#include <treeweave/treeweave.hpp>``. In an
+       installed prefix it carries ``<prefix>/include`` and nothing else, so it
+       is the CMake spelling of ``-I<prefix>/include``.
    * - C
      - ``treeweave::treeweave_c``
      - Shared C ABI, enabled by ``TREEWEAVE_BUILD_C_API=ON``.

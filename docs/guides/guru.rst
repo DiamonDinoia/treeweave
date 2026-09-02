@@ -1,5 +1,14 @@
-Guru interface (``treeweave::guru``)
-====================================
+Guru interface (``treeweave::guru``) — experimental
+===================================================
+
+.. warning::
+
+   The guru interface is experimental. Its signatures, its header layout and
+   its semantics can change in any release, including a patch release, and it
+   carries no deprecation period. Nothing on this page is needed to use
+   treeweave: the fit-and-evaluate API in :doc:`cpp` is the supported one.
+   Reach for the guru interface only after that API has been measured and
+   found wanting.
 
 ``<treeweave/guru.hpp>`` is treeweave's guru interface — named after FFTW's
 guru interface, the established precedent for an expert API that exposes the

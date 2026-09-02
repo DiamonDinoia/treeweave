@@ -23,22 +23,30 @@ The floating URL always resolves to the newest release; use
 CMake, FetchContent
 ^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: cmake
-
-   include(FetchContent)
-   FetchContent_Declare(treeweave
-     GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-     GIT_TAG stable)
-   FetchContent_MakeAvailable(treeweave)
-   target_link_libraries(my_app PRIVATE treeweave::treeweave)
+.. literalinclude:: ../../examples/quickstart/cpp-fetchcontent/CMakeLists.txt
+   :language: cmake
+   :lines: 4-
 
 CMake, CPM
 ^^^^^^^^^^
 
-.. code-block:: cmake
+.. literalinclude:: ../../examples/quickstart/cpp-cpm/CMakeLists.txt
+   :language: cmake
+   :lines: 3-
 
-   CPMAddPackage("gh:DiamonDinoia/treeweave@stable")
-   target_link_libraries(my_app PRIVATE treeweave::treeweave)
+CMake, find_package
+^^^^^^^^^^^^^^^^^^^
+
+``find_package(treeweave)`` against an installed prefix (or an extracted release
+tarball) also gives the header-only C++ target:
+
+.. literalinclude:: ../../examples/quickstart/cpp-find_package/CMakeLists.txt
+   :language: cmake
+   :lines: 4-
+
+Every file above is a complete project under ``examples/quickstart/``.
+``tools/ci/install-test.sh`` configures, builds and runs all of them on every
+pull request, so what is printed here is what CI proved.
 
 1-D fit
 -------
@@ -52,15 +60,11 @@ Multi-dimensional fit
 Inputs and outputs are ``std::array``. treeweave deduces the dimensions from
 the callable:
 
-.. code-block:: cpp
-
-   auto bump = [](std::array<double, 2> x) -> std::array<double, 1> {
-       return {std::exp(-100.0 * (x[0] - 0.5) * (x[0] - 0.5)
-                               - (x[1] - 0.5) * (x[1] - 0.5))};
-   };
-   auto fn = treeweave::fit(bump, std::array{0.0, 0.0},
-                            std::array{1.0, 1.0}, /*tol=*/1e-8);
-   auto y  = fn(std::array{0.4, 0.6});   // std::array<double, 1>
+.. literalinclude:: ../../examples/c++/simple2d.cpp
+   :language: cpp
+   :start-after: // BEGIN DOCS_MULTIDIM
+   :end-before: // END DOCS_MULTIDIM
+   :dedent: 4
 
 ``float`` works the same way: pass ``float`` corners and a ``float``-returning
 callable.
@@ -70,18 +74,19 @@ Options
 
 Pass a :doc:`treeweave::options <options>` as the trailing argument:
 
-.. code-block:: cpp
-
-   treeweave::options opts;
-   opts.tol_kind       = treeweave::TolKind::AbsoluteMax;
-   opts.max_memory_mib = 64;
-   auto fn = treeweave::fit(zeta, 2.0, 10.0, 1e-10, opts);
+.. literalinclude:: ../../examples/c++/with_options.cpp
+   :language: cpp
+   :start-after: // BEGIN DOCS_OPTIONS
+   :end-before: // END DOCS_OPTIONS
+   :dedent: 4
 
 The leaf polynomial degree is a template parameter (default 7):
 
-.. code-block:: cpp
-
-   auto fn = treeweave::fit<5>(zeta, 2.0, 10.0, 1e-8);  // degree-5 leaves
+.. literalinclude:: ../../examples/c++/with_options.cpp
+   :language: cpp
+   :start-after: // BEGIN DOCS_DEGREE
+   :end-before: // END DOCS_DEGREE
+   :dedent: 4
 
 Thread safety
 -------------
@@ -110,14 +115,11 @@ its own ``-march``. See :doc:`dispatch`.
 Runnable sources:
 `examples/c++/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B>`_.
 
-Lower-level: the guru interface
--------------------------------
+Experimental: the guru interface
+--------------------------------
 
-``treeweave/guru.hpp`` — the guru interface, after FFTW's — re-exposes the
-C++ batch pipeline's stages for caller-driven fusion: one classify sweep per
-point, one combined-key counting sort across several fits, per-run SIMD eval
-with each regime's post-processing fused while the data is still hot, and a
-``gather`` writeback — all on caller-owned scratch, no per-call allocation.
-The sorted run walk is the same one ``Function::sorted`` dispatches from, so
-library and user code share one path. See :doc:`guru` for the recipe, the
-key-layout rules, and the worked example.
+``<treeweave/guru.hpp>`` re-exposes the batch pipeline's stages (classify,
+counting sort, per-run SIMD evaluation, gather) over caller-owned buffers, so
+several fits can share one sort. It exists for functions that need several
+fits stitched together, one per asymptotic regime for instance. It is
+experimental and unstable; see :doc:`guru`.

@@ -153,7 +153,7 @@ if(TREEWEAVE_MKOCTFILE_EXECUTABLE AND TREEWEAVE_OCTAVE_EXECUTABLE)
             "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval
             "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); test_treeweave"
     )
-    foreach(_example IN ITEMS example_1d example_2d example_vector)
+    foreach(_example IN ITEMS example_1d example_2d example_vector example_routes)
         add_test(
             NAME "octave_example_${_example}"
             COMMAND

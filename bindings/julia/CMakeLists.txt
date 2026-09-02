@@ -20,7 +20,7 @@ set_tests_properties(
     PROPERTIES ENVIRONMENT "LIBTREEWEAVE_C=$<TARGET_FILE:treeweave_c>"
 )
 
-foreach(_example IN ITEMS example_1d example_2d_scalar example_2d_vector)
+foreach(_example IN ITEMS example_1d example_2d_scalar example_2d_vector example_routes)
     add_test(
         NAME "julia_example_${_example}"
         COMMAND

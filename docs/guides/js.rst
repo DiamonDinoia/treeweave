@@ -1,6 +1,11 @@
 JavaScript / TypeScript
 =======================
 
+The JavaScript binding is a Node addon over ``libtreeweave_c``, published as
+``@flatironinstitute/treeweave`` with TypeScript types. Prebuilt binaries cover
+the common platforms, so the install needs no toolchain. Inputs are 1-D, 2-D or
+3-D.
+
 Install
 -------
 
@@ -15,19 +20,10 @@ the bundled WASM backend.
 Usage
 -----
 
-.. code-block:: js
-
-   import { Treeweave } from "@flatironinstitute/treeweave";
-
-   function zeta(x) {
-       let y = 0.0;
-       for (let k = 1; k <= 1000; ++k) y += Math.pow(k, -x[0]);
-       return y;
-   }
-
-   const approx = await Treeweave.fit(zeta, 2.0, 10.0, 1e-10);
-   console.log(approx.eval(3.5));
-   approx.free();
+.. literalinclude:: ../../bindings/js/examples/simple_1d.mjs
+   :language: js
+   :start-after: // BEGIN DOCS_USAGE
+   :end-before: // END DOCS_USAGE
 
 Options
 -------
@@ -36,14 +32,10 @@ Pass a ``FitOptions`` object as the fifth argument to ``Treeweave.fit``.
 :doc:`options` documents the shared fit options. JavaScript spells them in lower
 camel case, such as ``tolKind`` and ``maxMemoryMib``.
 
-.. code-block:: ts
-
-   const approx = await Treeweave.fit(f, 0.0, 10.0, 1e-10, {
-       tolKind: "absolute_max",
-       maxDepth: 30,
-       maxMemoryMib: 64,
-       backend: "native",
-   });
+.. literalinclude:: ../../bindings/js/examples/simple_1d.mjs
+   :language: js
+   :start-after: // BEGIN DOCS_OPTIONS
+   :end-before: // END DOCS_OPTIONS
 
 JavaScript-specific fields:
 

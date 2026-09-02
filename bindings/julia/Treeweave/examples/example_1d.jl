@@ -25,3 +25,25 @@ xs = collect(range(a, b_val; length=1001))
 R  = approx(xs)
 max_err = maximum(abs.(R .- f.(xs)))
 println("\nMax error over 1000 points: $(max_err)")
+
+# `fit` takes the callable first, so a do-block fits a function written at the
+# call site. That is the Julia counterpart of the Python decorator.
+# BEGIN DOCS_DO_BLOCK
+zeta = fit(2.0, 10.0, 1e-10) do s
+    sum(k -> k^(-s), 1:1000)
+end
+# END DOCS_DO_BLOCK
+zeta_err = abs(zeta(3.5) - sum(k -> k^(-3.5), 1:1000))
+println("\nzeta(3.5) error: $(zeta_err)")
+@assert zeta_err < 1e-8
+
+# Options ride along as the `options` keyword.
+# BEGIN DOCS_OPTIONS
+opts = TreeweaveOptions(tol_kind = TREEWEAVE_ABSOLUTE_MAX, max_depth = 30,
+                        max_memory_mib = 64)
+capped = fit(f, a, b_val, 1e-10; options = opts)
+# END DOCS_OPTIONS
+capped_err = maximum(abs.(capped(xs) .- f.(xs)))
+println("Max absolute error of the capped fit: $(capped_err)")
+@assert capped_err < 1e-8
+println("OK")
