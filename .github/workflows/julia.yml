@@ -66,6 +66,16 @@ jobs:
       - name: Run Julia suite (julia_treeweave)
         run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure --no-tests=error
 
+      # From examples.yml, which rebuilt this same preset only to run these two
+      # steps. One leg, as it had.
+      - name: Run Julia examples
+        if: matrix.name == 'linux-x86_64'
+        run: ctest --test-dir build/bindings-julia -R '^julia_example_' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: tools/ci/docs-recipes.sh julia-dev julia-test
+
   compare-interpolators:
     name: Comparison against other Julia interpolators
     runs-on: ubuntu-24.04

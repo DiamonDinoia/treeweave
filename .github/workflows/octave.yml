@@ -61,6 +61,16 @@ jobs:
       - name: Run Octave suite (matlab_treeweave)
         run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure --no-tests=error
 
+      # From examples.yml, which rebuilt this same preset only to run these two
+      # steps. One leg, as it had.
+      - name: Run Octave examples
+        if: matrix.name == 'linux-x86_64'
+        run: ctest --test-dir build/bindings-octave -R '^octave_example_' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: tools/ci/docs-recipes.sh octave-dev
+
   compare-interpolators:
     name: Comparison against other Octave interpolators
     runs-on: ubuntu-24.04

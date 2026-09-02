@@ -122,9 +122,10 @@ region that no page embeds or that no workflow runs. The three checkpoints:
    * - When
      - What runs
    * - every pull request
-     - ``examples.yml`` and ``install-smoke.yml`` run the recipes that build or
-       consume the checkout: the clone, the presets, the install prefix, the
-       one-flag compile, the dispatch flags, the quick-start projects.
+     - ``install-smoke.yml`` runs the recipes that build or consume the
+       checkout: the clone, the presets, the install prefix, the one-flag
+       compile, the dispatch flags, the quick-start projects. Each binding's
+       own workflow runs its source-build recipe on the Linux leg.
    * - release dry run
      - ``release.yml``'s ``smoke-cxx`` runs the consume half of the tarball
        recipes against the artifacts the run built.

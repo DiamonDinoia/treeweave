@@ -22,6 +22,10 @@ name: Install smoke
 # branch, quickstart-prefix really extracts a tarball. install-test.sh proves
 # this PR's code; those two prove the documented recipe.
 #
+# The source-build recipes (clone, presets, install prefix, one -I, dispatch)
+# run in their own job here. They were a second workflow before, which rebuilt
+# trees this one already builds.
+#
 # The pip/TestPyPI leg stays here because it needs a published wheel. The Julia
 # Pkg.add -> GitHub Release path is covered by julia-smoke.yml.
 on:
@@ -91,6 +95,28 @@ jobs:
       - name: Docs recipes
         if: runner.os == 'Linux'
         run: tools/ci/docs-recipes.sh quickstart-build quickstart-prefix cxx-headers
+
+  # The source-build, install and dispatch recipes docs/install.rst,
+  # guides/cmake.rst, guides/cpp.rst, guides/c.rst and guides/dispatch.rst print.
+  # 60 minutes: the batch configures and builds the dev-release preset and a
+  # multiarch tree of its own.
+  source-recipes:
+    name: Source-build recipes
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install toolchain
+        run: sudo apt-get update && sudo apt-get install -y g++ cmake ninja-build
+
+      - name: Docs recipes
+        run: |
+          tools/ci/docs-recipes.sh clone dev-build dev-test c-abi-build \
+            install-prefix oneflag-cxx multiarch force-arch
 
   # README: pip install from TestPyPI. Only meaningful once a wheel is published,
   # so gate on the TestPyPI workflow having succeeded (or a manual dispatch).

@@ -53,3 +53,13 @@ jobs:
       # test_treeweave.f90 ends with `error stop` on any failure -> nonzero exit.
       - name: Run Fortran test (fortran_treeweave)
         run: ctest --test-dir build/bindings-fortran -R fortran_treeweave --output-on-failure --no-tests=error
+
+      # From examples.yml, which rebuilt this same preset only to run these two
+      # steps. One leg, as it had.
+      - name: Run Fortran examples
+        if: matrix.name == 'linux-x86_64'
+        run: ctest --test-dir build/bindings-fortran -R '^fortran_example$' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: tools/ci/docs-recipes.sh fortran-dev fortran-test

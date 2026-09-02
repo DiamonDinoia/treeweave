@@ -49,7 +49,7 @@ Install (Octave)
 Octave has no stable MEX ABI across versions, so there is no prebuilt Octave
 MEX. Download the source release and build against your local Octave:
 
-.. not-run-in-ci: a full Octave build of the released source tarball, on every pull request, to check a curl and a cd. examples.yml octave runs the same two cmake lines on the checkout, via the octave-dev recipe below.
+.. not-run-in-ci: a full Octave build of the released source tarball, on every pull request, to check a curl and a cd. octave.yml runs the same two cmake lines on the checkout, via the octave-dev recipe below.
 
 .. code-block:: bash
 

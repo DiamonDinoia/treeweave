@@ -75,3 +75,13 @@ jobs:
       # The suite runs both backends found in dist/ (node:test, via CTest).
       - name: Run JS suite (js_treeweave)
         run: ctest --test-dir build/bindings-js -R js_treeweave --output-on-failure --no-tests=error
+
+      # From examples.yml, which rebuilt this same preset only to run these two
+      # steps. One leg, as it had.
+      - name: Run JavaScript examples
+        if: matrix.name == 'linux-x86_64'
+        run: node bindings/js/examples/simple_1d.mjs
+
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: tools/ci/docs-recipes.sh js-dev

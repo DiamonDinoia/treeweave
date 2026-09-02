@@ -57,6 +57,16 @@ jobs:
       - name: Run pytest suite (python_treeweave)
         run: ctest --test-dir build/bindings-python -R python_treeweave --output-on-failure --no-tests=error
 
+      # From examples.yml, which rebuilt this same preset only to run these two
+      # steps. One leg, as it had.
+      - name: Run Python examples
+        if: matrix.name == 'linux-x86_64'
+        run: ctest --test-dir build/bindings-python -R '^python_example_' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: tools/ci/docs-recipes.sh python-dev
+
   # docs/guides/performance.rst prints this script's table and states that CI runs
   # it on every pull request. The script gates the reproducible columns (f-evals,
   # memory, achieved error) and --self-test proves those gates can fail, so a
