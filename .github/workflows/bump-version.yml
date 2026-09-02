@@ -1,8 +1,9 @@
 name: Bump Version
 
 # Human-dispatched version bump. Runs scripts/bump_version.py on a fresh main
-# checkout, which rewrites VERSION, include/treeweave_version.h, the Julia
-# Project.toml and the JS package.json, then commits and pushes to main.
+# checkout, which rewrites VERSION, the Julia Project.toml and the JS
+# package.json, then commits and pushes to main. (include/treeweave_version.h is
+# gitignored and regenerated from VERSION on every CMake configure.)
 #
 # After the bump lands and CI goes green on the new HEAD, dispatch the Release
 # workflow (release.yml) with the same version. The Release workflow builds

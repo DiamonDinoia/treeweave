@@ -2,12 +2,15 @@
 """Fail loudly if treeweave's hand-synced version strings disagree.
 
 The single source of truth for the release version is the root ``VERSION`` file
-(which the root ``CMakeLists.txt`` ``project()`` reads). Three other files
+(which the root ``CMakeLists.txt`` ``project()`` reads). Two other files
 hard-code the same version and must match:
 
-- ``include/treeweave.h``                  ``TREEWEAVE_VERSION_{MAJOR,MINOR,PATCH}`` (+ ``_STRING``)
-- ``include/treeweave/treeweave.hpp``      ``version_{major,minor,patch}``
 - ``bindings/julia/Treeweave/Project.toml``  ``version``
+- ``bindings/js/package.json``               ``version``
+
+``include/treeweave_version.h`` is not checked: it is generated from ``VERSION``
+on every CMake configure and is gitignored, so it cannot drift and is absent in a
+fresh checkout.
 
 The Python wheel version is derived from the same ``VERSION`` file by
 scikit-build-core's regex metadata provider, so a green ``VERSION`` check also
@@ -46,19 +49,6 @@ def main() -> int:
             f"error: VERSION must be MAJOR.MINOR.PATCH, got: {version_file!r}"
         )
 
-    # treeweave_version.h is generated from VERSION and committed; treeweave.h /
-    # treeweave.hpp #include it and derive their version from its macros, so they
-    # are auto-synced and not checked here. Verifying the committed generated
-    # copy catches a stale header (e.g. a bump that skipped regeneration).
-    hv = ROOT / "include" / "treeweave_version.h"
-    major = _search(hv, r"#define TREEWEAVE_VERSION_MAJOR (\d+)").group(1)
-    minor = _search(hv, r"#define TREEWEAVE_VERSION_MINOR (\d+)").group(1)
-    patch = _search(hv, r"#define TREEWEAVE_VERSION_PATCH (\d+)").group(1)
-    header = f"{major}.{minor}.{patch}"
-    header_string = _search(
-        hv, r'#define TREEWEAVE_VERSION_STRING "(\d+\.\d+\.\d+)"'
-    ).group(1)
-
     julia = _search(
         ROOT / "bindings" / "julia" / "Treeweave" / "Project.toml",
         r'^version = "(\d+\.\d+\.\d+)"',
@@ -71,8 +61,6 @@ def main() -> int:
 
     found = {
         "VERSION": version_file,
-        "include/treeweave_version.h (MAJOR/MINOR/PATCH)": header,
-        "include/treeweave_version.h (_STRING)": header_string,
         "bindings/julia/Treeweave/Project.toml": julia,
         "bindings/js/package.json": js,
     }
