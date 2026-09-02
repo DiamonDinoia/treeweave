@@ -181,7 +181,7 @@ jobs:
       # three tags shipped a MEX that could not load. Run the bundle's own test
       # against the staged files, so the packaged MEX is the one exercised.
       - name: Smoke-test the staged bundle
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@v3
         with:
           command: >-
             addpath('${{ github.workspace }}/bindings/matlab');
