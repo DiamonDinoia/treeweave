@@ -132,7 +132,7 @@ jobs:
       # through this action. test_treeweave calls error() on failure, so a
       # non-zero exit is a real failure of the cl.exe MEX under this release.
       - name: Run test_treeweave
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@v3
         with:
           command: addpath('bindings/matlab'); addpath(getenv('MEXDIR')); test_treeweave
 
