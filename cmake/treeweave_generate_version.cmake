@@ -1,6 +1,6 @@
 # treeweave_generate_version.cmake: composes TREEWEAVE_VERSION_FULL from
-# VERSION + git state; writes include/treeweave_version.h (committed, in-tree).
-# Script mode: cmake -P ...; -DCHECK=ON exits 1 if header would change.
+# VERSION + git state and writes include/treeweave_version.h, which is gitignored
+# and regenerated on every configure. Also runs standalone: cmake -P <this file>.
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -127,10 +127,14 @@ else()
     )
 endif()
 
-if(_shallow)
+# A shallow clone (CI fetch-depth:1) cannot count commits since the release tag,
+# so the -dev.N suffix would be wrong. If a header is already present, keep it;
+# otherwise write one from VERSION alone. The header is gitignored, so "already
+# present" means an earlier configure in the same tree, never a committed copy.
+if(_shallow AND EXISTS "${_tw_src}/include/treeweave_version.h")
     message(
         STATUS
-        "treeweave version: shallow clone, trusting committed include/treeweave_version.h"
+        "treeweave version: shallow clone, keeping the existing include/treeweave_version.h"
     )
     return()
 endif()
@@ -158,14 +162,4 @@ else()
     file(REMOVE "${_tmp}")
 endif()
 
-if(DEFINED CHECK AND CHECK)
-    if(_changed)
-        message(
-            STATUS
-            "treeweave version regenerated to ${TREEWEAVE_VERSION_FULL}; please re-stage include/treeweave_version.h"
-        )
-        message(FATAL_ERROR "treeweave_version.h out of date")
-    endif()
-else()
-    message(STATUS "treeweave version: ${TREEWEAVE_VERSION_FULL}")
-endif()
+message(STATUS "treeweave version: ${TREEWEAVE_VERSION_FULL}")

@@ -9,9 +9,22 @@
 #   find_package(treeweave REQUIRED)
 #   target_link_libraries(app PRIVATE treeweave::treeweave_c)
 #
-# The header-only C++ template API (`treeweave::treeweave`) is not installed; consume
-# it in-tree via add_subdirectory()/FetchContent().
+# The header-only C++ template API is the installed header bundle, exposed as
+# `treeweave::treeweave` below. That target carries an include directory and
+# nothing else, so it is equivalent to `-I<prefix>/include`.
 
 include("${CMAKE_CURRENT_LIST_DIR}/treeweaveTargets.cmake")
+
+# Header-only C++ API. Defined here rather than exported: the build-tree target
+# links polyfit/POET privately and pulls in their build-tree include paths,
+# while the installed bundle already contains those headers in one tree.
+if(NOT TARGET treeweave::treeweave)
+    add_library(treeweave::treeweave INTERFACE IMPORTED)
+    set_target_properties(
+        treeweave::treeweave
+        PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include"
+                   INTERFACE_COMPILE_FEATURES cxx_std_20
+    )
+endif()
 
 check_required_components(treeweave)

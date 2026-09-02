@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.25...3.31)
 
 # Single source of truth for the version is the tracked VERSION file; project()
 # takes its MAJOR.MINOR.PATCH from it, and treeweave_generate_version.cmake
-# (re)writes the committed include/treeweave_version.h from it + git state.
+# writes include/treeweave_version.h from it + git state. That header is
+# gitignored: it exists only in a configured tree.
 file(
     STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION"
     TREEWEAVE_BASE_VERSION

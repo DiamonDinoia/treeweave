@@ -49,3 +49,9 @@ devel/*
 
 # Doc figures captured from the examples at docs-build time.
 docs/_generated/
+
+# Generated on every CMake configure from VERSION + git state by
+# cmake/treeweave_generate_version.cmake. Untracked so a stale copy can never be
+# committed by mistake; consumers get it from the configure step, the release
+# tarballs or the cxx-headers bundle, all of which run CMake first.
+include/treeweave_version.h
