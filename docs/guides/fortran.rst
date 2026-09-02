@@ -14,24 +14,31 @@ Prebuilt C ABI
 Fortran calls the C ABI, so the release C archive is enough alongside an
 existing Fortran wrapper or build setup:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DOWNLOAD_C_TARBALL
+   :end-before: # END DOCS_DOWNLOAD_C_TARBALL
+   :dedent: 4
 
-   PLATFORM=linux-x86_64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
-   curl -fLO "$URL" || wget "$URL"
-   tar xzf "treeweave-${PLATFORM}.tar.gz"
+Extract it with ``tar xzf "treeweave-${PLATFORM}.tar.gz"``; the archive holds
+``include/`` and ``lib/``. Windows ships ``treeweave-windows-x64.zip``.
 
 Source build
 ^^^^^^^^^^^^
 
 Build the ``treeweave_fortran`` target using the CMake preset:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cd treeweave
-   cmake --preset bindings-fortran
-   cmake --build build/bindings-fortran -j
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_FORTRAN_DEV
+   :end-before: # END DOCS_FORTRAN_DEV
+   :dedent: 4
 
 Without a Fortran compiler, CMake skips the Fortran targets. The build writes
 the generated ``treeweave`` module into the build tree.
@@ -95,11 +102,17 @@ See :doc:`options` for the full description of each field and tolerance kind.
 Further
 -------
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_FORTRAN_DEV
+   :end-before: # END DOCS_FORTRAN_DEV
+   :dedent: 4
 
-   cmake --preset bindings-fortran
-   cmake --build build/bindings-fortran -j
-   ctest --test-dir build/bindings-fortran -R fortran_treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_FORTRAN_TEST
+   :end-before: # END DOCS_FORTRAN_TEST
+   :dedent: 4
 
 Without a Fortran compiler, CMake skips the Fortran targets. Full example:
 `bindings/fortran/example.f90 <https://github.com/DiamonDinoia/treeweave/blob/main/bindings/fortran/example.f90>`_.

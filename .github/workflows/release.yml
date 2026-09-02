@@ -388,6 +388,24 @@ jobs:
           ./ftn_consumer/build/ftn_test
           echo "Fortran consumer OK"
 
+      - name: Download the arch-independent C++ headers bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: treeweave-cxx-headers
+          path: hdrs
+
+      # The consume half of the tarball recipes docs/install.rst, guides/c.rst
+      # and guides/cpp.rst print, run against the artifacts this very run built.
+      # This is what makes "the documented install commands work on the real
+      # assets" a precondition of publishing instead of a post-publish
+      # discovery. The download lines they sit next to can only run once the
+      # release exists; release-install.yml runs those.
+      - name: Docs recipes — consume the built tarball and header bundle
+        env:
+          TREEWEAVE_DOCS_C_TARBALL: pkg/treeweave-${{ inputs.version }}-linux-x86_64.tar.gz
+          TREEWEAVE_DOCS_CXX_HEADERS: hdrs/treeweave-cxx-headers.tar.gz
+        run: tools/ci/docs-recipes.sh c-tarball cxx-headers
+
   smoke-julia:
     name: Smoke — Julia (from source, LIBTREEWEAVE_C -> tarball)
     needs: [preflight, build-c-abi]

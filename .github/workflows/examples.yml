@@ -21,7 +21,9 @@ jobs:
   cpp-c:
     name: C++ and C examples
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 60, not 30: the docs recipes below configure and build the dev-release
+    # preset and a multiarch tree of their own, on top of this job's build.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,6 +44,15 @@ jobs:
 
       - name: Run C++ and C examples
         run: ctest --test-dir build/examples -R '^(c_example_|cpp_example_)' --output-on-failure --no-tests=error
+
+      # The source-build, install and dispatch recipes docs/install.rst,
+      # guides/cmake.rst, guides/cpp.rst, guides/c.rst and guides/dispatch.rst
+      # print. Each is a marked region of the script, so the printed command is
+      # the executed command.
+      - name: Docs recipes
+        run: |
+          tools/ci/docs-recipes.sh clone dev-build dev-test c-abi-build \
+            install-prefix oneflag-cxx multiarch force-arch
 
   python:
     name: Python examples
@@ -75,6 +86,9 @@ jobs:
       - name: Run Python examples
         run: ctest --test-dir build/bindings-python -R '^python_example_' --output-on-failure --no-tests=error
 
+      - name: Docs recipes
+        run: tools/ci/docs-recipes.sh python-dev
+
   julia:
     name: Julia examples
     runs-on: ubuntu-latest
@@ -104,6 +118,9 @@ jobs:
       - name: Run Julia examples
         run: ctest --test-dir build/bindings-julia -R '^julia_example_' --output-on-failure --no-tests=error
 
+      - name: Docs recipes
+        run: tools/ci/docs-recipes.sh julia-dev julia-test
+
   fortran:
     name: Fortran example
     runs-on: ubuntu-latest
@@ -131,6 +148,9 @@ jobs:
 
       - name: Run Fortran example
         run: ctest --test-dir build/bindings-fortran -R '^fortran_example$' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        run: tools/ci/docs-recipes.sh fortran-dev fortran-test
 
   js:
     name: JavaScript example
@@ -165,6 +185,9 @@ jobs:
       - name: Run simple_1d example
         run: node bindings/js/examples/simple_1d.mjs
 
+      - name: Docs recipes
+        run: tools/ci/docs-recipes.sh js-dev
+
   octave:
     name: Octave examples
     runs-on: ubuntu-latest
@@ -189,3 +212,6 @@ jobs:
 
       - name: Run Octave examples
         run: ctest --test-dir build/bindings-octave -R '^octave_example_' --output-on-failure --no-tests=error
+
+      - name: Docs recipes
+        run: tools/ci/docs-recipes.sh octave-dev

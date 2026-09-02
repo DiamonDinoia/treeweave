@@ -12,7 +12,7 @@ Install (MATLAB)
 With `mip <https://mip.sh/>`_, from the `mip-org/labs
 <https://github.com/mip-org/mip-labs>`_ channel:
 
-.. not-run-in-ci: installs a published channel package; the MEX bundle itself is built and tested by matlab.yml.
+.. not-run-in-ci: installs a published channel package; matlab.yml builds and tests the MEX bundle these commands install.
 
 .. code-block:: matlab
 
@@ -27,15 +27,17 @@ the C ABI, so the bundle has no runtime dependencies. Download it, extract it,
 and ``addpath`` the extracted directory (which holds ``treeweave.m``, the generated
 ``tw_*.m`` stubs, and ``treeweave_mex.<ext>``).
 
+.. not-run-in-ci: no workflow downloads the published MATLAB bundle, so these two lines are unverified; release.yml build-mex builds the bundle and matlab.yml tests its contents. Testing the download needs a MATLAB job for a curl and a tar.
+
 .. code-block:: bash
 
    PLATFORM=linux-x64
    URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-matlab-${PLATFORM}.tar.gz"
-   curl -fLO "$URL" || wget "$URL"
+   curl -fLO "$URL"
    mkdir -p treeweave-matlab
    tar xzf "treeweave-matlab-${PLATFORM}.tar.gz" --strip-components=1 -C treeweave-matlab
 
-.. not-run-in-ci: path setup for an extracted release bundle; release-install.yml exercises the bundle.
+.. not-run-in-ci: path setup for an extracted release bundle, which no workflow downloads; matlab.yml runs the same treeweave.m against a freshly built MEX.
 
 .. code-block:: matlab
 
@@ -47,10 +49,12 @@ Install (Octave)
 Octave has no stable MEX ABI across versions, so there is no prebuilt Octave
 MEX. Download the source release and build against your local Octave:
 
+.. not-run-in-ci: a full Octave build of the released source tarball, on every pull request, to check a curl and a cd. examples.yml octave runs the same two cmake lines on the checkout, via the octave-dev recipe below.
+
 .. code-block:: bash
 
    URL="https://github.com/DiamonDinoia/treeweave/archive/refs/heads/stable.tar.gz"
-   curl -fL "$URL" -o treeweave-source.tar.gz || wget -O treeweave-source.tar.gz "$URL"
+   curl -fL "$URL" -o treeweave-source.tar.gz
    tar xzf treeweave-source.tar.gz
    cd treeweave-stable
    cmake --preset bindings-octave
@@ -64,11 +68,11 @@ Building is an opt-in CMake option, ``TREEWEAVE_BUILD_MATLAB``. With
 CMake fetches the mwrap generator, generates the gateway + ``tw_*.m`` stubs, and
 compiles the MEX:
 
-.. code-block:: bash
-
-   cmake --preset bindings-octave      # or bindings-matlab if building against MATLAB
-   cmake --build build/bindings-octave -j
-   ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_OCTAVE_DEV
+   :end-before: # END DOCS_OCTAVE_DEV
+   :dedent: 4
 
 Requirements: MATLAB R2019b+ (tested on R2025a) or GNU Octave with
 ``mkoctfile``, plus a C++20 toolchain and CMake >= 3.25.

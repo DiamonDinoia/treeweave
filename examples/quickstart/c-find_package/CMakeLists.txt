@@ -1,6 +1,8 @@
 # Consume the installed C library. The release tarball for every platform ships
 # this CMake package, so extract it and point CMake at the prefix:
-#   cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/extracted/tarball
+#   cmake -S . -B build -DCMAKE_PREFIX_PATH="$PREFIX"
+# where PREFIX is the directory the tarball was extracted into.
+# BEGIN DOCS_PROJECT
 cmake_minimum_required(VERSION 3.20)
 project(treeweave_quickstart C)
 

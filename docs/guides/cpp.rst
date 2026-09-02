@@ -10,12 +10,21 @@ Install
 Download headers, no CMake
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DOWNLOAD_CXX_HEADERS
+   :end-before: # END DOCS_DOWNLOAD_CXX_HEADERS
+   :dedent: 4
 
-   wget https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
-   tar xzf treeweave-cxx-headers.tar.gz   # -> ./include/treeweave/, ./include/polyfit/, ...
-   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Iinclude -o simple1d
-   ./simple1d
+Save the 1-D fit below as ``main.cpp``, then compile it with one ``-I``. The
+bundle extracts ``include/treeweave/``, ``include/polyfit/`` and their
+dependencies into the current directory:
+
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CXX_HEADERS
+   :end-before: # END DOCS_CXX_HEADERS
+   :dedent: 4
 
 The floating URL always resolves to the newest release; use
 ``.../releases/download/vX.Y.Z/treeweave-cxx-headers.tar.gz`` to pin a version.
@@ -25,14 +34,14 @@ CMake, FetchContent
 
 .. literalinclude:: ../../examples/quickstart/cpp-fetchcontent/CMakeLists.txt
    :language: cmake
-   :lines: 4-
+   :start-after: # BEGIN DOCS_PROJECT
 
 CMake, CPM
 ^^^^^^^^^^
 
 .. literalinclude:: ../../examples/quickstart/cpp-cpm/CMakeLists.txt
    :language: cmake
-   :lines: 3-
+   :start-after: # BEGIN DOCS_PROJECT
 
 CMake, find_package
 ^^^^^^^^^^^^^^^^^^^
@@ -42,7 +51,7 @@ tarball) also gives the header-only C++ target:
 
 .. literalinclude:: ../../examples/quickstart/cpp-find_package/CMakeLists.txt
    :language: cmake
-   :lines: 4-
+   :start-after: # BEGIN DOCS_PROJECT
 
 Every file above is a complete project under ``examples/quickstart/``.
 ``tools/ci/install-test.sh`` configures, builds and runs all of them on every
@@ -97,16 +106,24 @@ from many threads. treeweave does not parallelize internally.
 Build from source
 -----------------
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cmake -S treeweave -B build -DTREEWEAVE_BUILD_EXAMPLES=ON
-   cmake --build build -j
-   # one-flag compile against the consolidated header tree:
-   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/include -o simple1d
+The ``dev-release`` preset consolidates every header the C++ API needs into
+``build/dev-release/include``, so a non-CMake build needs one ``-I``:
 
-After ``cmake --install build --prefix P``, use ``-IP/include`` (or nothing for a
-standard prefix). ``cd examples/c++ && make`` uses the generated ``build/make.inc``.
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_ONEFLAG_CXX
+   :end-before: # END DOCS_ONEFLAG_CXX
+   :dedent: 4
+
+After ``cmake --install build/dev-release --prefix P``, use ``-IP/include`` (or
+nothing for a standard prefix). ``cd examples/c++ && make`` uses the generated
+``build/dev-release/make.inc``.
 
 The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime. The
 header-only C++ path instead compiles into the consuming translation unit under

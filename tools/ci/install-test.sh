@@ -6,6 +6,13 @@
 # checkout for the GitHub fetch through the mechanisms CMake and CPM already
 # provide, so the committed files stay exactly what a user copies.
 #
+# The cxx-headers route here is the portability half of the no-CMake header
+# bundle: the same tarball, compiled with whatever compiler the platform sets in
+# CXX, so the consolidated include tree keeps working under clang-cl and MSVC.
+# The command the docs print for that route is `c++ ... && ./app`, POSIX
+# spellings the Windows leg cannot run, so the printed form lives in
+# tools/ci/docs-recipes.sh as the cxx-headers recipe.
+#
 #   tools/ci/install-test.sh              # every route
 #   tools/ci/install-test.sh cpp-cpm      # one route
 #
@@ -81,7 +88,8 @@ for route in "${routes[@]}"; do
     cxx-headers)
         # No CMake at all: pack the consolidated header tree exactly as the
         # release asset is packed, extract it elsewhere, and compile with one
-        # -I, which is the "download the headers" recipe in the docs.
+        # -I. docs-recipes.sh runs the printed POSIX spelling of this; here it
+        # runs with the platform's own compiler, Windows included.
         cmake -S "$root" -B "$work/hdrs" -DTREEWEAVE_BUILD_TESTS=OFF \
             -DTREEWEAVE_BUILD_EXAMPLES=OFF "${extra_args[@]}"
         cmake --build "$work/hdrs" -j

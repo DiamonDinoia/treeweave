@@ -55,3 +55,10 @@ docs/_generated/
 # committed by mistake; consumers get it from the configure step, the release
 # tarballs or the cxx-headers bundle, all of which run CMake first.
 include/treeweave_version.h
+
+# Scratch tree for tools/ci/docs-recipes.sh and tools/ci/install-test.sh.
+_docs-recipes/
+_install-test/
+# The install prefix docs/guides/cmake.rst tells a developer to create in the
+# checkout: PREFIX defaults to $PWD/_prefix.
+_prefix/

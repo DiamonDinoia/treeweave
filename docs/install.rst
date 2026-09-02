@@ -8,9 +8,11 @@ library runs no faster, because the shipped binary already picks the best SIMD
 variant for the host CPU at runtime (:doc:`guides/dispatch`).
 
 Each section below is the shortest path to a running program. Every code block
-on this page is a file in the repository that CI compiles and runs, so a recipe
-that stops working is a failed build, not a stale page. The language guides
-cover the other install routes, the options and the larger examples.
+on this page, program and shell recipe alike, is a marked region of a file that
+CI compiles or executes, so a recipe that stops working is a failed build, not a
+stale page. The programs live under ``examples/quickstart/``; the shell recipes
+live in ``tools/ci/docs-recipes.sh``. The language guides cover the other
+install routes, the options and the larger examples.
 
 The program
 -----------
@@ -20,7 +22,7 @@ Every C and C++ section on this page builds the same program. It fits a
 
 .. literalinclude:: ../examples/quickstart/main.cpp
    :language: cpp
-   :lines: 8-
+   :start-after: // BEGIN DOCS_PROGRAM
 
 C++
 ---
@@ -30,22 +32,32 @@ with CMake and needs no bootstrap:
 
 .. literalinclude:: ../examples/quickstart/cpp-fetchcontent/CMakeLists.txt
    :language: cmake
-   :lines: 4-
+   :start-after: # BEGIN DOCS_PROJECT
 
-.. code-block:: bash
-
-   cmake -S . -B build && cmake --build build && ./build/app
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_QUICKSTART_BUILD
+   :end-before: # END DOCS_QUICKSTART_BUILD
+   :dedent: 4
 
 ``stable`` is a branch that always points at the newest release. Use a tag
 (``GIT_TAG v0.0.6``) to pin one.
 
-No CMake? Download the header bundle and pass one ``-I``:
+No CMake? Download the header bundle:
 
-.. code-block:: bash
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DOWNLOAD_CXX_HEADERS
+   :end-before: # END DOCS_DOWNLOAD_CXX_HEADERS
+   :dedent: 4
 
-   curl -fLO https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-cxx-headers.tar.gz
-   tar xzf treeweave-cxx-headers.tar.gz          # -> ./include/
-   c++ -std=c++20 -O3 -march=native main.cpp -Iinclude -o app && ./app
+Save the program above as ``main.cpp``, then compile it with one ``-I``:
+
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CXX_HEADERS
+   :end-before: # END DOCS_CXX_HEADERS
+   :dedent: 4
 
 :doc:`guides/cpp` covers CPM, ``find_package``, several dimensions, vector
 output and the degree template parameter.
@@ -59,31 +71,40 @@ program in C:
 
 .. literalinclude:: ../examples/quickstart/main.c
    :language: c
-   :lines: 7-
+   :start-after: /* BEGIN DOCS_PROGRAM */
 
-Download, then compile against it directly:
+Download the tarball for the platform:
 
-.. code-block:: bash
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DOWNLOAD_C_TARBALL
+   :end-before: # END DOCS_DOWNLOAD_C_TARBALL
+   :dedent: 4
 
-   PLATFORM=linux-x86_64      # or linux-aarch64, macos-arm64, macos-x86_64, windows-x64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
-   curl -fLO "$URL" && tar xzf "treeweave-${PLATFORM}.tar.gz"
-   cc main.c -Iinclude -Llib -ltreeweave_c -lm -o app
-   LD_LIBRARY_PATH=lib ./app
+Save the program above as ``main.c``, then compile against the tarball
+directly:
+
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_C_TARBALL
+   :end-before: # END DOCS_C_TARBALL
+   :dedent: 4
 
 ``latest/download`` always resolves to the newest release. Pin one by naming
 its tag instead: ``releases/download/v0.0.6/treeweave-0.0.6-linux-x86_64.tar.gz``.
+Windows ships the same tree as ``treeweave-windows-x64.zip``.
 
 Or let CMake find the extracted tarball:
 
 .. literalinclude:: ../examples/quickstart/c-find_package/CMakeLists.txt
    :language: cmake
-   :lines: 5-
+   :start-after: # BEGIN DOCS_PROJECT
 
-.. code-block:: bash
-
-   cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/extracted/tarball
-   cmake --build build && ./build/app
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_QUICKSTART_PREFIX
+   :end-before: # END DOCS_QUICKSTART_PREFIX
+   :dedent: 4
 
 .. warning::
 
@@ -98,9 +119,11 @@ options struct.
 Python
 ------
 
-.. code-block:: bash
-
-   pip install treeweave
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_PIP_PYPI
+   :end-before: # END DOCS_PIP_PYPI
+   :dedent: 4
 
 .. literalinclude:: ../bindings/python/examples/simple_1d.py
    :language: python
@@ -146,10 +169,11 @@ the direct MATLAB bundle download.
 Fortran
 -------
 
-.. code-block:: bash
-
-   cmake --preset bindings-fortran
-   cmake --build build/bindings-fortran -j
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_FORTRAN_DEV
+   :end-before: # END DOCS_FORTRAN_DEV
+   :dedent: 4
 
 .. literalinclude:: ../bindings/fortran/example.f90
    :language: fortran
@@ -159,9 +183,11 @@ See :doc:`guides/fortran`.
 JavaScript and TypeScript
 -------------------------
 
-.. code-block:: bash
-
-   npm install @flatironinstitute/treeweave
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_NPM
+   :end-before: # END DOCS_NPM
+   :dedent: 4
 
 .. literalinclude:: ../bindings/js/examples/simple_1d.mjs
    :language: js
@@ -171,13 +197,29 @@ See :doc:`guides/js`.
 Building from source
 --------------------
 
-.. code-block:: bash
+Clone the repository:
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cd treeweave
-   cmake --preset dev-release
-   cmake --build build/dev-release -j
-   ctest --test-dir build/dev-release --output-on-failure
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
+
+Configure and build:
+
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DEV_BUILD
+   :end-before: # END DOCS_DEV_BUILD
+   :dedent: 4
+
+Then run the suite:
+
+.. literalinclude:: ../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DEV_TEST
+   :end-before: # END DOCS_DEV_TEST
+   :dedent: 4
 
 :doc:`guides/cmake` lists the presets, the build options, the exported targets
-and the install layout.
+and the install layout. :doc:`releasing` is the maintainer's release procedure.

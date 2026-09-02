@@ -18,6 +18,12 @@ name: Release install
 #                          treeweave.mjs assets (the web-fetch path, no npm), then
 #                          tests/smoke/wasm_smoke.mjs fits + evals.
 #
+# Every job also runs the docs recipes for its route
+# (tools/ci/docs-recipes.sh), so the download and registry lines the docs print
+# are executed verbatim against the published release. Those lines are the only
+# ones no pre-release check can cover: release.yml's dry run already runs the
+# consume halves against the artifacts it builds.
+#
 # The Julia prebuilt-download path is covered by julia-smoke.yml (dispatched by
 # release.yml's verify-prebuilt job), so it is not duplicated here.
 #
@@ -56,6 +62,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # The line docs/install.rst and guides/python.rst print, verbatim and
+      # unpinned. The pinned install below then checks this exact version.
+      - name: Docs recipes — pip install from PyPI
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          tools/ci/docs-recipes.sh pip-install
+
       - name: Install treeweave from PyPI
         shell: bash
         run: |
@@ -86,10 +100,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-24.04,     pattern: '*linux-x86_64.tar.gz',  compiler: gcc }
-          - { os: ubuntu-24.04-arm, pattern: '*linux-aarch64.tar.gz', compiler: gcc }
-          - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   compiler: llvm }
-          - { os: windows-2022,     pattern: '*windows-x64.zip',      compiler: msvc }
+          - { os: ubuntu-24.04,     pattern: '*linux-x86_64.tar.gz',  platform: linux-x86_64,  compiler: gcc }
+          - { os: ubuntu-24.04-arm, pattern: '*linux-aarch64.tar.gz', platform: linux-aarch64, compiler: gcc }
+          - { os: macos-14,         pattern: '*macos-arm64.tar.gz',   platform: macos-arm64,   compiler: llvm }
+          - { os: windows-2022,     pattern: '*windows-x64.zip',      platform: windows-x64,   compiler: msvc }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -139,14 +153,24 @@ jobs:
           export PATH="$PWD/_prefix/bin:$PWD/_prefix/lib:$PATH"
           bash .github/scripts/smoke_find_package.sh "$PWD/_prefix"
 
-      - name: C guide command (-Iinclude -Llib)
+      # The consume half of the C tarball recipe docs/install.rst, guides/c.rst
+      # and guides/fortran.rst print, against the published asset. POSIX-only:
+      # the printed recipe uses cc and LD_LIBRARY_PATH.
+      - name: Docs recipes — compile against the C tarball
         if: runner.os == 'Linux'
         shell: bash
-        run: |
-          direct="$(mktemp -d)"
-          tar -C "$direct" -xzf "${{ steps.c_abi_pkg.outputs.pkgfile }}"
-          gcc examples/C/simple.c -I"$direct/include" -L"$direct/lib" -ltreeweave_c -lm -o simple
-          LD_LIBRARY_PATH="$direct/lib" ./simple
+        env:
+          TREEWEAVE_DOCS_PLATFORM: ${{ matrix.platform }}
+          TREEWEAVE_DOCS_C_TARBALL: ${{ steps.c_abi_pkg.outputs.pkgfile }}
+        run: tools/ci/docs-recipes.sh c-tarball
+
+      # The download line itself, verbatim. It names linux-x86_64, so it runs
+      # on that leg only; the other platforms differ in the name alone, which
+      # scripts/check_docs_code.py holds to the _build-c-abi.yml matrix.
+      - name: Docs recipes — the floating C tarball URL
+        if: matrix.platform == 'linux-x86_64'
+        shell: bash
+        run: tools/ci/docs-recipes.sh c-tarball-download
 
   cxx-headers-from-release:
     name: C++ headers from Release (-Iinclude, no CMake)
@@ -184,6 +208,18 @@ jobs:
           g++ -std=c++20 -O3 examples/standalone/demo.cpp -I"$dest/include" -o app
           ./app
 
+      # The two halves of the header-bundle recipe docs/install.rst and
+      # guides/cpp.rst print: the floating URL, then the compile against it.
+      - name: Docs recipes — the floating header bundle URL
+        shell: bash
+        run: tools/ci/docs-recipes.sh cxx-headers-download
+
+      - name: Docs recipes — compile against the header bundle
+        shell: bash
+        env:
+          TREEWEAVE_DOCS_CXX_HEADERS: pkg/treeweave-cxx-headers.tar.gz
+        run: tools/ci/docs-recipes.sh cxx-headers
+
   npm-from-registry:
     name: npm install (registry) — ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -200,6 +236,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '20'
+
+      # The line docs/install.rst and guides/js.rst print, verbatim and
+      # unpinned. The pinned install below then checks this exact version.
+      - name: Docs recipes — npm install from the registry
+        shell: bash
+        run: tools/ci/docs-recipes.sh npm-install
 
       - name: Install @flatironinstitute/treeweave from the registry
         shell: bash

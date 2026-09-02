@@ -1,5 +1,6 @@
 # Consume treeweave with CPM.cmake. CPM caches checkouts across projects, which
 # FetchContent does not; the cost is bootstrapping CPM itself, below.
+# BEGIN DOCS_PROJECT
 cmake_minimum_required(VERSION 3.20)
 project(treeweave_quickstart LANGUAGES CXX)
 

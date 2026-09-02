@@ -7,28 +7,20 @@ vendoring treeweave into another project.
 Vendored C++
 ------------
 
+Both routes below are complete projects under ``examples/quickstart/`` that
+``tools/ci/install-test.sh`` configures, builds and runs on every pull request.
+
 CPM.cmake:
 
-.. code-block:: cmake
-
-   CPMAddPackage("gh:DiamonDinoia/treeweave#stable")
-   add_executable(my_app example.cpp)
-   target_link_libraries(my_app PRIVATE treeweave::treeweave)
+.. literalinclude:: ../../examples/quickstart/cpp-cpm/CMakeLists.txt
+   :language: cmake
+   :start-after: # BEGIN DOCS_PROJECT
 
 FetchContent:
 
-.. code-block:: cmake
-
-   include(FetchContent)
-   FetchContent_Declare(
-       treeweave
-       GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-       GIT_TAG stable
-   )
-
-   FetchContent_MakeAvailable(treeweave)
-   add_executable(my_app example.cpp)
-   target_link_libraries(my_app PRIVATE treeweave::treeweave)
+.. literalinclude:: ../../examples/quickstart/cpp-fetchcontent/CMakeLists.txt
+   :language: cmake
+   :start-after: # BEGIN DOCS_PROJECT
 
 Targets
 -------
@@ -94,16 +86,19 @@ These are the user-facing CMake cache options:
 Installed package
 -----------------
 
-.. code-block:: bash
+``PREFIX`` defaults to ``./_prefix``; set it to install elsewhere.
 
-   cmake --preset dev-release
-   cmake --build build/dev-release --parallel
-   cmake --install build/dev-release --prefix /install/prefix
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_INSTALL_PREFIX
+   :end-before: # END DOCS_INSTALL_PREFIX
+   :dedent: 4
 
-.. code-block:: cmake
+A consumer then finds that prefix with ``find_package``:
 
-   find_package(treeweave REQUIRED)
-   target_link_libraries(my_app PRIVATE treeweave::treeweave_c)
+.. literalinclude:: ../../examples/quickstart/c-find_package/CMakeLists.txt
+   :language: cmake
+   :start-after: # BEGIN DOCS_PROJECT
 
 The header-only C++ API is not part of the installed
 ``find_package(treeweave)`` package because it depends on FetchContent-only
@@ -117,22 +112,32 @@ Source build
 Requirements: a C++20 compiler and CMake 3.25 or newer. CMake fetches the
 dependencies automatically.
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cd treeweave
-   cmake --preset dev-release
-   cmake --build build/dev-release -j
-   ctest --test-dir build/dev-release
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DEV_BUILD
+   :end-before: # END DOCS_DEV_BUILD
+   :dedent: 4
+
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DEV_TEST
+   :end-before: # END DOCS_DEV_TEST
+   :dedent: 4
 
 For a non-CMake C++ build, configure once to consolidate headers into
 ``<build>/include``:
 
-.. code-block:: bash
-
-   cmake --preset dev-release
-   cmake --build build/dev-release
-   g++ -std=c++20 -O3 -march=native examples/c++/simple1d.cpp -Ibuild/dev-release/include -o simple1d
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_ONEFLAG_CXX
+   :end-before: # END DOCS_ONEFLAG_CXX
+   :dedent: 4
 
 The build writes ``build/dev-release/make.inc`` with ``CXX``, ``CXXFLAGS``,
 and ``TREEWEAVE_INC``. ``examples/c++/Makefile`` includes it, so

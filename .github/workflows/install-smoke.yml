@@ -13,6 +13,15 @@ name: Install smoke
 #   c-find_package   : find_package against an installed prefix, C ABI
 #   cxx-headers      : the release header tarball, one -I, no CMake
 #
+# The cxx-headers route above compiles the bundle with the platform's own
+# compiler, MSVC-ABI clang included. The POSIX command the docs print for it
+# (`c++ ... && ./app`) is a docs recipe, run on the Linux leg below.
+#
+# That leg also runs the docs recipes that consume a quick-start project the way a
+# user does, with no substitution: quickstart-build really fetches the `stable`
+# branch, quickstart-prefix really extracts a tarball. install-test.sh proves
+# this PR's code; those two prove the documented recipe.
+#
 # The pip/TestPyPI leg stays here because it needs a published wheel. The Julia
 # Pkg.add -> GitHub Release path is covered by julia-smoke.yml.
 on:
@@ -76,6 +85,13 @@ jobs:
           fi
           tools/ci/install-test.sh
 
+      # The literal user commands docs/install.rst prints. POSIX-only: the
+      # printed recipe says ./build/app, which is not what MSVC names it. The
+      # Windows leg above covers the same routes through install-test.sh.
+      - name: Docs recipes
+        if: runner.os == 'Linux'
+        run: tools/ci/docs-recipes.sh quickstart-build quickstart-prefix cxx-headers
+
   # README: pip install from TestPyPI. Only meaningful once a wheel is published,
   # so gate on the TestPyPI workflow having succeeded (or a manual dispatch).
   pip-testpypi:
@@ -95,15 +111,16 @@ jobs:
 
       - name: Install from TestPyPI (deps from PyPI) and run the docs example
         run: |
-          # TestPyPI's index can lag the publish by a minute; retry a few times.
+          # The retry stays out here, not in the recipe: TestPyPI's index can
+          # lag the publish by a minute, and the docs print one pip command.
           for i in 1 2 3 4 5; do
-            if pip install --index-url https://test.pypi.org/simple/ \
-                           --extra-index-url https://pypi.org/simple/ treeweave; then
-              break
+            if tools/ci/docs-recipes.sh pip-testpypi; then break; fi
+            if [ "$i" = 5 ]; then
+              echo "::error::pip install from TestPyPI never succeeded"
+              exit 1
             fi
             echo "treeweave not on the TestPyPI index yet; retry $i"
             sleep 30
           done
-          python -c "import importlib.metadata as m; print('treeweave', m.version('treeweave'))"
           # The very file docs/install.rst embeds for the Python route.
           python bindings/python/examples/simple_1d.py

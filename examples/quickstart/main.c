@@ -5,6 +5,7 @@
  * tools/ci/install-test.sh, so the quick-start snippet in the docs is code that
  * CI proved works. */
 
+/* BEGIN DOCS_PROGRAM */
 #include <treeweave.h>
 
 #include <math.h>

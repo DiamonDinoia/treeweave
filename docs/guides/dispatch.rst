@@ -9,10 +9,15 @@ level the first time a caller builds a fit.
 
 Enable it at configure time:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_MULTIARCH
+   :end-before: # END DOCS_MULTIARCH
+   :dedent: 4
 
-   cmake -B build -DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=x86-64   # x86 / MSVC
-   cmake -B build -DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_ARCH=armv8-a  # aarch64
+On aarch64, pass ``-DTREEWEAVE_ARCH=armv8-a`` instead; the ``multiarch-arm``
+preset spells the same pair. ``_build-c-abi.yml`` builds that leg on an arm
+runner.
 
 ``TREEWEAVE_ARCH`` is the baseline for the dispatcher and the C shim
 themselves, so the library loads on any CPU of the family. Keep it at the
@@ -66,12 +71,16 @@ Set ``TREEWEAVE_FORCE_ARCH`` to one of the names above to pin the dispatcher to
 a specific level, capped at what the host supports, so one capable machine can
 exercise every fallback path:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_FORCE_ARCH
+   :end-before: # END DOCS_FORCE_ARCH
+   :dedent: 4
 
-   TREEWEAVE_FORCE_ARCH=sse2       ./test_c_abi   # force the x86 baseline
-   TREEWEAVE_FORCE_ARCH=avx        ./test_c_abi   # force MSVC's middle rung
-   TREEWEAVE_FORCE_ARCH=fma3+avx2  ./test_c_abi   # force AVX2
-   TREEWEAVE_FORCE_ARCH=arm64+neon ./test_c_abi   # force NEON64 on aarch64
+A name the build compiled no rung for is a bug, not a fallback: ``avx`` exists
+only in an MSVC-ABI build, and asking a GCC or Clang build for it aborts the
+C-ABI test. On aarch64 the one variant is ``arm64+neon``. A rung the host cannot
+run is a skip, so the ``avx512bw`` line above passes on a pre-AVX-512 CPU too.
 
-An unset, unknown, or unsupported value falls through to the normal
-widest-supported selection.
+An unset or unsupported value falls through to the normal widest-supported
+selection.

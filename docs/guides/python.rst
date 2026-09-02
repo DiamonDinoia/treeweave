@@ -10,9 +10,11 @@ Install
 
 Install the latest release from PyPI:
 
-.. code-block:: bash
-
-   pip install treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_PIP_PYPI
+   :end-before: # END DOCS_PIP_PYPI
+   :dedent: 4
 
 The wheel bundles the C ABI statically; the x86-64 wheel dispatches across the
 x86 SIMD ISAs at runtime. NumPy is the only dependency.
@@ -21,10 +23,11 @@ To test an unreleased change, every push to ``main`` publishes a staging wheel
 (``X.Y.Z.devN``) to `TestPyPI <https://test.pypi.org/project/treeweave/>`_;
 install it with TestPyPI as the primary index and real PyPI for the dependencies:
 
-.. code-block:: bash
-
-   pip install --index-url https://test.pypi.org/simple/ \
-               --extra-index-url https://pypi.org/simple/ treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_PIP_TESTPYPI
+   :end-before: # END DOCS_PIP_TESTPYPI
+   :dedent: 4
 
 Minimal example
 ---------------
@@ -134,11 +137,11 @@ See :doc:`options` for a full description of each option and the tolerance kinds
 Further
 -------
 
-.. code-block:: bash
-
-   cmake --preset bindings-python
-   cmake --build build/bindings-python -j
-   ctest --test-dir build/bindings-python -R python_treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_PYTHON_DEV
+   :end-before: # END DOCS_PYTHON_DEV
+   :dedent: 4
 
 Examples:
 `bindings/python/examples/ <https://github.com/DiamonDinoia/treeweave/tree/main/bindings/python/examples>`_.

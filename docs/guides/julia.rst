@@ -124,12 +124,17 @@ Build from source only when working on the binding or testing an unreleased
 change. Build the C ABI in a checkout, then ``develop`` the package against the
 sibling build:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cd treeweave
-   cmake --preset bindings-julia
-   cmake --build build/bindings-julia -j --target treeweave_c
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_JULIA_DEV
+   :end-before: # END DOCS_JULIA_DEV
+   :dedent: 4
 
 .. not-run-in-ci: developer install; julia.yml builds the same sibling target and runs the suite.
 
@@ -139,9 +144,11 @@ sibling build:
    Pkg.develop(path="bindings/julia/Treeweave")
    Pkg.build("Treeweave")
 
-.. code-block:: bash
-
-   ctest --test-dir build/bindings-julia -R julia_treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_JULIA_TEST
+   :end-before: # END DOCS_JULIA_TEST
+   :dedent: 4
 
 Examples:
 `bindings/julia/Treeweave/examples/ <https://github.com/DiamonDinoia/treeweave/tree/main/bindings/julia/Treeweave/examples>`_.

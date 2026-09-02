@@ -9,9 +9,11 @@ the common platforms, so the install needs no toolchain. Inputs are 1-D, 2-D or
 Install
 -------
 
-.. code-block:: bash
-
-   npm install @flatironinstitute/treeweave
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_NPM
+   :end-before: # END DOCS_NPM
+   :dedent: 4
 
 Prebuilt native N-API binaries ship for common Linux, macOS and Windows
 platforms. Browsers and hosts without a matching native prebuild fall back to
@@ -48,9 +50,10 @@ JavaScript-specific fields:
 Source build
 ------------
 
-.. code-block:: bash
-
-   cmake --preset bindings-js
-   cmake --build build/bindings-js -j
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_JS_DEV
+   :end-before: # END DOCS_JS_DEV
+   :dedent: 4
 
 Use ``bindings-js-wasm`` for the browser WASM backend.

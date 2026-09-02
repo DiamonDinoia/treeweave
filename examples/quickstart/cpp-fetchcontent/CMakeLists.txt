@@ -1,6 +1,7 @@
 # Consume treeweave with FetchContent, which ships with CMake. This is the
 # recommended C++ route: no bootstrap, no install step, nothing to download by
 # hand. tools/ci/install-test.sh configures and runs this project on every PR.
+# BEGIN DOCS_PROJECT
 cmake_minimum_required(VERSION 3.20)
 project(treeweave_quickstart LANGUAGES CXX)
 

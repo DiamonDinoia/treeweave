@@ -15,17 +15,23 @@ Install
 Direct tarball
 ^^^^^^^^^^^^^^
 
-Download the Linux x86-64 tarball from the `Releases page
-<https://github.com/DiamonDinoia/treeweave/releases>`_, then compile:
+Download the tarball for the platform from the `Releases page
+<https://github.com/DiamonDinoia/treeweave/releases>`_:
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_DOWNLOAD_C_TARBALL
+   :end-before: # END DOCS_DOWNLOAD_C_TARBALL
+   :dedent: 4
 
-   PLATFORM=linux-x86_64
-   URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
-   curl -fLO "$URL" || wget "$URL"
-   tar xzf "treeweave-${PLATFORM}.tar.gz"   # extracts include/ lib/ into ./
-   gcc examples/C/simple.c -Iinclude -Llib -ltreeweave_c -lm -o simple
-   LD_LIBRARY_PATH=lib ./simple
+Save the minimal example below as ``main.c``, then compile against the
+extracted tarball:
+
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_C_TARBALL
+   :end-before: # END DOCS_C_TARBALL
+   :dedent: 4
 
 Other platforms: ``linux-aarch64``, ``macos-arm64``, ``macos-x86_64``, ``windows-x64``
 (zip). The tarball includes ``include/treeweave.h``, ``lib/libtreeweave_c``, and a
@@ -39,17 +45,22 @@ consumer project, run by ``tools/ci/install-test.sh`` on every pull request:
 
 .. literalinclude:: ../../examples/quickstart/c-find_package/CMakeLists.txt
    :language: cmake
-   :lines: 4-
+   :start-after: # BEGIN DOCS_PROJECT
 
 Source build
 ^^^^^^^^^^^^
 
-.. code-block:: bash
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_CLONE
+   :end-before: # END DOCS_CLONE
+   :dedent: 4
 
-   git clone https://github.com/DiamonDinoia/treeweave.git
-   cd treeweave
-   cmake --preset dev-release
-   cmake --build build/dev-release --target treeweave_c -j
+.. literalinclude:: ../../tools/ci/docs-recipes.sh
+   :language: bash
+   :start-after: # BEGIN DOCS_C_ABI_BUILD
+   :end-before: # END DOCS_C_ABI_BUILD
+   :dedent: 4
 
 Minimal example
 ---------------
