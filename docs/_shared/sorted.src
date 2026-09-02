@@ -1,0 +1,9 @@
+.. Shared fragment: the sorted-batch promise. Included by every language guide;
+   edit here, not in the guides.
+
+The sorted path skips treeweave's internal bin-sort and is ~3-4x faster on an
+ascending 1-D batch, which covers regular grids, quadrature nodes, time series
+and parameter sweeps. The caller promises ``x[i] <= x[i+1]``, and treeweave
+does not verify the promise, so unsorted input yields wrong values. Use the
+plain batch path when the order is unknown. It sorts internally and is always
+correct.

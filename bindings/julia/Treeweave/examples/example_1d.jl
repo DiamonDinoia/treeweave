@@ -1,4 +1,5 @@
 # Example: 1D scalar function approximation.
+# BEGIN DOCS_MINIMAL
 using Treeweave
 
 f = x -> exp(0.5x) + sin(3x)
@@ -8,6 +9,7 @@ println("Fitting f(x) = exp(0.5x) + sin(3x) on [$a, $b_val] ...")
 # Fit f(x) on [0, 2] syntax is fit(callback, lower_bound, upper_bound, tolerance).
 approx = fit(f, a, b_val, 1e-10)
 println("  ", approx)   # show() prints dtype, dim, out_dim and bytes
+# END DOCS_MINIMAL
 
 println("\nPoint-by-point check:")
 for x in 0.0:0.25:2.0   # b_val is evaluable too (returns the boundary value)

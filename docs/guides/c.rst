@@ -2,12 +2,10 @@ C
 =
 
 ``libtreeweave_c`` is the installable C library. It ships the ``treeweave.h``
-header, a shared library and a static library. The prebuilt binary dispatches
-across the x86 SIMD ladder at runtime, so a source build runs no faster for a C
-consumer.
-Prefer the binary; build from source only when no binary covers the target
-platform. Open an issue to request a prebuilt binary for another platform.
-See :doc:`dispatch`.
+header, a shared library and a static library. Prefer the prebuilt binary and
+build from source only when no binary covers the target platform;
+:doc:`dispatch` explains why a source build runs no faster. Open an issue to
+request a prebuilt binary for another platform.
 
 Install
 -------
@@ -99,8 +97,8 @@ Fit
                               void *context, const treeweave_opts *opts);
 
 ``context`` carries optional callback state; ``opts`` is ``NULL`` for defaults.
-Options take no degree argument; the library auto-selects a register-optimal
-leaf degree for the detected CPU. On failure, fit returns ``NULL`` and sets the
+Options take no degree argument; the C ABI uses degree 7, the only spill-free
+degree in the register-pressured wide cells, for every shape and every CPU. On failure, fit returns ``NULL`` and sets the
 thread-local ``treeweave_last_error()``.
 
 Evaluate
@@ -120,10 +118,7 @@ Evaluate
 
 Each has a ``treeweavef_*`` ``float`` twin.
 
-Every eval path handles out-of-domain input the same way. A point exactly at
-the upper corner ``b`` returns the boundary value. Points below ``a``, points
-above ``b``, and ``NaN`` or ±Inf inputs all yield ``NaN``. The batch hot path
-stays branchless, because the domain test compiles to a SIMD mask.
+.. include:: ../_shared/domain.src
 
 By-value scalar eval
 ^^^^^^^^^^^^^^^^^^^^
@@ -183,10 +178,8 @@ Multi-arch dispatch
 -------------------
 
 On x86, build with ``-DTREEWEAVE_C_MULTIARCH=ON`` and a baseline of
-``-DTREEWEAVE_ARCH=x86-64``. The library compiles a portable baseline plus
-wider variants and selects one at runtime via CPU detection, so a single binary
-runs everywhere. GCC/Clang use SSE4.2 / AVX2 / AVX-512 variants; MSVC uses AVX /
-AVX2 / AVX-512.
+``-DTREEWEAVE_ARCH=x86-64``. That is how the released binary is built.
+:doc:`dispatch` lists the variants and describes the runtime selection.
 
 Thread safety
 -------------

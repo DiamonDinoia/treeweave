@@ -82,8 +82,11 @@ Batch & sorted eval
    :end-before: ! END DOCS_SORTED
    :dedent: 4
 
-``treeweave_sorted`` requires 1-D input (``input_dim == 1``). The caller
-promises ascending order, and treeweave does not verify it.
+``treeweave_sorted`` requires 1-D input (``input_dim == 1``).
+
+.. include:: ../_shared/sorted.src
+
+.. include:: ../_shared/domain.src
 
 Options
 -------
@@ -102,11 +105,7 @@ See :doc:`options` for the full description of each field and tolerance kind.
 Further
 -------
 
-.. literalinclude:: ../../tools/ci/docs-recipes.sh
-   :language: bash
-   :start-after: # BEGIN DOCS_FORTRAN_DEV
-   :end-before: # END DOCS_FORTRAN_DEV
-   :dedent: 4
+Run the suite against the source build:
 
 .. literalinclude:: ../../tools/ci/docs-recipes.sh
    :language: bash
@@ -114,5 +113,5 @@ Further
    :end-before: # END DOCS_FORTRAN_TEST
    :dedent: 4
 
-Without a Fortran compiler, CMake skips the Fortran targets. Full example:
+Full example:
 `bindings/fortran/example.f90 <https://github.com/DiamonDinoia/treeweave/blob/main/bindings/fortran/example.f90>`_.

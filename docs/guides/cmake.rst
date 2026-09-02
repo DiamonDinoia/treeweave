@@ -47,31 +47,12 @@ Targets
      - ``treeweave_fortran``
      - Local target when ``TREEWEAVE_BUILD_FORTRAN=ON``.
 
-Profiles
---------
+Presets
+-------
 
-Use ``cmake --preset <name>`` from a treeweave checkout:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 24 76
-
-   * - Preset
-     - What it sets
-   * - ``dev-release``
-     - ``Release`` build, ``TREEWEAVE_ARCH=native``; examples/tests use their top-level defaults.
-   * - ``dev-debug``
-     - ``Debug`` build with ``-Og -g`` and ``TREEWEAVE_ARCH=native``.
-   * - ``multiarch``
-     - ``TREEWEAVE_C_MULTIARCH=ON``, ``TREEWEAVE_ARCH=x86-64``; examples off.
-   * - ``multiarch-arm``
-     - ``TREEWEAVE_C_MULTIARCH=ON``, ``TREEWEAVE_ARCH=armv8-a``; examples off.
-   * - ``bindings-matlab``
-     - ``TREEWEAVE_BUILD_MATLAB=ON``; examples/tests off via ``lib-release``.
-   * - ``bindings-octave``
-     - Same CMake options as ``bindings-matlab``; intended for ``mkoctfile``/Octave builds.
-   * - ``bindings-fortran``
-     - ``TREEWEAVE_BUILD_FORTRAN=ON``; examples/tests off via ``lib-release``.
+``cmake --list-presets`` prints every preset with its description, and those
+descriptions in ``CMakePresets.json`` are the documentation. The install page
+and each language guide embed the preset line their route uses.
 
 Options
 -------
@@ -138,7 +119,3 @@ For a non-CMake C++ build, configure once to consolidate headers into
    :start-after: # BEGIN DOCS_ONEFLAG_CXX
    :end-before: # END DOCS_ONEFLAG_CXX
    :dedent: 4
-
-The build writes ``build/dev-release/make.inc`` with ``CXX``, ``CXXFLAGS``,
-and ``TREEWEAVE_INC``. ``examples/c++/Makefile`` includes it, so
-``cd examples/c++ && make`` builds every example.

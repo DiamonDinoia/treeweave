@@ -50,7 +50,11 @@ proved() { printf '    proved: %s\n' "$1"; }
 # One install tree, shared by the recipes that consume a prefix or a tarball.
 ensure_prefix() {
     if [ -d "$shared_prefix/include" ]; then return 0; fi
+    # CMAKE_INSTALL_LIBDIR=lib matches how _build-c-abi.yml packs the release
+    # asset; GNUInstallDirs picks lib64 on RHEL, and the printed `-Llib` would
+    # then miss a tarball packed here.
     cmake -S "$root" -B "$work/prefix-build" -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_LIBDIR=lib \
         -DTREEWEAVE_BUILD_TESTS=OFF -DTREEWEAVE_BUILD_EXAMPLES=OFF
     cmake --build "$work/prefix-build" -j
     cmake --install "$work/prefix-build" --prefix "$shared_prefix"
@@ -336,6 +340,10 @@ recipe_fortran_dev() {
     cmake --preset bindings-fortran
     cmake --build build/bindings-fortran -j
     # END DOCS_FORTRAN_DEV
+    # check_language(Fortran) degrades to a STATUS message, so the build above
+    # succeeds with the whole binding skipped. Without this the recipe claims a
+    # binding it never built.
+    require_tests build/bindings-fortran fortran_treeweave
     proved "the Fortran binding builds from source"
 }
 

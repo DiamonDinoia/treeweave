@@ -1,4 +1,5 @@
 """simple_1d.py: minimal 1D -> 1D fit and evaluation."""
+# BEGIN DOCS_MINIMAL
 import math
 import numpy as np
 import treeweave
@@ -11,6 +12,7 @@ def func(x):
 # Fit exp(x) on [0, 1] syntax is fit(callback, lower_bound, upper_bound, tol).
 approx = treeweave.fit(func, 0.0, 1.0, tol=1e-10)
 print(approx)  # dtype, dim, out_dim, memory_usage
+# END DOCS_MINIMAL
 
 # The fit domain is [a, b); evaluating exactly at the upper corner b is allowed
 # as a convenience and returns the boundary value (not NaN).

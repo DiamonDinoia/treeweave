@@ -78,6 +78,8 @@ the callable:
 ``float`` works the same way: pass ``float`` corners and a ``float``-returning
 callable.
 
+.. include:: ../_shared/domain.src
+
 Options
 -------
 
@@ -122,12 +124,11 @@ The ``dev-release`` preset consolidates every header the C++ API needs into
    :dedent: 4
 
 After ``cmake --install build/dev-release --prefix P``, use ``-IP/include`` (or
-nothing for a standard prefix). ``cd examples/c++ && make`` uses the generated
-``build/dev-release/make.inc``.
+nothing for a standard prefix).
 
-The prebuilt C-ABI binary dispatches across the x86 SIMD ladder at runtime. The
-header-only C++ path instead compiles into the consuming translation unit under
-its own ``-march``. See :doc:`dispatch`.
+The header-only C++ path compiles into the consuming translation unit under its
+own ``-march``, unlike the prebuilt C ABI, which selects a variant at runtime.
+See :doc:`dispatch`.
 
 Runnable sources:
 `examples/c++/ <https://github.com/DiamonDinoia/treeweave/tree/main/examples/c%2B%2B>`_.
@@ -135,8 +136,5 @@ Runnable sources:
 Experimental: the guru interface
 --------------------------------
 
-``<treeweave/guru.hpp>`` re-exposes the batch pipeline's stages (classify,
-counting sort, per-run SIMD evaluation, gather) over caller-owned buffers, so
-several fits can share one sort. It exists for functions that need several
-fits stitched together, one per asymptotic regime for instance. It is
-experimental and unstable; see :doc:`guru`.
+``<treeweave/guru.hpp>`` is experimental and unstable. :doc:`guru` owns the
+description, the stability warning and the buffer contract.

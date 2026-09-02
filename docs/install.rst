@@ -11,8 +11,10 @@ Each section below is the shortest path to a running program. Every code block
 on this page, program and shell recipe alike, is a marked region of a file that
 CI compiles or executes, so a recipe that stops working is a failed build, not a
 stale page. The programs live under ``examples/quickstart/``; the shell recipes
-live in ``tools/ci/docs-recipes.sh``. The language guides cover the other
-install routes, the options and the larger examples.
+live in ``tools/ci/docs-recipes.sh``. Two blocks are exempt because they install
+a published package rather than build one, the Julia ``Pkg.add`` and the MATLAB
+``mip install``; each carries the workflow that covers it instead. The language
+guides cover the other install routes, the options and the larger examples.
 
 The program
 -----------
@@ -41,7 +43,7 @@ with CMake and needs no bootstrap:
    :dedent: 4
 
 ``stable`` is a branch that always points at the newest release. Use a tag
-(``GIT_TAG v0.0.6``) to pin one.
+(``GIT_TAG vX.Y.Z``) to pin one.
 
 No CMake? Download the header bundle:
 
@@ -91,7 +93,7 @@ directly:
    :dedent: 4
 
 ``latest/download`` always resolves to the newest release. Pin one by naming
-its tag instead: ``releases/download/v0.0.6/treeweave-0.0.6-linux-x86_64.tar.gz``.
+its tag instead: ``releases/download/vX.Y.Z/treeweave-X.Y.Z-linux-x86_64.tar.gz``.
 Windows ships the same tree as ``treeweave-windows-x64.zip``.
 
 Or let CMake find the extracted tarball:

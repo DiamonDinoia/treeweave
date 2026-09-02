@@ -38,7 +38,9 @@ Sphinx reports a missing include as a warning, and ``docs/conf.py`` suppresses t
 script is the gate that does fire.
 
 The ``docs`` target runs it before ``sphinx-build``. It needs no build: the
-figures under ``docs/_generated/`` are tracked. Run it directly with::
+figures under ``docs/_generated/`` are written by the ``docs_example_output``
+target and gitignored, so the check skips a missing one by name rather than
+failing on a fresh clone. Run it directly with::
 
     python scripts/check_docs_code.py
     python scripts/check_docs_code.py --self-test   # positive controls
@@ -193,6 +195,143 @@ def check_snippets(docs: Path, root: Path) -> list[str]:
     return problems
 
 
+# ---- Markdown: the same two rules, spelled for a fenced block ---------------
+#
+# GitHub renders no directives, so a README cannot literalinclude. A marker
+# comment names the region instead and this gate holds the fence to it byte for
+# byte, which `--fix` can also rewrite. Everything else matches the RST rules:
+# a source-language fence must carry a marker or a named exemption.
+MD_GLOBS = (
+    "README.md",
+    "bindings/**/README.md",
+    "examples/**/README.md",
+    "docs/**/*.md",
+)
+MD_MARKER = re.compile(r"^\s*<!--\s*literalinclude:\s*(.*?)\s*-->\s*$")
+MD_EXEMPT = re.compile(r"^\s*<!--\s*not-run-in-ci:\s*\S.*-->\s*$")
+MD_FIELD = re.compile(r"\s+(start-after|end-before|dedent):\s*")
+FENCE = re.compile(r"^(\s*)(`{3,}|~{3,})\s*([^\s`]*)\s*$")
+
+
+def markdown_documents(root: Path) -> list[Path]:
+    found: set[Path] = set()
+    for pattern in MD_GLOBS:
+        found.update(
+            p for p in root.glob(pattern) if "node_modules" not in p.parts
+        )
+    return sorted(found)
+
+
+def parse_marker(inner: str) -> tuple[str, dict[str, str]]:
+    parts = MD_FIELD.split(inner)
+    return parts[0].strip(), {
+        key: value.strip() for key, value in zip(parts[1::2], parts[2::2])
+    }
+
+
+def extract_region(body: str, options: dict[str, str]) -> str | None:
+    """The lines Sphinx's literalinclude would embed, or None if an anchor is absent."""
+    lines = body.splitlines(keepends=True)
+    start = 0
+    if "start-after" in options:
+        start = next(
+            (i + 1 for i, ln in enumerate(lines) if options["start-after"] in ln), None
+        )
+        if start is None:
+            return None
+    end = len(lines)
+    if "end-before" in options:
+        end = next(
+            (
+                i
+                for i in range(start, len(lines))
+                if options["end-before"] in lines[i]
+            ),
+            None,
+        )
+        if end is None:
+            return None
+    region = lines[start:end]
+    width = int(options.get("dedent", 0))
+    if width:
+        region = [
+            ln[width:] if not ln[:width].strip() else ln.lstrip() for ln in region
+        ]
+    return "".join(region)
+
+
+def fenced_blocks(lines: list[str]):
+    """Yield (open_line, close_line, language, body_lines) for each fence."""
+    i = 0
+    while i < len(lines):
+        m = FENCE.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        indent, ticks, lang = m.groups()
+        for j in range(i + 1, len(lines)):
+            close = FENCE.match(lines[j])
+            if close and close.group(2)[0] == ticks[0] and len(
+                close.group(2)
+            ) >= len(ticks) and not close.group(3):
+                yield i, j, lang.lower(), lines[i + 1 : j]
+                i = j + 1
+                break
+        else:
+            i += 1
+
+
+def check_markdown(root: Path, fix: bool = False) -> list[str]:
+    problems = []
+    for doc in markdown_documents(root):
+        lines = doc.read_text(encoding="utf-8").splitlines()
+        edits: list[tuple[int, int, list[str]]] = []
+        for open_i, close_i, lang, body in list(fenced_blocks(lines)):
+            where = f"{doc.relative_to(root)}:{open_i + 1}"
+            previous = next((p for p in reversed(lines[:open_i]) if p.strip()), "")
+            marker = MD_MARKER.match(previous)
+            if not marker:
+                if lang in SOURCE_LANGUAGES and not MD_EXEMPT.match(previous):
+                    problems.append(
+                        f"{where}: inline {lang} fence. Embed it with a "
+                        "'<!-- literalinclude: <path> start-after: A end-before: B -->' "
+                        "marker naming a file CI runs, or mark it "
+                        "'<!-- not-run-in-ci: <reason> -->'"
+                    )
+                continue
+            target, options = parse_marker(marker.group(1))
+            src = (root / target).resolve()
+            if not src.is_file():
+                problems.append(f"{where}: marker target does not exist: {target}")
+                continue
+            region = extract_region(
+                src.read_text(encoding="utf-8", errors="replace"), options
+            )
+            if region is None:
+                problems.append(
+                    f"{where}: anchor not found in {target}: "
+                    + ", ".join(f"{k}: {v}" for k, v in options.items())
+                )
+                continue
+            want = region.rstrip("\n").splitlines()
+            if want == body:
+                continue
+            if fix:
+                edits.append((open_i, close_i, want))
+                continue
+            problems.append(
+                f"{where}: fence has drifted from {target}. Run "
+                "scripts/check_docs_code.py --fix to rewrite it from the source"
+            )
+        # Last block first, so an earlier block's indices stay valid.
+        for open_i, close_i, want in reversed(edits):
+            lines[open_i + 1 : close_i] = want
+        if edits:
+            doc.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            print(f"fixed: {doc.relative_to(root)}")
+    return problems
+
+
 def check_tree(docs: Path, root: Path) -> list[str]:
     problems = []
     for doc in documents(docs):
@@ -209,6 +348,15 @@ def check_tree(docs: Path, root: Path) -> list[str]:
                     ":start-after: / :end-before: markers"
                 )
             if not src.is_file():
+                # docs/_generated/ holds example stdout captured by the
+                # docs_example_output CMake target, so a fresh clone has none.
+                # Every other missing target is rot.
+                if "_generated/" in target:
+                    print(
+                        f"skip: {where}: {target} is written by the "
+                        "docs_example_output target; not present in this tree"
+                    )
+                    continue
                 problems.append(
                     f"{where}: literalinclude target does not exist: {target}"
                 )
@@ -742,6 +890,60 @@ def self_test() -> int:
         page=CLEAN_PAGE.replace("DOCS_DEV_BUILD", "DOCS_DOWNLOAD_C_TARBALL_X"),
     )
 
+    # The Markdown gate needs a root, not a docs/ dir: it reads README.md.
+    def markdown_case(name, page, expected, claim):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "src.py").write_text(
+                "# BEGIN A\nprint('hello')\n# END A\n", encoding="utf-8"
+            )
+            (root / "README.md").write_text(page, encoding="utf-8")
+            case(name, bool(check_markdown(root)), expected, claim)
+
+    MARKER = "<!-- literalinclude: src.py start-after: # BEGIN A end-before: # END A -->"
+    markdown_case(
+        "clean fence",
+        f"{MARKER}\n\n```python\nprint('hello')\n```\n",
+        False,
+        "a fence equal to the region its marker names passes",
+    )
+    markdown_case(
+        "drifted fence",
+        f"{MARKER}\n\n```python\nprint('goodbye')\n```\n",
+        True,
+        "a fence that no longer matches the region its marker names fails",
+    )
+    markdown_case(
+        "marker-less fence",
+        "Install it:\n\n```python\nprint('hello')\n```\n",
+        True,
+        "a source-language fence with no marker and no exemption fails",
+    )
+    markdown_case(
+        "exempted fence",
+        "<!-- not-run-in-ci: illustrative pseudocode -->\n\n```python\nprint('hello')\n```\n",
+        False,
+        "a source-language fence with a named exemption passes",
+    )
+    markdown_case(
+        "fence in no source language",
+        "Output:\n\n```\nhello\n```\n",
+        False,
+        "a fence in no source language needs no marker",
+    )
+    markdown_case(
+        "marker naming a missing file",
+        "<!-- literalinclude: gone.py -->\n\n```python\nprint('hello')\n```\n",
+        True,
+        "a marker naming a file that does not exist fails",
+    )
+    markdown_case(
+        "marker naming a missing anchor",
+        "<!-- literalinclude: src.py start-after: # BEGIN Z -->\n\n```python\nx\n```\n",
+        True,
+        "a marker whose anchor is absent from the file fails",
+    )
+
     for f in failures:
         print(f"FAIL: {f}")
     print(
@@ -760,6 +962,7 @@ def main(argv: list[str]) -> int:
     problems += check_c_blocks(root / "docs", root, root / C_HEADER)
     problems += check_snippets(root / "docs", root)
     problems += check_recipes(root / "docs", root)
+    problems += check_markdown(root, fix="--fix" in argv)
     for p in problems:
         print(f"FAIL: {p}")
     if problems:
@@ -768,7 +971,8 @@ def main(argv: list[str]) -> int:
     print(
         "every literalinclude resolves with anchors and no line ranges, every inline C "
         "declaration matches the header, every other snippet comes from a file CI runs, "
-        "and every docs recipe is embedded by a page and called by a workflow"
+        "every docs recipe is embedded by a page and called by a workflow, and every "
+        "Markdown fence matches the region its marker names"
     )
     return 0
 

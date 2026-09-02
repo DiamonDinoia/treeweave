@@ -1,5 +1,5 @@
 .. treeweave documentation master file. This is also the front HTML page: the
-   prose lives in overview.src so latexindex.rst can reuse it.
+   prose lives in overview.src so other pages can include it.
 
 .. _index:
 
@@ -39,7 +39,6 @@ Documentation contents
    guides/cmake
    guides/dispatch
    related
-   known-issues
 
 .. toctree::
    :maxdepth: 2

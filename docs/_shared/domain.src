@@ -1,0 +1,8 @@
+.. Shared fragment: the out-of-domain rule. Included by every language guide;
+   edit here, not in the guides.
+
+Every eval path treats out-of-domain input the same way. The fit covers
+``[a, b)``. A point exactly at the upper corner ``b`` returns the boundary
+value, the last cell's polynomial. Points below ``a``, points above ``b``, and
+``NaN`` or ±Inf inputs all return ``NaN``. The batch path stays branchless,
+because the domain test compiles to a SIMD mask.

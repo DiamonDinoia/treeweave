@@ -54,6 +54,7 @@ program treeweave_example
     b(1) = 1.0_c_double
     tol  = 1.0e-10_c_double
 
+    ! BEGIN DOCS_MINIMAL
     ! Fit exp(x) on [0, 1] syntax is
     ! treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options).
     h = treeweave_fit(c_funloc(kernel_exp), 1_c_int, 1_c_int, a, b, tol, &
@@ -70,6 +71,7 @@ program treeweave_example
     ! Evaluate h on (0.5) and print the result.
     call treeweave_eval(h, x, y)
     write (*, '(A,F0.12,A,F0.12)') "exp(0.5) approx=", y(1), " exact=", exp(0.5_c_double)
+    ! END DOCS_MINIMAL
 
     ! Batch eval over 11 points on [0, 1].
     do i = 1, 11

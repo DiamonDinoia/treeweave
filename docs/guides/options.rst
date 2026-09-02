@@ -13,42 +13,18 @@ Common fit options
 
 These apply to every language binding:
 
-.. list-table::
-   :header-rows: 1
-   :widths: 24 12 64
+.. literalinclude:: ../../include/treeweave/treeweave.hpp
+   :language: cpp
+   :start-after: // BEGIN DOCS_OPTIONS_STRUCT
+   :end-before: // END DOCS_OPTIONS_STRUCT
 
-   * - Field
-     - Default
-     - Meaning
-   * - ``tol_kind``
-     - ``RelativeMax``
-     - How treeweave interprets ``tol`` (see :ref:`tolkind`).
-   * - ``max_depth``
-     - ``50``
-     - Tree-depth ceiling. Hitting it without converging throws
-       ``MaxDepthExceeded`` (unless ``allow_max_depth_leaves``). Far above what
-       any non-singular function needs; lower it to fail fast near a suspected
-       singularity.
-   * - ``max_memory_mib``
-     - auto
-     - Cap on accumulated leaf storage (MiB). Tri-state: ``< 0`` (default) =
-       auto, a dimension-scaled budget (4 / 8 / 16 MiB for 1D / 2D / 3D);
-       ``0`` = no cap; ``> 0`` = explicit cap. Crossing it throws
-       ``MemoryBudgetExceeded`` carrying used/budget bytes and the offending
-       panel.
-   * - ``allow_max_depth_leaves``
-     - ``false``
-     - Keep panels that fail tolerance at ``max_depth`` as best-effort leaves
-       (inspect via ``Function::non_converged_panels()``) instead of throwing.
-   * - ``min_uniform_depth``
-     - ``0``
-     - Force BFS to refine every panel to at least this depth, driving the
-       leaf-table fast path (see :doc:`performance`). ``0`` = tol-based
-       refinement only.
+Every binding exposes the same five fields with the same defaults. The C ABI
+mirrors the struct in ``treeweave_opts``, and ``treeweave_default_opts()``
+fills it with these values.
 
 The leaf polynomial degree is not a runtime option. In C++ it is a template
-parameter, ``treeweave::fit<N>``, default 7. The C ABI picks a register-optimal
-degree for the detected CPU.
+parameter, ``treeweave::fit<N>``, default 7. The C ABI uses degree 7 for every
+cell, independent of the CPU.
 
 Language-specific options
 -------------------------
@@ -76,32 +52,25 @@ Some bindings add convenience fields around the shared C ABI:
    * - C++
      - degree template parameter
      - ``treeweave::fit<N>`` sets the leaf polynomial degree. Other bindings use
-       the C ABI's CPU-selected degree.
+       the C ABI's fixed degree 7.
 
 .. _tolkind:
 
 ``TolKind``
 -----------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 28 72
+.. literalinclude:: ../../include/treeweave/detail/tol_kind.hpp
+   :language: cpp
+   :start-after: // BEGIN DOCS_TOL_KIND
+   :end-before: // END DOCS_TOL_KIND
 
-   * - Kind
-     - Meaning
-   * - ``RelativeMax`` *(default)*
-     - sample-grid max-abs error relative to ``max|f|``
-   * - ``AbsoluteMax``
-     - sample-grid max-abs absolute error
-   * - ``RelativeL2``
-     - sample-grid L2 relative error
-   * - ``AbsoluteL2``
-     - sample-grid L2 absolute error
-   * - ``RelativeTail``
-     - 1-D only, relative coefficient-tail estimate
-   * - ``AbsoluteTail``
-     - 1-D only, absolute coefficient-tail estimate
+The C ABI enum carries the same numeric values:
 
-Switch to an ``Absolute*`` kind when ``f`` can be zero or when relative accuracy
-is not meaningful. In the C ABI these are the ``treeweave_tol_kind_t`` enum
-values (``TREEWEAVE_RELATIVE_MAX`` …).
+.. literalinclude:: ../../include/treeweave.h
+   :language: c
+   :start-after: /* BEGIN DOCS_TOL_KIND_C */
+   :end-before: /* END DOCS_TOL_KIND_C */
+
+``RelativeMax`` is the default. Switch to an ``Absolute*`` kind when ``f`` can
+be zero or when relative accuracy is not meaningful. The ``*Tail`` kinds are
+1-D only.

@@ -19,12 +19,8 @@ The shell commands the docs print for these projects are regions of
 real GitHub fetch. `scripts/check_docs_code.py` refuses a region no page embeds
 or no workflow runs.
 
-`tools/ci/install-test.sh` runs all of them. It substitutes the local checkout
-for the GitHub fetch through the mechanisms CMake and CPM already provide
-(`FETCHCONTENT_SOURCE_DIR_TREEWEAVE`, `CPM_treeweave_SOURCE`), so the files
-below stay the recipe a user actually copies.
-
-```bash
-tools/ci/install-test.sh          # every route
-tools/ci/install-test.sh cpp-cpm  # just one
-```
+`tools/ci/install-test.sh` runs every route, or one route named on its command
+line. It substitutes the local checkout for the GitHub fetch through the
+mechanisms CMake and CPM already provide (`FETCHCONTENT_SOURCE_DIR_TREEWEAVE`,
+`CPM_treeweave_SOURCE`), so the files below stay the recipe a user actually
+copies.

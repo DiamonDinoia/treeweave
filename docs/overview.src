@@ -13,7 +13,7 @@ Single and double precision are both supported, scalar and vector valued ``f``
 alike. A fitted object is immutable and its evaluators are thread-safe. The
 library is C++20, gets its portable SIMD from
 `xsimd <https://github.com/xtensor-stack/xsimd>`_ and
-`POET <https://github.com/flatironinstitute/poet>`_, has no runtime dependency
+`POET <https://github.com/DiamonDinoia/poet>`_, has no runtime dependency
 beyond libm, and is `BSD-3-Clause licensed
 <https://github.com/DiamonDinoia/treeweave/blob/main/LICENSE>`_. It is developed
 at the `Center for Computational Mathematics

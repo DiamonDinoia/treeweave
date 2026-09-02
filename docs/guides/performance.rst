@@ -15,7 +15,7 @@ points. Prefer them to a scalar loop for anything beyond a handful of points.
 
 This matters most in MATLAB/Octave, where single-point eval carries an extra
 per-call overhead from the mwrap binding layer, not from treeweave; see
-:doc:`/known-issues`. The batch path amortises that overhead to ~zero.
+:ref:`matlab-eval-overhead`. The batch path amortises that overhead to ~zero.
 
 The sorted fast path
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -23,16 +23,12 @@ The sorted fast path
 The general batch path first bin-sorts the inputs by leaf so each leaf's
 points are contiguous, runs one vectorized Horner stream per leaf, then permutes
 the results back to the caller's order. When the inputs are *already* ascending,
-that sort and permute-back are pure overhead. The ``sorted`` path skips both and
-streams straight through the leaves, ~3-4x faster on a presorted 1-D batch.
+that sort and permute-back are pure overhead. The sorted path skips both and
+streams straight through the leaves.
 
-Common cases where inputs are ascending for free: regular grids, ``linspace``,
-quadrature nodes, time series, and parameter sweeps.
+.. include:: ../_shared/sorted.src
 
-The caller promises ``x[i] <= x[i+1]``; treeweave does not verify the promise, so
-unsorted input yields wrong values. Use the plain batch path when the order is
-unknown. It sorts internally and is always correct. Both paths NaN-fill
-out-of-domain points.
+Both paths NaN-fill out-of-domain points.
 
 The leaf-table fast path
 ------------------------
@@ -1271,7 +1267,7 @@ Riemann-zeta sum benchmarked from all 7 bindings against native recomputation.
 Bars: Mevals/s (log scale); labels: within-language speedup.
 Cross-language Mevals/s is not comparable, because the CI runners differ.
 Compare each language's treeweave bar to its own native bar.
-The ``benchmark-showcase`` CI matrix regenerates these charts.
+The ``showcase`` job in ``benchmarks.yml`` regenerates these charts.
 
 Throughput, Mevals/s, higher is better
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

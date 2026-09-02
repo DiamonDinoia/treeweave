@@ -6,6 +6,7 @@
 % This script adds only the source dir (treeweave.m classdef).
 addpath(fileparts(fileparts(mfilename('fullpath'))));   % add bindings/matlab/ (treeweave.m)
 
+% BEGIN DOCS_MINIMAL
 f   = @(x) exp(0.5*x(1)) + sin(3*x(1));
 % Fit f(x) on [0, 1] syntax is
 % treeweave(callback, lower_bound, upper_bound, tolerance, name/value options).
@@ -16,6 +17,7 @@ Xtest = linspace(0, 1, 500)';
 Yhat  = obj.eval(Xtest);
 Yref  = exp(0.5*Xtest) + sin(3*Xtest);
 fprintf('1D max abs error: %.3e\n', max(abs(Yhat - Yref)));
+% END DOCS_MINIMAL
 fprintf('Memory: %.1f KiB\n', obj.memory_usage()/1024);
 
 % Name/value options ride after tol. tol_kind is the numeric

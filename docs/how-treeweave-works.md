@@ -266,16 +266,16 @@ it. Supported values are any positive integer; 7 is the default
 
 The C ABI (`treeweave_fit` for double, `treeweavef_fit` for float, in
 `treeweave.h`, where the precision lives in the prefix, FINUFFT/FFTW style)
-takes no degree argument. Instead it picks a register-optimal, spill-free degree at
-runtime based on the detected CPU vector width. The multi-arch dispatch path,
+takes no degree argument. It uses degree 7 for every cell, the only spill-free
+degree in the widest ones, independent of the CPU. The multi-arch dispatch path,
 enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON`, selects among
 compiled-in ISA variants, so the dispatcher picks the best leaf size for the
 host CPU: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
 mandatory NEON64 variant, and on RISC-V an `rvv` variant (best-effort,
-untested). See the [Runtime ISA dispatch](guides/dispatch.rst) guide for the
+untested). See the {doc}`Runtime ISA dispatch <guides/dispatch>` guide for the
 full family selection and the `TREEWEAVE_FORCE_ARCH` override. Accuracy comes
-from `tol` alone. Whichever degree the dispatcher picks, the adaptive tree
-refines until every leaf meets the tolerance.
+from `tol` alone: the adaptive tree refines until every leaf meets the
+tolerance.
 
 ## Background and further reading
 
