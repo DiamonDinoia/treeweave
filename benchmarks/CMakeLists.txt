@@ -52,6 +52,25 @@ if(TREEWEAVE_BUILD_BENCHMARKS)
         endif()
         add_test(NAME bench_c_zeta COMMAND treeweave_c_zeta_bench)
     endif()
+
+    # The C++ arm of the cross-language interpolator comparison. Boost.Math's
+    # interpolators are header-only, so this needs headers and no link step.
+    # Skipped, not failed, when Boost is absent: the other arms still build.
+    find_package(Boost 1.75 QUIET)
+    if(Boost_FOUND)
+        _tw_add_bench(compare_interpolators_cpp compare_interpolators.cpp Boost::headers)
+        if(TREEWEAVE_BUILD_TESTS)
+            add_test(
+                NAME compare_interpolators_cpp_self_test
+                COMMAND compare_interpolators_cpp --self-test
+            )
+        endif()
+    else()
+        message(
+            STATUS
+            "Boost not found: skipping compare_interpolators_cpp"
+        )
+    endif()
 endif()
 
 # No treeweave_enable_warnings: Google Benchmark / codspeed-cpp are third-party.
