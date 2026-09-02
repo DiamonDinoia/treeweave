@@ -16,8 +16,8 @@ Install the latest release from PyPI:
    :end-before: # END DOCS_PIP_PYPI
    :dedent: 4
 
-The wheel bundles the C ABI statically; the x86-64 wheel dispatches across the
-x86 SIMD ISAs at runtime. NumPy is the only dependency.
+The wheel bundles the C ABI statically and selects a SIMD variant at runtime
+(:doc:`dispatch`). NumPy is the only dependency.
 
 To test an unreleased change, every push to ``main`` publishes a staging wheel
 (``X.Y.Z.devN``) to `TestPyPI <https://test.pypi.org/project/treeweave/>`_;
@@ -72,16 +72,11 @@ keyword flags select the fast paths:
    :start-after: # BEGIN DOCS_ROUTES
    :end-before: # END DOCS_ROUTES
 
-``sorted=True`` skips treeweave's internal counting-sort and is ~3-4x faster
-when the caller can promise ``xs`` is ascending, which covers ``linspace``
-grids, quadrature nodes and time series. Nothing checks the promise, and
-unsorted input gives wrong values, so use the plain batch path when the order is
-unknown. ``transposed=True`` returns each output component in its own contiguous
-row.
+.. include:: ../_shared/sorted.src
 
-Every path handles out-of-domain input the same way. A point exactly at ``b``
-returns the boundary value. Points below ``a``, points above ``b``, and ``NaN``
-or ±Inf inputs all return ``NaN``.
+``transposed=True`` returns each output component in its own contiguous row.
+
+.. include:: ../_shared/domain.src
 
 Multi-dimensional fits
 ----------------------
@@ -97,40 +92,20 @@ scalar or a length-``out_dim`` sequence:
 Options
 -------
 
-Pass keyword arguments to ``fit`` to override defaults:
+Every field of the shared fit options is a keyword argument, spelled in snake
+case: ``tol_kind``, ``max_depth``, ``max_memory_mib``,
+``allow_max_depth_leaves`` and ``min_uniform_depth``. ``tol_kind`` takes a
+string, one of ``'relative_max'``, ``'absolute_max'``, ``'relative_l2'``,
+``'absolute_l2'``, ``'relative_tail'`` or ``'absolute_tail'``.
 
-.. list-table::
-   :header-rows: 1
-   :widths: 28 15 57
+Three Python-only kwargs cover the shape: ``dim`` and ``out_dim`` override the
+inference from ``a`` and from a probe of ``f``, and ``dtype`` selects ``'f64'``
+or ``'f32'``. A fit that exceeds ``max_depth`` raises ``RuntimeError`` naming
+``MaxDepthExceeded``.
 
-   * - Kwarg
-     - Default
-     - Meaning
-   * - ``tol_kind``
-     - ``'relative_max'``
-     - Tolerance interpretation. One of ``'relative_max'``, ``'absolute_max'``,
-       ``'relative_l2'``, ``'absolute_l2'``, ``'relative_tail'``, ``'absolute_tail'``.
-   * - ``max_depth``
-     - ``50``
-     - Tree-depth ceiling; raises ``RuntimeError`` with ``MaxDepthExceeded`` if hit.
-   * - ``max_memory_mib``
-     - ``-1`` (auto)
-     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
-   * - ``allow_max_depth_leaves``
-     - ``False``
-     - Keep non-converged panels at max depth instead of raising.
-   * - ``min_uniform_depth``
-     - ``0``
-     - Force uniform refinement to this depth before adaptivity.
-   * - ``dim``
-     - inferred
-     - Input dimension; inferred from ``len(a)`` (scalar corners → 1).
-   * - ``out_dim``
-     - inferred
-     - Output dimension; inferred by probing ``f`` at the box midpoint.
-   * - ``dtype``
-     - ``'f64'``
-     - Floating-point precision: ``'f64'`` or ``'f32'``.
+Every one of them defaults to ``None``, meaning the library's own default;
+``treeweave._treeweave.default_opts()`` returns those values, read from the C
+ABI, so no default is written down twice.
 
 See :doc:`options` for a full description of each option and the tolerance kinds.
 

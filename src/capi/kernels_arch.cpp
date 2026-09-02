@@ -17,12 +17,23 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <type_traits>
 
 #include <xsimd/xsimd.hpp>
 
-#include <treeweave/detail/arch_degree_table.hpp>
+#include <treeweave_shapes.hpp> // generated: TREEWEAVE_SHAPES
+
 #include <treeweave/detail/kernels.hpp>
 #include <treeweave/detail/quantize.hpp>
+#include <treeweave/detail/tol_kind.hpp> // kDefaultDegree
+
+// The rung's own ISA flags must select the arch the RUNG_TABLE claims for it,
+// or two rungs compile the same code under different names and the ladder has
+// a silent hole. CMake passes the table's arch as TREEWEAVE_RUNG_ARCH.
+#ifdef TREEWEAVE_RUNG_ARCH
+static_assert(std::is_same_v<xsimd::best_arch, TREEWEAVE_RUNG_ARCH>,
+              "this rung's ISA flags do not select the arch its RUNG_TABLE row names");
+#endif
 
 namespace treeweave::detail {
 namespace {
@@ -30,7 +41,7 @@ namespace {
 /// TU-local linkage anchor for the polyfit ND-batch instantiations.
 struct ArchTag {};
 
-constexpr auto kDeg = static_cast<std::size_t>(treeweave::capi::chosen_degree);
+constexpr auto kDeg = treeweave::detail::kDefaultDegree;
 
 // New vectorized kernel (step 4 of the guide in kernels.hpp): add its
 // `k_<name>` wrapper below — anonymous namespace, POD-view parameters,
@@ -78,7 +89,7 @@ auto k_eval_one_nd(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> &x, st
 // address per member, in member order (see kernels.hpp).
 template <class Arch, class T, std::size_t IN, std::size_t NC, std::size_t OUT>
 auto make_kernels_for() noexcept -> KernelSet<T, IN, NC, OUT> {
-    static_assert(NC == kDeg, "kernel TUs instantiate the baked degree only (arch_degree_table.hpp)");
+    static_assert(NC == kDeg, "kernel TUs instantiate the baked degree only (detail::kDefaultDegree)");
     // Arch::name() comes from this TU, compiled at this rung's ISA level, so the
     // name travels with the table and identifies which rung the caller reached.
     if constexpr (IN == 1 && OUT == 1) {
@@ -90,31 +101,12 @@ auto make_kernels_for() noexcept -> KernelSet<T, IN, NC, OUT> {
     }
 }
 
-// The supported shape set: 2 dtypes x {1,2,3}x{1,2,3}. Single source of
-// truth: the foreach lists in cmake/treeweave_c_dispatch.cmake — keep this
-// list and arch_dispatch.cpp's TREEWEAVE_SELECT_KERNELS list in sync with it.
+// The supported shape set, from the generated shape table.
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) — explicit-instantiation list.
 #define TREEWEAVE_KERNELS_FOR(T, IN, OUT)                                                                          \
     template auto make_kernels_for<xsimd::best_arch, T, IN, kDeg, OUT>() noexcept -> KernelSet<T, IN, kDeg, OUT>;
 
-TREEWEAVE_KERNELS_FOR(double, 1, 1)
-TREEWEAVE_KERNELS_FOR(double, 1, 2)
-TREEWEAVE_KERNELS_FOR(double, 1, 3)
-TREEWEAVE_KERNELS_FOR(double, 2, 1)
-TREEWEAVE_KERNELS_FOR(double, 2, 2)
-TREEWEAVE_KERNELS_FOR(double, 2, 3)
-TREEWEAVE_KERNELS_FOR(double, 3, 1)
-TREEWEAVE_KERNELS_FOR(double, 3, 2)
-TREEWEAVE_KERNELS_FOR(double, 3, 3)
-TREEWEAVE_KERNELS_FOR(float, 1, 1)
-TREEWEAVE_KERNELS_FOR(float, 1, 2)
-TREEWEAVE_KERNELS_FOR(float, 1, 3)
-TREEWEAVE_KERNELS_FOR(float, 2, 1)
-TREEWEAVE_KERNELS_FOR(float, 2, 2)
-TREEWEAVE_KERNELS_FOR(float, 2, 3)
-TREEWEAVE_KERNELS_FOR(float, 3, 1)
-TREEWEAVE_KERNELS_FOR(float, 3, 2)
-TREEWEAVE_KERNELS_FOR(float, 3, 3)
+TREEWEAVE_SHAPES(TREEWEAVE_KERNELS_FOR)
 
 #undef TREEWEAVE_KERNELS_FOR
 

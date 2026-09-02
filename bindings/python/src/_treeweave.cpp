@@ -372,6 +372,21 @@ NB_MODULE(_treeweave, m) {
         .def_prop_ro("memory_usage", &TreeweaveFunction::memory_usage)
         .def_prop_ro("dtype", &TreeweaveFunction::dtype_str);
 
+    m.def(
+        "default_opts",
+        [] {
+            treeweave_opts o;
+            treeweave_default_opts(&o);
+            nb::dict d;
+            d["tol_kind"]               = (int)o.tol_kind;
+            d["max_depth"]              = o.max_depth;
+            d["max_memory_mib"]         = o.max_memory_mib;
+            d["allow_max_depth_leaves"] = o.allow_max_depth_leaves;
+            d["min_uniform_depth"]      = o.min_uniform_depth;
+            return d;
+        },
+        "The library's own fit-option defaults, read from treeweave_default_opts().");
+
     m.def("fit_f64", &fit_impl<double>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a,
           "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
 

@@ -1,23 +1,23 @@
 // arch_dispatch.cpp: runtime multi-architecture kernel selection.
 //
 // Selected by CMake when TREEWEAVE_C_MULTIARCH is ON. Compiled at the family
-// baseline -march; emits no SIMD itself, only a CPU-feature probe. The
-// factory entries call the baseline `make_eval_for` (fit, tree build and
-// pipeline glue compile once); the per-ISA choice happens in
-// `select_kernels`, which returns the `KernelSet` of the widest
+// baseline -march; emits no SIMD itself, only a CPU-feature probe. Fit, tree
+// build and pipeline glue compile once at that baseline; the per-ISA choice
+// happens in `select_kernels`, which returns the `KernelSet` of the widest
 // host-supported rung, or the TREEWEAVE_FORCE_ARCH override. Uses
 // available_architectures().has (not Arch::available(), which is
-// constexpr-true and would SIGILL non-AVX512 hosts). Arch list: see
-// dispatch_arch.hpp.
+// constexpr-true and would SIGILL non-AVX512 hosts). The ladder itself is
+// generated from the RUNG_TABLE in cmake/treeweave_c_dispatch.cmake.
 
 #include <cstdlib>
 #include <string_view>
 
 #include <xsimd/xsimd.hpp>
 
-#include <treeweave/detail/arch_degree_table.hpp>
+#include <treeweave_dispatch_ladder.hpp> // generated: dispatch_arch_list
+#include <treeweave_shapes.hpp>          // generated: TREEWEAVE_SHAPES
+
 #include <treeweave/detail/c_binding.hpp>
-#include <treeweave/detail/dispatch_arch.hpp>
 
 namespace treeweave::capi {
 namespace {
@@ -73,66 +73,20 @@ auto select_kernels() -> detail::KernelSet<T, IN, NC, OUT> {
     return xsimd::dispatch<dispatch_arch_list>(SelectKernelsFn<T, IN, NC, OUT>{})();
 }
 
-// The shapes make_eval_impl can request. Single source of truth: the foreach
-// lists in cmake/treeweave_c_dispatch.cmake — keep this list and
-// kernels_arch.cpp's TREEWEAVE_KERNELS_FOR list in sync with them.
+// The shapes make_eval_impl can request, from the generated shape table.
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) — explicit-instantiation list.
-#define TREEWEAVE_SELECT_KERNELS(T, IN, OUT)                                                                       \
-    template auto select_kernels<T, IN, static_cast<std::size_t>(chosen_degree), OUT>()                           \
-        -> detail::KernelSet<T, IN, static_cast<std::size_t>(chosen_degree), OUT>;
+#define TREEWEAVE_SELECT_KERNELS(T, IN, OUT)                                                                           \
+    template auto select_kernels<T, IN, detail::kDefaultDegree, OUT>()                                                 \
+        -> detail::KernelSet<T, IN, detail::kDefaultDegree, OUT>;
 
-TREEWEAVE_SELECT_KERNELS(double, 1, 1)
-TREEWEAVE_SELECT_KERNELS(double, 1, 2)
-TREEWEAVE_SELECT_KERNELS(double, 1, 3)
-TREEWEAVE_SELECT_KERNELS(double, 2, 1)
-TREEWEAVE_SELECT_KERNELS(double, 2, 2)
-TREEWEAVE_SELECT_KERNELS(double, 2, 3)
-TREEWEAVE_SELECT_KERNELS(double, 3, 1)
-TREEWEAVE_SELECT_KERNELS(double, 3, 2)
-TREEWEAVE_SELECT_KERNELS(double, 3, 3)
-TREEWEAVE_SELECT_KERNELS(float, 1, 1)
-TREEWEAVE_SELECT_KERNELS(float, 1, 2)
-TREEWEAVE_SELECT_KERNELS(float, 1, 3)
-TREEWEAVE_SELECT_KERNELS(float, 2, 1)
-TREEWEAVE_SELECT_KERNELS(float, 2, 2)
-TREEWEAVE_SELECT_KERNELS(float, 2, 3)
-TREEWEAVE_SELECT_KERNELS(float, 3, 1)
-TREEWEAVE_SELECT_KERNELS(float, 3, 2)
-TREEWEAVE_SELECT_KERNELS(float, 3, 3)
+TREEWEAVE_SHAPES(TREEWEAVE_SELECT_KERNELS)
 
 #undef TREEWEAVE_SELECT_KERNELS
-
-auto make_eval_f64_dim1(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> * {
-    return make_eval_for<double, 1>(output_dim, f, data, a, b, tol, opts);
-}
-auto make_eval_f64_dim2(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> * {
-    return make_eval_for<double, 2>(output_dim, f, data, a, b, tol, opts);
-}
-auto make_eval_f64_dim3(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> * {
-    return make_eval_for<double, 3>(output_dim, f, data, a, b, tol, opts);
-}
-auto make_eval_f32_dim1(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> * {
-    return make_eval_for<float, 1>(output_dim, f, data, a, b, tol, opts);
-}
-auto make_eval_f32_dim2(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> * {
-    return make_eval_for<float, 2>(output_dim, f, data, a, b, tol, opts);
-}
-auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> * {
-    return make_eval_for<float, 3>(output_dim, f, data, a, b, tol, opts);
-}
 
 // Introspection. The name comes from the rung's own object, so a name the
 // caller did not select means the linker resolved a rung's kernels to another
 // rung's code — the COFF duplicate-COMDAT failure, caught at runtime.
-auto active_arch() -> const char * {
-    return select_kernels<double, 1, static_cast<std::size_t>(chosen_degree), 1>().arch;
-}
+auto active_arch() -> const char * { return select_kernels<double, 1, detail::kDefaultDegree, 1>().arch; }
 
 auto arch_available(const char *name) -> int {
     if (name == nullptr)

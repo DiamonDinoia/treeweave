@@ -153,4 +153,18 @@ end
     @test_throws ErrorException bv(xs; transposed=true, out=zeros(2, length(xs)))
 end
 
+@testset "options default to the library defaults" begin
+    # Nothing in the Julia layer writes a default down, so this fails if a
+    # keyword stops falling through to treeweave_default_opts.
+    d = Treeweave.default_opts()
+    @test TreeweaveOptions() === d
+    @test TreeweaveOptions(max_depth = 12).max_depth == Cint(12)
+    @test TreeweaveOptions(max_depth = 12).max_memory_mib == d.max_memory_mib
+    @test d.tol_kind == TREEWEAVE_RELATIVE_MAX
+
+    f = fit(x -> exp(x), 0.0, 1.0, 1e-8)
+    g = fit(x -> exp(x), 0.0, 1.0, 1e-8; options = TreeweaveOptions())
+    @test memory_usage(f) == memory_usage(g)
+end
+
 println("All Treeweave tests passed.")

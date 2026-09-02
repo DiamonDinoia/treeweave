@@ -1,0 +1,27 @@
+// treeweave_shapes.hpp: the instantiated C ABI shape set.
+//
+// Generated into the build tree by cmake/treeweave_c_dispatch.cmake from its
+// SHAPE_TABLE block; that block is the single source of truth. Edit the table,
+// never this file.
+
+#ifndef TREEWEAVE_CAPI_SHAPES_HPP
+#define TREEWEAVE_CAPI_SHAPES_HPP
+
+/// Expands `X(value_type, input_dim, output_dim)` once per instantiated shape.
+/// The explicit-instantiation lists in src/capi/arch_dispatch.cpp and
+/// src/capi/kernels_arch.cpp are this macro, so a shape can never be present in
+/// one and missing from the other.
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage) -- explicit-instantiation list.
+#define TREEWEAVE_SHAPES(X) \
+@TREEWEAVE_SHAPES_X@
+
+namespace treeweave::capi {
+
+/// Inclusive bounds of the shape set. The C entry points range-check against
+/// them, so the error names the field that is wrong before any dispatch runs.
+inline constexpr int kMaxInputDim  = @TREEWEAVE_MAX_INPUT_DIM@;
+inline constexpr int kMaxOutputDim = @TREEWEAVE_MAX_OUTPUT_DIM@;
+
+} // namespace treeweave::capi
+
+#endif // TREEWEAVE_CAPI_SHAPES_HPP

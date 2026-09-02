@@ -56,16 +56,12 @@ fast paths:
    :start-after: # BEGIN DOCS_ROUTES
    :end-before: # END DOCS_ROUTES
 
-``sorted = true`` skips treeweave's internal bin-sort and is ~3-4x faster when
-the caller can promise ``xs`` is ascending, which covers ``range`` grids,
-quadrature nodes and time series. Nothing checks the promise, and unsorted input
-gives wrong values, so use the plain batch path when the order is unknown.
-``sorted`` is 1-D only. ``transposed = true`` returns each output component in
-its own contiguous row.
+.. include:: ../_shared/sorted.src
 
-Every path handles out-of-domain input the same way. A point exactly at ``b``
-returns the boundary value. Points below ``a``, points above ``b``, and ``NaN``
-or ±Inf inputs all return ``NaN``.
+``sorted = true`` is 1-D only. ``transposed = true`` returns each output
+component in its own contiguous row.
+
+.. include:: ../_shared/domain.src
 
 Multi-dimensional fits
 ----------------------
@@ -88,32 +84,16 @@ Pass a ``TreeweaveOptions`` as the ``options`` keyword of ``fit``:
    :start-after: # BEGIN DOCS_OPTIONS
    :end-before: # END DOCS_OPTIONS
 
-Available fields (all keyword-only, all have defaults):
+``TreeweaveOptions`` takes every shared fit option as a keyword, spelled in
+snake case: ``tol_kind``, ``max_depth``, ``max_memory_mib``,
+``allow_max_depth_leaves`` and ``min_uniform_depth``. ``tol_kind`` takes one of
+the exported constants ``TREEWEAVE_RELATIVE_MAX``, ``TREEWEAVE_ABSOLUTE_MAX``,
+``TREEWEAVE_RELATIVE_L2``, ``TREEWEAVE_ABSOLUTE_L2``,
+``TREEWEAVE_RELATIVE_TAIL`` or ``TREEWEAVE_ABSOLUTE_TAIL``.
 
-.. list-table::
-   :header-rows: 1
-   :widths: 28 15 57
-
-   * - Field
-     - Default
-     - Meaning
-   * - ``tol_kind``
-     - ``TREEWEAVE_RELATIVE_MAX``
-     - Tolerance interpretation. One of the exported constants
-       ``TREEWEAVE_RELATIVE_MAX``, ``TREEWEAVE_ABSOLUTE_MAX``, ``TREEWEAVE_RELATIVE_L2``,
-       ``TREEWEAVE_ABSOLUTE_L2``, ``TREEWEAVE_RELATIVE_TAIL``, ``TREEWEAVE_ABSOLUTE_TAIL``.
-   * - ``max_depth``
-     - ``50``
-     - Tree-depth ceiling.
-   * - ``max_memory_mib``
-     - ``-1`` (auto)
-     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
-   * - ``allow_max_depth_leaves``
-     - ``false``
-     - Keep non-converged panels at max depth instead of throwing.
-   * - ``min_uniform_depth``
-     - ``0``
-     - Force uniform refinement to this depth before adaptivity.
+Every keyword defaults to ``nothing``, meaning the library's own default;
+``Treeweave.default_opts()`` returns those values, read from the C ABI, so no
+default is written down twice.
 
 See :doc:`options` for a full description of each option and the tolerance kinds.
 
@@ -136,7 +116,7 @@ sibling build:
    :end-before: # END DOCS_JULIA_DEV
    :dedent: 4
 
-.. not-run-in-ci: developer install; julia.yml builds the same sibling target and runs the suite.
+.. not-run-in-ci: developer install; bindings.yml builds the same sibling target and runs the suite.
 
 .. code-block:: julia
 

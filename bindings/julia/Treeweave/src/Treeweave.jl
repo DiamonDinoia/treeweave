@@ -134,8 +134,10 @@ const TREEWEAVE_F32 = Cint(1)
 Mirror of the C `treeweave_opts` struct.  All fields are `Cint` so the struct
 is blittable for `ccall`.
 
-Defaults match `treeweave_default_opts()` = {RELATIVE_MAX, 50, -1, 0, 0}.
-`max_memory_mib = -1` lets the C layer pick automatically (4/8/16 MiB by dim).
+Every keyword defaults to `nothing`, meaning the library's own default:
+`treeweave_default_opts()` fills the struct and the given keywords override it,
+so no default is written twice.  A negative `max_memory_mib` lets the C layer
+pick automatically (4/8/16 MiB by dim).
 """
 struct TreeweaveOptions
     tol_kind              :: Cint   # treeweave_tol_kind_t
@@ -145,14 +147,30 @@ struct TreeweaveOptions
     min_uniform_depth     :: Cint
 end
 
+"""
+    default_opts() -> TreeweaveOptions
+
+The library's own fit-option defaults, read from `treeweave_default_opts`.
+"""
+function default_opts()
+    ref = Ref{TreeweaveOptions}(TreeweaveOptions(Cint(0), Cint(0), Cint(0), Cint(0), Cint(0)))
+    ccall((:treeweave_default_opts, LIBTREEWEAVE), Cvoid, (Ref{TreeweaveOptions},), ref)
+    ref[]
+end
+
 function TreeweaveOptions(;
-        tol_kind               = TREEWEAVE_RELATIVE_MAX,
-        max_depth              = Cint(50),
-        max_memory_mib         = Cint(-1),
-        allow_max_depth_leaves = Cint(0),
-        min_uniform_depth      = Cint(0))
-    TreeweaveOptions(Cint(tol_kind), Cint(max_depth), Cint(max_memory_mib),
-                  Cint(allow_max_depth_leaves), Cint(min_uniform_depth))
+        tol_kind               = nothing,
+        max_depth              = nothing,
+        max_memory_mib         = nothing,
+        allow_max_depth_leaves = nothing,
+        min_uniform_depth      = nothing)
+    d = default_opts()
+    pick(given, fallback) = given === nothing ? fallback : Cint(given)
+    TreeweaveOptions(pick(tol_kind, d.tol_kind),
+                     pick(max_depth, d.max_depth),
+                     pick(max_memory_mib, d.max_memory_mib),
+                     pick(allow_max_depth_leaves, d.allow_max_depth_leaves),
+                     pick(min_uniform_depth, d.min_uniform_depth))
 end
 
 # Treeweave handle struct
@@ -533,7 +551,7 @@ end
 
 # Exports
 
-export TreeweaveOptions, TreeweaveFn, fit, memory_usage, print_stats
+export TreeweaveOptions, TreeweaveFn, fit, memory_usage, print_stats, default_opts
 export TREEWEAVE_RELATIVE_TAIL, TREEWEAVE_ABSOLUTE_TAIL, TREEWEAVE_RELATIVE_MAX
 export TREEWEAVE_ABSOLUTE_MAX, TREEWEAVE_RELATIVE_L2, TREEWEAVE_ABSOLUTE_L2
 export TREEWEAVE_F64, TREEWEAVE_F32

@@ -84,6 +84,9 @@ for art in "$@"; do
             sym = $0
             sub(/^[0-9a-f]+ [<(]/, "", sym)
             sub(/[>)]:$/, "", sym)
+            # Not the RUNG_TABLE rung list: a substring match on the mangled
+            # name, which is how a per-rung symbol advertises itself whatever
+            # the table calls the rung.
             tagged = (sym ~ /avx|sse|fma|neon|sve|rvv/) || (sym ~ /_GLOBAL__N_1/) \
                      || !(sym in text) || text[sym] > 1
             next

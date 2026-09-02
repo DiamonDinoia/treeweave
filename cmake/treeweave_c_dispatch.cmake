@@ -1,7 +1,11 @@
 # treeweave_c_dispatch.cmake: C-ABI TU generation and per-arch fan-out.
-# Generated factory TUs — fit, tree build, pipeline glue; degree baked to 7 —
-# compile once at the family baseline (6 combined TUs in multi-arch, 18
-# one-pipeline TUs in single-arch; see the granularity comment below).
+# Two tables below are the single source of truth for the C ABI's shape and ISA
+# surface: SHAPE_TABLE (dtype × input_dim × output_dim) and RUNG_TABLE (one row
+# per ISA rung). Both are written into the build tree as generated headers.
+# Generated factory TUs — fit, tree build, pipeline glue; degree baked to
+# detail::kDefaultDegree — compile once at the family baseline (6 combined TUs
+# in multi-arch, 18 one-pipeline TUs in single-arch; see the granularity
+# comment below).
 # Multi-arch fans out only the hot loops: kernels_arch.cpp compiles once per
 # ISA rung, and the factory TUs reach the selected rung through KernelSet
 # function pointers (TREEWEAVE_C_KERNELSET). No precompiled header: a PCH is
@@ -57,14 +61,13 @@ if(
     set(_treeweave_multiarch_family TRUE)
 endif()
 
-# Factory-TU generation. The foreach lists below (dtype × input_dim ×
-# output_dim) are the single source of truth for the shape set; when the set
-# changes, also update
-#   * the TREEWEAVE_SELECT_KERNELS list in src/capi/arch_dispatch.cpp,
-#   * the TREEWEAVE_KERNELS_FOR list in src/capi/kernels_arch.cpp,
-#   * make_eval_for's output_dim dispatch range in
-#     include/treeweave/detail/c_binding.hpp,
-#   * the documented shape set in include/treeweave.h.
+# Factory-TU generation. The table below (dtype × input_dim × output_dim) is
+# the single source of truth for the shape set. It drives the generated factory
+# TUs, and it is written into the build tree as treeweave_shapes.hpp, whose
+# TREEWEAVE_SHAPES(X) macro is the explicit-instantiation list of
+# arch_dispatch.cpp and kernels_arch.cpp and the range the C entry points check.
+# Widening the set is this table plus the documented shape set in
+# include/treeweave.h; nothing else.
 # A new NON-vectorized function needs no change anywhere in this file: code
 # outside the KernelSet hot loops compiles at baseline wherever it is called.
 # A new VECTORIZED kernel: follow the step guide at the top of
@@ -88,18 +91,31 @@ function(_treeweave_inst_line var vt in out)
     set(${var} "${_line}" PARENT_SCOPE)
 endfunction()
 
+# BEGIN SHAPE_TABLE
+set(_treeweave_dtypes f64 f32)
+set(_treeweave_input_dims 1 2 3)
+set(_treeweave_output_dims 1 2 3)
+# END SHAPE_TABLE
+
 set(_treeweave_variant_srcs "")
+set(_treeweave_shape_lines "")
 set(_treeweave_gen_dir "${CMAKE_CURRENT_BINARY_DIR}/capi_gen")
-foreach(_dtype f64 f32)
+foreach(_dtype IN LISTS _treeweave_dtypes)
     if(_dtype STREQUAL "f64")
         set(TREEWEAVE_VT double)
     else()
         set(TREEWEAVE_VT float)
     endif()
-    foreach(_dim 1 2 3)
+    foreach(_dim IN LISTS _treeweave_input_dims)
+        foreach(_out IN LISTS _treeweave_output_dims)
+            list(
+                APPEND _treeweave_shape_lines
+                "    X(${TREEWEAVE_VT}, ${_dim}, ${_out})"
+            )
+        endforeach()
         if(_treeweave_multiarch_family)
             set(TREEWEAVE_VINSTS "")
-            foreach(_out 1 2 3)
+            foreach(_out IN LISTS _treeweave_output_dims)
                 _treeweave_inst_line(_line "${TREEWEAVE_VT}" ${_dim} ${_out})
                 string(APPEND TREEWEAVE_VINSTS "${_line}")
             endforeach()
@@ -111,9 +127,11 @@ foreach(_dtype f64 f32)
             )
             list(APPEND _treeweave_variant_srcs "${_gen}")
         else()
-            foreach(_out 1 2 3)
+            foreach(_out IN LISTS _treeweave_output_dims)
                 _treeweave_inst_line(TREEWEAVE_VINSTS "${TREEWEAVE_VT}" ${_dim} ${_out})
-                set(_gen "${_treeweave_gen_dir}/dispatch_${_dtype}_dim${_dim}_out${_out}.cpp")
+                set(_gen
+                    "${_treeweave_gen_dir}/dispatch_${_dtype}_dim${_dim}_out${_out}.cpp"
+                )
                 configure_file(
                     "${PROJECT_SOURCE_DIR}/src/capi/dispatch_variant.cpp.in"
                     "${_gen}"
@@ -125,6 +143,17 @@ foreach(_dtype f64 f32)
     endforeach()
 endforeach()
 
+# treeweave_shapes.hpp: the same table as a C++ X-macro plus the inclusive
+# bounds the C entry points range-check against.
+string(JOIN " \\\n" TREEWEAVE_SHAPES_X ${_treeweave_shape_lines})
+list(GET _treeweave_input_dims -1 TREEWEAVE_MAX_INPUT_DIM)
+list(GET _treeweave_output_dims -1 TREEWEAVE_MAX_OUTPUT_DIM)
+configure_file(
+    "${PROJECT_SOURCE_DIR}/src/capi/shapes.hpp.in"
+    "${_treeweave_gen_dir}/treeweave_shapes.hpp"
+    @ONLY
+)
+
 # GCC 15 spuriously warns -Wtemplate-body on absent intrinsics; suppress once.
 check_cxx_compiler_flag("-Wno-template-body" _treeweave_has_wno_template_body)
 
@@ -133,7 +162,9 @@ check_cxx_compiler_flag("-Wno-template-body" _treeweave_has_wno_template_body)
 function(_treeweave_configure_c_object tgt)
     target_include_directories(
         ${tgt}
-        PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        PRIVATE
+            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+            "${_treeweave_gen_dir}" # generated treeweave_shapes.hpp / ladder
     )
     target_link_libraries(
         ${tgt}
@@ -193,34 +224,74 @@ endfunction()
 
 set_property(GLOBAL PROPERTY TREEWEAVE_C_OBJECT_EXPRS "")
 
+# One ISA rung: a build level, the xsimd arch its flags select, the name
+# TREEWEAVE_FORCE_ARCH uses to pick it (xsimd's own `Arch::name()`), then the
+# compile flags. Appends to the lists the rest of this file walks.
+function(_treeweave_rung level arch force_name)
+    list(APPEND _treeweave_arch_levels "${level}")
+    set(_treeweave_arch_levels "${_treeweave_arch_levels}" PARENT_SCOPE)
+    set(_treeweave_arch_${level} "${arch}" PARENT_SCOPE)
+    set(_treeweave_force_${level} "${force_name}" PARENT_SCOPE)
+    set(_treeweave_flags_${level} "${ARGN}" PARENT_SCOPE)
+endfunction()
+
 if(_treeweave_multiarch_family)
+    # The rung table: narrowest first, one line per rung. Everything downstream
+    # reads it — the per-rung kernel TU and its ISA flags, the
+    # TREEWEAVE_RUNG_ARCH static_assert that catches a flag/arch mismatch at
+    # compile time, the generated dispatch ladder (reversed, widest first) and
+    # the per-rung test_c_abi_force_<level> ctest.
+    set(_treeweave_arch_levels "")
+    # BEGIN RUNG_TABLE
     if(_treeweave_is_x86 AND MSVC)
         # MSVC x86: /arch: ladder (no -march); no SSE4.2 rung (SSE2→AVX→AVX2→AVX512).
-        # best_arch levels must match dispatch_arch.hpp's MSVC x86 list.
-        set(_treeweave_arch_levels sse2 avx avx2 avx512)
-        set(_treeweave_flags_sse2 "") # SSE2 is the MSVC x64 baseline
-        set(_treeweave_flags_avx /arch:AVX)
-        set(_treeweave_flags_avx2 /arch:AVX2)
-        set(_treeweave_flags_avx512 /arch:AVX512)
+        _treeweave_rung(sse2 "xsimd::sse2" "sse2") # SSE2 is the MSVC x64 baseline
+        _treeweave_rung(avx "xsimd::avx" "avx" /arch:AVX)
+        _treeweave_rung(avx2 "xsimd::fma3<xsimd::avx2>" "fma3+avx2" /arch:AVX2)
+        _treeweave_rung(avx512 "xsimd::avx512bw" "avx512bw" /arch:AVX512)
         set(_treeweave_baseline_flags "") # dispatcher: SSE2 baseline, no flag
     elseif(_treeweave_is_x86)
-        set(_treeweave_arch_levels x86-64 x86-64-v2 x86-64-v3 x86-64-v4)
-        set(_treeweave_flags_x86-64 -march=x86-64 -mtune=generic)
-        set(_treeweave_flags_x86-64-v2 -march=x86-64-v2 -mtune=generic)
-        set(_treeweave_flags_x86-64-v3 -march=x86-64-v3 -mtune=generic)
-        set(_treeweave_flags_x86-64-v4 -march=x86-64-v4 -mtune=generic)
+        _treeweave_rung(x86-64 "xsimd::sse2" "sse2" -march=x86-64 -mtune=generic)
+        _treeweave_rung(x86-64-v2 "xsimd::sse4_2" "sse4.2" -march=x86-64-v2
+                        -mtune=generic
+        )
+        _treeweave_rung(x86-64-v3 "xsimd::fma3<xsimd::avx2>" "fma3+avx2"
+                        -march=x86-64-v3 -mtune=generic
+        )
+        _treeweave_rung(x86-64-v4 "xsimd::avx512bw" "avx512bw" -march=x86-64-v4
+                        -mtune=generic
+        )
         set(_treeweave_baseline_flags -march=x86-64 -mtune=generic)
     elseif(_treeweave_is_aarch64)
         # Single rung: NEON64 is mandatory on ARMv8-A; SVE excluded.
-        set(_treeweave_arch_levels neon64)
-        set(_treeweave_flags_neon64 -march=armv8-a -mtune=generic)
+        _treeweave_rung(neon64 "xsimd::neon64" "arm64+neon" -march=armv8-a
+                        -mtune=generic
+        )
         set(_treeweave_baseline_flags -march=armv8-a -mtune=generic)
     else() # riscv64
-        # Best-effort / untested: no RISC-V CI runner.
-        set(_treeweave_arch_levels rvv)
-        set(_treeweave_flags_rvv -march=rv64gcv -mrvv-vector-bits=zvl)
+        # Best-effort / untested: no RISC-V CI runner. Fixed 128-bit RVV, matching
+        # -mrvv-vector-bits=zvl.
+        _treeweave_rung(rvv "xsimd::detail::rvv<128>" "riscv+rvv" -march=rv64gcv
+                        -mrvv-vector-bits=zvl
+        )
         set(_treeweave_baseline_flags -march=rv64gcv -mrvv-vector-bits=zvl)
     endif()
+    # END RUNG_TABLE
+
+    # The ladder the runtime dispatcher walks: the same rungs, widest first,
+    # since xsimd::dispatch takes the first entry the host supports.
+    set(_treeweave_ladder "${_treeweave_arch_levels}")
+    list(REVERSE _treeweave_ladder)
+    set(_treeweave_ladder_archs "")
+    foreach(_lvl IN LISTS _treeweave_ladder)
+        list(APPEND _treeweave_ladder_archs "${_treeweave_arch_${_lvl}}")
+    endforeach()
+    string(JOIN ", " TREEWEAVE_LADDER_ARCHS ${_treeweave_ladder_archs})
+    configure_file(
+        "${PROJECT_SOURCE_DIR}/src/capi/dispatch_ladder.hpp.in"
+        "${_treeweave_gen_dir}/treeweave_dispatch_ladder.hpp"
+        @ONLY
+    )
 
     # Probe each level's flags early so a missing assembler surfaces at configure.
     # Empty-flag levels (MSVC SSE2 baseline) are skipped.
@@ -278,6 +349,13 @@ if(_treeweave_multiarch_family)
                 PRIVATE ${_treeweave_flags_${_lvl}}
             )
         endif()
+        # kernels_arch.cpp static_asserts xsimd::best_arch against this, so a
+        # rung whose flags do not select the arch the table claims is a compile
+        # error rather than a silently duplicated rung.
+        target_compile_definitions(
+            treeweave_c_kernels_${_tag}
+            PRIVATE "TREEWEAVE_RUNG_ARCH=${_treeweave_arch_${_lvl}}"
+        )
         # COFF only: give this rung private names for everything it shares with
         # the other rungs, so no link can substitute another rung's code. The
         # kernel-table factory keeps its name -- the baseline TUs call it.
@@ -322,7 +400,10 @@ if(_treeweave_multiarch_family)
       "${PROJECT_SOURCE_DIR}/src/capi/arch_dispatch.cpp"
       "${PROJECT_SOURCE_DIR}/src/capi/treeweave.cpp"
     )
-    target_compile_definitions(treeweave_c_baseline PRIVATE TREEWEAVE_C_KERNELSET)
+    target_compile_definitions(
+        treeweave_c_baseline
+        PRIVATE TREEWEAVE_C_KERNELSET
+    )
     if(_treeweave_baseline_flags)
         target_compile_options(
             treeweave_c_baseline
@@ -345,7 +426,8 @@ if(_treeweave_multiarch_family)
     )
     foreach(_lvl IN LISTS _treeweave_arch_levels)
         string(REPLACE "-" "_" _tag "${_lvl}")
-        list(APPEND _treeweave_rung_sets
+        list(
+            APPEND _treeweave_rung_sets
             "${_lvl}=$<JOIN:$<TARGET_OBJECTS:treeweave_c_kernels_${_tag}>,$<SEMICOLON>>"
         )
     endforeach()
@@ -353,7 +435,8 @@ if(_treeweave_multiarch_family)
         add_test(
             NAME check_rung_symbols
             COMMAND
-                bash "${PROJECT_SOURCE_DIR}/.github/scripts/check_rung_symbols.sh"
+                bash
+                "${PROJECT_SOURCE_DIR}/.github/scripts/check_rung_symbols.sh"
                 ${_treeweave_rung_sets}
         )
         # The gate's own positive control. A gate that has only ever passed is
@@ -382,7 +465,8 @@ if(_treeweave_multiarch_family)
         add_custom_target(
             treeweave_verify_rungs
             COMMAND
-                bash "${PROJECT_SOURCE_DIR}/.github/scripts/check_rung_symbols.sh"
+                bash
+                "${PROJECT_SOURCE_DIR}/.github/scripts/check_rung_symbols.sh"
                 ${_treeweave_rung_sets}
             COMMENT "Checking cross-rung symbols (TREEWEAVE_VERIFY_RUNGS)"
             VERBATIM

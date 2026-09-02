@@ -481,6 +481,23 @@ static void test_error_paths(void) {
         CHECK(h == NULL);
         CHECK(strstr(treeweave_last_error(), "input_dim") != NULL);
     }
+    /* unsupported output_dim (4 and 0) -> NULL + error mentioning output_dim */
+    {
+        treeweave_t h = treeweave_fit(k_1d_1, 1, 4, &a, &b, 1e-9, NULL, NULL);
+        CHECK(h == NULL);
+        CHECK(strstr(treeweave_last_error(), "output_dim") != NULL);
+
+        h = treeweave_fit(k_1d_1, 1, 0, &a, &b, 1e-9, NULL, NULL);
+        CHECK(h == NULL);
+        CHECK(strstr(treeweave_last_error(), "output_dim") != NULL);
+    }
+    /* the f32 entry point names itself in its errors */
+    {
+        const float af = 0.0F, bf = 1.0F;
+        treeweave_t h = treeweavef_fit(k_1d_1f, 4, 1, &af, &bf, 1e-5, NULL, NULL);
+        CHECK(h == NULL);
+        CHECK(strstr(treeweave_last_error(), "treeweavef_fit") != NULL);
+    }
     /* tol <= 0 -> NULL + nonempty error */
     {
         treeweave_t h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 0.0, NULL, NULL);

@@ -27,9 +27,10 @@ export interface FitOptions {
     /** Output dimension; inferred by probing `f` at the box midpoint when omitted. */
     outDim?: number;
     dtype?: DType;
+    /* Every option below falls back to treeweave_default_opts when omitted. */
     tolKind?: TolKind;
     maxDepth?: number;
-    /** MiB; -1 auto-selects a dimension-scaled budget, 0 disables the cap. */
+    /** MiB; a negative value auto-selects a dimension-scaled budget, 0 disables the cap. */
     maxMemoryMib?: number;
     allowMaxDepthLeaves?: boolean;
     minUniformDepth?: number;
@@ -101,9 +102,12 @@ export class Treeweave {
         if (dim < 1 || dim > 3) throw new Error(`dim must be 1-3; got ${dim}`);
         if (outDim < 1 || outDim > 3) throw new Error(`outDim must be 1-3; got ${outDim}`);
 
-        const tolKind = TOL_KIND[opts.tolKind ?? "relative_max"];
-
         const backend = await getBackend(opts.backend ?? "auto");
+        // Unset options fall through to the library's own defaults; nothing
+        // here writes a default down.
+        const d = backend.defaultOpts();
+        const tolKind = opts.tolKind === undefined ? d.tolKind : TOL_KIND[opts.tolKind];
+
         const fn = backend.fit({
             callback: f,
             inputDim: dim,
@@ -112,10 +116,15 @@ export class Treeweave {
             b: bArr,
             tol,
             tolKind,
-            maxDepth: opts.maxDepth ?? 50,
-            maxMemoryMib: opts.maxMemoryMib ?? -1,
-            allowMaxDepthLeaves: opts.allowMaxDepthLeaves ? 1 : 0,
-            minUniformDepth: opts.minUniformDepth ?? 0,
+            maxDepth: opts.maxDepth ?? d.maxDepth,
+            maxMemoryMib: opts.maxMemoryMib ?? d.maxMemoryMib,
+            allowMaxDepthLeaves:
+                opts.allowMaxDepthLeaves === undefined
+                    ? d.allowMaxDepthLeaves
+                    : opts.allowMaxDepthLeaves
+                      ? 1
+                      : 0,
+            minUniformDepth: opts.minUniformDepth ?? d.minUniformDepth,
             dtype,
         });
         return new Treeweave(fn, backend.versionString);

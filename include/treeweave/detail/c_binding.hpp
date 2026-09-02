@@ -25,8 +25,8 @@
 /// `make_eval_impl` falls back to the header-only `InlineKernels` policy
 /// (`TREEWEAVE_C_KERNELSET` undefined).
 ///
-/// Degree is baked to `chosen_degree` (= 7; see
-/// include/treeweave/detail/arch_degree_table.hpp).
+/// Degree is baked to `treeweave::detail::kDefaultDegree`, the same default
+/// the C++ API uses; the C ABI never varies it per CPU.
 
 #include <array>
 #include <cstddef>
@@ -34,25 +34,14 @@
 #include <type_traits>
 #include <utility>
 
-#include <poet/core/dispatch.hpp>
 #include <treeweave.h>
 
-#include <treeweave/detail/arch_degree_table.hpp>
 #include <treeweave/detail/eval_policy.hpp>
 #include <treeweave/detail/function.hpp>
 #include <treeweave/detail/tol_kind.hpp>
 #include <treeweave/treeweave.hpp>
 
 namespace treeweave::capi {
-
-// Supported shape set (mirrored in treeweave.h and the fit error messages):
-//   degree     = 7 (baked; chosen_degree)
-//   input_dim  in {1, 2, 3}
-//   output_dim in {1, 2, 3}
-// The CMake-driven factory-TU fan-out (dtype, input_dim, output_dim; see
-// cmake/treeweave_c_dispatch.cmake) is the single source of truth for which
-// shapes are instantiated; `make_eval_for` below routes the runtime
-// output_dim onto them.
 
 /// Set the calling thread's last-error string (defined in src/capi/treeweave.cpp).
 void set_last_error(const char *msg) noexcept;
@@ -96,7 +85,7 @@ struct IEval {
 };
 
 /// One external factory symbol per (value_type, input_dim, output_dim) shape:
-/// fit, tree build and one eval pipeline, degree baked to `chosen_degree`.
+/// fit, tree build and one eval pipeline, degree baked to `kDefaultDegree`.
 /// Declared here (no body); defined in c_binding_dispatch.hpp and explicitly
 /// instantiated, once and at baseline, by exactly one CMake-generated factory
 /// TU (see cmake/treeweave_c_dispatch.cmake).
@@ -104,44 +93,12 @@ template <class T, std::size_t IN, std::size_t OUT>
 auto make_eval_one(c_func_t<T> f, void *data, const T *a, const T *b, double tol,
                    const treeweave::options &opts) -> IEval<T> *;
 
-/// Route a runtime `output_dim` onto the matching `make_eval_one`
-/// instantiation; nullptr when `output_dim` is outside the supported set.
-/// When the shape set gains an output_dim, widen the range here AND extend
-/// the CMake fan-out plus the instantiation lists it points to.
-template <class T, std::size_t IN>
-auto make_eval_for(int output_dim, c_func_t<T> f, void *data, const T *a, const T *b, double tol,
-                   const treeweave::options &opts) -> IEval<T> * {
-    return poet::dispatch(
-        [&]<int Out>() -> IEval<T> * {
-            return make_eval_one<T, IN, static_cast<std::size_t>(Out)>(f, data, a, b, tol, opts);
-        },
-        poet::dispatch_param<poet::inclusive_range<1, 3>>{output_dim});
-}
-
 /// Multi-arch only: the runtime kernel selection for one (T, IN, NC, OUT)
 /// shape. Defined in src/capi/arch_dispatch.cpp (TREEWEAVE_FORCE_ARCH
 /// override, else `xsimd::dispatch` picks the widest host-supported rung's
 /// `make_kernels_for`). Single-arch builds never instantiate this.
 template <class T, std::size_t IN, std::size_t NC, std::size_t OUT>
 auto select_kernels() -> detail::KernelSet<T, IN, NC, OUT>;
-
-/// Per-(value_type, input_dim) factory. Declared here, defined (one each) in
-/// the entry-point TU selected by CMake: src/capi/arch_single.cpp (single
-/// arch; multiarch OFF or non-x86) or src/capi/arch_dispatch.cpp (x86 runtime
-/// dispatch; multiarch ON). Degree is baked in, so these take no degree
-/// argument.
-auto make_eval_f64_dim1(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> *;
-auto make_eval_f64_dim2(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> *;
-auto make_eval_f64_dim3(int output_dim, treeweave_func_t f, void *data, const double *a, const double *b, double tol,
-                        const treeweave::options &opts) -> IEval<double> *;
-auto make_eval_f32_dim1(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> *;
-auto make_eval_f32_dim2(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> *;
-auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const float *a, const float *b, double tol,
-                        const treeweave::options &opts) -> IEval<float> *;
 
 /// Name of the ISA rung this build runs, read from that rung's own object.
 /// Defined beside the factories above, in the same entry-point TU.

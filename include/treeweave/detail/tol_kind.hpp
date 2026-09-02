@@ -1,11 +1,13 @@
 #ifndef TREEWEAVE_DETAIL_TOL_KIND_HPP
 #define TREEWEAVE_DETAIL_TOL_KIND_HPP
 
+#include <cstddef>
 #include <cstdint>
 
 namespace treeweave {
 
 /// Tolerance interpretation for the tree's adaptive refinement.
+// BEGIN DOCS_TOL_KIND
 enum class TolKind : std::uint8_t {
     RelativeTail = 0, ///< relative tail-coefficient estimate (1D only)
     AbsoluteTail = 1, ///< absolute tail-coefficient estimate (1D only)
@@ -14,14 +16,21 @@ enum class TolKind : std::uint8_t {
     RelativeL2   = 4, ///< sample-based, L2 relative error
     AbsoluteL2   = 5, ///< sample-based, L2 absolute error
 };
+// END DOCS_TOL_KIND
 
 namespace detail {
+
+/// Default leaf degree: 7 wins or ties every (arch, dtype, input_dim) cell,
+/// and is spill-free in the wide SIMD cells. The C ABI bakes it into every
+/// generated shape, so it is fixed there, not CPU-selected.
+inline constexpr std::size_t kDefaultDegree = 7;
+
 /// Internal fit-time configuration; mirror of `treeweave::options` plus the
 /// shape parameters resolved at the public API boundary.
 struct TreeInput {
     int    input_dim  = 0;
     int    output_dim = 1;
-    int    degree     = 7;
+    int    degree     = static_cast<int>(kDefaultDegree);
     double tol        = 0.0;
     int    max_depth  = 50;
     // Already-resolved concrete budget: >0 caps leaf storage at that many

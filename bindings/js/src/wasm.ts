@@ -9,7 +9,15 @@
 // i32 in wasm32, so the C signature void(const T*, T*, void*) is 'viii' for
 // both dtypes.
 
-import type { Backend, BackendFunction, DType, FitRequest, FloatArray } from "./backend.js";
+import type {
+    Backend,
+    BackendFunction,
+    DType,
+    FitDefaults,
+    FitRequest,
+    FloatArray,
+} from "./backend.js";
+import { unpackOpts } from "./backend.js";
 
 type CFn = (...args: number[]) => number;
 
@@ -210,6 +218,13 @@ export async function makeWasmBackend(): Promise<Backend> {
     return {
         name: "wasm",
         versionString,
+        defaultOpts(): FitDefaults {
+            const ptr = M._malloc(20); // 5 * int32
+            (M._treeweave_default_opts as CFn)(ptr);
+            const packed = M.HEAP32.slice(ptr / 4, ptr / 4 + 5);
+            M._free(ptr);
+            return unpackOpts(packed);
+        },
         fit: (req: FitRequest) => fit(M, req),
     };
 }

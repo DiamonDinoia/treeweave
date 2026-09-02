@@ -1,0 +1,21 @@
+// treeweave_dispatch_ladder.hpp: the ISA ladder the C ABI runtime dispatcher walks.
+//
+// Generated into the build tree by cmake/treeweave_c_dispatch.cmake from its
+// RUNG_TABLE block; that block is the single source of truth for which rungs
+// exist, which -march flags build them and which name selects one through
+// TREEWEAVE_FORCE_ARCH. Edit the table, never this file.
+//
+// Widest first: xsimd::dispatch takes the first entry the host supports.
+
+#ifndef TREEWEAVE_CAPI_DISPATCH_LADDER_HPP
+#define TREEWEAVE_CAPI_DISPATCH_LADDER_HPP
+
+#include <xsimd/xsimd.hpp>
+
+namespace treeweave::capi {
+
+using dispatch_arch_list = xsimd::arch_list<@TREEWEAVE_LADDER_ARCHS@>;
+
+} // namespace treeweave::capi
+
+#endif // TREEWEAVE_CAPI_DISPATCH_LADDER_HPP

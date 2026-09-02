@@ -66,6 +66,7 @@ inline constexpr const char *version_string = TREEWEAVE_VERSION_STRING;
 /// Compile-time guard: true iff the headers are at least `maj.min.pat`.
 constexpr auto version_at_least(int maj, int min, int pat) -> bool { return version >= maj * 10000 + min * 100 + pat; }
 
+// BEGIN DOCS_OPTIONS_STRUCT
 /// Runtime fit knobs. Every field here only affects fit-time
 /// construction; there is no eval-time benefit to promoting any of them
 /// to a template parameter, so they stay plain data.
@@ -114,6 +115,7 @@ struct options {
     /// tol-based refinement only.
     int min_uniform_depth = 0;
 };
+// END DOCS_OPTIONS_STRUCT
 
 /// Any callable that accepts `Domain` and returns a value.
 template <class F, class Domain>
@@ -127,10 +129,6 @@ constexpr auto auto_memory_budget_mib(int input_dim) -> int {
     const unsigned d = input_dim < 1 ? 1U : static_cast<unsigned>(input_dim);
     return static_cast<int>(4U << (d - 1U));
 }
-
-// Default leaf degree: 7 wins or ties every (arch, dtype, dim) cell, and is
-// spill-free in the wide SIMD cells.
-inline constexpr std::size_t kDefaultDegree = 7;
 
 inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &opts) -> TreeInput {
     TreeInput in{};

@@ -21,6 +21,30 @@ export const TOL_KIND = {
 } as const;
 export type TolKind = keyof typeof TOL_KIND;
 
+/** The library's own fit-option defaults, read from treeweave_default_opts. */
+export interface FitDefaults {
+    tolKind: number;
+    maxDepth: number;
+    maxMemoryMib: number;
+    allowMaxDepthLeaves: number;
+    minUniformDepth: number;
+}
+
+/**
+ * Decode a `treeweave_opts` filled by `treeweave_default_opts`. Both backends
+ * hand the struct over as five packed int32s in declaration order, so this is
+ * the one place that knows the order.
+ */
+export function unpackOpts(packed: Int32Array): FitDefaults {
+    return {
+        tolKind: packed[0],
+        maxDepth: packed[1],
+        maxMemoryMib: packed[2],
+        allowMaxDepthLeaves: packed[3],
+        minUniformDepth: packed[4],
+    };
+}
+
 /** Fully-resolved fit request handed to a backend (defaults already applied). */
 export interface FitRequest {
     callback: (x: FloatArray) => number | FloatArray | number[];
@@ -54,6 +78,8 @@ export interface BackendFunction {
 export interface Backend {
     readonly name: "native" | "wasm";
     readonly versionString: string;
+    /** The library's fit-option defaults; `index.ts` fills unset fields from it. */
+    defaultOpts(): FitDefaults;
     fit(req: FitRequest): BackendFunction;
 }
 

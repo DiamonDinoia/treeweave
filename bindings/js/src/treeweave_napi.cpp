@@ -7,6 +7,7 @@
 #include <treeweave.h>
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
@@ -241,8 +242,23 @@ Napi::Value Fit(const Napi::CallbackInfo &info) {
 
 } // namespace
 
+/// treeweave_default_opts as five packed int32s, the same order and packing
+/// the `fit` opts argument uses.
+static Napi::Value DefaultOpts(const Napi::CallbackInfo &info) {
+    treeweave_opts o;
+    treeweave_default_opts(&o);
+    auto out  = Napi::Int32Array::New(info.Env(), 5);
+    out[0]    = static_cast<int32_t>(o.tol_kind);
+    out[1]    = o.max_depth;
+    out[2]    = o.max_memory_mib;
+    out[3]    = o.allow_max_depth_leaves;
+    out[4]    = o.min_uniform_depth;
+    return out;
+}
+
 static Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("fit", Napi::Function::New(env, Fit));
+    exports.Set("defaultOpts", Napi::Function::New(env, DefaultOpts));
     exports.Set("versionString", Napi::String::New(env, TREEWEAVE_VERSION_STRING));
     exports.Set("version", Napi::Number::New(env, TREEWEAVE_VERSION));
     return exports;

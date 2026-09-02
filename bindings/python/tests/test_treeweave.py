@@ -380,3 +380,48 @@ def test_decorator_missing_tol():
         treeweave.fit(0.0, 1.0)
     with pytest.raises(TypeError):
         treeweave.fit(lambda x: x[0], 0.0, 1.0)
+
+
+def test_options_default_to_the_library_defaults():
+    """Omitting an option must equal passing treeweave_default_opts()' value.
+
+    Nothing in the Python layer hard-codes a default, so the check fails if the
+    None-means-default wiring drops an option or reaches the C shim with None.
+    """
+    import inspect
+
+    from treeweave import _treeweave
+
+    defaults = _treeweave.default_opts()
+    assert set(defaults) == {
+        "tol_kind",
+        "max_depth",
+        "max_memory_mib",
+        "allow_max_depth_leaves",
+        "min_uniform_depth",
+    }
+
+    params = inspect.signature(treeweave.fit).parameters
+    for name in defaults:
+        assert params[name].default is None, f"{name} still carries a Python default"
+
+    def func(x):
+        return math.exp(x[0])
+
+    implicit = treeweave.fit(func, 0.0, 1.0, tol=1e-8)
+    explicit = treeweave.fit(
+        func,
+        0.0,
+        1.0,
+        tol=1e-8,
+        tol_kind="relative_max",
+        max_depth=defaults["max_depth"],
+        max_memory_mib=defaults["max_memory_mib"],
+        allow_max_depth_leaves=bool(defaults["allow_max_depth_leaves"]),
+        min_uniform_depth=defaults["min_uniform_depth"],
+    )
+    assert defaults["tol_kind"] == treeweave._TOL_KIND["relative_max"]
+    assert implicit.memory_usage == explicit.memory_usage
+
+    xs = np.linspace(0.0, 1.0, 101)
+    np.testing.assert_array_equal(implicit(xs), explicit(xs))

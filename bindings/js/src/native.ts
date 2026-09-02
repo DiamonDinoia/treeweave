@@ -7,7 +7,8 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { Backend, BackendFunction, FitRequest } from "./backend.js";
+import type { Backend, BackendFunction, FitDefaults, FitRequest } from "./backend.js";
+import { unpackOpts } from "./backend.js";
 
 interface Addon {
     fit(
@@ -20,6 +21,7 @@ interface Addon {
         opts: Int32Array,
         dtype: string,
     ): BackendFunction;
+    defaultOpts(): Int32Array;
     versionString: string;
     version: number;
 }
@@ -46,6 +48,9 @@ export function makeNativeBackend(): Backend {
     return {
         name: "native",
         versionString: addon.versionString,
+        defaultOpts(): FitDefaults {
+            return unpackOpts(addon.defaultOpts());
+        },
         fit(req: FitRequest): BackendFunction {
             const a = req.dtype === "f32" ? Float32Array.from(req.a) : Float64Array.from(req.a);
             const b = req.dtype === "f32" ? Float32Array.from(req.b) : Float64Array.from(req.b);

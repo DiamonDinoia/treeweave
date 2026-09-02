@@ -11,7 +11,7 @@
  * the opaque handle, so they stay single (`treeweave_` prefix, no `treeweavef_`).
  *
  * Degree is baked: the leaf polynomial degree is fixed to 7 for all
- * (arch, dtype, input_dim) cells (see arch_degree_table.hpp). It is not a
+ * (arch, dtype, input_dim) cells (detail::kDefaultDegree). It is not a
  * user parameter.
  *
  * Eval-only: a fitted function can be evaluated (single, AoS batch,
@@ -65,6 +65,7 @@
 extern "C" {
 #endif
 
+/* BEGIN DOCS_TOL_KIND_C */
 /* Tolerance interpretation; numeric values match treeweave::TolKind. */
 typedef enum {
     TREEWEAVE_RELATIVE_TAIL = 0, /* relative tail-coefficient estimate (1D) */
@@ -74,6 +75,7 @@ typedef enum {
     TREEWEAVE_RELATIVE_L2   = 4, /* sample-based, L2 relative error         */
     TREEWEAVE_ABSOLUTE_L2   = 5  /* sample-based, L2 absolute error         */
 } treeweave_tol_kind_t;
+/* END DOCS_TOL_KIND_C */
 
 typedef enum { TREEWEAVE_F64 = 0, TREEWEAVE_F32 = 1 } treeweave_dtype_t;
 
@@ -118,7 +120,7 @@ typedef void (*treeweavef_func_t)(const float *x, float *y, void *context);
  * @return A handle on success, or NULL with treeweave_last_error() set when the
  *         (dtype, input_dim, output_dim) tuple is unsupported, the arguments
  *         are invalid, or the fit throws (MaxDepthExceeded / MemoryBudgetExceeded).
- * @note The leaf polynomial degree is fixed at 7 and is not a parameter.
+ * @note The leaf polynomial degree is detail::kDefaultDegree, not a parameter.
  */
 TREEWEAVE_EXPORT treeweave_t treeweave_fit(treeweave_func_t f, int input_dim, int output_dim, const double *a,
                                            const double *b, double tol, void *context, const treeweave_opts *opts);

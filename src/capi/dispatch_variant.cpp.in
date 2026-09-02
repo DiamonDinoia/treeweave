@@ -8,13 +8,12 @@
 // the family baseline -march in the multi-arch build (TREEWEAVE_C_KERNELSET;
 // the hot loops reach the per-ISA kernel TUs through `KernelSet` function
 // pointers) or at TREEWEAVE_ARCH in the single-arch build (`InlineKernels`,
-// fully inlined). Degree baked (= 7, see arch_degree_table.hpp). The
+// fully inlined). Degree baked to detail::kDefaultDegree. The
 // anonymous-namespace include keeps every fit/pipeline instantiation internal
 // to this TU.
 
 // Required by the explicit-instantiation below; include-cleaner can't see the indirect use.
 #include <treeweave/detail/c_binding.hpp>         // NOLINT(misc-include-cleaner)
-#include <treeweave/detail/arch_degree_table.hpp> // NOLINT(misc-include-cleaner)
 
 namespace treeweave::capi {
 namespace {

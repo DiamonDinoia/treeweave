@@ -49,7 +49,7 @@ Install (Octave)
 Octave has no stable MEX ABI across versions, so there is no prebuilt Octave
 MEX. Download the source release and build against your local Octave:
 
-.. not-run-in-ci: a full Octave build of the released source tarball, on every pull request, to check a curl and a cd. octave.yml runs the same two cmake lines on the checkout, via the octave-dev recipe below.
+.. not-run-in-ci: a full Octave build of the released source tarball, on every pull request, to check a curl and a cd. bindings.yml runs the same two cmake lines on the checkout, via the octave-dev recipe below.
 
 .. code-block:: bash
 
@@ -87,10 +87,9 @@ path, then fit and evaluate:
    :language: matlab
 
 The callback receives a ``1 x dim`` row and returns a scalar or a
-``out_dim x 1`` column. The fit domain is ``[a, b)``; evaluating exactly at the
-upper corner ``b`` returns the boundary value (the last cell's polynomial).
-Every other out-of-domain point returns ``NaN``, below ``a``, above ``b``, and
-``NaN``/±Inf inputs alike, uniformly across the scalar, batch and sorted paths.
+``out_dim x 1`` column.
+
+.. include:: ../_shared/domain.src
 
 Evaluation routes
 -----------------
@@ -103,11 +102,20 @@ select the fast paths:
    :start-after: % BEGIN DOCS_ROUTES
    :end-before: % END DOCS_ROUTES
 
-``'sorted', true`` skips treeweave's internal counting-sort and is ~3-4x faster
-when the caller can promise the column is ascending, which covers ``linspace``
-grids, quadrature nodes and time series. Nothing checks the promise, and
-unsorted input gives wrong values, so use the plain batch call when the order is
-unknown.
+.. include:: ../_shared/sorted.src
+
+.. _matlab-eval-overhead:
+
+Single-point eval overhead
+--------------------------
+
+mwrap's generic R2008OO codegen, not treeweave, sets the cost of a single-point
+MATLAB/Octave eval. The ``treeweave.mw`` R2008OO convention stores the handle as
+a string in the ``mwptr`` property, so every call re-parses it with ``sscanf``
+and allocates a temporary output buffer. The batch API pays that cost once for
+the whole array instead of once per point. For anything beyond a handful of
+points, call ``obj.eval(X)`` or the sorted-batch path rather than looping over
+scalars.
 
 Multi-dimensional fits
 ----------------------
@@ -130,32 +138,12 @@ Pass name-value pairs after ``tol`` to ``treeweave(...)`` to override defaults:
    :start-after: % BEGIN DOCS_OPTIONS
    :end-before: % END DOCS_OPTIONS
 
-Available options:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 28 15 57
-
-   * - Name
-     - Default
-     - Meaning
-   * - ``'tol_kind'``
-     - ``2`` (relative max)
-     - Tolerance interpretation, as the numeric ``treeweave_tol_kind_t``:
-       ``0`` relative tail, ``1`` absolute tail, ``2`` relative max,
-       ``3`` absolute max, ``4`` relative L2, ``5`` absolute L2.
-   * - ``'max_depth'``
-     - ``50``
-     - Tree-depth ceiling.
-   * - ``'max_memory_mib'``
-     - ``-1`` (auto)
-     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
-   * - ``'allow_max_depth_leaves'``
-     - ``false``
-     - Keep non-converged panels at max depth instead of raising.
-   * - ``'min_uniform_depth'``
-     - ``0``
-     - Force uniform refinement to this depth before adaptivity.
+The name-value pairs are the shared fit options in snake case:
+``'tol_kind'``, ``'max_depth'``, ``'max_memory_mib'``,
+``'allow_max_depth_leaves'`` and ``'min_uniform_depth'``. ``'tol_kind'`` takes
+the numeric ``treeweave_tol_kind_t`` value: ``0`` relative tail, ``1`` absolute
+tail, ``2`` relative max, ``3`` absolute max, ``4`` relative L2, ``5`` absolute
+L2.
 
 See `the options guide <https://diamondinoia.github.io/treeweave/guides/options.html>`_ for full descriptions.
 

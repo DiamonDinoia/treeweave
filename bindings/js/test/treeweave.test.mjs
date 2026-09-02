@@ -10,7 +10,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, test } from "node:test";
 
-import { Treeweave } from "../dist/index.js";
+import { loadBackend, TOL_KIND, Treeweave } from "../dist/index.js";
 
 const A = 2.0;
 const B = 10.0;
@@ -156,6 +156,26 @@ for (const backend of backends) {
                 ),
                 /boom/,
             );
+        });
+
+        test("unset options come from treeweave_default_opts", async () => {
+            // Nothing in the JS layer writes a default down, so this fails if
+            // an option stops falling through to the C ABI's own defaults.
+            const b = await loadBackend(backend);
+            const d = b.defaultOpts();
+            assert.equal(d.tolKind, TOL_KIND.relative_max);
+            assert.ok(d.maxMemoryMib < 0, `expected an auto memory budget, got ${d.maxMemoryMib}`);
+
+            const implicit = await Treeweave.fit((x) => zeta(x[0]), A, B, TOL, { backend });
+            const explicit = await Treeweave.fit((x) => zeta(x[0]), A, B, TOL, {
+                backend,
+                tolKind: "relative_max",
+                maxDepth: d.maxDepth,
+                maxMemoryMib: d.maxMemoryMib,
+                allowMaxDepthLeaves: d.allowMaxDepthLeaves !== 0,
+                minUniformDepth: d.minUniformDepth,
+            });
+            assert.equal(implicit.memoryUsage(), explicit.memoryUsage());
         });
     });
 }

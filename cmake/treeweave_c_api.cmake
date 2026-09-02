@@ -115,17 +115,14 @@ if(TREEWEAVE_BUILD_EXAMPLES OR TREEWEAVE_BUILD_TESTS)
 endif()
 
 if(TREEWEAVE_BUILD_EXAMPLES)
-    foreach(
-        _ex
-        simple
-        simple2d
-        simple3d
-        vector_output
-        sorted
-        with_options
-        with_context
-        float32
+    # Every examples/C/*.c is an example and a test, so adding a file is enough.
+    file(
+        GLOB _treeweave_c_examples
+        CONFIGURE_DEPENDS
+        "${PROJECT_SOURCE_DIR}/examples/C/*.c"
     )
+    foreach(_src IN LISTS _treeweave_c_examples)
+        cmake_path(GET _src STEM _ex)
         _treeweave_add_c_program(treeweave_c_${_ex} examples/C/${_ex}.c)
         add_test(NAME c_example_${_ex} COMMAND treeweave_c_${_ex})
         set_property(
@@ -140,6 +137,20 @@ if(TREEWEAVE_BUILD_TESTS)
     _treeweave_add_c_program(test_c_abi tests/test_c_abi.c)
     add_test(NAME test_c_abi COMMAND test_c_abi)
     set_property(GLOBAL APPEND PROPERTY TREEWEAVE_TEST_TARGETS test_c_abi)
+
+    # One run per ISA rung of the multi-arch ladder (empty in a single-arch
+    # build). test_active_arch_matches_forced fails on a name no rung answers
+    # to and reports a skip for a rung this host cannot execute, so the whole
+    # ladder is exercised wherever the host allows it. The rung names come from
+    # the RUNG_TABLE in treeweave_c_dispatch.cmake.
+    foreach(_lvl IN LISTS _treeweave_arch_levels)
+        add_test(NAME test_c_abi_force_${_lvl} COMMAND test_c_abi)
+        set_tests_properties(
+            test_c_abi_force_${_lvl}
+            PROPERTIES
+                ENVIRONMENT "TREEWEAVE_FORCE_ARCH=${_treeweave_force_${_lvl}}"
+        )
+    endforeach()
 
     # Skip valgrind under sanitizers: valgrind cannot run an ASan/UBSan-
     # instrumented binary (the two shadow-memory schemes collide), so the run
@@ -159,8 +170,7 @@ if(TREEWEAVE_BUILD_TESTS)
     # measured with: a reconfigure with a different TREEWEAVE_ARCH then probes
     # again instead of reusing the old answer.
     string(
-        MAKE_C_IDENTIFIER
-        "TREEWEAVE_VALGRIND_RUNNABLE_${_tw_probe_flags}"
+        MAKE_C_IDENTIFIER "TREEWEAVE_VALGRIND_RUNNABLE_${_tw_probe_flags}"
         _tw_probe_var
     )
     set(_tw_saved_required_flags "${CMAKE_REQUIRED_FLAGS}")

@@ -33,7 +33,7 @@ if(EMSCRIPTEN)
     target_link_libraries(treeweave_wasm PRIVATE treeweave_c_static)
 
     set(_tw_exported_functions
-        "_treeweave_fit,_treeweavef_fit,_treeweave_eval,_treeweavef_eval,_treeweave_batch,_treeweavef_batch,_treeweave_sorted,_treeweavef_sorted,_treeweave_transposed,_treeweavef_transposed,_treeweave_memory_usage,_treeweave_print_stats,_treeweave_free,_treeweave_dtype,_treeweave_input_dim,_treeweave_output_dim,_treeweave_last_error,_treeweave_version,_treeweave_version_string,_malloc,_free"
+        "_treeweave_default_opts,_treeweave_fit,_treeweavef_fit,_treeweave_eval,_treeweavef_eval,_treeweave_batch,_treeweavef_batch,_treeweave_sorted,_treeweavef_sorted,_treeweave_transposed,_treeweavef_transposed,_treeweave_memory_usage,_treeweave_print_stats,_treeweave_free,_treeweave_dtype,_treeweave_input_dim,_treeweave_output_dim,_treeweave_last_error,_treeweave_version,_treeweave_version_string,_malloc,_free"
     )
     set(_tw_runtime_methods
         "addFunction,removeFunction,ccall,cwrap,HEAPF64,HEAPF32,HEAP32,HEAPU8"
@@ -188,4 +188,12 @@ add_test(
         "${TREEWEAVE_NODE_EXECUTABLE}" --test
         "${_js_dir}/test/treeweave.test.mjs"
 )
-message(STATUS "treeweave[js]: test 'js_treeweave' registered.")
+add_test(
+    NAME js_example_simple_1d
+    COMMAND
+        "${TREEWEAVE_NODE_EXECUTABLE}" "${_js_dir}/examples/simple_1d.mjs"
+)
+message(
+    STATUS
+    "treeweave[js]: tests 'js_treeweave' and 'js_example_simple_1d' registered."
+)

@@ -199,11 +199,11 @@ def fit(
     dim: int | None = None,
     out_dim: int | None = None,
     dtype: str = "f64",
-    tol_kind: str = "relative_max",
-    max_depth: int = 50,
-    max_memory_mib: int = -1,
-    allow_max_depth_leaves: bool = False,
-    min_uniform_depth: int = 0,
+    tol_kind: str | None = None,
+    max_depth: int | None = None,
+    max_memory_mib: int | None = None,
+    allow_max_depth_leaves: bool | None = None,
+    min_uniform_depth: int | None = None,
 ) -> TreeweaveFunction:
     """Fit a Python callable and return a callable :class:`TreeweaveFunction`.
 
@@ -238,20 +238,24 @@ def fit(
         midpoint and takes ``np.asarray(result).size`` (a scalar result ⇒ 1).
     dtype : {'f64', 'f32'}
         Floating-point precision.
-    tol_kind : str
+    tol_kind : str, optional
         Tolerance interpretation. One of ``'relative_max'``,
         ``'absolute_max'``, ``'relative_l2'``, ``'absolute_l2'``,
         ``'relative_tail'``, ``'absolute_tail'``.
-    max_depth : int
+    max_depth : int, optional
         Maximum adaptive tree depth.
-    max_memory_mib : int
-        Memory budget in MiB. ``-1`` (default) auto-selects a
+    max_memory_mib : int, optional
+        Memory budget in MiB. A negative value auto-selects a
         dimension-scaled budget (4/8/16 MiB for dim 1/2/3); ``0`` disables
         the cap; a positive value is an explicit cap.
-    allow_max_depth_leaves : bool
+    allow_max_depth_leaves : bool, optional
         Allow leaves at max depth (relaxes convergence).
-    min_uniform_depth : int
+    min_uniform_depth : int, optional
         Minimum uniform refinement depth before adaptive refinement starts.
+
+    Every option above defaults to ``None``, which means the library's own
+    default. ``_treeweave.default_opts()`` returns those defaults, read from
+    the C ABI's ``treeweave_default_opts``; nothing here hard-codes them.
 
     Returns
     -------
@@ -318,18 +322,29 @@ def fit(
     if dtype not in ("f64", "f32"):
         raise ValueError(f"dtype must be 'f64' or 'f32'; got {dtype!r}")
 
-    tol_kind_int = _TOL_KIND.get(tol_kind.lower())
-    if tol_kind_int is None:
-        raise ValueError(f"Unknown tol_kind {tol_kind!r}; choose from {list(_TOL_KIND)}")
+    defaults = _treeweave.default_opts()
+    if tol_kind is None:
+        tol_kind_int = defaults["tol_kind"]
+    else:
+        tol_kind_int = _TOL_KIND.get(tol_kind.lower())
+        if tol_kind_int is None:
+            raise ValueError(
+                f"Unknown tol_kind {tol_kind!r}; choose from {list(_TOL_KIND)}"
+            )
+
+    def _or_default(value, key):
+        return defaults[key] if value is None else value
 
     common_kw = dict(
         input_dim=dim, output_dim=out_dim,
         tol=float(tol),
         tol_kind=tol_kind_int,
-        max_depth=max_depth,
-        max_memory_mib=max_memory_mib,
-        allow_max_depth_leaves=int(allow_max_depth_leaves),
-        min_uniform_depth=min_uniform_depth,
+        max_depth=_or_default(max_depth, "max_depth"),
+        max_memory_mib=_or_default(max_memory_mib, "max_memory_mib"),
+        allow_max_depth_leaves=int(
+            _or_default(allow_max_depth_leaves, "allow_max_depth_leaves")
+        ),
+        min_uniform_depth=_or_default(min_uniform_depth, "min_uniform_depth"),
     )
 
     fit_fn = _treeweave.fit_f64 if dtype == "f64" else _treeweave.fit_f32

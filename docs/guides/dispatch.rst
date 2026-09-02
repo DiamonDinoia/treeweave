@@ -26,32 +26,28 @@ lowest level (``x86-64``, ``armv8-a``), not a tuned one.
 How the build chooses the family
 --------------------------------
 
-The build selects the variant set at compile time from ``xsimd::best_arch``, by
-CPU family (see ``include/treeweave/detail/dispatch_arch.hpp``):
+The rung table in ``cmake/treeweave_c_dispatch.cmake`` defines the ladder. Each
+row gives the build level, the ``xsimd`` arch its flags select, the
+``TREEWEAVE_FORCE_ARCH`` name that pins it, and the compile flags:
 
-- ``x86-64``: a four-level ladder. The dispatcher walks it widest-first and
-  selects the first level the host reports as available. GCC/Clang use
-  ``SSE2 -> SSE4.2 -> AVX2 -> AVX-512``; MSVC ABI compilers use
-  ``SSE2 -> AVX -> AVX2 -> AVX-512`` because there is no ``/arch:SSE4.2``.
+.. literalinclude:: ../../cmake/treeweave_c_dispatch.cmake
+   :language: cmake
+   :start-after: # BEGIN RUNG_TABLE
+   :end-before: # END RUNG_TABLE
+   :dedent: 4
 
-  ====================  ============  ===========================
-  ISA level             arch          ``TREEWEAVE_FORCE_ARCH`` name
-  ====================  ============  ===========================
-  ``x86-64-v4``         AVX-512BW     ``avx512bw``
-  ``x86-64-v3``         FMA3 + AVX2   ``fma3+avx2``
-  ``x86-64-v2``         SSE4.2        ``sse4.2`` (GCC/Clang)
-  ``/arch:AVX``         AVX           ``avx`` (MSVC ABI)
-  ``x86-64``            SSE2          ``sse2``
-  ====================  ============  ===========================
+Everything downstream is generated from that table: the per-rung kernel object,
+the ``xsimd::arch_list`` the dispatcher walks, and one
+``test_c_abi_force_<level>`` ctest per rung. The dispatcher walks the ladder
+widest-first and takes the first rung the host reports as available. A rung
+whose flags do not select the arch its row names is a compile error, not a
+silent duplicate.
 
-- ``aarch64`` (non-Apple): a single ``neon64`` variant
-  (``TREEWEAVE_FORCE_ARCH`` name ``arm64+neon``). NEON64 is mandatory on
-  ARMv8-A, so it always dispatches. The single variant keeps one dispatch path
-  across platforms. It is not a new performance tier.
-
-- ``riscv64``: a single ``rvv`` variant (fixed 128-bit RVV). Best-effort and
-  untested. No RISC-V CI runner exists, so this branch compiles but nothing
-  checks it.
+x86 has four rungs. MSVC ABI compilers substitute AVX for SSE4.2, because there
+is no ``/arch:SSE4.2``. ``aarch64`` (non-Apple) has one, ``neon64``: NEON64 is
+mandatory on ARMv8-A, so it always dispatches, and it keeps one dispatch path
+across platforms rather than adding a performance tier. ``riscv64`` has one,
+fixed 128-bit RVV, best-effort and untested since no RISC-V CI runner exists.
 
 Apple silicon and unknown targets fall back to a single-arch build at
 ``TREEWEAVE_ARCH`` (no runtime dispatch).
@@ -67,7 +63,7 @@ is mandatory on ARMv8-A, so dropping SVE costs no coverage.
 Forcing an ISA for testing
 ---------------------------
 
-Set ``TREEWEAVE_FORCE_ARCH`` to one of the names above to pin the dispatcher to
+Set ``TREEWEAVE_FORCE_ARCH`` to one of the names in the table above to pin the dispatcher to
 a specific level, capped at what the host supports, so one capable machine can
 exercise every fallback path:
 

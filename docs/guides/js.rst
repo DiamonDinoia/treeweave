@@ -46,6 +46,10 @@ JavaScript-specific fields:
 - ``dtype`` defaults to ``"f64"``; use ``"f32"`` for single precision.
 - ``backend`` defaults to ``"auto"``; pass ``"native"`` or ``"wasm"`` to force one
   backend.
+- An omitted fit option takes the library's own default, read from the C ABI by
+  ``backend.defaultOpts()``; no default is written down twice.
+
+.. include:: ../_shared/domain.src
 
 Source build
 ------------
