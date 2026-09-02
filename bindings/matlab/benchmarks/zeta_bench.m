@@ -1,5 +1,5 @@
 % zeta_bench.m: treeweave vs a fair brute-force Riemann-zeta eval.
-% See examples/c++/zeta_bench.cpp for the rationale. zeta(s) = sum_k k^-s summed
+% See benchmarks/zeta_bench.cpp for the rationale. zeta(s) = sum_k k^-s summed
 % until the tail is negligible (rel 1e-10, <=160 terms) yet smooth on [2,10]: fit
 % once, eval a polynomial. Times single/multi/sorted; the native rate is sampled
 % over n_native and reused. No in-place out= (copy-on-write); every mode allocates.

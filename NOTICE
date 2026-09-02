@@ -10,7 +10,7 @@ baobzi originated the adaptive-tree-of-polynomial-panels design that treeweave
 builds on. treeweave shares no code with baobzi: it is a clean reimplementation
 that re-architects the fit and evaluation pipeline around polyfit
 (https://github.com/DiamonDinoia/polyfit) and POET
-(https://github.com/DiamonDinoia/POET) and adds a multi-language C ABI.
+(https://github.com/DiamonDinoia/poet) and adds a multi-language C ABI.
 
 treeweave is distributed under the BSD 3-Clause License; see the LICENSE file
 for the full terms.

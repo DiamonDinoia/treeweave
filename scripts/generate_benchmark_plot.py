@@ -3,7 +3,7 @@
 
 Each benchmark in the zeta family (one per binding: C, C++, Fortran, Python,
 Julia, Octave, JS) writes a YAML file when the ``TREEWEAVE_BENCH_YAML``
-environment variable names a path; see examples/c++/zeta_bench.cpp for the
+environment variable names a path; see benchmarks/zeta_bench.cpp for the
 schema. This script loads every ``*.yaml`` in ``--results-dir``, keyed by each
 file's own ``language`` field and not by its path, then emits a family of SVG bar
 charts to ``--output-dir``.

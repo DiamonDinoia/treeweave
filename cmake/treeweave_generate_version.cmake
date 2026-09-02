@@ -2,7 +2,7 @@
 # VERSION + git state and writes include/treeweave_version.h, which is gitignored
 # and regenerated on every configure. Also runs standalone: cmake -P <this file>.
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 if(CMAKE_SOURCE_DIR AND EXISTS "${CMAKE_SOURCE_DIR}/VERSION")
     set(_tw_src "${CMAKE_SOURCE_DIR}")

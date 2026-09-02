@@ -146,35 +146,34 @@ if(TREEWEAVE_MKOCTFILE_EXECUTABLE)
     add_custom_target(treeweave_mex_octave ALL DEPENDS "${_treeweave_oct_mex}")
 endif()
 
+# Both interpreters run the same .m files; only the launcher differs.
 if(TREEWEAVE_MKOCTFILE_EXECUTABLE AND TREEWEAVE_OCTAVE_EXECUTABLE)
+    set(_treeweave_run "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval)
+    set(_treeweave_interp "Octave: ${TREEWEAVE_OCTAVE_EXECUTABLE}")
+elseif(Matlab_FOUND AND Matlab_MAIN_PROGRAM)
+    set(_treeweave_run "${Matlab_MAIN_PROGRAM}" -batch)
+    set(_treeweave_interp "MATLAB: ${Matlab_MAIN_PROGRAM}")
+endif()
+
+if(_treeweave_run)
+    set(_treeweave_addpath
+        "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}');"
+    )
     add_test(
         NAME matlab_treeweave
-        COMMAND
-            "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval
-            "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); test_treeweave"
+        COMMAND ${_treeweave_run} "${_treeweave_addpath} test_treeweave"
     )
     foreach(_example IN ITEMS example_1d example_2d example_vector example_routes)
         add_test(
-            NAME "octave_example_${_example}"
+            NAME "matlab_${_example}"
             COMMAND
-                "${TREEWEAVE_OCTAVE_EXECUTABLE}" --no-gui --quiet --eval
-                "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); run('${CMAKE_CURRENT_SOURCE_DIR}/examples/${_example}.m')"
+                ${_treeweave_run}
+                "${_treeweave_addpath} run('${CMAKE_CURRENT_SOURCE_DIR}/examples/${_example}.m')"
         )
     endforeach()
     message(
         STATUS
-        "treeweave[matlab]: test 'matlab_treeweave' registered (Octave: ${TREEWEAVE_OCTAVE_EXECUTABLE})."
-    )
-elseif(Matlab_FOUND AND Matlab_MAIN_PROGRAM)
-    add_test(
-        NAME matlab_treeweave
-        COMMAND
-            "${Matlab_MAIN_PROGRAM}" -batch
-            "addpath('${CMAKE_CURRENT_SOURCE_DIR}'); addpath('${_treeweave_gen_dir}'); test_treeweave"
-    )
-    message(
-        STATUS
-        "treeweave[matlab]: test 'matlab_treeweave' registered (MATLAB: ${Matlab_MAIN_PROGRAM})."
+        "treeweave[matlab]: tests 'matlab_treeweave' and 'matlab_example_*' registered (${_treeweave_interp})."
     )
 else()
     message(

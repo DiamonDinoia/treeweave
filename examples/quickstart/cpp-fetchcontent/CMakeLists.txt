@@ -2,7 +2,7 @@
 # recommended C++ route: no bootstrap, no install step, nothing to download by
 # hand. tools/ci/install-test.sh configures and runs this project on every PR.
 # BEGIN DOCS_PROJECT
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 project(treeweave_quickstart LANGUAGES CXX)
 
 include(FetchContent)

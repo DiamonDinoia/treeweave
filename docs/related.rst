@@ -105,7 +105,7 @@ Related Flatiron libraries
 
 * `FINUFFT <https://finufft.readthedocs.io/>`__: nonuniform fast Fourier
   transforms. Where treeweave's docs borrow their structure from.
-* `POET <https://github.com/flatironinstitute/poet>`__: the portable-SIMD layer
+* `POET <https://github.com/DiamonDinoia/poet>`__: the portable-SIMD layer
   treeweave and FINUFFT both build their kernels on.
 * `polyfit <https://github.com/DiamonDinoia/polyfit>`__: the Chebyshev-node
   polynomial fitter treeweave uses on each panel.

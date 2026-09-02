@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Pin bindings/python/pyproject.toml to a static dev version for TestPyPI.
 
-The wheel version is normally single-sourced from the root CMakeLists.txt via
-scikit-build-core's regex metadata provider (see [tool.scikit-build.metadata.
-version]). CMake's project(VERSION ...) is numeric-only, so it cannot carry a
-PEP 440 `.devN` suffix. For staging uploads we therefore replace the dynamic
+The wheel version is normally single-sourced from the VERSION file at the repo
+root via scikit-build-core's regex metadata provider (see [tool.scikit-build.
+metadata.version]). That file is numeric-only, so it cannot carry a PEP 440
+`.devN` suffix. For staging uploads we therefore replace the dynamic
 version with a static one for the duration of the build only. This edit is
 never committed.
 
