@@ -564,6 +564,30 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      # Unversioned duplicates of the platform archives, so
+      # .../releases/latest/download/treeweave-linux-x86_64.tar.gz is a URL that
+      # keeps working across releases. The docs quote that floating URL; the
+      # versioned name stays alongside it for anyone pinning a release. The
+      # cxx-headers asset is already unversioned upstream, in _build-c-abi.yml.
+      - name: Duplicate platform archives under unversioned names
+        shell: bash
+        run: |
+          ver="${{ inputs.version }}"
+          n=0
+          for f in artifacts/treeweave-"$ver"-* artifacts/treeweave-matlab-"$ver"-*; do
+            [ -e "$f" ] || continue
+            case "$f" in *.whl) continue ;; esac
+            cp -- "$f" "${f/-$ver-/-}"
+            n=$((n + 1))
+          done
+          # The C ABI legs always produce archives; zero copies means the naming
+          # convention moved and the floating URLs in the docs just went stale.
+          if [ "$n" -eq 0 ]; then
+            echo "::error::no platform archive matched treeweave-$ver-*; the floating download URLs in the docs would 404"
+            exit 1
+          fi
+          echo "duplicated $n archive(s) under unversioned names"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -596,6 +620,31 @@ jobs:
               --title "treeweave $tag" --generate-notes \
               artifacts/*
           fi
+
+  # The `stable` branch is the ref the install recipes name: FetchContent
+  # GIT_TAG stable, CPMAddPackage("gh:DiamonDinoia/treeweave#stable"). It is
+  # force-updated to the released commit, so a consumer who never pins still
+  # gets the newest release rather than the tip of main. It moves only after
+  # the GitHub Release exists, so `stable` and the newest release always agree.
+  update-stable:
+    name: Point the stable branch at the release
+    needs: [preflight, github-release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: true
+      - name: Force stable to the released commit
+        run: |
+          git push --force origin \
+            "${{ needs.preflight.outputs.sha }}:refs/heads/stable"
+          echo "::notice::stable -> ${{ needs.preflight.outputs.sha }} (v${{ inputs.version }})"
 
   # Publish the WASM JS package to npm. The package exists, so npm publishing is
   # a hard release gate alongside the PyPI and GitHub Release artifacts. Auth:

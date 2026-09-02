@@ -65,3 +65,50 @@ jobs:
 
       - name: Run Julia suite (julia_treeweave)
         run: ctest --test-dir build/bindings-julia -R julia_treeweave --output-on-failure --no-tests=error
+
+  compare-interpolators:
+    name: Comparison against other Julia interpolators
+    runs-on: ubuntu-24.04
+    # Reaching 1e-10 with a uniform cubic grid takes 5e5 knots on two of the
+    # three targets, and every method is grown to that accuracy before it is
+    # measured.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Configure + build libtreeweave_c
+        run: |
+          cmake --preset bindings-julia -DTREEWEAVE_ARCH=x86-64-v3
+          cmake --build build/bindings-julia -j --target treeweave_c
+
+      - name: Install the comparison field
+        run: |
+          julia -e 'using Pkg
+                    Pkg.develop(path="bindings/julia/Treeweave")
+                    Pkg.add(["Interpolations", "Dierckx", "FastChebInterp", "DataInterpolations"])'
+
+      - name: Self-test the comparison's own gates
+        env:
+          LIBTREEWEAVE_C: ${{ github.workspace }}/build/bindings-julia/libtreeweave_c.so
+        run: julia benchmarks/compare_interpolators.jl --self-test
+
+      # --check-docs re-measures the deterministic columns and fails if the Julia
+      # tables in docs/guides/performance.rst no longer match. Regenerate with --rst.
+      - name: Run the comparison and hold the docs tables to it
+        env:
+          LIBTREEWEAVE_C: ${{ github.workspace }}/build/bindings-julia/libtreeweave_c.so
+        run: julia benchmarks/compare_interpolators.jl --check-docs

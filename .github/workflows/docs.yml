@@ -65,10 +65,18 @@ jobs:
 
       # Configures the library and runs the `docs` target: Doxygen emits XML,
       # then sphinx-build (Breathe/Exhale) renders docs/ -> _build/html.
+      # The gates that keep every docs page showing real, existing code run
+      # inside the `docs` target below. Prove here that it can fail.
+      - name: Positive control for the docs-code gates
+        run: python scripts/check_docs_code.py --self-test
+
       - name: Build docs (Doxygen XML + Sphinx)
         run: |
+          # EXAMPLES=ON is required: the docs literalinclude figures captured
+          # from the examples' own stdout (examples/CMakeLists.txt), so a
+          # picture on the site is what the shipped program actually prints.
           cmake -S . -B build \
-            -DTREEWEAVE_BUILD_TESTS=OFF -DTREEWEAVE_BUILD_EXAMPLES=OFF \
+            -DTREEWEAVE_BUILD_TESTS=OFF -DTREEWEAVE_BUILD_EXAMPLES=ON \
             -DTREEWEAVE_GENERATE_DOCS=ON
           cmake --build build --target docs
 

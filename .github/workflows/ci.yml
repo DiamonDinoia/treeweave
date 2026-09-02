@@ -514,3 +514,39 @@ jobs:
           }
           Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue
           if ($fail -ne 0) { throw "at least one rung failed its tests" }
+
+  compare-interpolators:
+    name: Comparison against Boost.Math's interpolators
+    runs-on: ubuntu-24.04
+    # Reaching 1e-10 on the pole takes a 5e5-knot uniform grid, and every method
+    # is grown to that accuracy before it is measured.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        uses: aminya/setup-cpp@v1.8.1
+        with:
+          compiler: gcc
+          cmake: true
+          ninja: true
+          cache-tools: true
+
+      # Boost.Math's interpolators are header-only: headers, no link step.
+      - name: Install Boost headers
+        run: sudo apt-get update && sudo apt-get install -y libboost-dev libboost-math-dev
+
+      - name: Configure + build the comparison
+        run: |
+          cmake --preset bench -DTREEWEAVE_ARCH=x86-64-v3
+          cmake --build build/bench -j --target compare_interpolators_cpp
+
+      - name: Self-test the comparison's own gates
+        run: ./build/bench/compare_interpolators_cpp --self-test
+
+      # --check-docs re-measures the deterministic columns and fails if the C++
+      # tables in docs/guides/performance.rst no longer match. Regenerate with --rst.
+      - name: Run the comparison and hold the docs tables to it
+        run: ./build/bench/compare_interpolators_cpp --check-docs

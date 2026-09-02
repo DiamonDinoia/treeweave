@@ -60,3 +60,41 @@ jobs:
       # test_treeweave.m calls error() on any failure -> octave exits non-zero.
       - name: Run Octave suite (matlab_treeweave)
         run: ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure --no-tests=error
+
+  compare-interpolators:
+    name: Comparison against other Octave interpolators
+    runs-on: ubuntu-24.04
+    # Reaching 1e-10 with pchip on sin(30 x) takes the whole 2^20-knot cap, and
+    # every method is grown to that accuracy before it is measured.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Octave + toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev ||
+            { sudo apt-get update; sudo apt-get install -y octave-dev; }
+
+      - name: Configure + build the Octave MEX
+        run: |
+          cmake --preset bindings-octave -DTREEWEAVE_ARCH=x86-64-v3
+          cmake --build build/bindings-octave -j
+
+      - name: Self-test the comparison's own gates
+        run: |
+          octave --no-gui -q --path benchmarks \
+            --eval "exit(compare_interpolators('--self-test'))"
+
+      # --check-docs re-measures the deterministic columns and fails if the
+      # Octave tables in docs/guides/performance.rst no longer match, and if
+      # Octave's not-a-knot spline stops agreeing row for row with the published
+      # scipy CubicSpline table. Regenerate with --rst.
+      - name: Run the comparison and hold the docs tables to it
+        run: |
+          octave --no-gui -q \
+            --path benchmarks --path bindings/matlab \
+            --path build/bindings-octave/bindings/matlab/generated \
+            --eval "exit(compare_interpolators('--check-docs'))"
