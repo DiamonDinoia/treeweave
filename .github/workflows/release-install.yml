@@ -110,12 +110,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.compiler }}
-          cmake: true
-          ninja: true
-          cache-tools: true
 
       - name: Download the C-ABI tarball from the release
         shell: bash
@@ -182,12 +179,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       - name: Download the arch-independent headers tarball from the release
         shell: bash
@@ -200,12 +192,12 @@ jobs:
             --pattern 'treeweave-cxx-headers.tar.gz' --dir pkg
           ls -l pkg
 
-      - name: Extract + compile the standalone demo with -Iinclude
+      - name: Extract + compile an example against the bundle with -Iinclude
         shell: bash
         run: |
           dest="$(mktemp -d)"
           tar -C "$dest" -xzf pkg/treeweave-cxx-headers.tar.gz
-          g++ -std=c++20 -O3 examples/standalone/demo.cpp -I"$dest/include" -o app
+          g++ -std=c++20 -O3 examples/c++/simple1d.cpp -I"$dest/include" -o app
           ./app
 
       # The two halves of the header-bundle recipe docs/install.rst and

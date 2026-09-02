@@ -8,11 +8,7 @@
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 [![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 
-[![Python](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/python.yml?branch=main&label=Python)](https://github.com/DiamonDinoia/treeweave/actions/workflows/python.yml)
-[![Julia](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/julia.yml?branch=main&label=Julia)](https://github.com/DiamonDinoia/treeweave/actions/workflows/julia.yml)
-[![Fortran](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/fortran.yml?branch=main&label=Fortran)](https://github.com/DiamonDinoia/treeweave/actions/workflows/fortran.yml)
-[![Octave](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/octave.yml?branch=main&label=Octave)](https://github.com/DiamonDinoia/treeweave/actions/workflows/octave.yml)
-[![JavaScript](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=JS%2FWASM)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml)
+[![Bindings](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/bindings.yml?branch=main&label=Bindings)](https://github.com/DiamonDinoia/treeweave/actions/workflows/bindings.yml)
 [![MATLAB](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/matlab.yml?branch=main&label=MATLAB)](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
 
 ## What it solves
@@ -47,31 +43,32 @@ The fit covers `[a, b)`. Evaluation still accepts the closed interval `[a, b]`, 
 
 ## Examples and install
 
+Every snippet below is a marked region of a file CI compiles or runs, and
+`scripts/check_docs_code.py` fails the build when one drifts. The language
+guides carry the full API, the options and the other install routes.
+
 ### Python
 
+<!-- literalinclude: bindings/python/examples/simple_1d.py start-after: # BEGIN DOCS_MINIMAL end-before: # END DOCS_MINIMAL -->
 ```python
 import math
+import numpy as np
 import treeweave
 
-def zeta(s):
-    return sum(math.pow(k, -s[0]) for k in range(1, 1001))
 
-approx = treeweave.fit(zeta, 2.0, 10.0, tol=1e-10)
-print(approx(3.5))
+def func(x):
+    return math.exp(x[0])
+
+
+# Fit exp(x) on [0, 1] syntax is fit(callback, lower_bound, upper_bound, tol).
+approx = treeweave.fit(func, 0.0, 1.0, tol=1e-10)
+print(approx)  # dtype, dim, out_dim, memory_usage
 ```
 
-Omit the callable and `fit` becomes a decorator, the `functools.cache` spelling:
-
-```python
-@treeweave.fit(2.0, 10.0, tol=1e-10)
-def zeta(s):
-    return sum(math.pow(k, -s[0]) for k in range(1, 1001))
-
-print(zeta(3.5))          # evaluates the approximation
-```
-
+Omit the callable and `fit` becomes a decorator, the `functools.cache` spelling.
 Install:
 
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_PIP_PYPI end-before: # END DOCS_PIP_PYPI dedent: 4 -->
 ```bash
 pip install treeweave
 ```
@@ -80,12 +77,15 @@ pip install treeweave
 
 ### C++
 
+<!-- literalinclude: examples/quickstart/main.cpp start-after: // BEGIN DOCS_PROGRAM -->
 ```cpp
 #include <treeweave/treeweave.hpp>
+
 #include <cmath>
-#include <iostream>
+#include <cstdio>
 
 int main() {
+    // Stand-in for an expensive function: a 1000-term series, ~1 us per call.
     auto zeta = [](double s) {
         double y = 0.0;
         for (int k = 1; k <= 1000; ++k)
@@ -93,85 +93,122 @@ int main() {
         return y;
     };
 
-    auto approx = treeweave::fit(zeta, 2.0, 10.0, 1e-10);
-    std::cout << approx(3.5) << "\n";
+    // fit(callback, lower_bound, upper_bound, tolerance)
+    const auto f = treeweave::fit(zeta, 2.0, 10.0, 1e-10);
+
+    const double x   = 3.5;
+    const double err = std::abs(f(x) - zeta(x)) / std::abs(zeta(x));
+    std::printf("f(%g) = %.15g, relative error %.2e\n", x, f(x), err);
+    return err < 1e-8 ? 0 : 1;
 }
 ```
 
-To install directly in CMake:
+`treeweave::treeweave` comes from every CMake route: FetchContent, CPM,
+`add_subdirectory` and `find_package` against an installed prefix.
 
+<!-- literalinclude: examples/quickstart/cpp-fetchcontent/CMakeLists.txt start-after: # BEGIN DOCS_PROJECT -->
 ```cmake
+cmake_minimum_required(VERSION 3.25)
+project(treeweave_quickstart LANGUAGES CXX)
+
 include(FetchContent)
 FetchContent_Declare(
     treeweave
     GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-    GIT_TAG stable # or any other release tag
+    GIT_TAG stable # a branch that always points at the newest release
+    GIT_SHALLOW TRUE
 )
-
 FetchContent_MakeAvailable(treeweave)
-add_executable(my_app example.cpp)
-target_link_libraries(my_app PRIVATE treeweave::treeweave)
+
+add_executable(app "${CMAKE_CURRENT_LIST_DIR}/../main.cpp")
+target_link_libraries(app PRIVATE treeweave::treeweave)
 ```
 
-The CMake section below contains more details, or download `treeweave-cxx-headers.tar.gz` from
+Without CMake, download `treeweave-cxx-headers.tar.gz` from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases) and compile with
-`-std=c++20 -Iinclude`. `treeweave::treeweave` is available from every route:
-FetchContent, CPM, tree-level `add_subdirectory`, and `find_package` against an
-installed prefix. The installed package adds `treeweave::treeweave_c` /
-`treeweave::treeweave_c_static` for the C API.
+`-std=c++20 -Iinclude`.
 
 [C++ guide](https://diamondinoia.github.io/treeweave/guides/cpp.html)
 
 ### C
 
+<!-- literalinclude: examples/quickstart/main.c start-after: /* BEGIN DOCS_PROGRAM */ -->
 ```c
-#include <math.h>
-#include <stdio.h>
 #include <treeweave.h>
 
-static void kernel(const double *x, double *y, void *ctx) {
-    (void)ctx;
-    y[0] = 0.0;
+#include <math.h>
+#include <stdio.h>
+
+/* treeweave calls this while fitting. x holds input_dim values, y holds
+ * output_dim; here both are 1. */
+static void zeta(const double *x, double *y, void *context) {
+    (void)context;
+    double sum = 0.0;
     for (int k = 1; k <= 1000; ++k)
-        y[0] += pow((double)k, -x[0]);
+        sum += pow((double)k, -x[0]);
+    y[0] = sum;
 }
 
 int main(void) {
-    double a = 2.0, b = 10.0;
-    treeweave_t f = treeweave_fit(kernel, 1, 1, &a, &b, 1e-10, NULL, NULL);
-    printf("%g\n", treeweave_eval_1d(f, 3.5));
-    treeweave_free(f);
+    const double a = 2.0, b = 10.0;
+
+    /* treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance,
+     *               context, options) */
+    treeweave_t f = treeweave_fit(zeta, 1, 1, &a, &b, 1e-10, NULL, NULL);
+    if (f == NULL) {
+        fprintf(stderr, "treeweave_fit failed: %s\n", treeweave_last_error());
+        return 1;
+    }
+
+    double exact;
+    zeta((const double[]){3.5}, &exact, NULL);
+    const double approx = treeweave_eval_1d(f, 3.5);
+    const double err    = fabs(approx - exact) / fabs(exact);
+    printf("f(3.5) = %.15g, relative error %.2e\n", approx, err);
+
+    f = treeweave_free(f);
+    return err < 1e-8 ? 0 : 1;
 }
 ```
 
-Install the C ABI tarball directly:
+The installed package adds `treeweave::treeweave_c` and
+`treeweave::treeweave_c_static`. To use the release tarball without CMake:
 
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_DOWNLOAD_C_TARBALL end-before: # END DOCS_DOWNLOAD_C_TARBALL dedent: 4 -->
 ```bash
-PLATFORM=linux-x86_64
+PLATFORM=linux-x86_64      # or linux-aarch64, macos-arm64, macos-x86_64
 URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-${PLATFORM}.tar.gz"
-curl -fLO "$URL" || wget "$URL"
-tar xzf "treeweave-${PLATFORM}.tar.gz"
-gcc example.c -Iinclude -Llib -ltreeweave_c -lm -o example
-LD_LIBRARY_PATH=lib ./example
+curl -fLO "$URL"
+```
+
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_C_TARBALL end-before: # END DOCS_C_TARBALL dedent: 4 -->
+```bash
+tar xzf "treeweave-${PLATFORM}.tar.gz"   # extracts include/ and lib/ into ./
+cc main.c -Iinclude -Llib -ltreeweave_c -lm -o app
+LD_LIBRARY_PATH=lib ./app
 ```
 
 [C guide](https://diamondinoia.github.io/treeweave/guides/c.html)
 
 ### Julia
 
+<!-- literalinclude: bindings/julia/Treeweave/examples/example_1d.jl start-after: # BEGIN DOCS_MINIMAL end-before: # END DOCS_MINIMAL -->
 ```julia
 using Treeweave
 
-zeta(s) = sum(k -> k^(-s), 1:1000)
-approx = fit(zeta, 2.0, 10.0, 1e-10)
-println(approx(3.5))
+f = x -> exp(0.5x) + sin(3x)
+a, b_val = 0.0, 2.0
+
+println("Fitting f(x) = exp(0.5x) + sin(3x) on [$a, $b_val] ...")
+# Fit f(x) on [0, 2] syntax is fit(callback, lower_bound, upper_bound, tolerance).
+approx = fit(f, a, b_val, 1e-10)
+println("  ", approx)   # show() prints dtype, dim, out_dim and bytes
 ```
 
 `fit` takes the callable first, so a `do` block fits a function written on the
-spot: `approx = fit(2.0, 10.0, 1e-10) do s ... end`.
+spot. Install:
 
-Install:
-
+<!-- not-run-in-ci: fetches a published release; julia-smoke.yml exercises the same path -->
 ```julia
 using Pkg
 Pkg.add(url="https://github.com/DiamonDinoia/treeweave",
@@ -180,107 +217,65 @@ Pkg.add(url="https://github.com/DiamonDinoia/treeweave",
 
 [Julia guide](https://diamondinoia.github.io/treeweave/guides/julia.html)
 
-### MATLAB
+### MATLAB and Octave
 
+<!-- literalinclude: bindings/matlab/examples/example_1d.m start-after: % BEGIN DOCS_MINIMAL end-before: % END DOCS_MINIMAL -->
 ```matlab
-zeta = @(x) sum((1:1000) .^ (-x(1)));
-approx = treeweave(zeta, 2, 10, 1e-10);   % dim and out_dim are inferred
-disp(approx(3.5));
-delete(approx);
+f   = @(x) exp(0.5*x(1)) + sin(3*x(1));
+% Fit f(x) on [0, 1] syntax is
+% treeweave(callback, lower_bound, upper_bound, tolerance, name/value options).
+obj = treeweave(f, 0, 1, 1e-8);
+
+Xtest = linspace(0, 1, 500)';
+% Evaluate obj on 500 points and print the maximum error.
+Yhat  = obj.eval(Xtest);
+Yref  = exp(0.5*Xtest) + sin(3*Xtest);
+fprintf('1D max abs error: %.3e\n', max(abs(Yhat - Yref)));
 ```
 
-Install:
+MATLAB installs from [mip](https://mip.sh/), from the
+[`mip-org/labs`](https://github.com/mip-org/mip-labs) channel:
 
-With [mip](https://mip.sh/), from the [`mip-org/labs`](https://github.com/mip-org/mip-labs) channel:
-
+<!-- not-run-in-ci: installs a published channel package; matlab.yml builds and tests the MEX bundle -->
 ```matlab
 mip install --channel mip-org/labs treeweave
 mip load treeweave
 ```
 
-Or download the MATLAB bundle directly:
+Octave builds the MEX from source:
 
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_OCTAVE_DEV end-before: # END DOCS_OCTAVE_DEV dedent: 4 -->
 ```bash
-PLATFORM=linux-x64
-URL="https://github.com/DiamonDinoia/treeweave/releases/latest/download/treeweave-matlab-${PLATFORM}.tar.gz"
-curl -fLO "$URL" || wget "$URL"
-mkdir -p treeweave-matlab
-tar xzf "treeweave-matlab-${PLATFORM}.tar.gz" --strip-components=1 -C treeweave-matlab
-```
-
-```matlab
-addpath('treeweave-matlab')
-```
-
-Other platforms use the matching `treeweave-matlab-<version>-<platform>` asset from
-[Releases](https://github.com/DiamonDinoia/treeweave/releases).
-
-[MATLAB/Octave guide](https://diamondinoia.github.io/treeweave/guides/matlab.html)
-
-### Octave
-
-```matlab
-zeta = @(x) sum((1:1000) .^ (-x(1)));
-approx = treeweave(zeta, 2, 10, 1e-10);   % dim and out_dim are inferred
-disp(approx(3.5));
-delete(approx);
-```
-
-Install:
-
-```bash
-URL="https://github.com/DiamonDinoia/treeweave/archive/refs/heads/stable.tar.gz"
-curl -fL "$URL" -o treeweave-source.tar.gz || wget -O treeweave-source.tar.gz "$URL"
-tar xzf treeweave-source.tar.gz
-cd treeweave-stable
-cmake --preset bindings-octave
+cmake --preset bindings-octave      # or bindings-matlab to build against MATLAB
 cmake --build build/bindings-octave -j
+ctest --test-dir build/bindings-octave -R matlab_treeweave --output-on-failure
 ```
 
 [MATLAB/Octave guide](https://diamondinoia.github.io/treeweave/guides/matlab.html)
 
 ### Fortran
 
+<!-- literalinclude: bindings/fortran/example.f90 start-after: ! BEGIN DOCS_MINIMAL end-before: ! END DOCS_MINIMAL dedent: 4 -->
 ```fortran
-subroutine kernel(x, y, context) bind(C)
-    use, intrinsic :: iso_c_binding
-    real(c_double), intent(in)  :: x(*)
-    real(c_double), intent(out) :: y(*)
-    type(c_ptr), value          :: context
-    integer :: k
-    y(1) = 0.0_c_double
-    do k = 1, 1000
-        y(1) = y(1) + real(k, c_double) ** (-x(1))
-    end do
-end subroutine kernel
-
-program example
-use, intrinsic :: iso_c_binding
-use treeweave
-
-interface
-    subroutine kernel(x, y, context) bind(C)
-        use, intrinsic :: iso_c_binding
-        real(c_double), intent(in)  :: x(*)
-        real(c_double), intent(out) :: y(*)
-        type(c_ptr), value          :: context
-    end subroutine kernel
-end interface
-
-real(c_double) :: a(1) = [2.0_c_double], b(1) = [10.0_c_double]
-real(c_double) :: x(1) = [3.5_c_double], y(1)
-type(c_ptr) :: h
-
-h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, &
-                  1.0e-10_c_double, c_null_ptr, c_null_ptr)
+! Fit exp(x) on [0, 1] syntax is
+! treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options).
+h = treeweave_fit(c_funloc(kernel_exp), 1_c_int, 1_c_int, a, b, tol, &
+               c_null_ptr, c_null_ptr)
+if (.not. c_associated(h)) then
+    write (*, '(2A)') "treeweave_fit failed: ", treeweave_error_message()
+    error stop 1
+end if
+write (*, '(A,I0,A,I0,A,I0,A)') "fit exp(x): input_dim=", treeweave_input_dim(h), &
+    " output_dim=", treeweave_output_dim(h), " memory=", treeweave_memory_usage(h), " bytes"
+x(1) = 0.5_c_double
+! Evaluate h on (0.5) and print the result.
 call treeweave_eval(h, x, y)
-print *, y(1)
-h = treeweave_free(h)
-end program example
+write (*, '(A,F0.12,A,F0.12)') "exp(0.5) approx=", y(1), " exact=", exp(0.5_c_double)
 ```
 
 Install:
 
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_FORTRAN_DEV end-before: # END DOCS_FORTRAN_DEV dedent: 4 -->
 ```bash
 cmake --preset bindings-fortran
 cmake --build build/bindings-fortran -j
@@ -288,109 +283,54 @@ cmake --build build/bindings-fortran -j
 
 [Fortran guide](https://diamondinoia.github.io/treeweave/guides/fortran.html)
 
-### JavaScript / TypeScript
+### JavaScript and TypeScript
 
+<!-- literalinclude: bindings/js/examples/simple_1d.mjs start-after: // BEGIN DOCS_USAGE end-before: // END DOCS_USAGE -->
 ```js
-import { Treeweave } from "@flatironinstitute/treeweave";
+// In an installed package this import is "@flatironinstitute/treeweave".
+import { Treeweave } from "../dist/index.js";
 
-function zeta(x) {
-    let y = 0.0;
-    for (let k = 1; k <= 1000; ++k) y += Math.pow(k, -x[0]);
-    return y;
-}
+// Fit sin(x) on [0, 1] syntax is fit(callback, lower_bound, upper_bound, tolerance, options).
+const fn = await Treeweave.fit((x) => Math.sin(x[0]), 0.0, 1.0, 1e-10, {
+    backend: "native",
+});
 
-const approx = await Treeweave.fit(zeta, 2.0, 10.0, 1e-10);
-console.log(approx.eval(3.5));
-approx.free();
+// Evaluate fn on (0.5) and print the result.
+const single = fn.eval(0.5);
+console.log(`sin(0.5) approx=${single.toFixed(12)}`);
 ```
 
 Install:
 
+<!-- literalinclude: tools/ci/docs-recipes.sh start-after: # BEGIN DOCS_NPM end-before: # END DOCS_NPM dedent: 4 -->
 ```bash
 npm install @flatironinstitute/treeweave
 ```
 
-[npm package](https://www.npmjs.com/package/@flatironinstitute/treeweave)
+[JavaScript guide](https://diamondinoia.github.io/treeweave/guides/js.html)
 
-Source builds, release channels, and package details are in the [install guide](https://diamondinoia.github.io/treeweave/install.html).
-
+Source builds, release channels and package details are in the
+[install guide](https://diamondinoia.github.io/treeweave/install.html).
 
 ## Experimental: the guru interface
 
-`<treeweave/guru.hpp>` re-exposes the batch pipeline's stages (classify, counting sort,
-per-run SIMD evaluation, gather) over caller-owned buffers, so several fits can share one
-sort and fuse their own post-processing while the data is still hot. It exists for
-functions that need several fits stitched together, one per asymptotic regime for
-instance. `tests/test_guru.cpp` is the worked example.
-
-It is experimental: signatures, headers and semantics can change in any release, with no
-deprecation period. Nothing above needs it.
-
-[Guru interface guide](https://diamondinoia.github.io/treeweave/guides/guru.html)
+`<treeweave/guru.hpp>` re-exposes the batch pipeline's stages over caller-owned
+buffers, so several fits can share one sort. Signatures and semantics can change
+in any release, with no deprecation period. Nothing above needs it. See the
+[guru interface guide](https://diamondinoia.github.io/treeweave/guides/guru.html).
 
 ## CMake
 
-For C++, CPM is enough:
-
-```cmake
-CPMAddPackage("gh:DiamonDinoia/treeweave#stable")
-add_executable(my_app example.cpp)
-target_link_libraries(my_app PRIVATE treeweave::treeweave)
-```
-
-With `FetchContent`:
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    treeweave
-    GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-    GIT_TAG stable # or any other release tag
-)
-
-FetchContent_MakeAvailable(treeweave)
-add_executable(my_app example.cpp)
-target_link_libraries(my_app PRIVATE treeweave::treeweave)
-```
-
-For this repo, prefer `cmake --preset <name>`:
-
-| Preset | What it sets |
-| --- | --- |
-| `dev-release` | `Release`, `TREEWEAVE_ARCH=native`; examples/tests use top-level defaults. |
-| `dev-debug` | `Debug`, `-Og -g`, `TREEWEAVE_ARCH=native`. |
-| `bindings-matlab` | `TREEWEAVE_BUILD_MATLAB=ON`; examples/tests off via `lib-release`. |
-| `bindings-octave` | Same CMake options as `bindings-matlab`; intended for `mkoctfile`/Octave builds. |
-| `bindings-fortran` | `TREEWEAVE_BUILD_FORTRAN=ON`; examples/tests off via `lib-release`. |
-| `multiarch` | `TREEWEAVE_C_MULTIARCH=ON`, `TREEWEAVE_ARCH=x86-64`; examples off. |
-
-Advanced options:
-
-| Option | Default | Use |
-| --- | --- | --- |
-| `TREEWEAVE_BUILD_C_API` | `ON` | Build `treeweave::treeweave_c` and `treeweave::treeweave_c_static`. |
-| `TREEWEAVE_C_MULTIARCH` | `OFF` | Build the C ABI with runtime ISA dispatch when supported. |
-| `TREEWEAVE_BUILD_EXAMPLES` | top-level only | Build examples. |
-| `TREEWEAVE_BUILD_TESTS` | top-level only | Build tests. |
-| `TREEWEAVE_BUILD_PYTHON` | `OFF` | Build/register the Python binding test path. |
-| `TREEWEAVE_BUILD_JULIA` | `OFF` | Register the Julia binding test path. |
-| `TREEWEAVE_BUILD_MATLAB` | `OFF` | Build MATLAB/Octave MEX. |
-| `TREEWEAVE_BUILD_FORTRAN` | `OFF` | Build Fortran module, example, and tests. |
-| `TREEWEAVE_BUILD_JS` | `OFF` | Build JavaScript/TypeScript native or WASM binding. |
-
-Targets by language:
-
-| Language | CMake target | Notes |
-| --- | --- | --- |
-| C++ | `treeweave::treeweave` | Header/interface target for `#include <treeweave/treeweave.hpp>`. |
-| C | `treeweave::treeweave_c` | Shared C ABI, enabled by `TREEWEAVE_BUILD_C_API=ON`. |
-| C | `treeweave::treeweave_c_static` | Static C ABI, enabled by `TREEWEAVE_BUILD_C_API=ON`. |
-| Fortran | `treeweave_fortran` | Local target when `TREEWEAVE_BUILD_FORTRAN=ON`. |
+`cmake --list-presets` prints every preset; the `description` fields in
+`CMakePresets.json` are the documentation. `cmake -LH` lists every
+`TREEWEAVE_*` option with its default. The
+[CMake guide](https://diamondinoia.github.io/treeweave/guides/cmake.html)
+covers the targets, the options that matter and the recipe for each route.
 
 ## Acknowledgements
 
 treeweave is inspired by [baobzi](https://github.com/flatironinstitute/baobzi) by Robert Blackwell (Flatiron Institute).
-Thank you Robert! treeweave rebuilds the fit/eval pipeline on [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/POET), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
+Thank you Robert! treeweave rebuilds the fit/eval pipeline on [polyfit](https://github.com/DiamonDinoia/polyfit) and [POET](https://github.com/DiamonDinoia/poet), and adds the multi-language C ABI. See [`NOTICE`](NOTICE).
 
 For numerical background, see Alex Barnett's talk [What everyone should know about function approximation](https://users.flatironinstitute.org/~ahb/talks/fwam25.pdf) (FWAM7, Flatiron Institute, 2025), and Marco Barbone's [Practical HPC NUFFTs](https://diamondinoia.com/talks/practical-hpc-nuffts/index.html#1).
 

@@ -6,19 +6,14 @@ name: Docs
 #
 # Pages serves the gh-pages branch root (repo Settings -> Pages -> "Deploy from
 # a branch" -> gh-pages /). The Sphinx site lands at the root; the benchmark
-# workflow (bench.yml) keeps its history under dev/bench/ on the same branch,
+# workflow (benchmarks.yml) keeps its history under dev/bench/ on the same branch,
 # so this workflow publishes with keep_files and neither workflow wipes the
 # other's output.
+# No paths filter: the docs literalinclude sources from examples/, bindings/,
+# tools/ci/docs-recipes.sh and CMakeLists.txt, so any narrower filter goes stale.
 on:
   push:
     branches: [main]
-    # Only rebuild Doxygen+Sphinx when something the docs render has changed.
-    paths:
-      - 'docs/**'
-      - '**/*.md'
-      - 'include/**'
-      - 'README.md'
-      - 'cmake/**'
   pull_request:
   workflow_dispatch:
 
@@ -42,12 +37,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       - uses: actions/setup-python@v7
         with:
@@ -80,7 +70,7 @@ jobs:
             -DTREEWEAVE_GENERATE_DOCS=ON
           cmake --build build --target docs
 
-      # keep_files: don't delete dev/bench/ (written by bench.yml) when
+      # keep_files: don't delete dev/bench/ (written by benchmarks.yml) when
       # publishing the freshly built site.
       - name: Publish to gh-pages
         if: github.ref == 'refs/heads/main'

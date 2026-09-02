@@ -95,16 +95,15 @@ jobs:
       # builds with Ninja like every other platform, not the slow VS generator.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.name, 'linux') }}
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
-          cmake: true
-          ninja: true
           # LLVM is installed for llvm-nm and llvm-objcopy, which the per-rung
           # symbol rename needs (cmake/treeweave_c_dispatch.cmake). The compiler
           # is cl.exe: MSVC is the reference Windows toolchain, so the shipped
           # binary matches what consumers compile against.
           compiler: ${{ matrix.name == 'windows-x64' && 'llvm' || '' }}
           vcvarsall: ${{ matrix.name == 'windows-x64' }}
+          cache-tools: false
 
       - name: Package name
         id: ver

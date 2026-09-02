@@ -1,0 +1,42 @@
+name: Setup C++ toolchain
+description: >
+  One place for the compiler, CMake, Ninja and sccache pins every job shares.
+  Checkout must run first: a local action is read from the checked-out tree.
+
+inputs:
+  compiler:
+    description: >
+      setup-cpp compiler id (gcc, gcc-13, llvm, msvc, ...). Empty selects the
+      runner's own default toolchain, which is what the MSVC-plus-vcvarsall
+      legs want.
+    required: false
+    default: gcc
+  vcvarsall:
+    description: Enter the MSVC developer environment (Windows legs only).
+    required: false
+    default: "false"
+  cache-tools:
+    description: Cache the installed tools between runs.
+    required: false
+    default: "true"
+  sccache:
+    description: >
+      Also install sccache. The Actions cache service backs it, so no
+      save/restore step is needed; a configure step still has to set
+      CMAKE_{C,CXX}_COMPILER_LAUNCHER.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: aminya/setup-cpp@v1.8.1
+      with:
+        compiler: ${{ inputs.compiler }}
+        cmake: true
+        ninja: true
+        cache-tools: ${{ inputs.cache-tools }}
+        vcvarsall: ${{ inputs.vcvarsall }}
+
+    - if: ${{ inputs.sccache == 'true' }}
+      uses: mozilla/sccache-action@v0.0.11

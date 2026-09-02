@@ -91,16 +91,11 @@ jobs:
       # libstdc++); MSVC env on Windows so the preset's Ninja generator works like
       # every other platform; system clang on macOS.
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.name == 'linux-x64' && 'gcc' || '' }}
-          cmake: true
-          ninja: true
           vcvarsall: ${{ matrix.name == 'windows-x64' }}
-          cache-tools: true
 
-      # mwrap's CMake build generates its parser/lexer, so it needs bison + flex.
-      # Linux/macOS runners ship them; Windows does not — winflexbison3 provides
       # Compiling a MEX needs MATLAB on PATH (FindMatlab); a license is only
       # needed to *run*, which we do not do here. Intel macOS pins R2025b (the
       # last Intel-supported release); everything else takes the latest.

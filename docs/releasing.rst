@@ -9,8 +9,11 @@ the release is four ``workflow_dispatch`` clicks and two waits.
 
 The ``VERSION`` file is the source of truth; the Julia ``Project.toml`` and the
 JS ``package.json`` carry hand-synced copies, and the wheel version is derived
-from ``VERSION``. ``scripts/check_version_sync.py`` refuses a release whose three
-files disagree, and the ``Bump Version`` workflow is what keeps them in step.
+from ``VERSION``. ``scripts/check_sync.py`` refuses a release whose three
+files disagree, and the ``Bump Version`` workflow is what keeps them in step. The
+same script checks every other hand-copied fact -- the ``tol_kind`` and dtype
+enumerators in each binding, and the MATLAB copy of the fit-option defaults --
+and pre-commit runs it on every commit.
 
 1. Preconditions on ``main``
 ----------------------------
@@ -34,8 +37,8 @@ configure, so it is not one of them.
 -----------------------------------------
 
 The ``Release`` workflow refuses to start unless each of these has a green
-run on the exact commit: ``python.yml``, ``julia.yml``, ``fortran.yml``,
-``octave.yml``, ``js.yml`` and ``install-smoke.yml``. The authoritative list is
+run on the exact commit: ``bindings.yml`` and ``install-smoke.yml``. The
+authoritative list is
 the one ``release.yml``'s ``preflight`` job iterates. They take about ten
 minutes between them.
 

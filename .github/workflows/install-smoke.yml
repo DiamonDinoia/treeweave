@@ -72,12 +72,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.compiler }}
-          cmake: true
-          ninja: true
-          cache-tools: true
           vcvarsall: ${{ runner.os == 'Windows' }}
 
       - name: Build and run every quick-start route

@@ -43,27 +43,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Refuse if tag already exists
-        run: |
-          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
-            echo "::error::tag v${{ inputs.version }} already exists; pick a new version"
-            exit 1
-          fi
-
-      - name: Refuse if version is already on PyPI
-        run: |
-          status=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/treeweave/${{ inputs.version }}/json")
-          echo "pypi-status=$status"
-          if [ "$status" = "200" ]; then
-            echo "::error::version ${{ inputs.version }} is already published on PyPI"
-            exit 1
-          fi
+      # Neither a tag nor a PyPI release may already claim the target version.
+      # The repository's own version files are still the old ones here, so this
+      # run passes the version to check only through --unpublished.
+      - name: Refuse a version that is already tagged or published
+        run: python scripts/check_sync.py --unpublished "${{ inputs.version }}"
 
       - name: Bump version across every version-bearing file
         run: python scripts/bump_version.py "${{ inputs.version }}"
 
       - name: Verify cross-file sync
-        run: python scripts/check_version_sync.py "${{ inputs.version }}"
+        run: python scripts/check_sync.py "${{ inputs.version }}"
 
       - name: Show diff
         run: git --no-pager diff

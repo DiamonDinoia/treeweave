@@ -1,0 +1,287 @@
+name: Bindings
+
+# Every host-language wrapper over the C ABI, one leg per (language, platform).
+# All five build the same way: configure a preset, build, then run that build
+# tree's whole CTest set unfiltered. The examples are ctests too, so no separate
+# "run examples" step exists.
+#
+# Coverage notes that are load-bearing:
+#   * Julia runs on every platform the release ships a prebuilt for, so a
+#     wrapper bug lands on a PR, not post-release. The macos-14 (Apple Silicon)
+#     leg is load-bearing: the @cfunction callback in Treeweave.jl must not
+#     capture a closure, since closure cfunctions are unsupported on
+#     aarch64-apple-darwin.
+#   * Octave is the blocking runtime gate for the MATLAB/Octave binding. Real
+#     MATLAB (matlab.yml) only gates the build, since its hosted license is
+#     unreliable in CI. Octave has no stable MEX ABI, so nothing is prebuilt.
+#   * JS builds BOTH backends, the native N-API addon and the WASM module; the
+#     node:test suite exercises whichever it finds in dist/ (here: both).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Branch runs: this workflow gates the release and fires on push to main
+  # only, so a change to it has no other way to run before it lands.
+  workflow_dispatch:
+
+concurrency:
+  group: bindings-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  bindings:
+    name: ${{ matrix.label }} (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { lang: python, label: Python (nanobind) bindings, name: linux-x86_64,
+              runs-on: ubuntu-24.04, compiler: gcc, preset: bindings-python,
+              cmake_extra: '-DTREEWEAVE_ARCH=x86-64-v3' }
+          - { lang: python, label: Python (nanobind) bindings, name: linux-aarch64,
+              runs-on: ubuntu-24.04-arm, compiler: gcc, preset: bindings-python,
+              cmake_extra: '-DTREEWEAVE_ARCH=armv8-a' }
+
+          - { lang: fortran, label: Fortran bindings, name: linux-x86_64,
+              runs-on: ubuntu-24.04, compiler: gcc, preset: bindings-fortran,
+              cmake_extra: '-DTREEWEAVE_ARCH=x86-64-v3' }
+          - { lang: fortran, label: Fortran bindings, name: linux-aarch64,
+              runs-on: ubuntu-24.04-arm, compiler: gcc, preset: bindings-fortran,
+              cmake_extra: '-DTREEWEAVE_ARCH=armv8-a' }
+
+          - { lang: js, label: JavaScript/TypeScript bindings, name: linux-x86_64,
+              runs-on: ubuntu-24.04, compiler: gcc, preset: bindings-js,
+              targets: '--target treeweave_node treeweave_js_ts',
+              cmake_extra: '-DTREEWEAVE_ARCH=x86-64-v3' }
+          - { lang: js, label: JavaScript/TypeScript bindings, name: linux-aarch64,
+              runs-on: ubuntu-24.04-arm, compiler: gcc, preset: bindings-js,
+              targets: '--target treeweave_node treeweave_js_ts',
+              cmake_extra: '-DTREEWEAVE_ARCH=armv8-a' }
+
+          - { lang: octave, label: Octave bindings, name: linux-x86_64,
+              runs-on: ubuntu-24.04, compiler: gcc, preset: bindings-octave,
+              cmake_extra: '-DTREEWEAVE_ARCH=x86-64-v3' }
+          - { lang: octave, label: Octave bindings, name: linux-aarch64,
+              runs-on: ubuntu-24.04-arm, compiler: gcc, preset: bindings-octave,
+              cmake_extra: '-DTREEWEAVE_ARCH=armv8-a' }
+
+          - { lang: julia, label: Julia bindings, name: linux-x86_64,
+              runs-on: ubuntu-24.04, compiler: gcc, preset: bindings-julia,
+              targets: '--target treeweave_c',
+              cmake_extra: '-DTREEWEAVE_ARCH=x86-64-v3' }
+          - { lang: julia, label: Julia bindings, name: linux-aarch64,
+              runs-on: ubuntu-24.04-arm, compiler: gcc, preset: bindings-julia,
+              targets: '--target treeweave_c',
+              cmake_extra: '-DTREEWEAVE_ARCH=armv8-a' }
+          - { lang: julia, label: Julia bindings, name: macos-14-arm64,
+              runs-on: macos-14, compiler: apple-clang, preset: bindings-julia,
+              targets: '--target treeweave_c' }
+          - { lang: julia, label: Julia bindings, name: macos-15-arm64,
+              runs-on: macos-15, compiler: apple-clang, preset: bindings-julia,
+              targets: '--target treeweave_c' }
+          - { lang: julia, label: Julia bindings, name: macos-15-x86_64,
+              runs-on: macos-15-intel, compiler: apple-clang, preset: bindings-julia,
+              targets: '--target treeweave_c' }
+          # cl.exe, to match what the release ships. This leg is single-arch,
+          # where the rung rename does not apply.
+          - { lang: julia, label: Julia bindings, name: windows-x64,
+              runs-on: windows-2022, compiler: msvc, preset: bindings-julia,
+              targets: '--target treeweave_c',
+              cmake_extra: '-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl' }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Octave opts out: mkoctfile links the MEX against the image's own g++,
+      # so a second toolchain on PATH would give it a mismatched libstdc++.
+      - name: Setup C++ toolchain
+        if: matrix.lang != 'octave'
+        uses: ./.github/actions/setup-cpp
+        with:
+          compiler: ${{ matrix.compiler }}
+          vcvarsall: ${{ runner.os == 'Windows' }}
+
+      - if: matrix.lang == 'python'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install Python build/test deps
+        if: matrix.lang == 'python'
+        run: python -m pip install --upgrade pip pytest numpy "nanobind>=2.0,!=3.0.*"
+
+      - name: Install gfortran
+        if: matrix.lang == 'fortran'
+        run: sudo apt-get update && sudo apt-get install -y gfortran
+
+      - if: matrix.lang == 'julia'
+        uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - if: matrix.lang == 'js'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      - name: Set up Emscripten
+        if: matrix.lang == 'js'
+        uses: mymindstorm/setup-emsdk@v16
+        with:
+          version: 4.0.9
+
+      - name: Install npm deps
+        if: matrix.lang == 'js'
+        run: npm ci
+        working-directory: bindings/js
+
+      # octave-dev provides mkoctfile and the headers the MEX build needs.
+      # ports.ubuntu.com serves an index stale enough to 404 a pool file, so
+      # refresh and retry once.
+      - name: Install Octave
+        if: matrix.lang == 'octave'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev ||
+            { sudo apt-get update; sudo apt-get install -y octave-dev; }
+
+      - name: Configure + build
+        shell: bash
+        run: |
+          cmake --preset ${{ matrix.preset }} ${{ matrix.cmake_extra }}
+          cmake --build build/${{ matrix.preset }} -j ${{ matrix.targets }}
+
+      - name: Configure + build the WASM backend
+        if: matrix.lang == 'js'
+        run: |
+          cmake --preset bindings-js-wasm
+          cmake --build build/bindings-js-wasm -j --target treeweave_wasm treeweave_js_ts
+
+      # Validate the raw WASM module (treeweave.mjs + treeweave.wasm) on its own,
+      # the standalone path shipped as a Release asset, driven directly through
+      # the Emscripten runtime, independent of the TypeScript wrapper.
+      - name: Smoke the raw WASM module
+        if: matrix.lang == 'js'
+        run: node tests/smoke/wasm_smoke.mjs bindings/js/dist/treeweave.mjs
+
+      # Unfiltered: the examples are ctests and exit nonzero on a wrong answer.
+      - name: Run the suite and the examples
+        shell: bash
+        run: ctest --test-dir build/${{ matrix.preset }} --output-on-failure --no-tests=error
+
+      # One literal `docs-recipes.sh <names>` line per language: check_docs_code.py
+      # reads the recipe names off these lines, so they cannot be a matrix field.
+      - name: Docs recipes
+        if: matrix.name == 'linux-x86_64'
+        run: |
+          case "${{ matrix.lang }}" in
+            python)  tools/ci/docs-recipes.sh python-dev ;;
+            julia)   tools/ci/docs-recipes.sh julia-dev julia-test ;;
+            fortran) tools/ci/docs-recipes.sh fortran-dev fortran-test ;;
+            js)      tools/ci/docs-recipes.sh js-dev ;;
+            octave)  tools/ci/docs-recipes.sh octave-dev ;;
+          esac
+
+  # docs/guides/performance.rst prints these scripts' tables and states that CI
+  # runs them on every pull request. Each script gates the reproducible columns
+  # (f-evals, memory, achieved error) and --self-test proves those gates can
+  # fail, so a regression in either the library or the published table fails
+  # here. --check-docs re-measures and fails if the tables no longer match;
+  # regenerate them with --rst.
+  compare-interpolators:
+    name: Comparison against other ${{ matrix.lang }} interpolators
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The scikit-learn arm solves a dense least-squares system per
+          # doubling step, which dominates the runtime.
+
+          - { lang: python, preset: bindings-python, timeout: 60 }
+          # Two of the three targets need 5e5 knots on a uniform cubic grid to
+          # reach 1e-10, and every method is grown to that accuracy first.
+          - { lang: julia, preset: bindings-julia, timeout: 60 }
+          # pchip on sin(30 x) needs the whole 2^20-knot cap to reach 1e-10,
+          # and every method is grown to that accuracy first.
+          - { lang: octave, preset: bindings-octave, timeout: 30 }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup C++ toolchain
+        if: matrix.lang != 'octave'
+        uses: ./.github/actions/setup-cpp
+
+      - if: matrix.lang == 'python'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      # scipy and numpy are required by the comparison; scikit-learn, chebpy and
+      # baobzi are the optional comparators. chebpy is not on PyPI under that
+      # name, so it comes from its own repository.
+      - name: Install Python deps
+        if: matrix.lang == 'python'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy scikit-learn baobzi "nanobind>=2.0,!=3.0.*" \
+            git+https://github.com/chebpy/chebpy.git
+
+      - if: matrix.lang == 'julia'
+        uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      - name: Install Octave
+        if: matrix.lang == 'octave'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y octave-dev ||
+            { sudo apt-get update; sudo apt-get install -y octave-dev; }
+
+      - name: Configure + build
+        run: |
+          cmake --preset ${{ matrix.preset }} -DTREEWEAVE_ARCH=x86-64-v3
+          cmake --build build/${{ matrix.preset }} -j
+
+      - name: Install the Julia comparison field
+        if: matrix.lang == 'julia'
+        run: |
+          julia -e 'using Pkg
+                    Pkg.develop(path="bindings/julia/Treeweave")
+                    Pkg.add(["Interpolations", "Dierckx", "FastChebInterp", "DataInterpolations"])'
+
+      - name: Self-test the comparison's own gates
+        env:
+          PYTHONPATH: build/bindings-python/python-pkg
+          LIBTREEWEAVE_C: ${{ github.workspace }}/build/bindings-julia/libtreeweave_c.so
+        run: |
+          case "${{ matrix.lang }}" in
+            python) python benchmarks/compare_interpolators.py --self-test ;;
+            julia)  julia benchmarks/compare_interpolators.jl --self-test ;;
+            octave) octave --no-gui -q --path benchmarks \
+                      --eval "exit(compare_interpolators('--self-test'))" ;;
+          esac
+
+      - name: Run the comparison and hold the docs tables to it
+        env:
+          PYTHONPATH: build/bindings-python/python-pkg
+          LIBTREEWEAVE_C: ${{ github.workspace }}/build/bindings-julia/libtreeweave_c.so
+        run: |
+          case "${{ matrix.lang }}" in
+            python) python benchmarks/compare_interpolators.py --check-docs ;;
+            julia)  julia benchmarks/compare_interpolators.jl --check-docs ;;
+            octave) octave --no-gui -q \
+                      --path benchmarks --path bindings/matlab \
+                      --path build/bindings-octave/bindings/matlab/generated \
+                      --eval "exit(compare_interpolators('--check-docs'))" ;;
+          esac

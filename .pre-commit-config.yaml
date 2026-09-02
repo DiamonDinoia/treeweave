@@ -62,6 +62,24 @@ repos:
         language: system
         always_run: true
         pass_filenames: false
+      # --- Hand-copied facts: the version strings, the tol_kind and dtype
+      # enumerators, and the MATLAB copy of the fit-option defaults must all
+      # still equal the file that owns them. stdlib only, no network. ---
+      - id: check-sync
+        name: Version, enum and default mirrors agree
+        entry: python scripts/check_sync.py
+        language: system
+        always_run: true
+        pass_filenames: false
+  # --- Workflows: actionlint is the only check that reads the composite
+  # action's input names, so a typo in a `with:` key fails here rather than at
+  # runtime. It also shellchecks every `run:` block when shellcheck is on PATH,
+  # which it is on the GitHub-hosted runners. ---
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.9
+    hooks:
+      - id: actionlint
+
   # --- Python (reformat changed lines only, like the staged C++ hook) ---
   - repo: https://github.com/akaihola/darker
     rev: v3.0.0
@@ -81,9 +99,6 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-yaml
-        # conda/recipe/meta.yaml is a Jinja template (`{% set %}`), not plain
-        # YAML, and check-yaml's parser chokes on it (the only templated YAML here).
-        exclude: '^conda/recipe/meta\.yaml$'
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-illegal-windows-names

@@ -1,17 +1,22 @@
-name: Benchmark Showcase
+name: Benchmarks
 
-# Builds each language's zeta benchmark, has each emit a machine-readable YAML
-# (via the TREEWEAVE_BENCH_YAML env var), then aggregates the per-language
-# results into cross-language speedup SVGs that are force-pushed to the
-# orphaned `benchmark-results` branch — so the README and the docs can embed
-# them by raw.githubusercontent.com URL. Styled after poet's benchmarks.yml.
+# Two non-gating dashboards, one cadence.
 #
-# This is intentionally separate from bench.yml (nanobench time-series) and
-# docs.yml (gh-pages): a distinct workflow, concurrency group, and result
-# branch, so it never collides with either.
-# Non-gating dashboard — only regenerates the README throughput charts. Runs
-# per-release (the correct cadence) plus weekly + on demand, so it no longer
-# fires on every push (it was one of the two heaviest non-gating per-push jobs).
+# `ci-bench` runs the stable nanobench driver (benchmarks/treeweave_ci_bench.cpp)
+# and accumulates history under dev/bench/ on the gh-pages branch, served
+# alongside the Doxygen site (docs.yml). Its job-level concurrency group is
+# shared with docs.yml so the two gh-pages pushes serialise.
+#
+# `showcase` builds each language's zeta benchmark, has each emit a
+# machine-readable YAML (TREEWEAVE_BENCH_YAML), and `publish-showcase`
+# aggregates them into cross-language speedup SVGs force-pushed to the orphan
+# `benchmark-results` branch, so the README and the docs can embed them by
+# raw.githubusercontent.com URL. Its own concurrency group keeps it off
+# gh-pages entirely.
+#
+# Per-release is the correct cadence for both; weekly and on demand cover the
+# gaps. Neither runs per push: they were the two heaviest non-gating per-push
+# jobs.
 on:
   release:
     types: [published]
@@ -19,16 +24,55 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
-concurrency:
-  group: benchmark-showcase-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
 jobs:
-  bench:
-    name: Bench (${{ matrix.lang }})
+  ci-bench:
+    name: CI benchmark (nanobench)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    # Share the gh-pages writer group with docs.yml so the two pushes serialise.
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup C++ toolchain
+        uses: ./.github/actions/setup-cpp
+
+      - name: Configure + build the CI benchmark
+        run: |
+          cmake --preset bench
+          cmake --build build/bench -j --target treeweave_ci_bench
+
+      - name: Run benchmark
+        run: ./build/bench/treeweave_ci_bench bench.json
+
+      # Tracks each named series over time, auto-pushes the updated history to
+      # gh-pages, and comments on a commit if it regresses past the threshold.
+      # fail-on-alert stays off: shared CI runners are too noisy to gate merges
+      # on absolute timings (the chart + comment are the signal).
+      - name: Store + publish benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: treeweave batch eval
+          tool: customSmallerIsBetter
+          output-file-path: bench.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          auto-push: true
+          alert-threshold: "200%"
+          comment-on-alert: true
+          fail-on-alert: false
+          summary-always: true
+
+  showcase:
+    name: Showcase bench (${{ matrix.lang }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -42,12 +86,7 @@ jobs:
 
       # Every language builds libtreeweave_c, so all need a C/C++ toolchain.
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       - name: Install gfortran
         if: matrix.lang == 'fortran'
@@ -61,7 +100,7 @@ jobs:
 
       - name: Install Python deps
         if: matrix.lang == 'python'
-        run: python -m pip install --upgrade pip numpy "nanobind>=2.0,<3"
+        run: python -m pip install --upgrade pip numpy "nanobind>=2.0,!=3.0.*"
 
       - name: Set up Julia
         if: matrix.lang == 'julia'
@@ -74,7 +113,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y octave-dev
 
       # The JS showcase bar uses the NATIVE .node backend (comparable to the
-      # other native-language bars); the WASM backend is exercised in js.yml.
+      # other native-language bars); the WASM backend is exercised in bindings.yml.
       - name: Set up Node
         if: matrix.lang == 'js'
         uses: actions/setup-node@v7
@@ -159,13 +198,18 @@ jobs:
           path: bench_results/*.yaml
           if-no-files-found: error
 
-  aggregate:
+  publish-showcase:
     name: Aggregate + publish charts
-    needs: bench
+    needs: showcase
     if: always()
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    # The orphan benchmark-results branch is this job's alone, so it keeps its
+    # own group rather than serialising behind the gh-pages writers.
+    concurrency:
+      group: benchmark-results
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
 
@@ -190,8 +234,8 @@ jobs:
           python scripts/generate_benchmark_plot.py --results-dir bench_results --output-dir charts
           ls -la charts
 
+      # Every trigger this workflow has (release, cron, dispatch) publishes.
       - name: Publish to the benchmark-results branch
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

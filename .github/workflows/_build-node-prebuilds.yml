@@ -102,12 +102,11 @@ jobs:
       # symbol rename needs; the addon itself compiles with cl.exe.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.platdir, 'linux') }}
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.platdir == 'win32-x64' && 'llvm' || '' }}
-          cmake: true
-          ninja: true
           vcvarsall: ${{ matrix.platdir == 'win32-x64' }}
+          cache-tools: false
 
       - name: Install node-addon-api headers
         shell: bash

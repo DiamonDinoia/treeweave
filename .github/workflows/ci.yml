@@ -81,13 +81,11 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.toolchain }}
-          cmake: true
-          ninja: true
-          cache-tools: true
           vcvarsall: ${{ runner.os == 'Windows' }}
+          sccache: true
 
       # sccache reads and writes the Actions cache service directly, so no
       # save/restore step is needed. The action's post step prints hit rates.
@@ -95,8 +93,6 @@ jobs:
       # to the same key on every runner but expands to that runner's microarch,
       # so a restored object could carry instructions the restoring host cannot
       # execute. That leg keeps a local disk cache, which is single-CPU and safe.
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
       - name: Opt the -mcpu=native leg out of the shared cache
         if: ${{ matrix.arch_native }}
         shell: bash
@@ -221,15 +217,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: gcc-13
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
+          sccache: true
 
       - name: Install coverage tools
         run: |
@@ -292,6 +283,14 @@ jobs:
             clang-format-staged,gersemi-staged,prettier-staged,darker,shfmt,
             end-of-file-fixer,trailing-whitespace,mixed-line-ending
 
+      # Every snippet in the docs, the README and the per-binding READMEs must
+      # match the region of the source file it names. The docs CMake target runs
+      # the same script; this leg runs it on every pull request without a build.
+      # The `_generated/` targets are skipped here, since only the docs build
+      # writes them.
+      - name: Docs code gate
+        run: python3 scripts/check_docs_code.py
+
   valgrind:
     name: Valgrind (C ABI)
     runs-on: ubuntu-24.04
@@ -305,15 +304,9 @@ jobs:
       # build matrix pattern), so the objects persist across runs.
       # Valgrind's Build step was 7m38s with no cache (run 32208936358).
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
+          sccache: true
 
       # valgrind must be present at configure time so the test_c_abi_valgrind
       # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
@@ -334,141 +327,51 @@ jobs:
       - name: Run leak check under valgrind
         run: ctest --test-dir build/valgrind -R valgrind --output-on-failure --no-tests=error
 
+  # One shape for every rung-dispatch leg: configure a preset, build, run the
+  # C ABI suite once per rung. Phase 4c's RUNG_TABLE registers a
+  # test_c_abi_force_<rung> ctest per rung, each comparing
+  # treeweave_active_arch() against its TREEWEAVE_FORCE_ARCH and failing on a
+  # mismatch whenever the host reports the rung available, so a rung the runner
+  # can run is asserted, not merely attempted. check_rung_symbols proves the
+  # rungs share no symbol; running the suite per rung proves the renamed code
+  # still executes, including the throwing paths whose RTTI records the rename
+  # duplicates.
   multiarch:
-    name: Multiarch dispatch smoke
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
-      # pick one at runtime; the rest of CI pins a single -march, leaving the
-      # dispatcher and its AVX-512 variant otherwise unbuilt/untested.
-      - name: Configure (multiarch dispatch)
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset multiarch
-
-      - name: Build
-        run: cmake --build build/multiarch
-
-      # Diagnostic + fallback coverage: dump the runner's actual ISA (incl. the
-      # avx512 subfeatures the dispatcher does NOT individually probe, e.g. VL),
-      # then exercise each fallback variant via TREEWEAVE_FORCE_ARCH. force_dispatch
-      # only honours a level the host CPU reports as available, so this surfaces
-      # any "reported-available but actually faults" gap without masking the
-      # real native run below.
-      - name: Diagnose ISA dispatch (cpu flags + per-arch forced run)
-        continue-on-error: true
-        # set +e: the forced runs may exit non-zero (parity diffs) or crash
-        # (SIGILL). Keep going so every arch's result is reported.
-        run: |
-          set +e
-          echo "== CPU model =="; lscpu | grep -i "model name"
-          echo "== ISA features =="
-          grep -o -m1 -E 'avx512[a-z]+|avx2|fma|sse4_2' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
-          bin=build/multiarch/test_c_abi
-          echo "-- default dispatch --"
-          "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          for arch in sse2 sse4.2 fma3+avx2 avx512bw; do
-            TREEWEAVE_FORCE_ARCH="$arch" "$bin" >/tmp/fa.out 2>&1; ec=$?
-            echo "FORCE_ARCH=$arch exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          done
-
-      # Exact match: the dispatched binary runs natively here. (Avoid the
-      # valgrind variant, which can't execute an AVX-512 dispatch target.)
-      - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-
-  multiarch-arm:
-    name: Multiarch dispatch smoke (aarch64)
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
-      # armv8-a baseline with the runtime dispatcher, which selects the single
-      # mandatory neon64 variant (SVE excluded by design, see dispatch_arch.hpp).
-      - name: Configure (multiarch dispatch)
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset multiarch-arm
-
-      - name: Build
-        run: cmake --build build/multiarch-arm
-
-      # neon64 is mandatory on ARMv8-A, so forcing it must always select and run.
-      - name: Diagnose ISA dispatch (forced neon64 run)
-        continue-on-error: true
-        run: |
-          set +e
-          echo "== CPU model =="; lscpu | grep -i "model name"
-          bin=build/multiarch-arm/test_c_abi
-          echo "-- default dispatch --"
-          "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          TREEWEAVE_FORCE_ARCH=arm64+neon "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "FORCE_ARCH=arm64+neon exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-
-      - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-
-  multiarch-windows:
-    name: Multiarch dispatch smoke (${{ matrix.compiler }})
-    runs-on: windows-2022
-    timeout-minutes: 45
+    name: Multiarch dispatch smoke (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       matrix:
-        compiler: [cl, clang-cl]
+        include:
+          # x86-64 (not v3): the dispatcher builds every ISA variant and picks
+          # one at runtime, so the compile baseline must be the lowest.
+          - { name: x86_64, runs-on: ubuntu-24.04, preset: multiarch, timeout: 30 }
+          # armv8-a: the dispatcher selects the single mandatory neon64 variant
+          # (SVE excluded by design, see the RUNG_TABLE in
+          # cmake/treeweave_c_dispatch.cmake).
+          - { name: aarch64, runs-on: ubuntu-24.04-arm, preset: multiarch-arm, timeout: 30 }
+          - { name: windows-cl, runs-on: windows-2022, preset: multiarch-windows,
+              compiler: msvc, timeout: 45 }
+          - { name: windows-clang-cl, runs-on: windows-2022,
+              preset: multiarch-windows-clang, compiler: msvc, timeout: 45 }
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
-          compiler: msvc
-          cmake: true
-          ninja: true
-          vcvarsall: true
-          cache-tools: true
+          compiler: ${{ matrix.compiler || 'gcc' }}
+          vcvarsall: ${{ runner.os == 'Windows' }}
+          sccache: ${{ runner.os != 'Windows' }}
 
       # COFF has no hidden visibility, so a multi-arch Windows build renames each
       # rung's shared symbols (cmake/treeweave_c_dispatch.cmake). That needs
       # llvm-nm and llvm-objcopy, and the gate needs llvm-objdump.
       - name: Put the LLVM binutils on PATH
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $llvm = "C:\Program Files\LLVM\bin"
@@ -478,42 +381,39 @@ jobs:
             if (-not (Get-Command $t -ErrorAction SilentlyContinue)) { throw "$t not found on PATH" }
           }
 
-      # Both toolsets need the rename, so both are gated. cl.exe defines its
-      # whole external surface once per rung; clang-cl defines less of it but not
-      # none, and which of those diverge is not a property to leave ungated.
-      - name: Configure (multiarch dispatch)
-        shell: pwsh
-        run: >
-          cmake -S . -B build/multiarch-win -G Ninja
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=${{ matrix.compiler }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-          -DTREEWEAVE_ARCH=x86-64
-          -DTREEWEAVE_C_MULTIARCH=ON
-          -DTREEWEAVE_VERIFY_RUNGS=ON
-          -DTREEWEAVE_BUILD_TESTS=ON
-          -DTREEWEAVE_BUILD_EXAMPLES=OFF
+      - name: Configure
+        shell: bash
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: ${{ runner.os == 'Windows' && '' || 'sccache' }}
+          CMAKE_CXX_COMPILER_LAUNCHER: ${{ runner.os == 'Windows' && '' || 'sccache' }}
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
-        run: cmake --build build/multiarch-win
+        shell: bash
+        run: cmake --build build/${{ matrix.preset }}
 
-      # The gate proves the rungs share no symbol; running the suite once per
-      # rung proves the renamed code still executes, including the throwing
-      # paths whose RTTI records the rename duplicates. test_c_abi compares
-      # treeweave_active_arch() against TREEWEAVE_FORCE_ARCH and fails on a
-      # mismatch whenever the host reports the rung available, so a rung the
-      # runner can run is asserted, not merely attempted.
-      - name: Run the C ABI suite once per rung
-        shell: pwsh
+      # Diagnostic only: dump the runner's actual ISA (incl. the avx512
+      # subfeatures the dispatcher does NOT individually probe, e.g. VL) and the
+      # arch the default dispatch lands on, so a "reported-available but
+      # actually faults" gap is visible next to the asserted per-rung runs.
+      - name: Diagnose ISA dispatch
+        if: runner.os == 'Linux'
+        continue-on-error: true
         run: |
-          $fail = 0
-          foreach ($arch in @("", "sse2", "avx", "fma3+avx2", "avx512bw")) {
-            if ($arch) { $env:TREEWEAVE_FORCE_ARCH = $arch } else { Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue }
-            ctest --test-dir build/multiarch-win -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-            if ($LASTEXITCODE -ne 0) { "RUNG_FAIL $arch"; $fail = 1 } else { "RUNG_OK $(if ($arch) { $arch } else { 'default' })" }
-          }
-          Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue
-          if ($fail -ne 0) { throw "at least one rung failed its tests" }
+          set +e
+          echo "== CPU model =="; lscpu | grep -i "model name"
+          echo "== ISA features =="
+          grep -o -m1 -E 'avx512[a-z]+|avx2|fma|sse4_2' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
+          bin=build/${{ matrix.preset }}/test_c_abi
+          "$bin" >/tmp/fa.out 2>&1; ec=$?
+          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
+
+      - name: Run the C ABI suite once per rung
+        shell: bash
+        run: >
+          ctest --test-dir build/${{ matrix.preset }}
+          -R '^(test_c_abi(_force_.+)?|check_rung_symbols(_selftest)?)$'
+          -V --no-tests=error
 
   compare-interpolators:
     name: Comparison against Boost.Math's interpolators
@@ -527,12 +427,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       # Boost.Math's interpolators are header-only: headers, no link step.
       - name: Install Boost headers

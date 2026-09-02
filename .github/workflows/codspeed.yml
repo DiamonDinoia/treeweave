@@ -3,7 +3,7 @@ name: CodSpeed
 # Instruction-count perf gating via CodSpeed.io `simulation` mode: builds the
 # Google Benchmark driver (benchmarks/treeweave_codspeed_bench.cpp) RelWithDebInfo
 # at the x86-64-v3 baseline and runs it once under CodSpeed's simulated CPU.
-# This complements bench.yml (nanobench → gh-pages wall-time trend) with a
+# This complements benchmarks.yml (nanobench → gh-pages wall-time trend) with a
 # deterministic, runner-independent signal. Uploading a report needs the repo
 # connected at app.codspeed.io (one-time GitHub-App install); until then the job
 # still builds + runs the bench as a smoke test.
@@ -35,12 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       - name: Configure + build the CodSpeed benchmark
         run: |

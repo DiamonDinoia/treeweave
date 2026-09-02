@@ -1,7 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # The composite action pins setup-cpp and sccache for every workflow, so it
+    # has to be a scanned directory of its own.
+    directories:
+      - "/"
+      - "/.github/actions/setup-cpp"
     schedule:
       interval: "weekly"
     groups:

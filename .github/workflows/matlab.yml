@@ -5,13 +5,13 @@ name: MATLAB
 # build is the hard gate here. Actually *running* the suite needs a license,
 # which MathWorks' hosted licensing does not reliably grant for `matlab -batch`
 # launched outside matlab-actions/run-command (observed: "MathWorks Licensing
-# Error 1"). The run step is therefore best-effort; octave.yml runs the identical
+# Error 1"). The run step is therefore best-effort; bindings.yml runs the identical
 # `matlab_treeweave` test and is the blocking runtime gate. This workflow is NOT
 # a hard release gate (see release.yml preflight). Split out from the former
 # bindings.yml so it earns its own (best-effort) status badge.
 # Non-gating + slow MATLAB setup: runs on PRs + on demand only. The prebuilt
 # MATLAB MEX is built and packaged in the release pipeline (_build-mex.yml);
-# octave.yml gates the shared mwrap gateway logic on every push.
+# bindings.yml gates the shared mwrap gateway logic on every push.
 on:
   pull_request:
   workflow_dispatch:
@@ -34,12 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
@@ -56,9 +51,9 @@ jobs:
       # test_treeweave.m calls error() on any failure -> matlab -batch exits non-zero.
       # Best-effort: skip blocking CI when no MATLAB license is available on the
       # runner (the Octave job is the blocking runtime gate). Build above stays a gate.
-      - name: Run MATLAB suite (matlab_treeweave)
+      - name: Run MATLAB suite and examples
         continue-on-error: true
-        run: ctest --test-dir build/bindings-matlab -R matlab_treeweave --output-on-failure --no-tests=error
+        run: ctest --test-dir build/bindings-matlab --output-on-failure --no-tests=error
 
   # Windows MEX, built and *run* under several MATLAB releases. Until v0.0.4 no
   # Windows job ever loaded the MEX it built, and three releases shipped a MEX
@@ -80,12 +75,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
+        uses: ./.github/actions/setup-cpp
         with:
-          cmake: true
-          ninja: true
+          compiler: ""
           vcvarsall: true
-          cache-tools: true
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
@@ -150,12 +143,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.8.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
+        uses: ./.github/actions/setup-cpp
 
       # octave-dev gives mkoctfile so the binding's CMakeLists selects a backend
       # (else it skips and the regen target is never defined); bison/flex/m4 build

@@ -179,6 +179,29 @@
       }
     },
     {
+      "name": "multiarch-windows",
+      "displayName": "Multiarch dispatch (Windows, cl.exe)",
+      "description": "Windows counterpart of multiarch. COFF has no hidden visibility, so each rung's shared symbols are renamed; TREEWEAVE_VERIFY_RUNGS makes the cross-rung symbol gate a build step rather than only a ctest.",
+      "inherits": "multiarch",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl",
+        "TREEWEAVE_BUILD_TESTS": { "type": "BOOL", "value": "ON" },
+        "TREEWEAVE_VERIFY_RUNGS": { "type": "BOOL", "value": "ON" }
+      }
+    },
+    {
+      "name": "multiarch-windows-clang",
+      "displayName": "Multiarch dispatch (Windows, clang-cl)",
+      "description": "clang-cl twin of multiarch-windows: it defines less of the external surface per rung than cl.exe does, but not none, so the rename is gated on both toolsets.",
+      "inherits": "multiarch-windows",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      }
+    },
+    {
       "name": "bench",
       "displayName": "Benchmarks (Release, examples only)",
       "inherits": ["arch-x86-64-v3", "base"],
@@ -237,7 +260,7 @@
     {
       "name": "bindings-matlab",
       "displayName": "MATLAB/Octave (MEX) bindings",
-      "description": "Builds the MEX entirely from CMake: fetches the mwrap generator via CPM, generates the gateway + bz_*.m from treeweave.mw, and compiles/links treeweave_c_static via matlab_add_mex (MATLAB) and/or mkoctfile (Octave).",
+      "description": "Builds the MEX entirely from CMake: fetches the mwrap generator via CPM, generates the gateway + tw_*.m from treeweave.mw, and compiles/links treeweave_c_static via matlab_add_mex (MATLAB) and/or mkoctfile (Octave).",
       "inherits": "bindings-base",
       "cacheVariables": {
         "TREEWEAVE_BUILD_MATLAB": { "type": "BOOL", "value": "ON" }
