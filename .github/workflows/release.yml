@@ -180,7 +180,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
@@ -313,7 +313,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
@@ -468,7 +468,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
