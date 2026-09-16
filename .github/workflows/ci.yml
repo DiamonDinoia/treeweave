@@ -81,7 +81,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: ${{ matrix.toolchain }}
           cmake: true
@@ -221,7 +221,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc-13
           cmake: true
@@ -305,7 +305,7 @@ jobs:
       # build matrix pattern), so the objects persist across runs.
       # Valgrind's Build step was 7m38s with no cache (run 32208936358).
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
@@ -344,7 +344,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
@@ -405,7 +405,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: gcc
           cmake: true
@@ -457,7 +457,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: msvc
           cmake: true

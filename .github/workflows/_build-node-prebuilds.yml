@@ -102,7 +102,7 @@ jobs:
       # symbol rename needs; the addon itself compiles with cl.exe.
       - name: Setup CMake + Ninja (macOS/Windows)
         if: ${{ !startsWith(matrix.platdir, 'linux') }}
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: ${{ matrix.platdir == 'win32-x64' && 'llvm' || '' }}
           cmake: true

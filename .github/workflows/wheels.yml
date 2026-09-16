@@ -87,7 +87,7 @@ jobs:
       # so vcvarsall and LLVM here reach the build.
       - name: Setup MSVC + LLVM binutils + Ninja (Windows)
         if: matrix.name == 'windows-x64'
-        uses: aminya/setup-cpp@v1.10.0
+        uses: aminya/setup-cpp@v1.10.1
         with:
           compiler: llvm
           cmake: true
