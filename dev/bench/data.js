@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789387990866,
+  "lastUpdate": 1789993298930,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3372,6 +3372,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000368540666666667,
             "unit": "s/batch",
             "extra": "MdAPE=0.0048287408189718; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]",
+            "email": "49699333+dependabot[bot]@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "DiamonDinoia@users.noreply.github.com"
+          },
+          "id": "3e059426a427fb6da2d1650b9a22f8968b88fc11",
+          "message": "Build(deps): Bump aminya/setup-cpp in the github-actions group\n\nBumps the github-actions group with 1 update: [aminya/setup-cpp](https://github.com/aminya/setup-cpp).\n\n\nUpdates `aminya/setup-cpp` from 1.10.0 to 1.10.1\n- [Release notes](https://github.com/aminya/setup-cpp/releases)\n- [Commits](https://github.com/aminya/setup-cpp/compare/v1.10.0...v1.10.1)\n\n---\nupdated-dependencies:\n- dependency-name: aminya/setup-cpp\n  dependency-version: 1.10.1\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n  dependency-group: github-actions\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2026-09-16T13:11:07Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/3e059426a427fb6da2d1650b9a22f8968b88fc11"
+        },
+        "date": 1789993297468,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000660823,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00362011308937896; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.00101833777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0255244624522272; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000518205222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00352551270163411; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.000960123444444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00323888978141289; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.002086647125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000975135598248444; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.003375269625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0154100907889622; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.00784540122222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00396802672174377; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0010545685,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00251163526642865; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000322865625,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000650853251511608; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.0005487663,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00884155568398684; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000473840333333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00760869777094228; batch=65536 pts/call"
           }
         ]
       }
