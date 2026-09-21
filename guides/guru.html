@@ -350,6 +350,13 @@ table, the per-point descent otherwise; the ids are identical either way. A
 point is out-of-domain (OOD) when the fit cannot evaluate it — below
 <code class="docutils literal notranslate"><span class="pre">lower</span></code>, above <code class="docutils literal notranslate"><span class="pre">upper</span></code>, or NaN/±Inf; classification maps it to the
 sentinel id <code class="docutils literal notranslate"><span class="pre">out_of_domain_id()</span></code> (== <code class="docutils literal notranslate"><span class="pre">num_leaves()</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">LaneQuantizer&lt;T,</span> <span class="pre">Arch&gt;</span></code> is the SIMD lane-level twin of <code class="docutils literal notranslate"><span class="pre">leaf_id</span></code> for a
+fit that <code class="docutils literal notranslate"><span class="pre">supports()</span></code> it (one subtree, live leaf table): <code class="docutils literal notranslate"><span class="pre">in_domain(x)</span></code>
+and <code class="docutils literal notranslate"><span class="pre">ids(x)</span></code> take one <code class="docutils literal notranslate"><span class="pre">xsimd::batch</span></code> and return the lane mask and the
+lane-matched integer ids, identical lane for lane to <code class="docutils literal notranslate"><span class="pre">leaf_id</span></code>. A caller
+that combines several regimes folds the key with <code class="docutils literal notranslate"><span class="pre">xsimd::select</span></code> while the
+lanes are still in registers, so the fold stays branchless on every
+compiler. It is xsimd only: no intrinsics, every xsimd ISA.</p>
 <p>The sort blocks are generic u32 counting-sort primitives. The u32 buffers are
 concrete <code class="docutils literal notranslate"><span class="pre">std::span</span></code>s (a <code class="docutils literal notranslate"><span class="pre">std::vector</span></code> or <code class="docutils literal notranslate"><span class="pre">std::array</span></code> converts
 implicitly); the value buffers accept any contiguous range with matching

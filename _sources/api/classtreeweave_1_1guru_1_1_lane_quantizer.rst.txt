@@ -1,0 +1,17 @@
+.. _exhale_class_classtreeweave_1_1guru_1_1_lane_quantizer:
+
+Template Class LaneQuantizer
+============================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Class Documentation
+-------------------
+
+
+.. doxygenclass:: treeweave::guru::LaneQuantizer
+   :project: treeweave
+   :members:
+   :protected-members:
+   :undoc-members:

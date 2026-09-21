@@ -31,7 +31,7 @@ The public ``Function`` batch evaluators fuse the stages (classify -> histogram 
 
 
 
-- classify each point once into one combined key (``key = range_base + f.leaf_id(x)`` for the regime's fit — the classification machinery is the public ``Function`` interface: ``leaf_id``/``leaf_ids``, the quantize view via ``get_subtrees()``, ``has_fast_quantize()``, ``num_leaves()``, ``out_of_domain_id()``),
+- classify each point once into one combined key (``key = range_base + f.leaf_id(x)`` for the regime's fit — the classification machinery is the public ``Function`` interface: ``leaf_id``/``leaf_ids``, ``has_fast_quantize()``, ``num_leaves()``, ``out_of_domain_id()``; ``LaneQuantizer`` is the SIMD lane-level twin of ``leaf_id``, so the combined key folds branchlessly in registers),
 
 - run ONE counting sort over those keys, on caller-owned buffers that persist across calls (``exclusive_scan`` + ``scatter`` when the histogram is fused into the classify sweep, otherwise the one-shot ``counting_sort``),
 
@@ -84,9 +84,13 @@ Includes
 
 - ``span``
 
+- ``treeweave/detail/quantize.hpp``
+
 - ``treeweave/treeweave.hpp`` (:ref:`file_include_treeweave_treeweave.hpp`)
 
 - ``type_traits``
+
+- ``xsimd/xsimd.hpp``
 
 
 
@@ -102,6 +106,13 @@ Namespaces
 - :ref:`namespace_treeweave__guru`
 
 - :ref:`namespace_treeweave__guru__gdetail`
+
+
+Classes
+-------
+
+
+- :ref:`exhale_class_classtreeweave_1_1guru_1_1_lane_quantizer`
 
 
 Functions

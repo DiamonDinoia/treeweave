@@ -37,6 +37,11 @@ Classes and Structs
 
    structtreeweave__opts.rst
 
+.. toctree::
+   :maxdepth: 5
+
+   classtreeweave_1_1guru_1_1_lane_quantizer.rst
+
 Enums
 *****
 

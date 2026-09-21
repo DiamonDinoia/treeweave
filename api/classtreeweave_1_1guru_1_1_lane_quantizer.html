@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>File guru.hpp &mdash; treeweave  documentation</title>
+  <title>Template Class LaneQuantizer &mdash; treeweave  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/collapsible-lists/css/tree_view.css?v=a885cde7" />
@@ -22,9 +22,7 @@
       <script src="../_static/collapsible-lists/js/apply-collapsible-lists.js?v=660e4f45"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="File tol_kind.hpp" href="file_include_treeweave_detail_tol_kind.hpp.html" />
-    <link rel="prev" title="Directory detail" href="dir_include_treeweave_detail.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -215,11 +213,11 @@
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API reference</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="library_root.html">treeweave API Reference</a><ul class="current">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="library_root.html">treeweave API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="library_root.html#class-hierarchy">Class Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="library_root.html#file-hierarchy">File Hierarchy</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="library_root.html#functions">Functions</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
@@ -270,8 +268,8 @@
 <li class="toctree-l4"><a class="reference internal" href="dir_include_treeweave_detail.html">Directory detail</a></li>
 </ul>
 </li>
-<li class="toctree-l3 current"><a class="reference internal" href="library_root.html#files">Files</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">File guru.hpp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="library_root.html#files">Files</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_guru.hpp.html">File guru.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_detail_tol_kind.hpp.html">File tol_kind.hpp</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave.h.html">File treeweave.h</a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_include_treeweave_treeweave.hpp.html">File treeweave.hpp</a></li>
@@ -297,10 +295,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="library_root.html">treeweave API Reference</a></li>
-      <li class="breadcrumb-item active">File guru.hpp</li>
+      <li class="breadcrumb-item active">Template Class LaneQuantizer</li>
       <li class="wy-breadcrumbs-aside">
-              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/api/file_include_treeweave_guru.hpp.rst" class="fa fa-github"> Edit on GitHub</a>
+              <a href="https://github.com/DiamonDinoia/treeweave/blob/main/docs/api/classtreeweave_1_1guru_1_1_lane_quantizer.rst" class="fa fa-github"> Edit on GitHub</a>
       </li>
   </ul>
   <hr/>
@@ -308,100 +305,82 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="file-guru-hpp">
-<span id="file-include-treeweave-guru-hpp"></span><h1>File guru.hpp<a class="headerlink" href="#file-guru-hpp" title="Link to this heading"></a></h1>
-<p>↰ <a class="reference internal" href="dir_include_treeweave.html#dir-include-treeweave"><span class="std std-ref">Parent directory</span></a> (<code class="docutils literal notranslate"><span class="pre">include/treeweave</span></code>)</p>
-<p>The guru interface: the batch pipeline as public, caller-driven stages — caller-owned scratch, caller-driven fusion, no per-call allocation. Named after FFTW’s guru interface, the established precedent for an expert API exposing the planner/executor internals.</p>
-<nav class="contents local" id="contents">
-<p class="topic-title">Contents</p>
+  <section id="template-class-lanequantizer">
+<span id="exhale-class-classtreeweave-1-1guru-1-1-lane-quantizer"></span><h1>Template Class LaneQuantizer<a class="headerlink" href="#template-class-lanequantizer" title="Link to this heading"></a></h1>
 <ul class="simple">
-<li><p><a class="reference internal" href="#definition-include-treeweave-guru-hpp" id="id1">Definition (<code class="docutils literal notranslate"><span class="pre">include/treeweave/guru.hpp</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#detailed-description" id="id2">Detailed Description</a></p></li>
-<li><p><a class="reference internal" href="#includes" id="id3">Includes</a></p></li>
-<li><p><a class="reference internal" href="#namespaces" id="id4">Namespaces</a></p></li>
-<li><p><a class="reference internal" href="#classes" id="id5">Classes</a></p></li>
-<li><p><a class="reference internal" href="#functions" id="id6">Functions</a></p></li>
+<li><p>Defined in <a class="reference internal" href="file_include_treeweave_guru.hpp.html#file-include-treeweave-guru-hpp"><span class="std std-ref">File guru.hpp</span></a></p></li>
 </ul>
-</nav>
-<section id="definition-include-treeweave-guru-hpp">
-<h2>Definition (<code class="docutils literal notranslate"><span class="pre">include/treeweave/guru.hpp</span></code>)<a class="headerlink" href="#definition-include-treeweave-guru-hpp" title="Link to this heading"></a></h2>
-</section>
-<section id="detailed-description">
-<h2>Detailed Description<a class="headerlink" href="#detailed-description" title="Link to this heading"></a></h2>
-<p>The public <code class="docutils literal notranslate"><span class="pre">Function</span></code> batch evaluators fuse the stages (classify -&gt; histogram -&gt; scan -&gt; scatter -&gt; per-leaf SIMD eval -&gt; gather back) into one call. That composition is right for most uses, but a caller that fits several Functions over sub-ranges of one domain (e.g. a hard function partitioned into regimes — the standard treeweave methodology: split at the singularities/asymptotes, subtract the singular part so each piece fits a polynomial, evaluate the piecewise part per regime, then add the analytically-known part back) re-pays the crossing costs: a range-partition sweep plus per-range scatter, a separate post-processing sweep, fresh allocations every call. The pieces here re-expose the stages so such callers can:</p>
-<ul class="simple">
-<li><p>classify each point once into one combined key (<code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">=</span> <span class="pre">range_base</span> <span class="pre">+</span> <span class="pre">f.leaf_id(x)</span></code> for the regime’s fit — the classification machinery is the public <code class="docutils literal notranslate"><span class="pre">Function</span></code> interface: <code class="docutils literal notranslate"><span class="pre">leaf_id</span></code>/<code class="docutils literal notranslate"><span class="pre">leaf_ids</span></code>, <code class="docutils literal notranslate"><span class="pre">has_fast_quantize()</span></code>, <code class="docutils literal notranslate"><span class="pre">num_leaves()</span></code>, <code class="docutils literal notranslate"><span class="pre">out_of_domain_id()</span></code>; <code class="docutils literal notranslate"><span class="pre">LaneQuantizer</span></code> is the SIMD lane-level twin of <code class="docutils literal notranslate"><span class="pre">leaf_id</span></code>, so the combined key folds branchlessly in registers),</p></li>
-<li><p>run ONE counting sort over those keys, on caller-owned buffers that persist across calls (<code class="docutils literal notranslate"><span class="pre">exclusive_scan</span></code> + <code class="docutils literal notranslate"><span class="pre">scatter</span></code> when the histogram is fused into the classify sweep, otherwise the one-shot <code class="docutils literal notranslate"><span class="pre">counting_sort</span></code>),</p></li>
-<li><p>evaluate each packed run straight through polyfit’s SIMD kernel and fuse their own elementwise post-processing while the run’s data is still in registers (<code class="docutils literal notranslate"><span class="pre">eval_leaf_aos</span></code> / <code class="docutils literal notranslate"><span class="pre">eval_leaf_soa</span></code> on the runs of <code class="docutils literal notranslate"><span class="pre">for_each_run</span></code>, <code class="docutils literal notranslate"><span class="pre">fill_out_of_domain</span></code> on the out-of-domain bucket), then <code class="docutils literal notranslate"><span class="pre">gather</span></code> back through <code class="docutils literal notranslate"><span class="pre">rank</span></code>,</p></li>
-<li><p>do the same run-level fusion on sorted input with zero scratch (<code class="docutils literal notranslate"><span class="pre">for_each_sorted_run</span></code>: sorted input needs no counting sort at all).</p></li>
-</ul>
-<p>Preconditions mirror the library’s: ids and ranks are <code class="docutils literal notranslate"><span class="pre">std::uint32_t</span></code>, so a tile stays below 2^32 points. Classification semantics are identical to the public paths point-for-point. A point is out-of-domain (OOD) when the fit cannot evaluate it — below <code class="docutils literal notranslate"><span class="pre">lower</span></code>, above <code class="docutils literal notranslate"><span class="pre">upper</span></code>, or NaN/±Inf; classification maps it to the sentinel id <code class="docutils literal notranslate"><span class="pre">f.out_of_domain_id()</span></code> (== <code class="docutils literal notranslate"><span class="pre">num_leaves()</span></code>), via the positive-logic gate that keeps the closed upper endpoint in-domain.</p>
-<p>Thread safety: everything here is reentrant and stateless; the buffers are caller arguments. The usual rule applies — disjoint output slices and disjoint scratch per thread.</p>
-<p>Combined-key rules, in one place:</p>
-<ul class="simple">
-<li><p>Keys are fit-local ids with the fit’s OWN sentinel FIRST folded, then offset per regime: <code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">=</span> <span class="pre">(id</span> <span class="pre">==</span> <span class="pre">f.out_of_domain_id())</span> <span class="pre">?</span> <span class="pre">my_ood_bucket</span> <span class="pre">/</span> <span class="pre">:</span> <span class="pre">(range_base</span> <span class="pre">+</span> <span class="pre">id)</span></code>. The fold compares against the fit’s own sentinel — never against an offset number. Lay the per-regime spaces back-to-back without holes (hank105’s layout; the aggregated OOD bucket comes last).</p></li>
-<li><p>After the sort, <code class="docutils literal notranslate"><span class="pre">rank[i]</span></code> holds the packed slot of point i — the INVERSE permutation, which the writeback consumes directly: <code class="docutils literal notranslate"><span class="pre">out[i]</span> <span class="pre">=</span> <span class="pre">packed_out[rank[i]]</span></code> per output component (<code class="docutils literal notranslate"><span class="pre">gather</span></code>), unconditionally — every slot belongs to exactly one bin, so OOD buckets too. (<code class="docutils literal notranslate"><span class="pre">eval_scatter_sorted</span></code> in <code class="docutils literal notranslate"><span class="pre">&lt;treeweave/eval_scatter.hpp&gt;</span></code> records the opposite, FORWARD permutation: its <code class="docutils literal notranslate"><span class="pre">perm[k]</span></code> is the original index of packed slot k.)</p></li>
-<li><p>Tile at what keeps the per-point scratch (keys 4 B + rank 4 B + packed in and out streams) L2-resident; on a 2 MiB L2 host the valley is 2^14 points for a 4-output fit (sweep {16384, 32768, 65536} when the layout differs).</p></li>
-<li><p>Contract violations (key &gt;= counts.size() into <code class="docutils literal notranslate"><span class="pre">scatter</span></code>, the OOD sentinel into <code class="docutils literal notranslate"><span class="pre">eval_leaf_*</span></code>) are assert-guarded: they fail cleanly in Debug and undefined in NDEBUG — build Debug/ASan when wiring a new caller.</p></li>
-<li><p>Classification is SIMD when <code class="docutils literal notranslate"><span class="pre">f.has_fast_quantize()</span></code> (<code class="docutils literal notranslate"><span class="pre">leaf_id</span></code> / <code class="docutils literal notranslate"><span class="pre">leaf_ids</span></code>, and any tables fused from the fit’s quantize view) and per-point tree descent otherwise; the ids are identical either way, only the cost moves. ARM/NEON, wasm, and x86 below AVX2 run the same semantics entirely through the public scalar machinery.</p></li>
-</ul>
-</section>
-<section id="includes">
-<h2>Includes<a class="headerlink" href="#includes" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">algorithm</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">array</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cassert</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">concepts</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cstddef</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cstdint</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ranges</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">span</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">treeweave/detail/quantize.hpp</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">treeweave/treeweave.hpp</span></code> (<a class="reference internal" href="file_include_treeweave_treeweave.hpp.html#file-include-treeweave-treeweave-hpp"><span class="std std-ref">File treeweave.hpp</span></a>)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">type_traits</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xsimd/xsimd.hpp</span></code></p></li>
-</ul>
-</section>
-<section id="namespaces">
-<h2>Namespaces<a class="headerlink" href="#namespaces" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="namespace_treeweave.html#namespace-treeweave"><span class="std std-ref">Namespace treeweave</span></a></p></li>
-<li><p><a class="reference internal" href="namespace_treeweave__guru.html#namespace-treeweave-guru"><span class="std std-ref">Namespace treeweave::guru</span></a></p></li>
-<li><p><a class="reference internal" href="namespace_treeweave__guru__gdetail.html#namespace-treeweave-guru-gdetail"><span class="std std-ref">Namespace treeweave::guru::gdetail</span></a></p></li>
-</ul>
-</section>
-<section id="classes">
-<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="classtreeweave_1_1guru_1_1_lane_quantizer.html#exhale-class-classtreeweave-1-1guru-1-1-lane-quantizer"><span class="std std-ref">Template Class LaneQuantizer</span></a></p></li>
-</ul>
-</section>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html#exhale-function-guru-8hpp-1a073816a220c3ae7251c25f21fb185a33"><span class="std std-ref">Template Function treeweave::guru::counting_sort</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html#exhale-function-guru-8hpp-1a947758b0f930c6cc2dc6696e8756eeb3"><span class="std std-ref">Template Function treeweave::guru::eval_leaf_aos</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html#exhale-function-guru-8hpp-1a5b90020b2af5fca89a8119fb0ab2d12f"><span class="std std-ref">Template Function treeweave::guru::eval_leaf_soa</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae.html#exhale-function-guru-8hpp-1a28a60bef30f989ac20aefd8adf9d57ae"><span class="std std-ref">Function treeweave::guru::exclusive_scan</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b.html#exhale-function-guru-8hpp-1af57de6c2d748da1f944f142482cb8f8b"><span class="std std-ref">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, typename F::value_type *, std::size_t)</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d.html#exhale-function-guru-8hpp-1ab144870b71463a63ce22c79c2126682d"><span class="std std-ref">Template Function treeweave::guru::fill_out_of_domain(const F&amp;, std::array&lt;typename F::value_type *, F::output_dim&gt;, std::size_t)</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f.html#exhale-function-guru-8hpp-1a8fba07c290de1d41fb0acaa76805275f"><span class="std std-ref">Template Function treeweave::guru::for_each_run</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a6c6de2211df7ed8a15e582165c3d9cb2.html#exhale-function-guru-8hpp-1a6c6de2211df7ed8a15e582165c3d9cb2"><span class="std std-ref">Template Function treeweave::guru::for_each_sorted_run</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1adcc697d938a61a54ed1fd57afd0c26d1.html#exhale-function-guru-8hpp-1adcc697d938a61a54ed1fd57afd0c26d1"><span class="std std-ref">Template Function treeweave::guru::gather</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a.html#exhale-function-guru-8hpp-1a00a3073fcafdcbf83f1ecafe08438a2a"><span class="std std-ref">Function treeweave::guru::histogram</span></a></p></li>
-<li><p><a class="reference internal" href="function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4.html#exhale-function-guru-8hpp-1a3017ce785ce1f78a60386c42224a2ff4"><span class="std std-ref">Template Function treeweave::guru::scatter</span></a></p></li>
-</ul>
+<section id="class-documentation">
+<h2>Class Documentation<a class="headerlink" href="#class-documentation" title="Link to this heading"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4I00EN9treeweave4guru13LaneQuantizerE">
+<span id="_CPPv3I00EN9treeweave4guru13LaneQuantizerE"></span><span id="_CPPv2I00EN9treeweave4guru13LaneQuantizerE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Arch</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">xsimd</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">default_arch</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LaneQuantizer</span></span></span><a class="headerlink" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="Link to this definition"></a><br /></dt>
+<dd><p>One 1D fit’s leaf-table quantize with its constants hoisted into registers. <code class="docutils literal notranslate"><span class="pre">ids(x)</span></code> and <code class="docutils literal notranslate"><span class="pre">in_domain(x)</span></code> classify a batch of points lane for lane identical to <code class="docutils literal notranslate"><span class="pre">Function::leaf_id</span></code>, so a caller fusing several regimes folds the lanes with <code class="docutils literal notranslate"><span class="pre">xsimd::select</span></code> while they are still in registers — branchless whatever a compiler makes of the scalar ternary. Precondition <code class="docutils literal notranslate"><span class="pre">supports(f)</span></code>: one subtree with a live leaf table (assert- guarded in the constructor). xsimd only: every ISA xsimd targets runs it. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave4guru13LaneQuantizer10batch_typeE">
+<span id="_CPPv3N9treeweave4guru13LaneQuantizer10batch_typeE"></span><span id="_CPPv2N9treeweave4guru13LaneQuantizer10batch_typeE"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1aa3085d73d0696d4a53f18be2d2a8aaf3"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">batch_type</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">xsimd</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">batch</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="treeweave::guru::LaneQuantizer::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="treeweave::guru::LaneQuantizer::Arch"><span class="n"><span class="pre">Arch</span></span></a><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N9treeweave4guru13LaneQuantizer10batch_typeE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave4guru13LaneQuantizer9mask_typeE">
+<span id="_CPPv3N9treeweave4guru13LaneQuantizer9mask_typeE"></span><span id="_CPPv2N9treeweave4guru13LaneQuantizer9mask_typeE"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1a6cec0708c5934c532d2c554a7cfad797"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mask_type</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer10batch_typeE" title="treeweave::guru::LaneQuantizer::batch_type"><span class="n"><span class="pre">batch_type</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">batch_bool_type</span></span><a class="headerlink" href="#_CPPv4N9treeweave4guru13LaneQuantizer9mask_typeE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave4guru13LaneQuantizer7id_typeE">
+<span id="_CPPv3N9treeweave4guru13LaneQuantizer7id_typeE"></span><span id="_CPPv2N9treeweave4guru13LaneQuantizer7id_typeE"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1a0daff13a376a444fc657928ac197f78e"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">id_type</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">xsimd</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">as_integer_t</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="treeweave::guru::LaneQuantizer::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N9treeweave4guru13LaneQuantizer7id_typeE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave4guru13LaneQuantizer13id_batch_typeE">
+<span id="_CPPv3N9treeweave4guru13LaneQuantizer13id_batch_typeE"></span><span id="_CPPv2N9treeweave4guru13LaneQuantizer13id_batch_typeE"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1a26c38d4801b1e3e9cb99c64845f9b82d"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">id_batch_type</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">xsimd</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">batch</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer7id_typeE" title="treeweave::guru::LaneQuantizer::id_type"><span class="n"><span class="pre">id_type</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="treeweave::guru::LaneQuantizer::Arch"><span class="n"><span class="pre">Arch</span></span></a><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N9treeweave4guru13LaneQuantizer13id_batch_typeE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN9treeweave4guru13LaneQuantizer13LaneQuantizerERK1F">
+<span id="_CPPv3I0EN9treeweave4guru13LaneQuantizer13LaneQuantizerERK1F"></span><span id="_CPPv2I0EN9treeweave4guru13LaneQuantizer13LaneQuantizerERK1F"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">F</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1af7ac4d2f7ec6dd734ac8133d38d9e414"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LaneQuantizer</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN9treeweave4guru13LaneQuantizer13LaneQuantizerERK1F" title="treeweave::guru::LaneQuantizer::LaneQuantizer::F"><span class="n"><span class="pre">F</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN9treeweave4guru13LaneQuantizer13LaneQuantizerERK1F" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave4guru13LaneQuantizer13LaneQuantizerERKN6detail12QuantizeViewI1TXL1EEEE">
+<span id="_CPPv3N9treeweave4guru13LaneQuantizer13LaneQuantizerERKN6detail12QuantizeViewI1TXL1EEEE"></span><span id="_CPPv2N9treeweave4guru13LaneQuantizer13LaneQuantizerERKN6detail12QuantizeViewI1TX1EEE"></span><span id="treeweave::guru::LaneQuantizer::LaneQuantizer__detail::QuantizeView:T.1:CR"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1aff88a1bff99baf23ba04729964912d98"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LaneQuantizer</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">QuantizeView</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4I00EN9treeweave4guru13LaneQuantizerE" title="treeweave::guru::LaneQuantizer::T"><span class="n"><span class="pre">T</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">v</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N9treeweave4guru13LaneQuantizer13LaneQuantizerERKN6detail12QuantizeViewI1TXL1EEEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9treeweave4guru13LaneQuantizer9in_domainE10batch_type">
+<span id="_CPPv3NK9treeweave4guru13LaneQuantizer9in_domainE10batch_type"></span><span id="_CPPv2NK9treeweave4guru13LaneQuantizer9in_domainE10batch_type"></span><span id="treeweave::guru::LaneQuantizer::in_domain__batch_typeC"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1ac0f349171074192491d120677f9ee910"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer9mask_typeE" title="treeweave::guru::LaneQuantizer::mask_type"><span class="n"><span class="pre">mask_type</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">in_domain</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer10batch_typeE" title="treeweave::guru::LaneQuantizer::batch_type"><span class="n"><span class="pre">batch_type</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">x</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4NK9treeweave4guru13LaneQuantizer9in_domainE10batch_type" title="Link to this definition"></a><br /></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">&lt;=</span> <span class="pre">x</span> <span class="pre">&lt;=</span> <span class="pre">upper</span></code> per lane; NaN and ±Inf fail (positive logic). </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9treeweave4guru13LaneQuantizer3idsE10batch_type">
+<span id="_CPPv3NK9treeweave4guru13LaneQuantizer3idsE10batch_type"></span><span id="_CPPv2NK9treeweave4guru13LaneQuantizer3idsE10batch_type"></span><span id="treeweave::guru::LaneQuantizer::ids__batch_typeC"></span><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1a6214c7d1abe361ddd0f7b3da299f0270"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer13id_batch_typeE" title="treeweave::guru::LaneQuantizer::id_batch_type"><span class="n"><span class="pre">id_batch_type</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ids</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N9treeweave4guru13LaneQuantizer10batch_typeE" title="treeweave::guru::LaneQuantizer::batch_type"><span class="n"><span class="pre">batch_type</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">x</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">noexcept</span></span><a class="headerlink" href="#_CPPv4NK9treeweave4guru13LaneQuantizer3idsE10batch_type" title="Link to this definition"></a><br /></dt>
+<dd><p>Leaf id per lane. An out-of-domain lane reads a clamped, valid table entry — mask it with <code class="docutils literal notranslate"><span class="pre">in_domain</span></code>. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN9treeweave4guru13LaneQuantizer8supportsEbRK1F">
+<span id="_CPPv3I0EN9treeweave4guru13LaneQuantizer8supportsERK1F"></span><span id="_CPPv2I0EN9treeweave4guru13LaneQuantizer8supportsERK1F"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">F</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classtreeweave_1_1guru_1_1_lane_quantizer_1ac31dca7ae35a76650fe5cf4a96cc6455"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">supports</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN9treeweave4guru13LaneQuantizer8supportsEbRK1F" title="treeweave::guru::LaneQuantizer::supports::F"><span class="n"><span class="pre">F</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN9treeweave4guru13LaneQuantizer8supportsEbRK1F" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="dir_include_treeweave_detail.html" class="btn btn-neutral float-left" title="Directory detail" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="file_include_treeweave_detail_tol_kind.hpp.html" class="btn btn-neutral float-right" title="File tol_kind.hpp" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

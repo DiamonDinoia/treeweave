@@ -20,6 +20,13 @@ Namespaces
 - :ref:`namespace_treeweave__guru__gdetail`
 
 
+Classes
+-------
+
+
+- :ref:`exhale_class_classtreeweave_1_1guru_1_1_lane_quantizer`
+
+
 Functions
 ---------
 

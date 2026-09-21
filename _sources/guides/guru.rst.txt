@@ -47,6 +47,14 @@ point is out-of-domain (OOD) when the fit cannot evaluate it — below
 ``lower``, above ``upper``, or NaN/±Inf; classification maps it to the
 sentinel id ``out_of_domain_id()`` (== ``num_leaves()``).
 
+``LaneQuantizer<T, Arch>`` is the SIMD lane-level twin of ``leaf_id`` for a
+fit that ``supports()`` it (one subtree, live leaf table): ``in_domain(x)``
+and ``ids(x)`` take one ``xsimd::batch`` and return the lane mask and the
+lane-matched integer ids, identical lane for lane to ``leaf_id``. A caller
+that combines several regimes folds the key with ``xsimd::select`` while the
+lanes are still in registers, so the fold stays branchless on every
+compiler. It is xsimd only: no intrinsics, every xsimd ISA.
+
 The sort blocks are generic u32 counting-sort primitives. The u32 buffers are
 concrete ``std::span``\ s (a ``std::vector`` or ``std::array`` converts
 implicitly); the value buffers accept any contiguous range with matching
