@@ -607,7 +607,8 @@ auto lane_probe_points(std::mt19937 &gen, T lo, T hi) -> std::vector<T> {
                              -std::numeric_limits<T>::infinity(),
                              std::numeric_limits<T>::max(),
                              std::numeric_limits<T>::denorm_min()};
-    xs.insert(xs.end(), std::begin(adversarial), std::end(adversarial));
+    for (T v : adversarial)
+        xs.push_back(v); // not insert(): gcc 11 -Wstringop-overflow false positive
     return xs;
 }
 
