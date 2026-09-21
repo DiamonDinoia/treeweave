@@ -37,10 +37,10 @@ section verbatim into that release's GitHub Release notes.
   registers. Pure xsimd, no ISA gate; `tests/test_guru.cpp` pins the parity on
   f64, f64 1D->4D and f32 fits including the OOD, endpoint and non-finite
   lanes.
-- The polyfit pin moves to `017921d` (branch `horner-batch-eval`): `poly_eval::horner`
-  takes an `xsimd::batch` argument, and xsimd comes from the `DiamonDinoia/xsimd`
-  fork at `97fe968`, which adds the vector double -> int64 `fast_cast` and the
-  u32 -> i64 widening `gather` that `LaneQuantizer::ids` relies on.
+- The polyfit pin moves to `5aea5fe`: `poly_eval::horner` takes an `xsimd::batch`
+  argument, and xsimd comes from the `DiamonDinoia/xsimd` fork at `6351cd2`, which
+  adds the vector double -> int64 `fast_cast` and the u32 -> i64 widening `gather`
+  that `LaneQuantizer::ids` relies on.
 - `<treeweave/guru.hpp>` (`treeweave::guru`): the guru interface (after
   FFTW's) — the batch pipeline as public stages with caller-owned scratch and
   no per-call allocation. `counting_sort`/`histogram`/`exclusive_scan`/

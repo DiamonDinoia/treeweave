@@ -627,7 +627,7 @@ TEST_CASE("guru LaneQuantizer lanes match leaf_id (f64 scalar, f64 1D->4D, f32)"
         treeweave::options opts;
         opts.max_memory_mib    = 0;
         opts.min_uniform_depth = 5;
-        auto f                 = treeweave::fit<6>([](float x) { return std::exp(x); }, -1.0f, 1.0f, 1e-5f, opts);
+        auto f                 = treeweave::fit<6>([](float x) { return std::exp(x); }, -1.0f, 1.0f, 1e-5, opts);
         check_lane_parity(f, lane_probe_points<float>(gen, -1.0f, 1.0f));
     }
     // The descent-mode fit has no leaf table: the precondition must say so.
