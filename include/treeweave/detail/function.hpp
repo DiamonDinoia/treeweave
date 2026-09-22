@@ -112,9 +112,22 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
             ++i;
             continue;
         }
-        std::size_t j = i + 1;
-        while (j < n && f.sorted_leaf_id_at(xs, j, ood_id, fast) == id)
-            ++j;
+        // Run end by galloping search: probe i+1, i+2, i+4, ... until the id changes, then
+        // bisect. O(log run) leaf lookups per run instead of one per point.
+        auto        same = [&](std::size_t p) { return f.sorted_leaf_id_at(xs, p, ood_id, fast) == id; };
+        std::size_t j = i + 1, k = i + 1; // same on [i, j); the run end lies in [j, k]
+        for (std::size_t step = 1; k < n && same(k); step <<= 1) {
+            j = k + 1;
+            k += step;
+        }
+        k = std::min(k, n);
+        while (j < k) {
+            const std::size_t mid = j + (k - j) / 2;
+            if (same(mid))
+                j = mid + 1;
+            else
+                k = mid;
+        }
         fn(id, i, j - i);
         i = j;
     }
