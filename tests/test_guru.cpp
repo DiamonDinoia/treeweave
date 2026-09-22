@@ -39,7 +39,7 @@ auto make_descent_f64() {
     return treeweave::fit<8>([](double x) { return 1.0 / (x * x + 1e-13); }, -1.0, 1.0, 1e-6, opts);
 }
 
-// 1D in, 4-out (the hank105 mid-fit shape): exercises the SoA/LeafND route.
+// 1D in, 4-out: exercises the SoA/LeafND route.
 auto make_out4_f64() {
     treeweave::options opts;
     opts.max_memory_mib    = 0;

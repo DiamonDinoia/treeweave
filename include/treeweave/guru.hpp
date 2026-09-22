@@ -55,8 +55,7 @@
 ///     offset per regime: `key = (id == f.out_of_domain_id()) ? my_ood_bucket
 ///     : (range_base + id)`. The fold compares against the fit's own sentinel
 ///     — never against an offset number. Lay the per-regime spaces
-///     back-to-back without holes (hank105's layout; the aggregated OOD
-///     bucket comes last).
+///     back-to-back without holes; the aggregated OOD bucket comes last.
 ///   * After the sort, `rank[i]` holds the packed slot of point i — the
 ///     INVERSE permutation, which the writeback consumes directly:
 ///     `out[i] = packed_out[rank[i]]` per output component (`gather`),

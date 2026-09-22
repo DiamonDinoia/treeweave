@@ -68,7 +68,7 @@ int main() {
 
     // 3. per-run eval with the regime's work fused (here the regimes are the
     //    fits themselves; a real fusion applies the regime's elementwise
-    //    post-processing here, e.g. multiply phase back — see hank105).
+    //    post-processing here, e.g. multiply phase back).
     treeweave::guru::for_each_run(counts, [&](std::uint32_t b, std::size_t begin, std::size_t count) {
         if (b == ood) {
             treeweave::guru::fill_out_of_domain(fit_a, out_packed.data() + begin, count);

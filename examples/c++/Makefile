@@ -10,7 +10,7 @@
 
 include ../../build/make.inc
 
-EXAMPLES = simple1d simple2d simple3d hankel with_options vector_output zeta_bench
+EXAMPLES = simple1d simple2d simple3d with_options vector_output zeta_bench
 
 all: $(EXAMPLES)
 

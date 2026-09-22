@@ -27,18 +27,6 @@ auto make_runge1d() {
 auto make_erf1d() {
     return [](double x) { return std::erf(x); };
 }
-// cyl_bessel_j unavailable on libc++ (Apple clang); kHasCylBesselJ gates the kernel at the call site.
-#if defined(_LIBCPP_VERSION)
-inline constexpr bool kHasCylBesselJ = false;
-[[maybe_unused]] auto make_j0_1d() {
-    return [](double x) { return x; };
-}
-#else
-inline constexpr bool kHasCylBesselJ = true;
-auto                  make_j0_1d() {
-    return [](double x) { return std::cyl_bessel_j(0, x); };
-}
-#endif
 auto make_tanh1d() {
     return [](double x) { return std::tanh(50.0 * x); };
 }
@@ -261,8 +249,6 @@ int main() {
     sweep_1d<8>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_1d<10>(b, "1d_runge", make_runge1d, -1.0, 1.0);
     sweep_1d<8>(b, "1d_erf", make_erf1d, -3.0, 3.0);
-    if constexpr (kHasCylBesselJ)
-        sweep_1d<8>(b, "1d_bessel_j0", make_j0_1d, 0.5, 30.0);
     sweep_1d<10>(b, "1d_tanh_sharp", make_tanh1d, -1.0, 1.0);
     sweep_1d<8>(b, "1d_log1p", make_log1p1d, -0.9, 5.0);
 

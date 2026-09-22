@@ -169,12 +169,8 @@ int main(int argc, char **argv) {
     // there is a single subtree: the redundant outer quantize that the batch
     // paths skip via their `subtrees_.size() == 1` fast path.
     //
-    // Note on multi-scale: a downstream proposal (imwofx) reported a two-*subtree*
-    // regression at near-eps tol (~1e-15). Empirically the current builder yields
-    // 1 subtree for every practical (degree, tol); >1 subtree needs a near-eps
-    // fit that overruns the memory budget at the default degree, so it is not a
-    // CI-stable case. These cases pin the common 1-subtree scalar cost instead;
-    // the printed subtrees/leaf-table line makes any future split visible.
+    // Pins the common 1-subtree scalar cost; the printed subtrees/leaf-table
+    // line flags any future split into multiple subtrees.
     auto scalar_case = [&](const char *name, const auto &fn, const auto &xs) {
         using T = std::remove_cvref_t<decltype(xs[0])>;
         bench.batch(static_cast<double>(xs.size())).run(name, [&] {
