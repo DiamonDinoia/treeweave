@@ -72,6 +72,10 @@ auto fill_out_of_domain(const F &, std::array<typename F::value_type *, F::outpu
         std::fill_n(component, n, std::numeric_limits<typename F::value_type>::quiet_NaN());
 }
 
+// Linear look-ahead before galloping. K=2: runge N=32 0.88x main's linear scan, N>=1024 1.8x to 2.6x faster than main
+// (K sweep {0,2,4,8,16}, 5 interleaved reps, medians; K=2 minima equal K=0 at N=1024 and N=1e6).
+inline constexpr std::size_t small_run_cutoff = 2;
+
 } // namespace detail
 
 /// The canonical ascending-run walk over a 1D fit: `fn(id, begin, count)` per
@@ -99,6 +103,15 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
     if (i > 0)
         fn(ood_id, 0, i);
 
+    // Position of the first NaN found by the lazy scan, or n if the scan found
+    // none or has not run. The scan runs at most once per batch, only when a
+    // run first reaches the gallop path, and only over [current i, suffix
+    // start). A batch whose runs all end inside the linear cutoff never
+    // scans, and neither does one that goes out of domain first. After a NaN
+    // is found, the rest of the batch stays linear.
+    std::size_t first_nan = n;
+    bool        scanned   = false;
+
     while (i < n) {
         // `>` not `>=`: the closed upper endpoint x == hi stays in-domain; NaN
         // fails the test and falls through to the sentinel path below.
@@ -112,9 +125,51 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
             ++i;
             continue;
         }
-        std::size_t j = i + 1;
-        while (j < n && f.sorted_leaf_id_at(xs, j, ood_id, fast) == id)
+        // Run end: scan the next small_run_cutoff points linearly. If the run
+        // ends inside them, stop there. Otherwise the run is long and the
+        // walk gallops i+1, i+2, i+4, ... from there, then bisects. A gallop
+        // step can jump over an interior NaN and merge the runs on both
+        // sides of it, so the walk checks for NaN once per batch before the
+        // first gallop and stays linear whenever a NaN lies ahead.
+        auto        same = [&](std::size_t p) { return f.sorted_leaf_id_at(xs, p, ood_id, fast) == id; };
+        std::size_t j    = i + 1; // same on [i, j)
+        while (j < n && j - i <= detail::small_run_cutoff && same(j))
             ++j;
+        if (j - i > detail::small_run_cutoff) {
+            if (!scanned) {
+                scanned = true;
+                // Stop at the first xs[p] > hi: it starts the aggregated
+                // out-of-domain suffix (see above), which covers any NaN
+                // past it, so scanning that suffix is wasted work.
+                for (std::size_t p = i; p < n && !(xs[p] > hi); ++p) {
+                    if (xs[p] != xs[p]) {
+                        first_nan = p;
+                        break;
+                    }
+                }
+            }
+            if (first_nan == n) {
+                // No NaN in [i, n): a gallop step cannot jump over one.
+                std::size_t k = j; // the run end lies in [j, k]
+                for (std::size_t step = detail::small_run_cutoff; k < n && same(k); step <<= 1) {
+                    j = k + 1;
+                    k += step;
+                }
+                k = std::min(k, n);
+                while (j < k) {
+                    const std::size_t mid = j + (k - j) / 2;
+                    if (same(mid))
+                        j = mid + 1;
+                    else
+                        k = mid;
+                }
+            } else {
+                // A NaN lies ahead: a gallop step can jump over it and merge
+                // the runs on both sides. Stay linear.
+                while (j < n && same(j))
+                    ++j;
+            }
+        }
         fn(id, i, j - i);
         i = j;
     }
