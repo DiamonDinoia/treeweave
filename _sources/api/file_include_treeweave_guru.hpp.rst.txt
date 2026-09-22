@@ -49,7 +49,7 @@ Combined-key rules, in one place:
 
 
 
-- Keys are fit-local ids with the fit's OWN sentinel FIRST folded, then offset per regime: ``key = (id == f.out_of_domain_id()) ? my_ood_bucket / : (range_base + id)``. The fold compares against the fit's own sentinel — never against an offset number. Lay the per-regime spaces back-to-back without holes (hank105's layout; the aggregated OOD bucket comes last).
+- Keys are fit-local ids with the fit's OWN sentinel FIRST folded, then offset per regime: ``key = (id == f.out_of_domain_id()) ? my_ood_bucket / : (range_base + id)``. The fold compares against the fit's own sentinel — never against an offset number. Lay the per-regime spaces back-to-back without holes; the aggregated OOD bucket comes last.
 
 - After the sort, ``rank[i]`` holds the packed slot of point i — the INVERSE permutation, which the writeback consumes directly: ``out[i] = packed_out[rank[i]]`` per output component (``gather``), unconditionally — every slot belongs to exactly one bin, so OOD buckets too. (``eval_scatter_sorted`` in ``<treeweave/eval_scatter.hpp>`` records the opposite, FORWARD permutation: its ``perm[k]`` is the original index of packed slot k.)
 
