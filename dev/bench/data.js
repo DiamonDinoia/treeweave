@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789993298930,
+  "lastUpdate": 1790601487717,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3460,6 +3460,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000473840333333333,
             "unit": "s/batch",
             "extra": "MdAPE=0.00760869777094228; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "11a2bdaab8db153b742385b7e3a992270c1304c7",
+          "message": "chore: drop the Hankel example and Bessel microbench, treeweave-functions owns them\n\nhank105 and imwofx live in treeweave-functions. The core repo keeps the fitter,\nso the H0(1) example, the 1d_bessel_j0 sweep and the comments that named the\ndownstream evaluators go. docs/guides/guru.rst keeps the link to the consumer.\n\nAssisted-by: Claude Opus 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-22T21:09:47Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/11a2bdaab8db153b742385b7e3a992270c1304c7"
+        },
+        "date": 1790601485947,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.0004852525,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00335022710094212; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.000759910444444444,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.01748663286748; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000362437111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00889653188666236; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.000508690375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00306148997423452; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00124696888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00129615380191586; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.0019038698,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0127098697500795; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.00597879255555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00798616648292151; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0006587113,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00547654155002658; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000191015875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000988468521003946; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000302908333333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00628816822978964; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000263774375,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00236888706484116; batch=65536 pts/call"
           }
         ]
       }
