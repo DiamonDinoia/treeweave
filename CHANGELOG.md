@@ -10,6 +10,12 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+### Changed
+- `TolKind::RelativeMax`, the default, now accepts a panel when
+  `max|p - f| <= tol * max|f|` on its sample grid, where `max|f|` is the
+  largest `|f|` sampled so far over the whole domain, instead of pointwise
+  relative. Functions with zeros now fit; leaf counts change.
+
 ### Fixed
 - `Function::leaf_id`'s descent-mode OOD gate used negative logic, letting
   `NaN` fall through to `get_linear_bin(NaN)` (a UB narrowing conversion plus
@@ -27,6 +33,9 @@ section verbatim into that release's GitHub Release notes.
 - `--no-tests=error` on every filtered `ctest -R` call in the workflow tree.
   `bf53bf7` added it to the three multiarch legs only, leaving nine calls
   across seven files that would turn into silent passes on a test rename.
+- `TolKind::RelativeTail` now scales the tail estimate by the largest panel
+  coefficient; previously it behaved as `AbsoluteTail`, so leaf counts change
+  for fits that used it.
 
 ### Added
 - `guru::LaneQuantizer<T, Arch>`: the SIMD lane-level twin of

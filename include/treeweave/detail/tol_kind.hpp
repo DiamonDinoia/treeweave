@@ -7,9 +7,9 @@ namespace treeweave {
 
 /// Tolerance interpretation for the tree's adaptive refinement.
 enum class TolKind : std::uint8_t {
-    RelativeTail = 0, ///< relative tail-coefficient estimate (1D only)
+    RelativeTail = 0, ///< tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only)
     AbsoluteTail = 1, ///< absolute tail-coefficient estimate (1D only)
-    RelativeMax  = 2, ///< sample-based, max-abs relative error
+    RelativeMax  = 2, ///< sample-based, max|p - f| <= tol * max|f| sampled over the domain; all-zero f needs p == f
     AbsoluteMax  = 3, ///< sample-based, max-abs absolute error
     RelativeL2   = 4, ///< sample-based, L2 relative error
     AbsoluteL2   = 5, ///< sample-based, L2 absolute error
@@ -39,6 +39,8 @@ struct TreeInput {
     /// Default 0: no forcing, tol-based refinement only.
     int     min_uniform_depth = 0;
     TolKind tol_kind          = TolKind::RelativeMax;
+    /// Running max|f| over every sample of this fit, the `RelativeMax` normaliser. The fit is serial: no atomic.
+    mutable double max_abs_f = 0.0;
 };
 
 /// Sample-grid resolution per axis used by sample-based tolerance kinds

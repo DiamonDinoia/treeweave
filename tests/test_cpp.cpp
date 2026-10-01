@@ -47,6 +47,24 @@ auto max_rel_err_1d(F1 &&exact, F2 &&approx, double a, double b, int n) -> doubl
     return mx;
 }
 
+// max|p - f| / max|f| on n + 1 uniform points of [a, b): the quantity the default `RelativeMax` bounds.
+template <class F1, class F2>
+auto max_norm_err_1d(F1 &&exact, F2 &&approx, double a, double b, int n) -> double {
+    double err = 0.0, fmax = 0.0;
+    for (int i = 0; i <= n; ++i) {
+        const double x  = std::min(a + (b - a) * i / n, std::nextafter(b, a));
+        const double y  = exact(x);
+        const double yh = approx(x);
+        // std::max(err, NaN) keeps err, so fold NaN/inf up front or it is dropped.
+        if (!std::isfinite(yh) || !std::isfinite(y))
+            return std::numeric_limits<double>::infinity();
+        err  = std::max(err, std::abs(yh - y));
+        fmax = std::max(fmax, std::abs(y));
+    }
+    // Relative to max|f|; only an all-zero exact function falls back to the absolute error.
+    return fmax > 0.0 ? err / fmax : err;
+}
+
 template <class F1, class F2>
 auto max_rel_err_2d(F1 &&exact, F2 &&approx, std::array<double, 2> a, std::array<double, 2> b, int n) -> double {
     std::mt19937                           gen(1);
@@ -95,6 +113,120 @@ TEST_CASE("degree-1 tail tolerance reads only the coefficient it has", "[treewea
         fit<1>(f, 0.0, 1.0, /*tol=*/1e-3,
                options{.tol_kind = treeweave::TolKind::AbsoluteTail, .max_depth = 4, .allow_max_depth_leaves = true});
     REQUIRE(std::isfinite(fn(0.5)));
+}
+
+TEST_CASE("tail tolerance reads the highest-degree coefficients", "[treeweave][tail]") {
+    // coeffs() is Horner order; the cubic's top coefficients are 0, c_0 = 1: the wrong end splits.
+    const auto opts  = options{.tol_kind = treeweave::TolKind::AbsoluteTail, .max_depth = 6};
+    auto       cubic = fit<8>([](double x) { return 1.0 + x - 2.0 * x * x * x; }, -1.0, 1.0, /*tol=*/1e-13, opts);
+    REQUIRE(cubic.num_leaves() == 1);
+    // exp: the degree-7 coefficient 1/7! exceeds tol, so the root must split.
+    auto ex = fit<8>([](double x) { return std::exp(x); }, -1.0, 1.0, /*tol=*/1e-10, opts);
+    REQUIRE(ex.num_leaves() > 1);
+}
+
+TEST_CASE("RelativeTail is scale invariant, AbsoluteTail is not", "[treeweave][tail]") {
+    constexpr double tol    = 1e-10;
+    auto             leaves = [](double s, treeweave::TolKind k) {
+        return fit<8>([s](double x) { return s * std::exp(x); }, -1.0, 1.0, tol, options{.tol_kind = k}).num_leaves();
+    };
+    using treeweave::TolKind;
+    const auto rel_big = leaves(1e6, TolKind::RelativeTail), rel_small = leaves(1e-6, TolKind::RelativeTail);
+    // AbsoluteTail at 1e6 never converges: 1e-10 < coefficient noise 1e6 * eps. The control uses 1e3.
+    const auto abs_big = leaves(1e3, TolKind::AbsoluteTail), abs_small = leaves(1e-6, TolKind::AbsoluteTail);
+    INFO("RelativeTail " << rel_big << " / " << rel_small << ", AbsoluteTail " << abs_big << " / " << abs_small);
+    REQUIRE(rel_big == rel_small);
+    REQUIRE(abs_big != abs_small); // control: an unscaled kind does see the scale
+
+    for (const double s : {1e6, 1e-6}) {
+        auto         f   = [s](double x) { return s * std::exp(x); };
+        auto         fn  = fit<8>(f, -1.0, 1.0, tol, options{.tol_kind = TolKind::RelativeTail});
+        const double err = max_norm_err_1d(f, fn, -1.0, 1.0, 1000);
+        INFO("scale " << s << ": max|p-f|/max|f| = " << err);
+        REQUIRE(err <= 10 * tol);
+    }
+
+    // All-zero panel: max_k |c_k| = 0 counts as converged.
+    REQUIRE(
+        fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol, options{.tol_kind = TolKind::RelativeTail}).num_leaves() ==
+        1);
+}
+
+TEST_CASE("RelativeMax is scale invariant, AbsoluteMax is not", "[treeweave][relmax]") {
+    constexpr double tol    = 1e-10;
+    auto             leaves = [](double s, treeweave::TolKind k) {
+        return fit<8>([s](double x) { return s * std::exp(x); }, -1.0, 1.0, tol, options{.tol_kind = k}).num_leaves();
+    };
+    using treeweave::TolKind;
+    const auto rel_big = leaves(1e6, TolKind::RelativeMax), rel_small = leaves(1e-6, TolKind::RelativeMax);
+    // AbsoluteMax at 1e6 never converges: 1e-10 < sample noise 1e6 * eps. The control uses 1e3.
+    const auto abs_big = leaves(1e3, TolKind::AbsoluteMax), abs_small = leaves(1e-6, TolKind::AbsoluteMax);
+    INFO("RelativeMax " << rel_big << " / " << rel_small << ", AbsoluteMax " << abs_big << " / " << abs_small);
+    REQUIRE(rel_big == rel_small);
+    REQUIRE(abs_big != abs_small); // control: an unscaled kind does see the scale
+
+    for (const double s : {1e6, 1e-6}) {
+        auto         f   = [s](double x) { return s * std::exp(x); };
+        auto         fn  = fit<8>(f, -1.0, 1.0, tol);
+        const double err = max_norm_err_1d(f, fn, -1.0, 1.0, 1000);
+        INFO("scale " << s << ": max|p-f|/max|f| = " << err);
+        REQUIRE(err <= 10 * tol);
+    }
+
+    // All-zero panel: max|p - f| = 0 = tol * max|f| counts as converged.
+    REQUIRE(fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol).num_leaves() == 1);
+}
+
+TEST_CASE("RelativeMax still rejects an unconverged panel", "[treeweave][relmax]") {
+    auto f      = [](double x) { return std::exp(10.0 * x); };
+    auto forced = fit(f, -1.0, 1.0, 1e-13, options{.max_depth = 0, .allow_max_depth_leaves = true});
+    REQUIRE(forced.non_converged_panels().size() == 1);
+    auto fn = fit(f, -1.0, 1.0, 1e-13);
+    INFO("leaves " << fn.num_leaves());
+    REQUIRE(fn.non_converged_panels().empty());
+}
+
+TEST_CASE("RelativeMax fits a function with zeros", "[treeweave][relmax]") {
+    // The largest |f| over the domain, not |f(x)|, normalises the error: zeros of cos are no obstacle.
+    constexpr double tol = 1e-13;
+    auto             f   = [](double x) { return std::cos(x); };
+    for (const double b : {101.0, 1001.0}) {
+        auto         fn  = fit(f, 1.0, b, tol);
+        const double err = max_norm_err_1d(f, fn, 1.0, b, 20000);
+        INFO("[1, " << b << "): leaves " << fn.num_leaves() << ", max|p-f|/max|f| = " << err);
+        REQUIRE(err <= 10 * tol);
+    }
+}
+
+TEST_CASE("RelativeMax on cos far from the origin: tol 1e-14 converges, tol 2e-15 is unreachable",
+          "[treeweave][relmax]") {
+    // Degree-8 polyfit Horner evaluation of cos near x ~ 64 bottoms out at
+    // max|p - f| ~ 3e-15 (max_abs_f = 1). tol 1e-14 lands above the floor;
+    // tol 2e-15 is below it, so the paneler subdivides until the leaf memory
+    // budget (4 MiB default) fires before convergence.
+    auto f = [](double x) { return std::cos(x); };
+
+    constexpr double tol_ok = 1e-14;
+    auto             fn     = fit(f, 1.0, 101.0, tol_ok);
+    const double     err    = max_norm_err_1d(f, fn, 1.0, 101.0, 20000);
+    INFO("tol " << tol_ok << ": leaves " << fn.num_leaves() << ", max|p-f|/max|f| = " << err);
+    REQUIRE(err <= 10 * tol_ok);
+
+    REQUIRE_THROWS_AS(fit(f, 1.0, 101.0, /*tol=*/2e-15), treeweave::MemoryBudgetExceeded);
+}
+
+TEST_CASE("RelativeMax normalises by the domain-wide max|f|, not per panel", "[treeweave][relmax]") {
+    // exp(-50x) falls to 2e-22 at x = 1. A global normaliser resolves the tail only to tol * max|f| absolute,
+    // so the pointwise relative error there exceeds tol. A per-panel normaliser needs 64 leaves and gets 6e-9 at x = 1.
+    constexpr double tol = 1e-8;
+    auto             f   = [](double x) { return std::exp(-50.0 * x); };
+    auto             fn  = fit(f, 0.0, 1.0, tol);
+    const double     err = max_norm_err_1d(f, fn, 0.0, 1.0, 20000);
+    const double     rel = std::abs(fn(1.0) - f(1.0)) / f(1.0);
+    INFO("leaves " << fn.num_leaves() << ", max|p-f|/max|f| = " << err << ", relative error at 1 = " << rel);
+    REQUIRE(err <= 10 * tol);
+    REQUIRE(fn.num_leaves() <= 16);
+    REQUIRE(rel > tol);
 }
 
 TEST_CASE("2D smooth polynomial, compile-time degree 8", "[treeweave][smooth][2d]") {
@@ -229,8 +361,15 @@ TEST_CASE("2D anisotropic gaussian bump", "[treeweave][2d][bump]") {
     };
     auto fn     = fit<10>(f, std::array{0.0, 0.0}, std::array{1.0, 1.0},
                           /*tol=*/1e-10);
-    auto approx = [&](std::array<double, 2> x) { return fn(x)[0]; };
-    REQUIRE(max_rel_err_2d(exact, approx, {0.001, 0.001}, {0.999, 0.999}, 5000) < 1e-6);
+    // max|f| = 1 and the default tol is relative to it, so the error bound is absolute; the tails fall to 1e-11.
+    std::mt19937                           gen(1);
+    std::uniform_real_distribution<double> d(0.0, 1.0);
+    bool                                   ok = true; // `<=` is false for NaN; std::max would drop it
+    for (int i = 0; i < 5000; ++i) {
+        const std::array<double, 2> x{d(gen), d(gen)};
+        ok = ok && std::abs(exact(x) - fn(x)[0]) <= 1e-9;
+    }
+    REQUIRE(ok);
 }
 
 TEST_CASE("sqrt|x - 0.5| -- not C^1, max_depth guards runaway", "[treeweave][sharp]") {
@@ -577,7 +716,7 @@ TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][la
     auto         f = [](double x) { return std::sin(1e-5 * x) + 0.25 * std::cos(3e-6 * x); };
 
     auto fn = fit<8>(f, a, b, /*tol=*/1e-9);
-    REQUIRE(max_rel_err_1d(f, fn, a + 1.0, b - 1.0, N_SAMPLE) < 1e-7);
+    REQUIRE(max_norm_err_1d(f, fn, a, b, N_SAMPLE) <= 1e-8);
     // OOD on the wide domain still NaNs cleanly.
     REQUIRE(std::isnan(fn(a - 1.0)));
     REQUIRE(std::isnan(fn(b + 1.0)));
@@ -995,5 +1134,93 @@ TEST_CASE("Scalar double input with array output routes through ND path", "[tree
     const auto out = fn(0.37);
     REQUIRE(out[0] == Catch::Approx(0.37 * 0.37).epsilon(1e-8));
     REQUIRE(out[1] == Catch::Approx(std::cos(0.37)).epsilon(1e-8));
+}
+
+TEST_CASE("NaN propagates through max_norm_err_1d, all-zero exact is safe", "[treeweave][helpers]") {
+    const auto nan = std::numeric_limits<double>::quiet_NaN();
+    auto       z   = [](double) { return 0.0; };
+    CHECK(std::isinf(max_norm_err_1d(z, [nan](double) { return nan; }, 0.0, 1.0, 100)));
+    CHECK(std::isinf(max_norm_err_1d([nan](double) { return nan; }, z, 0.0, 1.0, 100)));
+    // All-zero exact must not divide by zero: the result is plain max|p|.
+    CHECK(max_norm_err_1d(z, z, 0.0, 1.0, 100) == 0.0);
+    CHECK(max_norm_err_1d(z, [](double) { return 2.0; }, 0.0, 1.0, 100) == 2.0);
+    // |f| < 1: the error stays relative to max|f| (5e-10 / 1e-6), it is not clamped to an absolute one.
+    CHECK(max_norm_err_1d([](double) { return 1e-6; }, [](double) { return 1e-6 + 5e-10; }, 0.0, 1.0, 100) ==
+          Catch::Approx(5e-4).epsilon(1e-3));
+}
+
+TEST_CASE("Boundary sqrt singularity throws", "[treeweave][singularities]") {
+    auto singular = [](double x) { return std::sqrt(x); };
+    REQUIRE_THROWS_AS(treeweave::fit(singular, 0.0, 1.0, 1e-13), treeweave::MaxDepthExceeded);
+}
+
+namespace {
+// Stand-in for a polyfit: tail_error_exceeds_tol reads only the type aliases, NCOEFFS and coeffs().
+struct FakeFit {
+    using InputType  = double;
+    using OutputType = double;
+    static constexpr std::size_t NCOEFFS = 8;
+    std::array<double, NCOEFFS>  c{};
+    [[nodiscard]] auto coeffs() const -> const std::array<double, NCOEFFS> & { return c; }
+};
+} // namespace
+
+TEST_CASE("the tail check rejects any non-finite coefficient", "[treeweave][tail][nonfinite]") {
+    using treeweave::TolKind;
+    using treeweave::detail::tail_error_exceeds_tol;
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    for (const auto kind : {TolKind::RelativeTail, TolKind::AbsoluteTail}) {
+        FakeFit ok;
+        ok.c.back() = 1.0; // tail (c0, c1) is 0: converged
+        REQUIRE(!tail_error_exceeds_tol(kind, 1e-10, ok));
+        // Horner order: c0, c1 are the tail; c2..c7 are not, but the bad one must still reject.
+        // A finite coefficient after it must not hide it (std::max drops a NaN).
+        for (std::size_t i = 0; i < FakeFit::NCOEFFS; ++i) {
+            for (const double bad : {nan, inf}) {
+                FakeFit f = ok;
+                f.c[i]    = bad;
+                INFO("kind " << static_cast<int>(kind) << ", coefficient " << i << " = " << bad);
+                REQUIRE(tail_error_exceeds_tol(kind, 1e-10, f));
+            }
+        }
+    }
+}
+
+TEST_CASE("a non-finite sample never poisons the RelativeMax normaliser", "[treeweave][relmax][nonfinite]") {
+    // f is non-finite on [0, 0.5) and a wiggle no degree-8 panel of width 0.25 fits on [0.5, 2].
+    // If the inf sample raised max|f| to inf, the wiggle panels would pass unexamined.
+    for (const bool use_nan : {false, true}) {
+        auto f = [use_nan](double x) {
+            if (x < 0.5)
+                return use_nan ? std::numeric_limits<double>::quiet_NaN() : std::numeric_limits<double>::infinity();
+            return std::sin(200.0 * x);
+        };
+        auto fn = fit(f, 0.0, 2.0, 1e-8, options{.max_depth = 3, .allow_max_depth_leaves = true});
+        bool bad_low = false, bad_high = false;
+        for (const auto &p : fn.non_converged_panels()) {
+            bad_low  = bad_low || p.b[0] <= 0.5;
+            bad_high = bad_high || p.a[0] >= 0.5;
+        }
+        INFO((use_nan ? "NaN branch" : "inf branch"));
+        REQUIRE(bad_low);  // the non-finite region is flagged
+        REQUIRE(bad_high); // the finite, badly fitted region is still flagged
+    }
+}
+
+TEST_CASE("RelativeTail on degree-1/2 uses the sampled check", "[treeweave][tail][lowdegree]") {
+    // With NCOEFFS <= 2 the tail is the whole polynomial, so RelativeTail could never pass on a
+    // nonzero constant/linear: exact functions converge, an inexact one is still rejected.
+    using treeweave::TolKind;
+    const auto opts = options{.tol_kind = TolKind::RelativeTail};
+    auto       cst  = fit<1>([](double) { return 1e-12; }, 0.0, 1.0, 1e-10, opts);
+    REQUIRE(cst.num_leaves() == 1);
+    auto lin = fit<2>([](double x) { return 1.0 + 2.0 * x; }, 0.0, 1.0, 1e-10, opts);
+    REQUIRE(lin.num_leaves() == 1);
+    CHECK(lin(0.37) == Catch::Approx(1.0 + 2.0 * 0.37).epsilon(1e-8));
+
+    auto quad = fit<1>([](double x) { return x * x; }, 0.0, 1.0, 1e-10,
+                       options{.tol_kind = TolKind::RelativeTail, .max_depth = 0, .allow_max_depth_leaves = true});
+    REQUIRE(quad.non_converged_panels().size() == 1);
 }
 // NOLINTEND(cert-msc51-cpp,cert-msc32-c)

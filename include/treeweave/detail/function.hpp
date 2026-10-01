@@ -416,8 +416,8 @@ class Function {
 #endif
 
         // Aggregate any per-subtree non-converged panels. Default behaviour
-        // prints them to cerr and throws; opt-in keeps the list on the
-        // Function for `non_converged_panels()` introspection.
+        // throws; opt-in keeps the list on the Function for
+        // `non_converged_panels()` introspection.
         for (const auto &subtree : subtrees_)
             for (const auto &p : subtree.non_converged_panels())
                 non_converged_panels_.push_back(p);

@@ -17,13 +17,11 @@
 
 ## What it solves
 
-treeweave turns repeated calls to a costly function into a one-time fit plus fast polynomial evaluation.
-
-When `f(x)` is expensive but smooth on a bounded domain, treeweave samples it once, builds a compact polynomial approximation, and reuses that approximation for cheap lookups. The target is any workload that evaluates the same function many times: special functions, kernels, simulations, calibration models, table-backed interpolators.
+An expensive function becomes a few nanoseconds per call after a one-line fit, works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS.
 
 ## Benchmarks
 
-Each chart fits a Riemann-zeta sum on `[2, 10]` to `1e-10` with a naive algorithm, then compares against treeweave. Bars are Mevals/s on a log scale; higher is better.
+Each chart fits a Riemann-zeta sum on `[2, 10]` to a relative tolerance of `1e-10` with a naive algorithm, then compares against treeweave. Bars are Mevals/s on a log scale; higher is better.
 
 ### Single eval
 
@@ -39,11 +37,24 @@ Each chart fits a Riemann-zeta sum on `[2, 10]` to `1e-10` with a naive algorith
 
 See the [performance guide](https://diamondinoia.github.io/treeweave/guides/performance.html) for throughput and latency details.
 
-## What it is
+## When fit throws
 
-treeweave fits low-order polynomial panels on an adaptive tree. The fitted object is immutable. C++, C, Python, Julia, MATLAB/Octave, Fortran and JavaScript/TypeScript can all evaluate it.
+`fit` throws `MaxDepthExceeded` or `MemoryBudgetExceeded` when `f` has a singularity inside the domain or on its boundary.
+Typical cases are `sqrt` or `log` at an endpoint, and a kink or pole inside the domain.
+Singularities can use up the `max_depth` or `max_memory_mib` limits. A pole never fits. A kink or an endpoint singularity costs depth and may still fit: at an endpoint `sqrt` the panel error falls like the square root of the panel width. A `tol` below the double-precision floor is unreachable and uses up the limits. A split at a kink removes that source of non-smoothness.
 
-The fit covers `[a, b)`. Evaluation still accepts the closed interval `[a, b]`, because an input exactly at `b` lands in the last panel and returns a finite value. Pass `[a, b]` even when `f` is undefined at `b`. Inputs below `a`, inputs above `b`, and `NaN` or infinite inputs all return `NaN`.
+Remedies, in order of preference:
+- Shrink the domain to stay away from the singularity.
+- Subtract or factor out the singular part and fit the smooth remainder. The Hankel functions are fitted this way.
+- Set `allow_max_depth_leaves = true` to accept best-effort leaves, then inspect `non_converged_panels()`.
+
+```cpp
+auto singular = [](double x) { return std::sqrt(x); };
+REQUIRE_THROWS_AS(treeweave::fit(singular, 0.0, 1.0, 1e-13), treeweave::MaxDepthExceeded);
+
+auto zeros = [](double x) { return std::cos(x); };
+REQUIRE_NOTHROW(treeweave::fit(zeros, 1.0, 101.0, 1e-13));
+```
 
 ## Examples and install
 
@@ -98,22 +109,7 @@ int main() {
 }
 ```
 
-To install directly in CMake:
-
-```cmake
-include(FetchContent)
-FetchContent_Declare(
-    treeweave
-    GIT_REPOSITORY https://github.com/DiamonDinoia/treeweave.git
-    GIT_TAG stable # or any other release tag
-)
-
-FetchContent_MakeAvailable(treeweave)
-add_executable(my_app example.cpp)
-target_link_libraries(my_app PRIVATE treeweave::treeweave)
-```
-
-The CMake section below contains more details, or download `treeweave-cxx-headers.tar.gz` from
+See [CMake](#cmake) below for the `FetchContent`/CPM snippet, or download `treeweave-cxx-headers.tar.gz` from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases) and compile with
 `-std=c++20 -Iinclude`. Note: `treeweave::treeweave` exists in FetchContent/CPM (and
 tree-level `add_subdirectory`) builds; the *installed* export provides
@@ -121,38 +117,6 @@ tree-level `add_subdirectory`) builds; the *installed* export provides
 consolidated header tree for header-only C++ use.
 
 [C++ guide](https://diamondinoia.github.io/treeweave/guides/cpp.html)
-
-### Lower-level: the guru interface
-
-`<treeweave/guru.hpp>` is treeweave's guru interface (named after FFTW's guru interface,
-the established precedent for an expert API exposing the planner/executor internals). It
-re-exposes the batch pipeline's stages for caller-driven fusion: caller-owned scratch,
-caller-chosen keys, no per-call allocation. The public `sorted()` kernel dispatch itself
-runs on the canonical implementation shared with `guru::for_each_sorted_run`, so library
-and user code share one path.
-
-**The recipe** (the standard procedure this interface exists for). When one Function
-cannot fit the whole domain, this is the standard construction. First, split the domain
-into regimes: at singularities, at scale changes, anywhere the fit tree must get deep.
-Second, subtract or factor out the singular part so each regime's leftover is
-polynomial-friendly, fit each regime separately, and keep the analytically-known part as
-a cheap elementwise fixup. Third, at evaluation: one classify sweep computes each point's
-combined key (`key = range_base + leaf_id`; `guru::LaneQuantizer` is the SIMD lane-level
-twin of `leaf_id`, for folding the key in registers). One counting sort over those keys packs every
-regime's points into contiguous runs (`counting_sort`, or `histogram` +
-`exclusive_scan` + `scatter` split apart). Each packed run calls polyfit's SIMD kernel
-*plus* its regime's fixup while the data is still hot (`for_each_run` +
-`eval_leaf_aos/soa`, `fill_out_of_domain` on the out-of-domain bucket). A final
-`gather` through the sort's `rank` restores caller order. On fully sorted input skip the
-sort entirely (`for_each_sorted_run`: the leaf ids are monotone, so runs are already
-contiguous).
-
-Classification semantics — the positive-logic out-of-domain (OOD) gate, the
-`out_of_domain_id()` sentinel, the closed upper endpoint — match the public paths
-point-for-point.
-
-The tests (`tests/test_guru.cpp`) are the worked example of the recipe, including a
-two-fit combined-key sort with per-run fused post-processing.
 
 ### C
 
@@ -213,7 +177,7 @@ Pkg.add(url="https://github.com/DiamonDinoia/treeweave",
 
 [Julia guide](https://diamondinoia.github.io/treeweave/guides/julia.html)
 
-### MATLAB
+### MATLAB / Octave
 
 ```matlab
 zeta = @(x) sum((1:1000) .^ (-x(1)));
@@ -222,9 +186,7 @@ disp(approx(3.5));
 delete(approx);
 ```
 
-Install:
-
-With [mip](https://mip.sh/), from the [`mip-org/labs`](https://github.com/mip-org/mip-labs) channel:
+Install for MATLAB, with [mip](https://mip.sh/), from the [`mip-org/labs`](https://github.com/mip-org/mip-labs) channel:
 
 ```matlab
 mip install --channel mip-org/labs treeweave
@@ -248,18 +210,7 @@ addpath('treeweave-matlab-stable-linux-x64')
 Other platforms use the matching `treeweave-matlab-<version>-<platform>` asset from
 [Releases](https://github.com/DiamonDinoia/treeweave/releases).
 
-[MATLAB/Octave guide](https://diamondinoia.github.io/treeweave/guides/matlab.html)
-
-### Octave
-
-```matlab
-zeta = @(x) sum((1:1000) .^ (-x(1)));
-approx = treeweave(zeta, 2, 10, 1e-10);   % dim and out_dim are inferred
-disp(approx(3.5));
-delete(approx);
-```
-
-Install:
+Install for Octave, from source:
 
 ```bash
 VER=stable
@@ -348,6 +299,12 @@ npm install @flatironinstitute/treeweave
 
 Source builds, release channels, and package details are in the [install guide](https://diamondinoia.github.io/treeweave/install.html).
 
+## The contract
+
+- The domain `[a, b)` is fitted; `[a, b]` is evaluated. Points outside, `NaN`, or infinite input return `NaN`.
+- With the default `TolKind::RelativeMax`, `tol` is relative to the largest `|f|` over the domain, so zeros of `f` fit. `options::tol_kind` selects absolute, L2, or tail norms instead; L2 is per panel, and tail scales by the panel's largest coefficient.
+- Unmet tolerance throws `MaxDepthExceeded` or `MemoryBudgetExceeded`, by default, and never returns a silent bad fit. The opt-in `allow_max_depth_leaves = true` is the exception: it keeps unconverged leaves and lists them in `non_converged_panels()`.
+- The fitted object is immutable and thread-safe.
 
 ## CMake
 

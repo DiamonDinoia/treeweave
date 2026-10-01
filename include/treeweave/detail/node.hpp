@@ -73,18 +73,27 @@ class Node {
         constexpr bool kTailErrorSupported =
             !poly_eval::detail::hasTupleSize_v<input_type> && !poly_eval::detail::hasTupleSize_v<output_type>;
         const bool wants_tail = input.tol_kind == TolKind::RelativeTail || input.tol_kind == TolKind::AbsoluteTail;
-        if (wants_tail) {
-            if constexpr (kTailErrorSupported) {
-                if (tail_error_exceeds_tol(input.tol, polyfit))
+        if constexpr (kTailErrorSupported) {
+            // With NCOEFFS <= 2 the tail IS the whole polynomial, so
+            // RelativeTail can never pass on a nonzero function; use the
+            // sampled check, which is the meaningful criterion there.
+            const bool low_degree = input.tol_kind == TolKind::RelativeTail && poly_eval_type::NCOEFFS <= 2;
+            if (wants_tail && !low_degree) {
+                if (tail_error_exceeds_tol(input.tol_kind, input.tol, polyfit))
                     return rollback_and_fail();
-            } else {
+            } else if (sample_error_exceeds_tol(kFitSamplesPerDim,
+                                                low_degree ? TolKind::RelativeMax : input.tol_kind, input.tol,
+                                                input.max_abs_f, center, half_length, func, polyfit)) {
+                return rollback_and_fail();
+            }
+        } else {
+            if (wants_tail)
                 throw std::runtime_error("Treeweave fit error: TolKind::RelativeTail / AbsoluteTail "
                                          "is only supported for 1D scalar→scalar fits; use a "
                                          "sample-based TolKind for array-valued or ND fits");
-            }
-        } else if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, center, half_length, func,
-                                            polyfit)) {
-            return rollback_and_fail();
+            if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, input.max_abs_f, center,
+                                         half_length, func, polyfit))
+                return rollback_and_fail();
         }
 
         poly_eval_id_ = static_cast<std::uint32_t>(n_polyfit_before);

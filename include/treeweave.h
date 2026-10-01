@@ -69,7 +69,7 @@ extern "C" {
 typedef enum {
     TREEWEAVE_RELATIVE_TAIL = 0, /* relative tail-coefficient estimate (1D) */
     TREEWEAVE_ABSOLUTE_TAIL = 1, /* absolute tail-coefficient estimate (1D) */
-    TREEWEAVE_RELATIVE_MAX  = 2, /* sample-based, max-abs relative error    */
+    TREEWEAVE_RELATIVE_MAX  = 2, /* sample-based, max-abs err / global max|f| */
     TREEWEAVE_ABSOLUTE_MAX  = 3, /* sample-based, max-abs absolute error    */
     TREEWEAVE_RELATIVE_L2   = 4, /* sample-based, L2 relative error         */
     TREEWEAVE_ABSOLUTE_L2   = 5  /* sample-based, L2 absolute error         */

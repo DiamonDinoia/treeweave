@@ -71,9 +71,9 @@ constexpr auto version_at_least(int maj, int min, int pat) -> bool { return vers
 /// to a template parameter, so they stay plain data.
 struct options {
     /// How the convergence check interprets `tol`. The default
-    /// (`RelativeMax`) compares max-abs error on a sample grid against
-    /// `tol * max(|f|)`; switch to `Absolute*` when `f` can be zero or
-    /// when relative accuracy isn't meaningful.
+    /// (`RelativeMax`) compares the max-abs error on an 8^dim cell-centred
+    /// sample grid per panel against `tol` times the largest `|f|` sampled
+    /// over the whole domain, so zeros of `f` are fine.
     TolKind tol_kind = TolKind::RelativeMax;
     /// Tree-depth ceiling for the adaptive paneler. Hitting it without
     /// converging throws `MaxDepthExceeded` (or, with
