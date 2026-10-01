@@ -160,6 +160,18 @@ catch
 end
 check(ok, 'both flags errors');
 
+% Regression: eval on an empty batch reaches the MEX stub as NULL with n = 0
+% and must be a no-op. A heap write on this path corrupts the glibc arenas and
+% aborts MATLAB at exit ("free(): chunks in smallbin corrupted").
+y0 = o2.eval(zeros(0,2));
+check(isempty(y0), 'empty 2D batch returns empty');
+
+y0 = o1.eval(zeros(0,1));
+check(isempty(y0), 'empty 1D batch returns empty');
+
+y0 = o1(zeros(0,1), 'sorted', true);
+check(isempty(y0), 'empty sorted batch returns empty');
+
 delete(o1); delete(o2);
 
 fprintf('\n--- Results: %d passed, %d failed ---\n', passed, failed);

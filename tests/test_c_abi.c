@@ -976,23 +976,57 @@ static void test_zero_batch_noop(void) {
 
     /* n=0: must not read or write any data, must not crash. */
     /* Pass a non-null but tiny buffer to catch any off-by-one OOB. */
-    double x_sentinel = 0.5, y_sentinel = 0.0;
+    double x_sentinel = 0.5, y_sentinel = 1.25;
     treeweave_batch(h, &x_sentinel, &y_sentinel, 0);
     /* Output must be untouched by a zero-length batch. */
-    CHECK(y_sentinel == 0.0);
+    CHECK(y_sentinel == 1.25);
+
+    /* NULL pointers with n=0: exactly what the MATLAB MEX stub passes for an
+     * empty X (mxMalloc(0) output, NULL input). */
+    treeweave_batch(h, NULL, NULL, 0);
+    treeweave_sorted(h, NULL, NULL, 0);
 
     /* sorted and transposed n=0 as well. */
     treeweave_sorted(h, &x_sentinel, &y_sentinel, 0);
-    CHECK(y_sentinel == 0.0);
+    CHECK(y_sentinel == 1.25);
+
+    /* transposed needs output_dim > 1: build a (1, 3) handle and compare every
+     * SoA buffer after the call. Positive control: a single write to any
+     * buffer fails the test, even without a sanitizer. */
+    const double a3[1] = {0.0}, b3[1] = {1.0};
+    treeweave_t  h3 = treeweave_fit(k_1d_3, 1, 3, a3, b3, 1e-8, NULL, NULL);
+    CHECK(h3 != NULL);
+    if (h3 != NULL) {
+        double  c0 = 1.25, c1 = 2.5, c2 = 3.75;
+        double *soa[3] = {&c0, &c1, &c2};
+        double  x3[1] = {0.5};
+        treeweave_transposed(h3, x3, soa, 0);
+        CHECK(c0 == 1.25);
+        CHECK(c1 == 2.5);
+        CHECK(c2 == 3.75);
+        treeweave_free(h3);
+    }
+
+    /* 2D input with n=0: the configuration of the reported MEX crash. */
+    const double a2[2] = {0.0, -1.0}, b2[2] = {8.0, 1.0};
+    treeweave_t  h2 = treeweave_fit(k_2d_1, 2, 1, a2, b2, 1e-9, NULL, NULL);
+    CHECK(h2 != NULL);
+    if (h2 != NULL) {
+        double x2[2] = {0.5, 0.5}, y2 = 2.5;
+        treeweave_batch(h2, x2, &y2, 0);
+        CHECK(y2 == 2.5);
+        treeweave_batch(h2, NULL, NULL, 0);
+        treeweave_free(h2);
+    }
 
     /* f32 path. */
     const float af = 0.0F, bf = 1.0F;
     treeweave_t hf = treeweavef_fit(k_1d_1f, 1, 1, &af, &bf, 1e-5, NULL, NULL);
     CHECK(hf != NULL);
     if (hf != NULL) {
-        float xf = 0.5F, yf = 0.0F;
+        float xf = 0.5F, yf = 3.75F;
         treeweavef_batch(hf, &xf, &yf, 0);
-        CHECK(yf == 0.0F);
+        CHECK(yf == 3.75F);
         treeweave_free(hf);
     }
 

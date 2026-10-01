@@ -417,6 +417,34 @@ TEST_CASE("Batch vs single evaluation agree", "[treeweave][batch]") {
     }
 }
 
+TEST_CASE("Empty batch is a no-op on null and sentinel pointers", "[treeweave][batch][empty]") {
+    // The MATLAB MEX stub passes NULL with n = 0 when Xflat is empty
+    // (fit.eval(zeros(0, dim))). A heap write on this path corrupts the
+    // glibc arenas and aborts the host process at MEX unload.
+    auto fn1 = fit<8>([](double x) { return std::sin(4.0 * x); }, 0.0, 1.0, /*tol=*/1e-10);
+    fn1(static_cast<const double *>(nullptr), static_cast<double *>(nullptr), 0);
+    double x_sentinel = 0.5, y_sentinel = 0.0;
+    fn1(&x_sentinel, &y_sentinel, 0);
+    REQUIRE(y_sentinel == 0.0);
+    fn1.sorted(nullptr, nullptr, 0);
+    fn1.sorted(&x_sentinel, &y_sentinel, 0);
+    REQUIRE(y_sentinel == 0.0);
+
+    // 2D: the configuration of the reported crash.
+    auto fn2 = fit<8>([](std::array<double, 2> x) -> std::array<double, 1> { return {x[0] * x[1]}; },
+                      std::array{0.0, -1.0}, std::array{8.0, 1.0}, /*tol=*/1e-10);
+    fn2(nullptr, nullptr, 0);
+    double in2[2] = {0.5, 0.5};
+    double out2   = 0.0;
+    fn2(in2, &out2, 0);
+    REQUIRE(out2 == 0.0);
+
+    // SoA output path (output_dim > 1).
+    auto fn3 = fit<8>([](std::array<double, 1> x) -> std::array<double, 2> { return {x[0], x[0] * x[0]}; },
+                      std::array{0.0}, std::array{1.0}, /*tol=*/1e-10);
+    fn3(nullptr, std::array<double *, 2>{nullptr, nullptr}, 0);
+}
+
 TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batch][sorted]") {
     auto run = [](auto fn, double a, double b) {
         std::mt19937                           gen(7);
