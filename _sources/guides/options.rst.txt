@@ -90,7 +90,7 @@ Some bindings add convenience fields around the shared C ABI:
    * - Kind
      - Meaning
    * - ``RelativeMax`` *(default)*
-     - sample-grid max-abs error relative to ``max|f|``
+     - sample-grid max-abs error relative to the largest ``|f|`` sampled over the whole domain
    * - ``AbsoluteMax``
      - sample-grid max-abs absolute error
    * - ``RelativeL2``
@@ -102,6 +102,5 @@ Some bindings add convenience fields around the shared C ABI:
    * - ``AbsoluteTail``
      - 1-D only, absolute coefficient-tail estimate
 
-Switch to an ``Absolute*`` kind when ``f`` can be zero or when relative accuracy
-is not meaningful. In the C ABI these are the ``treeweave_tol_kind_t`` enum
+Switch to an ``Absolute*`` kind when relative accuracy is not meaningful. In the C ABI these are the ``treeweave_tol_kind_t`` enum
 values (``TREEWEAVE_RELATIVE_MAX`` …).

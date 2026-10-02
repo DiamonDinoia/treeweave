@@ -418,7 +418,7 @@ the C ABI’s CPU-selected degree.</p></td>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">RelativeMax</span></code> <em>(default)</em></p></td>
-<td><p>sample-grid max-abs error relative to <code class="docutils literal notranslate"><span class="pre">max|f|</span></code></p></td>
+<td><p>sample-grid max-abs error relative to the largest <code class="docutils literal notranslate"><span class="pre">|f|</span></code> sampled over the whole domain</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">AbsoluteMax</span></code></p></td>
 <td><p>sample-grid max-abs absolute error</p></td>
@@ -437,8 +437,7 @@ the C ABI’s CPU-selected degree.</p></td>
 </tr>
 </tbody>
 </table>
-<p>Switch to an <code class="docutils literal notranslate"><span class="pre">Absolute*</span></code> kind when <code class="docutils literal notranslate"><span class="pre">f</span></code> can be zero or when relative accuracy
-is not meaningful. In the C ABI these are the <code class="docutils literal notranslate"><span class="pre">treeweave_tol_kind_t</span></code> enum
+<p>Switch to an <code class="docutils literal notranslate"><span class="pre">Absolute*</span></code> kind when relative accuracy is not meaningful. In the C ABI these are the <code class="docutils literal notranslate"><span class="pre">treeweave_tol_kind_t</span></code> enum
 values (<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_MAX</span></code> …).</p>
 </section>
 </section>
