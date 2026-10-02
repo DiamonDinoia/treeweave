@@ -39,9 +39,9 @@ See the [performance guide](https://diamondinoia.github.io/treeweave/guides/perf
 
 ## When fit throws
 
-`fit` throws `MaxDepthExceeded` or `MemoryBudgetExceeded` when `f` has a singularity inside the domain or on its boundary.
+A singularity inside the domain or on its boundary can stop convergence and make `fit` throw `MaxDepthExceeded` or `MemoryBudgetExceeded`.
 Typical cases are `sqrt` or `log` at an endpoint, and a kink or pole inside the domain.
-Singularities can use up the `max_depth` or `max_memory_mib` limits. A pole never fits. A kink or an endpoint singularity costs depth and may still fit: at an endpoint `sqrt` the panel error falls like the square root of the panel width. A `tol` below the double-precision floor is unreachable and uses up the limits. A split at a kink removes that source of non-smoothness.
+Singularities can use up the `max_depth` or `max_memory_mib` limits. But sampled checks cannot always detect a pole, so a loose `tol` may accept a panel that hides one; the fit then returns without error. A kink or an endpoint singularity costs depth and may still fit: at an endpoint `sqrt` the panel error falls like the square root of the panel width. How far `tol` can go depends on the function, the domain, and the evaluation. Fits that are exact, such as `f = 0`, can converge below machine epsilon; a hard function may not reach the double-precision floor before it uses up the limits. A split at a kink removes that source of non-smoothness.
 
 Remedies, in order of preference:
 - Shrink the domain to stay away from the singularity.
@@ -177,6 +177,9 @@ Pkg.add(url="https://github.com/DiamonDinoia/treeweave",
 
 [Julia guide](https://diamondinoia.github.io/treeweave/guides/julia.html)
 
+<a id="matlab"></a>
+<a id="octave"></a>
+
 ### MATLAB / Octave
 
 ```matlab
@@ -302,7 +305,7 @@ Source builds, release channels, and package details are in the [install guide](
 ## The contract
 
 - The domain `[a, b)` is fitted; `[a, b]` is evaluated. Points outside, `NaN`, or infinite input return `NaN`.
-- With the default `TolKind::RelativeMax`, `tol` is relative to the largest `|f|` over the domain, so zeros of `f` fit. `options::tol_kind` selects absolute, L2, or tail norms instead; L2 is per panel, and tail scales by the panel's largest coefficient.
+- With the default `TolKind::RelativeMax`, `tol` is relative to the largest `|f|` over the domain, so zeros of `f` fit. `options::tol_kind` selects absolute, L2, or tail norms instead; L2 is per panel. Among the tail kinds, only `RelativeTail` scales `tol` by the panel's largest coefficient; `AbsoluteTail` compares the tail directly with `tol`. Exception: `RelativeTail` with a fit of 1 or 2 coefficients falls back to sampled `RelativeMax` scaled by the running domain-wide max|f|, since the tail is then the whole polynomial.
 - Unmet tolerance throws `MaxDepthExceeded` or `MemoryBudgetExceeded`, by default, and never returns a silent bad fit. The opt-in `allow_max_depth_leaves = true` is the exception: it keeps unconverged leaves and lists them in `non_converged_panels()`.
 - The fitted object is immutable and thread-safe.
 

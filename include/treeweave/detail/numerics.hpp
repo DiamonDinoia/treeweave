@@ -74,13 +74,6 @@ auto tail_error_exceeds_tol(TolKind tol_type, double tol, const Polyfit &polyfit
                                   "use a sample-based tol_type for array-valued or ND fits");
     static_assert(output_dim == 1, "tail_error only implemented for single output in 1D");
 
-    // RelativeTail on a constant/linear fit can never pass: the tail is the whole polynomial. node.hpp
-    // routes those fits to the sampled check, so reaching here is a bug, not a silent accept.
-    if constexpr (Polyfit::NCOEFFS <= 2) {
-        if (tol_type == TolKind::RelativeTail)
-            throw std::logic_error("tail_error_exceeds_tol: RelativeTail needs more than 2 coefficients");
-    }
-
     // A one-coefficient fit is a constant, so its single coefficient is the
     // whole tail and `coeffs[1]` would read past the buffer. `.data()` keeps the
     // array extent out of the type: GCC folds the identical instantiations of

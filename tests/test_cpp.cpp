@@ -61,8 +61,10 @@ auto max_norm_err_1d(F1 &&exact, F2 &&approx, double a, double b, int n) -> doub
         err  = std::max(err, std::abs(yh - y));
         fmax = std::max(fmax, std::abs(y));
     }
-    // Relative to max|f|; only an all-zero exact function falls back to the absolute error.
-    return fmax > 0.0 ? err / fmax : err;
+    // Relative to max|f|; an all-zero reference matches `RelativeMax`: 0 iff the error is 0, else inf.
+    if (fmax > 0.0)
+        return err / fmax;
+    return err == 0.0 ? 0.0 : std::numeric_limits<double>::infinity();
 }
 
 template <class F1, class F2>
@@ -146,10 +148,11 @@ TEST_CASE("RelativeTail is scale invariant, AbsoluteTail is not", "[treeweave][t
         REQUIRE(err <= 10 * tol);
     }
 
-    // All-zero panel: max_k |c_k| = 0 counts as converged.
-    REQUIRE(
-        fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol, options{.tol_kind = TolKind::RelativeTail}).num_leaves() ==
-        1);
+    // All-zero panel: max_k |c_k| = 0 counts as converged, and the fit evaluates to exactly 0.
+    auto zero_tail = fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol, options{.tol_kind = TolKind::RelativeTail});
+    REQUIRE(zero_tail.num_leaves() == 1);
+    for (const double x : {-0.75, 0.0, 0.25, 0.9})
+        REQUIRE(zero_tail(x) == 0.0);
 }
 
 TEST_CASE("RelativeMax is scale invariant, AbsoluteMax is not", "[treeweave][relmax]") {
@@ -173,8 +176,11 @@ TEST_CASE("RelativeMax is scale invariant, AbsoluteMax is not", "[treeweave][rel
         REQUIRE(err <= 10 * tol);
     }
 
-    // All-zero panel: max|p - f| = 0 = tol * max|f| counts as converged.
-    REQUIRE(fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol).num_leaves() == 1);
+    // All-zero panel: max|p - f| = 0 = tol * max|f| counts as converged, and the fit evaluates to exactly 0.
+    auto zero_max = fit<8>([](double) { return 0.0; }, -1.0, 1.0, tol);
+    REQUIRE(zero_max.num_leaves() == 1);
+    for (const double x : {-0.75, 0.0, 0.25, 0.9})
+        REQUIRE(zero_max(x) == 0.0);
 }
 
 TEST_CASE("RelativeMax still rejects an unconverged panel", "[treeweave][relmax]") {
@@ -423,26 +429,31 @@ TEST_CASE("Empty batch is a no-op on null and sentinel pointers", "[treeweave][b
     // glibc arenas and aborts the host process at MEX unload.
     auto fn1 = fit<8>([](double x) { return std::sin(4.0 * x); }, 0.0, 1.0, /*tol=*/1e-10);
     fn1(static_cast<const double *>(nullptr), static_cast<double *>(nullptr), 0);
-    double x_sentinel = 0.5, y_sentinel = 0.0;
+    double x_sentinel = 0.5, y_sentinel = 1.25;
     fn1(&x_sentinel, &y_sentinel, 0);
-    REQUIRE(y_sentinel == 0.0);
+    REQUIRE(y_sentinel == 1.25);
     fn1.sorted(nullptr, nullptr, 0);
     fn1.sorted(&x_sentinel, &y_sentinel, 0);
-    REQUIRE(y_sentinel == 0.0);
+    REQUIRE(y_sentinel == 1.25);
 
     // 2D: the configuration of the reported crash.
     auto fn2 = fit<8>([](std::array<double, 2> x) -> std::array<double, 1> { return {x[0] * x[1]}; },
                       std::array{0.0, -1.0}, std::array{8.0, 1.0}, /*tol=*/1e-10);
     fn2(nullptr, nullptr, 0);
     double in2[2] = {0.5, 0.5};
-    double out2   = 0.0;
+    double out2   = 2.5;
     fn2(in2, &out2, 0);
-    REQUIRE(out2 == 0.0);
+    REQUIRE(out2 == 2.5);
 
     // SoA output path (output_dim > 1).
     auto fn3 = fit<8>([](std::array<double, 1> x) -> std::array<double, 2> { return {x[0], x[0] * x[0]}; },
                       std::array{0.0}, std::array{1.0}, /*tol=*/1e-10);
     fn3(nullptr, std::array<double *, 2>{nullptr, nullptr}, 0);
+    double in3[1]  = {0.5};
+    double out3[2] = {1.25, 3.75};
+    fn3(in3, std::array<double *, 2>{&out3[0], &out3[1]}, 0);
+    REQUIRE(out3[0] == 1.25);
+    REQUIRE(out3[1] == 3.75);
 }
 
 TEST_CASE("Sorted-1D batch matches unsorted batch and scalar", "[treeweave][batch][sorted]") {
@@ -1169,9 +1180,9 @@ TEST_CASE("NaN propagates through max_norm_err_1d, all-zero exact is safe", "[tr
     auto       z   = [](double) { return 0.0; };
     CHECK(std::isinf(max_norm_err_1d(z, [nan](double) { return nan; }, 0.0, 1.0, 100)));
     CHECK(std::isinf(max_norm_err_1d([nan](double) { return nan; }, z, 0.0, 1.0, 100)));
-    // All-zero exact must not divide by zero: the result is plain max|p|.
+    // All-zero exact must not divide by zero: the result is 0 when the error is 0, else inf.
     CHECK(max_norm_err_1d(z, z, 0.0, 1.0, 100) == 0.0);
-    CHECK(max_norm_err_1d(z, [](double) { return 2.0; }, 0.0, 1.0, 100) == 2.0);
+    CHECK(std::isinf(max_norm_err_1d(z, [](double) { return 2.0; }, 0.0, 1.0, 100)));
     // |f| < 1: the error stays relative to max|f| (5e-10 / 1e-6), it is not clamped to an absolute one.
     CHECK(max_norm_err_1d([](double) { return 1e-6; }, [](double) { return 1e-6 + 5e-10; }, 0.0, 1.0, 100) ==
           Catch::Approx(5e-4).epsilon(1e-3));

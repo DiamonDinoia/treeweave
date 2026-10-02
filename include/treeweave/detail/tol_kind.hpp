@@ -7,7 +7,9 @@ namespace treeweave {
 
 /// Tolerance interpretation for the tree's adaptive refinement.
 enum class TolKind : std::uint8_t {
-    RelativeTail = 0, ///< tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only)
+    RelativeTail = 0, ///< tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only).
+                      ///< Exception: with a fit of 1 or 2 coefficients the tail is the whole polynomial, so this
+                      ///< falls back to sampled RelativeMax scaled by the running domain-wide max|f|.
     AbsoluteTail = 1, ///< absolute tail-coefficient estimate (1D only)
     RelativeMax  = 2, ///< sample-based, max|p - f| <= tol * max|f| sampled over the domain; all-zero f needs p == f
     AbsoluteMax  = 3, ///< sample-based, max-abs absolute error

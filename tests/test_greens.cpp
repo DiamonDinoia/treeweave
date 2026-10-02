@@ -87,8 +87,10 @@ auto max_norm_err_nd(Exact &&ex, Approx &&ap, std::array<double, DIM> a, std::ar
         err  = std::max(err, std::abs(y - yh));
         fmax = std::max(fmax, std::abs(y));
     }
-    // Relative to max|f|; only an all-zero exact function falls back to the absolute error.
-    return fmax > 0.0 ? err / fmax : err;
+    // Relative to max|f|; an all-zero reference matches `RelativeMax`: 0 iff the error is 0, else inf.
+    if (fmax > 0.0)
+        return err / fmax;
+    return err == 0.0 ? 0.0 : std::numeric_limits<double>::infinity();
 }
 
 } // namespace
@@ -103,12 +105,12 @@ TEST_CASE("NaN propagates through max_norm_err_nd, all-zero exact is safe", "[tr
     const double err_nan_exact  = max_norm_err_nd<2>(n, z, lo, hi, 100, 3);
     CHECK(std::isinf(err_nan_approx));
     CHECK(std::isinf(err_nan_exact));
-    // All-zero exact must not divide by zero: the result is plain max|p|.
+    // All-zero exact with nonzero error must not pass: 0 iff err is 0, else inf (matches `RelativeMax`).
     auto         two      = [](std::array<double, 2>) { return 2.0; };
     const double err_zero = max_norm_err_nd<2>(z, z, lo, hi, 100, 3);
     const double err_two  = max_norm_err_nd<2>(z, two, lo, hi, 100, 3);
     CHECK(err_zero == 0.0);
-    CHECK(err_two == 2.0);
+    CHECK(std::isinf(err_two));
     // |f| < 1: the error stays relative to max|f| (5e-10 / 1e-6), it is not clamped to an absolute one.
     auto small   = [](std::array<double, 2>) { return 1e-6; };
     auto shifted = [](std::array<double, 2>) { return 1e-6 + 5e-10; };
