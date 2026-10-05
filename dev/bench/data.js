@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790601487717,
+  "lastUpdate": 1791208879314,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3548,6 +3548,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000263774375,
             "unit": "s/batch",
             "extra": "MdAPE=0.00236888706484116; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "3576a360bbf2a9968443acaa35b191ceae5cdddd",
+          "message": "fix: address review findings on tolerance docs, zero-reference helpers and empty-batch sentinels",
+          "timestamp": "2026-10-02T15:16:13Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/3576a360bbf2a9968443acaa35b191ceae5cdddd"
+        },
+        "date": 1791208878390,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000644865111111111,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00875024029094233; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.00114522833333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0105934190366492; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.0006115595,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00216493267897142; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.000998124,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00241332662462678; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00238692888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00412797093172548; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.00484058455555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00548011076006549; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.009115241125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00632990495509325; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.0013963445,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00511937346700433; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.0002987485,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00316735777962968; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.000592123333333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00452019573691634; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000533202,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0157662467908168; batch=65536 pts/call"
           }
         ]
       }
