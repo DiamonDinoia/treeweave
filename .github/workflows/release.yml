@@ -651,3 +651,112 @@ jobs:
             -f tag="v${{ inputs.version }}" \
             -f repo="${{ github.repository }}"
           echo "::notice::dispatched julia-smoke.yml for v${{ inputs.version }} (prebuilt-download path across all OS/arch). Watch it under the Actions tab; it does not gate the release."
+
+  # Rolling `stable` release (issue #50): the docs install snippets use
+  # VER=stable, so these URLs must always resolve to the newest release:
+  #   .../releases/download/stable/treeweave-stable-<platform>.tar.gz
+  #   .../releases/download/stable/treeweave-matlab-stable-<platform>.tar.gz
+  #   .../archive/refs/heads/stable.tar.gz          (source archive)
+  # Mirrors the unstable-headers.yml pattern: ONE release with the fixed tag
+  # `stable`, edited in place, assets clobbered under the `stable` name.
+  # `gh release create stable` creates the tag `stable`; a later run only
+  # edits the release in place, so the tag would stay behind at the first
+  # release's commit while assets move on. The step therefore force-moves the
+  # tag AND the branch to the new release tag in one step and verifies they
+  # agree via ls-remote. Both refs must move: a tag wins `git checkout stable`
+  # and `git rev-parse stable` when they diverge (the checkout goes detached
+  # at the tag), so a stale tag would silently pin GIT_TAG stable /
+  # CPMAddPackage(@stable) FetchContent consumers to an old release.
+  stable-release:
+    name: Refresh stable release + refs
+    needs: [preflight, github-release]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          persist-credentials: true
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish the rolling stable release and move the stable refs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="${{ github.repository }}"
+          ver="${{ inputs.version }}"
+          git fetch origin "refs/tags/v$ver"
+
+          # (a) Build the manifest: the v$ver bundle assets on GitHub (checked
+          # assignment) must equal the local renamed set. Fail BEFORE any
+          # remote change if the set is empty or incomplete.
+          expected=$(gh release view "v$ver" --repo "$repo" --json assets \
+            --jq '.assets[].name | select(test("^treeweave-(matlab-)?'"$ver"'-.*\\.(tar\\.gz|zip)$"))' \
+            | sed "s/-$ver-/-stable-/" | sort)
+          [ -n "$expected" ] || { echo "::error::no v$ver bundle assets found on release v$ver"; exit 1; }
+          mkdir -p stable-assets
+          rm -f stable-assets/*
+          for f in artifacts/treeweave{,"-matlab"}-"$ver"-*.tar.gz artifacts/treeweave{,"-matlab"}-"$ver"-*.zip; do
+            [ -e "$f" ] || continue
+            cp "$f" "stable-assets/$(basename "$f" | sed "s/-$ver-/-stable-/")"
+          done
+          actual=$(find stable-assets -maxdepth 1 -type f -printf '%f\n' | sort)
+          echo "manifest:"; echo "$actual"
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::local bundles do not match the v$ver release assets"
+            diff <(echo "$expected") <(echo "$actual") || :
+            exit 1
+          fi
+
+          # (b) Prove both refs will be accepted before changing anything.
+          git push --atomic --dry-run -f origin "v$ver:refs/tags/stable" \
+            "$(git rev-parse "v$ver^{commit}"):refs/heads/stable"
+
+          # (c) Create the rolling release once (--latest=false keeps the
+          # versioned release as GitHub's latest), then clobber-upload.
+          if ! gh release view stable --repo "$repo" >/dev/null 2>&1; then
+            gh release create stable --repo "$repo" --latest=false \
+              --title "treeweave stable" \
+              --notes "Rolling release tracking the newest tagged treeweave release (issue #50). Assets are the v<version> release files renamed to treeweave-stable-*. Pin a version with a vX.Y.Z tag instead."
+          fi
+          gh release upload stable --repo "$repo" --clobber stable-assets/*
+          # Residual window: a failure between (c) and (d) leaves new binaries
+          # next to old refs; rerunning the job repairs it.
+
+          # (d) Move tag and branch together. Force: a release does not need to
+          # fast-forward the previous stable refs. A branch ref must point at a
+          # commit, so push the peeled commit of the annotated tag.
+          git push --atomic -f origin "v$ver:refs/tags/stable" \
+            "$(git rev-parse "v$ver^{commit}"):refs/heads/stable"
+
+          # (e) Delete assets this run no longer uploads (checked enumeration,
+          # no word splitting).
+          assets=$(gh release view stable --repo "$repo" --json assets --jq '.assets[].name')
+          echo "$assets" | while IFS= read -r a; do
+            [ -e "stable-assets/$a" ] || gh release delete-asset stable "$a" --repo "$repo" -y
+          done
+
+          # (f) Verify the refs and that the release asset set is the manifest.
+          tag_sha=$(git ls-remote origin "refs/tags/stable^{}" | cut -f1)
+          [ -n "$tag_sha" ] || tag_sha=$(git ls-remote origin refs/tags/stable | cut -f1)
+          branch_sha=$(git ls-remote origin refs/heads/stable | cut -f1)
+          release_sha=$(git rev-parse "v$ver^{commit}")
+          final_assets=$(gh release view stable --repo "$repo" --json assets --jq '.assets[].name' | sort)
+          echo "tag=$tag_sha branch=$branch_sha release=$release_sha"
+          if [ "$tag_sha" != "$release_sha" ] || [ "$branch_sha" != "$release_sha" ]; then
+            echo "::error::refs/tags/stable and refs/heads/stable must both equal v$ver"
+            exit 1
+          fi
+          if [ "$final_assets" != "$expected" ]; then
+            echo "::error::stable release assets differ from the manifest"
+            diff <(echo "$expected") <(echo "$final_assets") || :
+            exit 1
+          fi
