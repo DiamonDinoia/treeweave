@@ -1202,6 +1202,15 @@ struct FakeFit {
     std::array<double, NCOEFFS>  c{};
     [[nodiscard]] auto coeffs() const -> const std::array<double, NCOEFFS> & { return c; }
 };
+
+// Stand-in for a polyfit on the sampled path: sample_error_exceeds_tol reads
+// the type aliases and calls operator()(sample_point) for grid points.
+struct FakeSampleFit {
+    using InputType  = double;
+    using OutputType = double;
+    std::function<double(double)> approx;
+    auto                          operator()(double x) const -> double { return approx(x); }
+};
 } // namespace
 
 TEST_CASE("the tail check rejects any non-finite coefficient", "[treeweave][tail][nonfinite]") {
@@ -1261,5 +1270,202 @@ TEST_CASE("RelativeTail on degree-1/2 uses the sampled check", "[treeweave][tail
     auto quad = fit<1>([](double x) { return x * x; }, 0.0, 1.0, 1e-10,
                        options{.tol_kind = TolKind::RelativeTail, .max_depth = 0, .allow_max_depth_leaves = true});
     REQUIRE(quad.non_converged_panels().size() == 1);
+}
+
+namespace {
+// n_sample_1d = 8 grid on [1, 3] (center 2, half 1): sample i is
+// 1.125 + 0.25 * i, so the sentinel lookup is exact in double.
+constexpr int    kTestSamples = 8;
+constexpr double kCenter = 2.0, kHalf = 1.0;
+double           kTestGridPoint(std::size_t i) { return 1.125 + 0.25 * static_cast<double>(i); }
+
+// Runs the checker with the reference closed over `ref` and every grid point
+// approximated by `ref(x) + err_of(x)`. Returns the checker verdict.
+template <class Ref, class Err>
+bool sample_tol_check(treeweave::TolKind kind, double tol, Ref ref, Err err_of) {
+    double        max_abs_f = 0.0;
+    auto          func      = [ref](double x) { return ref(x); };
+    FakeSampleFit fit{[ref, err_of](double x) { return ref(x) + err_of(x); }};
+    return treeweave::detail::sample_error_exceeds_tol(kTestSamples, kind, tol, max_abs_f, kCenter, kHalf, func, fit);
+}
+} // namespace
+
+TEST_CASE("the RelativeL2 check scales the norm, no overflow or underflow", "[treeweave][rell2][scaled]") {
+    using treeweave::TolKind;
+    // Distinct well-fitted grid values: err = 1e-3 * f, so the L2 ratio is 1e-3.
+    // A long-double reference over the same grid gives the oracle ratio.
+    const std::array<double, kTestSamples> base{1.0, 1.7, 2.3, 3.1, 3.9, 4.7, 5.3, 5.9};
+    const auto                             ref_of = [&base](double x) {
+        for (std::size_t i = 0; i < kTestSamples; ++i)
+            if (x == kTestGridPoint(i))
+                return base[i];
+        return 0.0;
+    };
+    for (const double mag : {1e200, 1e-200}) {
+        auto        ref     = [mag, ref_of](double x) { return mag * ref_of(x); };
+        auto        err_of  = [mag, ref_of](double x) { return 1e-3 * mag * ref_of(x); };
+        long double ssq_err = 0.0L, ssq_f = 0.0L;
+        for (std::size_t i = 0; i < kTestSamples; ++i) {
+            const long double f = static_cast<long double>(mag) * base[i];
+            const long double e = 1e-3L * f;
+            ssq_err += e * e;
+            ssq_f += f * f;
+        }
+        const long double oracle = std::sqrt(ssq_err / ssq_f);
+        INFO("magnitude " << mag << ", oracle relative L2 " << static_cast<double>(oracle));
+        REQUIRE(sample_tol_check(TolKind::RelativeL2, 2e-3, ref, err_of) == (oracle > 2e-3L));
+        REQUIRE(sample_tol_check(TolKind::RelativeL2, 5e-4, ref, err_of) == (oracle > 5e-4L));
+    }
+    // Strict check: sample magnitudes grow by 1e8 per step, so the running
+    // scale rescales at every sample. Bisect tol until the verdict flips to
+    // recover the computed relative L2; compare against a long double oracle
+    // within a few ulps. A wrong rescale factor (ssq*r instead of ssq*r*r)
+    // moves the result far outside this window.
+    {
+        const std::array<double, kTestSamples> grow{1e0, 1e8, 1e16, 1e24, 1e32, 1e40, 1e48, 1e56};
+        const auto                             grow_of = [&grow](double x) {
+            for (std::size_t i = 0; i < kTestSamples; ++i)
+                if (x == kTestGridPoint(i))
+                    return grow[i];
+            return 0.0;
+        };
+        auto        err_of  = [grow_of](double x) { return 3e-3 * grow_of(x); };
+        long double osq_err = 0.0L, osq_f = 0.0L;
+        for (std::size_t i = 0; i < kTestSamples; ++i) {
+            const double      fd = grow[i];
+            const long double f  = static_cast<long double>(fd);
+            // The checker sees (f + e) - f, rounded in double, not e itself.
+            const long double e = static_cast<long double>(std::abs((fd + 3e-3 * fd) - fd));
+            osq_err += e * e;
+            osq_f += f * f;
+        }
+        const long double expected = std::sqrt(osq_err / osq_f);
+        // Bisect: sample_tol_check is monotone in tol (true below the norm,
+        // false at or above it). 200 iterations reach ulp-level precision.
+        double lo = 0.0, hi = 1.0;
+        for (int iter = 0; iter < 200; ++iter) {
+            const double mid = 0.5 * (lo + hi);
+            if (sample_tol_check(TolKind::RelativeL2, mid, grow_of, err_of))
+                lo = mid;
+            else
+                hi = mid;
+        }
+        const double      got = 0.5 * (lo + hi);
+        const long double ulp = std::numeric_limits<double>::epsilon() * static_cast<long double>(std::abs(got));
+        INFO("bisected relative L2 " << got << ", oracle " << static_cast<double>(expected));
+        REQUIRE(std::abs(static_cast<long double>(got) - expected) <= 8.0L * ulp);
+    }
+}
+
+TEST_CASE("the AbsoluteL2 check scales the norm, no overflow or underflow", "[treeweave][absl2][scaled]") {
+    using treeweave::TolKind;
+    const std::array<double, kTestSamples> fbase{1.1, 1.9, 2.6, 3.4, 4.2, 4.9, 5.7, 6.1};
+    const std::array<double, kTestSamples> ebase{1.3, 0.7, 2.1, 0.9, 1.7, 0.3, 1.1, 1.9};
+    const auto                             ref_of = [&fbase](double x) {
+        for (std::size_t i = 0; i < kTestSamples; ++i)
+            if (x == kTestGridPoint(i))
+                return fbase[i];
+        return 0.0;
+    };
+    const auto err_base_of = [&ebase](double x) {
+        for (std::size_t i = 0; i < kTestSamples; ++i)
+            if (x == kTestGridPoint(i))
+                return ebase[i];
+        return 0.0;
+    };
+    for (const double mag : {1e200, 1e-200}) {
+        auto        ref    = [mag, ref_of](double x) { return mag * ref_of(x); };
+        auto        err_of = [mag, err_base_of](double x) { return mag * err_base_of(x); };
+        long double ssq    = 0.0L;
+        for (std::size_t i = 0; i < kTestSamples; ++i) {
+            const long double e = static_cast<long double>(mag) * ebase[i];
+            ssq += e * e;
+        }
+        const long double oracle = std::sqrt(ssq) / static_cast<long double>(kTestSamples);
+        INFO("magnitude " << mag << ", oracle absolute L2 " << static_cast<long double>(oracle));
+        REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 2.0 * static_cast<double>(oracle), ref, err_of) == false);
+        REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 0.5 * static_cast<double>(oracle), ref, err_of) == true);
+    }
+    // Strict check: error magnitudes grow by 1e8 per step, so the running
+    // scale rescales at every sample. Bisect tol until the verdict flips to
+    // recover the computed absolute L2; compare against a long double oracle
+    // within a few ulps. A wrong rescale factor (ssq*r instead of ssq*r*r)
+    // moves the result far outside this window.
+    {
+        const std::array<double, kTestSamples> egrow{1e0, 1e8, 1e16, 1e24, 1e32, 1e40, 1e48, 1e56};
+        const auto                             err_of = [&egrow](double x) {
+            for (std::size_t i = 0; i < kTestSamples; ++i)
+                if (x == kTestGridPoint(i))
+                    return egrow[i];
+            return 0.0;
+        };
+        auto        ref_none = [](double) { return 1.0; };
+        long double osq      = 0.0L;
+        for (std::size_t i = 0; i < kTestSamples; ++i) {
+            const double      ed = egrow[i];
+            const long double e  = static_cast<long double>(std::abs((1.0 + ed) - 1.0));
+            osq += e * e;
+        }
+        const long double expected = std::sqrt(osq) / static_cast<long double>(kTestSamples);
+        // Bisect: sample_tol_check is monotone in tol (true below the norm,
+        // false at or above it). 200 iterations reach ulp-level precision.
+        const double scale = static_cast<double>(expected);
+        double       lo = 0.0, hi = 4.0 * scale;
+        for (int iter = 0; iter < 200; ++iter) {
+            const double mid = 0.5 * (lo + hi);
+            if (sample_tol_check(TolKind::AbsoluteL2, mid, ref_none, err_of))
+                lo = mid;
+            else
+                hi = mid;
+        }
+        const double      got = 0.5 * (lo + hi);
+        const long double ulp = std::numeric_limits<double>::epsilon() * static_cast<long double>(std::abs(got));
+        INFO("bisected absolute L2 " << got << ", oracle " << static_cast<double>(expected));
+        REQUIRE(std::abs(static_cast<long double>(got) - expected) <= 8.0L * ulp);
+    }
+}
+
+TEST_CASE("the RelativeL2 check matches the sibling rule on an all-zero reference", "[treeweave][rell2][zeroref]") {
+    using treeweave::TolKind;
+    // Sibling rule (RelativeMax): an all-zero f converges iff the error is 0.
+    // AbsoluteL2 is excluded: with no reference to normalise by, a 1e-13
+    // error under a 1e-10 absolute tol correctly passes.
+    auto zero_ref = [](double) { return 0.0; };
+    auto zero_err = [](double) { return 0.0; };
+    auto bad_err  = [](double x) { return x > 2.0 ? 1e-13 : -1e-13; };
+    REQUIRE(!sample_tol_check(TolKind::RelativeL2, 1e-10, zero_ref, zero_err));
+    REQUIRE(sample_tol_check(TolKind::RelativeL2, 1e-10, zero_ref, bad_err));
+}
+
+TEST_CASE("an isolated non-finite error is rejected at every grid position", "[treeweave][rell2][nonfinite]") {
+    using treeweave::TolKind;
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    // Distinct nonzero reference and error so only the injected value is bad.
+    const std::array<double, kTestSamples> base{1.2, 2.1, 2.9, 3.7, 4.4, 5.2, 5.8, 6.6};
+    auto                                   ref = [&base](double x) {
+        for (std::size_t i = 0; i < kTestSamples; ++i)
+            if (x == kTestGridPoint(i))
+                return base[i];
+        return 1.0;
+    };
+    for (const auto kind : {TolKind::RelativeL2, TolKind::AbsoluteL2, TolKind::RelativeMax, TolKind::AbsoluteMax}) {
+        for (const std::size_t pos : {std::size_t{0}, std::size_t{4}, std::size_t{kTestSamples - 1}}) {
+            for (const double bad : {nan, inf}) {
+                // Inject through the polyfit side: approx = ref + err is bad at pos.
+                auto err_of = [&base, bad, pos](double x) {
+                    if (x == kTestGridPoint(pos))
+                        return bad;
+                    return x == x ? 1e-12 * base[1] : 0.0; // base[1] keeps values distinct
+                };
+                double        max_abs_f = 0.0;
+                auto          func      = [ref](double x) { return ref(x); };
+                FakeSampleFit fit{[ref, err_of](double x) { return ref(x) + err_of(x); }};
+                INFO("kind " << static_cast<int>(kind) << ", position " << pos << ", value " << bad);
+                REQUIRE(treeweave::detail::sample_error_exceeds_tol(kTestSamples, kind, 1e-8, max_abs_f, kCenter, kHalf,
+                                                                    func, fit));
+            }
+        }
+    }
 }
 // NOLINTEND(cert-msc51-cpp,cert-msc32-c)

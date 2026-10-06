@@ -116,8 +116,14 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     const Value       center         = center_in;
 
     double max_abs_err{0.0};
-    double abs_err_l2{0.0};
-    double direct_sum{0.0};
+    // Hypot-style scaled sums of squares: accumulate `ssq = Σ (x/scale)²`
+    // against the running `scale = max|x|`, so no intermediate square
+    // overflows at |x| > ~1e154 or underflows below ~1e-154, and the final
+    // `scale * sqrt(ssq)` recovers the exact norm. Squaring raw values
+    // (the previous form) let RelativeL2 produce inf/inf or 0/0 = NaN,
+    // and `NaN > tol` is false, so a NaN error was accepted silently.
+    double ssq_err{0.0}, scale_err{0.0};
+    double ssq_f{0.0}, scale_f{0.0};
     double panel_max_abs_f{0.0};
     bool   all_finite{true};
     for (std::size_t linear_index = 0; linear_index < n_samples; ++linear_index) {
@@ -141,8 +147,24 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
             all_finite      = all_finite && std::isfinite(abs_err);
             max_abs_err     = std::max(max_abs_err, abs_err);
             panel_max_abs_f = std::max(panel_max_abs_f, std::abs(static_cast<double>(actual[i])));
-            abs_err_l2 += powi<2>(abs_err);
-            direct_sum += powi<2>(static_cast<double>(actual[i]));
+            // Rescale when a new max appears; the stored ssq stays finite.
+            if (abs_err > scale_err) {
+                const double r = scale_err / abs_err;
+                ssq_err        = ssq_err * r * r + 1.0;
+                scale_err      = abs_err;
+            } else if (scale_err > 0.0) {
+                const double r = abs_err / scale_err;
+                ssq_err += r * r;
+            }
+            const double abs_f = std::abs(static_cast<double>(actual[i]));
+            if (abs_f > scale_f) {
+                const double r = scale_f / abs_f;
+                ssq_f          = ssq_f * r * r + 1.0;
+                scale_f        = abs_f;
+            } else if (scale_f > 0.0) {
+                const double r = abs_f / scale_f;
+                ssq_f += r * r;
+            }
         }
     }
 
@@ -154,9 +176,13 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
 
     switch (tol_type) {
     case TolKind::RelativeL2:
-        return std::sqrt(abs_err_l2 / direct_sum) > tol;
+        // Sibling rule (RelativeMax): an all-zero reference converges iff the
+        // error is 0. Either norm returns 0.0 exactly when its scale is 0.
+        if (scale_f == 0.0)
+            return scale_err != 0.0;
+        return (scale_err / scale_f) * std::sqrt(ssq_err / ssq_f) > tol;
     case TolKind::AbsoluteL2:
-        return std::sqrt(abs_err_l2) / static_cast<double>(n_samples * output_dim) > tol;
+        return scale_err * std::sqrt(ssq_err) / static_cast<double>(n_samples * output_dim) > tol;
     case TolKind::RelativeMax:
         // Only RelativeMax consumes the running max|f|: raise it here, once,
         // for the accepted-or-rejected panel (both sides are finite above),
