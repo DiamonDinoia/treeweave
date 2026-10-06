@@ -693,7 +693,10 @@ jobs:
           set -euo pipefail
           repo="${{ github.repository }}"
           ver="${{ inputs.version }}"
-          git fetch origin "refs/tags/v$ver"
+          # Colon refspec: without it the tag lands in FETCH_HEAD only and the
+          # "v$ver:refs/tags/stable" pushes below fail with "src refspec does
+          # not match any" (this checkout is shallow, no tags).
+          git fetch origin "refs/tags/v$ver:refs/tags/v$ver"
 
           # (a) Build the manifest: the v$ver bundle assets on GitHub (checked
           # assignment) must equal the local renamed set. Fail BEFORE any
