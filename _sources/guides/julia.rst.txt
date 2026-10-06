@@ -102,7 +102,8 @@ Available fields (all keyword-only, all have defaults):
    * - ``tol_kind``
      - ``"relative_max"``
      - Tolerance interpretation. One of ``"relative_max"``, ``"absolute_max"``,
-       ``"relative_l2"``, ``"absolute_l2"``, ``"relative_tail"``, ``"absolute_tail"``.
+       ``"relative_l2"``, ``"absolute_l2"``, ``"relative_tail"``, ``"absolute_tail"``,
+       ``"relative_pointwise"``.
    * - ``max_depth``
      - ``50``
      - Tree-depth ceiling.
