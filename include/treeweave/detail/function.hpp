@@ -149,7 +149,8 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
                 }
             }
             if (first_nan == n) {
-                // No NaN in [i, n): a gallop step cannot jump over one.
+                // No NaN before the out-of-domain suffix (the scan stops
+                // at the suffix start): a gallop step cannot jump over one.
                 std::size_t k = j; // the run end lies in [j, k]
                 for (std::size_t step = detail::small_run_cutoff; k < n && same(k); step <<= 1) {
                     j = k + 1;

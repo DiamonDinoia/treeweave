@@ -14,7 +14,7 @@
 #include <span>
 #include <vector>
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #include <csetjmp>
 #include <csignal>
 #include <sys/mman.h>
@@ -27,11 +27,27 @@
 
 namespace {
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 // SIGSEGV guard state for the lazy-NaN-scan regression test. File scope:
 // a signal handler reads only these. Nan read = the guard page got touched.
 volatile sig_atomic_t nan_guard_touched = 0;
 sigjmp_buf            nan_guard_env;
+
+// Scope-bound cleanup for the mapping and the installed SIGSEGV handler.
+// Destructors run on every exit path (return, REQUIRE throw), so the old
+// handler goes back and the mapping is released even when the test fails.
+// siglongjmp bypasses them only on the fault path; the check after
+// sigsetjmp still runs, and a fault means the test fails anyway.
+struct segv_guard {
+    double          *map    = nullptr;
+    std::size_t      length = 0;
+    struct sigaction old{};
+    segv_guard(double *m, std::size_t len) : map(m), length(len) {}
+    ~segv_guard() {
+        ::sigaction(SIGSEGV, &old, nullptr);
+        ::munmap(map, length);
+    }
+};
 #endif
 
 // Easy fit: the root panel converges on its own, min_uniform_depth force-refines
@@ -571,7 +587,7 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
     nan_after_suffix(f);
     nan_after_suffix(ft);
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
     // Inspected-points regression: the lazy NaN scan must stop at the first
     // xs[p] > hi. 3 equal in-domain points, then 10^6 points above hi, all
     // in one page-aligned mapping. Pages after page 0 (indices >= 512) get
@@ -592,14 +608,16 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
             std::fill_n(xs + 3, n - 3, 2.0); // > hi for both fixtures
             REQUIRE(::mprotect(reinterpret_cast<char *>(xs) + psz, mlen - psz, PROT_NONE) == 0);
 
-            struct sigaction sa{}, old{};
+            // Restores the old handler and unmaps on every exit path.
+            segv_guard       cleanup(xs, mlen);
+            struct sigaction sa{};
             sa.sa_handler = [](int) {
                 nan_guard_touched = 1;
                 ::siglongjmp(nan_guard_env, 1);
             };
             ::sigemptyset(&sa.sa_mask);
             sa.sa_flags = SA_NODEFER;
-            REQUIRE(::sigaction(SIGSEGV, &sa, &old) == 0);
+            REQUIRE(::sigaction(SIGSEGV, &sa, &cleanup.old) == 0);
 
             std::vector<std::pair<std::size_t, std::size_t>> runs;
             if (::sigsetjmp(nan_guard_env, 1) == 0) {
@@ -607,10 +625,8 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
                     ff, xs, n,
                     [&](std::uint32_t, std::size_t begin, std::size_t count) { runs.emplace_back(begin, count); });
             }
-            ::sigaction(SIGSEGV, &old, nullptr);
             REQUIRE(nan_guard_touched == 0);
             REQUIRE(runs == std::vector<std::pair<std::size_t, std::size_t>>{{0, 3}, {3, n - 3}});
-            ::munmap(xs, mlen);
         };
         nan_guard_touched = 0;
         guard_body(f);
