@@ -221,7 +221,7 @@ Fortran
    ! Fit sin(x) on [0, 1] syntax is treeweave_fit(callback, input_dim, output_dim, lower, upper, tolerance, context, options).
    h = treeweave_fit(c_funloc(fn), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, c_null_ptr, c_null_ptr)
    ! Evaluate f on (0.5) and print the result.
-   call treeweave_eval(h, x, y)
+   y = treeweave_eval(h, x)
    print *, y(1)
    h = treeweave_free(h)
    end program example
