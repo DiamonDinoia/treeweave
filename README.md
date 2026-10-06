@@ -261,7 +261,7 @@ type(c_ptr) :: h
 
 h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, &
                   1.0e-10_c_double, c_null_ptr, c_null_ptr)
-call treeweave_eval(h, x, y)
+y = treeweave_eval(h, x)
 print *, y(1)
 h = treeweave_free(h)
 end program example

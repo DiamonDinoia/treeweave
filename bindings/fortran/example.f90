@@ -25,7 +25,6 @@ program treeweave_example
 
     type(c_ptr)    :: h
     real(c_double) :: a(1), b(1), tol
-    real(c_double) :: x(1), y(1)
     real(c_double) :: xs(11), res(11)
     real(c_double) :: exact, err, max_err
     integer        :: i
@@ -46,16 +45,16 @@ program treeweave_example
     write (*, '(A,I0,A,I0,A,I0,A)') "fit exp(x): input_dim=", treeweave_input_dim(h), &
         " output_dim=", treeweave_output_dim(h), " memory=", treeweave_memory_usage(h), " bytes"
 
-    x(1) = 0.5_c_double
-    ! Evaluate h on (0.5) and print the result.
-    call treeweave_eval(h, x, y)
-    write (*, '(A,F0.12,A,F0.12)') "exp(0.5) approx=", y(1), " exact=", exp(0.5_c_double)
+    ! treeweave_eval reads the dims off the handle: a scalar argument is a
+    ! point, an array argument is a batch. No call site picks the batch route.
+    write (*, '(A,F0.12,A,F0.12)') "exp(0.5) approx=", treeweave_eval(h, 0.5_c_double), &
+        " exact=", exp(0.5_c_double)
 
     ! Batch eval over 11 points on [0, 1].
     do i = 1, 11
         xs(i) = real(i - 1, c_double) / 10.0_c_double
     end do
-    call treeweave_batch(h, xs, res, int(11, c_size_t))
+    res = treeweave_eval(h, xs)
     max_err = 0.0_c_double
     do i = 1, 11
         exact = exp(xs(i))

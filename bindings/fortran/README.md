@@ -70,13 +70,38 @@ use treeweave
 3. Evaluate, then free:
 
    ```fortran
-   real(c_double) :: x(1) = [0.5_c_double], y(1)
-   call treeweave_eval(h, x, y)            ! single point
-   call treeweave_batch(h, xs, res, n)     ! n points, AoS (n: integer(c_size_t))
-   call treeweave_sorted(h, xs, res, n)    ! 1-D ascending fast path (~3-4x faster)
-   call treeweave_transposed(h, xs, soa, n)! n points, SoA output (out_dim > 1)
-   h = treeweave_free(h)                   ! returns c_null_ptr
+   integer                     :: i
+   real(c_double)              :: xs(1000), points(1, 16), ys_s
+   real(c_double), allocatable :: y(:), ys(:, :)
+
+   xs = [(real(i - 1, c_double) / 999.0_c_double, i = 1, 1000)]  ! fill [0, 1]
+   points(1, :) = xs(1:16)                                       ! 16 1-D points
+
+   ys_s = treeweave_eval(h, 0.5_c_double)  ! scalar in, scalar out
+   y  = treeweave_eval(h, xs)              ! array in, batch route, y(size(xs))
+   ys = treeweave_eval(h, points)          ! points(input_dim, n) -> ys(output_dim, n)
+   h  = treeweave_free(h)                  ! returns c_null_ptr
    ```
+
+   `treeweave_eval` reads `input_dim` and `output_dim` off the handle and picks
+   the C entry point from the rank of its argument, so no call site selects the
+   batch route by hand. One column of the rank-2 form is one point, which is
+   the layout the C ABI reads. A contiguous rank-2 argument passes with no
+   copy; a strided section (say `points(:, 1:n:2)`) needs a contiguous
+   temporary.
+
+   The C entry points stay available for zero-allocation work and for the two
+   routes that cannot be inferred:
+
+   ```fortran
+   call treeweave_eval_c(h, x, y)           ! one point, caller-owned buffers
+   call treeweave_batch(h, xs, res, n)      ! n points, AoS (n: integer(c_size_t))
+   call treeweave_sorted(h, xs, res, n)     ! 1-D ascending fast path (~3-4x faster)
+   call treeweave_transposed(h, xs, soa, n) ! n points, SoA output (out_dim > 1)
+   ```
+
+   `treeweave_sorted` stays explicit on purpose: ascending order is an unchecked
+   promise about the input, not something to infer.
 
 ### The `context` pattern
 
@@ -123,6 +148,8 @@ h = treeweave_fit(c_funloc(kernel_ctx), 1_c_int, 1_c_int, a, b, tol, &
 | `size_t n`                                       | `integer(c_size_t), value`                                |
 | `double *const *soa`                             | `type(c_ptr), intent(in) :: soa(*)`                       |
 | `treeweave_dtype_t` / `treeweave_tol_kind_t`           | `integer(c_int)` parameters (`TREEWEAVE_F64`, `TREEWEAVE_RELATIVE_MAX`, …) |
+| `void treeweave_eval(h, const double *x, double *y)`            | `subroutine treeweave_eval_c(f, x, y)`; the generic `treeweave_eval(f, x)` covers the common cases |
+| `void treeweavef_eval(h, const float *x, float *y)`           | `subroutine treeweavef_eval(f, x, y)` |
 | `double treeweave_eval_1d(h, double x0)`            | `real(c_double) function treeweave_eval_1d(f, x0)`, `x0` by value |
 | `double treeweave_eval_2d(h, x0, x1)`               | `real(c_double) function treeweave_eval_2d(f, x0, x1)`, all by value |
 | `double treeweave_eval_3d(h, x0, x1, x2)`           | `real(c_double) function treeweave_eval_3d(f, x0, x1, x2)` |

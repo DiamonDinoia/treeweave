@@ -36,8 +36,19 @@ section verbatim into that release's GitHub Release notes.
 - `TolKind::RelativeTail` now scales the tail estimate by the largest panel
   coefficient; previously it behaved as `AbsoluteTail`, so leaf counts change
   for fits that used it.
+- The Fortran binding's single-point `treeweave_eval` subroutine is renamed to
+  `treeweave_eval_c`. This breaks existing `call treeweave_eval(h, x, y)`
+  callers: use `call treeweave_eval_c(h, x, y)` for the raw C route, or switch
+  to the new generic `treeweave_eval`. The f32 twin keeps the name
+  `treeweavef_eval`.
 
 ### Added
+- The Fortran binding gains a generic `treeweave_eval` over six specifics that
+  dispatch on the rank and kind of `x`: a scalar or a rank-1 `x` returns the
+  point or batch result directly; a rank-2 `x(input_dim, n)` returns
+  `y(output_dim, n)`. The old single-point subroutine is renamed to
+  `treeweave_eval_c`; the f32 twin keeps the name `treeweavef_eval` (see
+  `### Changed`).
 - `guru::LaneQuantizer<T, Arch>`: the SIMD lane-level twin of
   `Function::leaf_id` for a single-subtree fit with a live leaf table.
   `in_domain(x)` and `ids(x)` classify one `xsimd::batch` into the lane mask

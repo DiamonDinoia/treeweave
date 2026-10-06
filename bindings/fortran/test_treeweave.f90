@@ -97,6 +97,7 @@ end module test_kernels
 
 program test_treeweave
     use, intrinsic :: iso_c_binding
+    use, intrinsic :: ieee_arithmetic, only: ieee_is_nan
     use treeweave
     use test_kernels
     implicit none
@@ -114,6 +115,7 @@ program test_treeweave
     call test_transposed_soa(failures)
     call test_print_stats(failures)
     call test_scalar_eval_byvalue(failures)
+    call test_generic_eval(failures)
 
     if (failures > 0) then
         write (*, '(A,I0,A)') "--- ", failures, " check(s) FAILED ---"
@@ -153,7 +155,7 @@ contains
         do i = 1, 50
             xx   = 0.02_c_double + 0.96_c_double * real(i - 1, c_double) / 49.0_c_double
             x(1) = xx
-            call treeweave_eval(h, x, y)
+            call treeweave_eval_c(h, x, y)
             exact = exp(0.5_c_double * xx) + sin(3.0_c_double * xx)
             if (abs(y(1) - exact) > max_err) max_err = abs(y(1) - exact)
         end do
@@ -173,7 +175,7 @@ contains
         call check(c_associated(h), "2D fit returns a handle", failures)
         if (.not. c_associated(h)) return
         x = [0.3_c_double, 0.4_c_double]
-        call treeweave_eval(h, x, y)
+        call treeweave_eval_c(h, x, y)
         exact = exp(0.3_c_double * x(1)) + sin(2.0_c_double * x(2))
         call check(abs(y(1) - exact) < 1.0e-4_c_double, "2D->1 accuracy < 1e-4", failures)
         h = treeweave_free(h)
@@ -190,7 +192,7 @@ contains
         if (.not. c_associated(h)) return
         call check(treeweave_output_dim(h) == 2, "vector-output out_dim == 2", failures)
         x(1) = 0.5_c_double
-        call treeweave_eval(h, x, y)
+        call treeweave_eval_c(h, x, y)
         call check(abs(y(1) - sin(0.5_c_double)) < 1.0e-5_c_double .and. &
                    abs(y(2) - cos(0.5_c_double)) < 1.0e-5_c_double, &
                    "vector-output components accurate", failures)
@@ -219,7 +221,7 @@ contains
         same = .true.
         do i = 1, 64
             x(1) = xs(i)
-            call treeweave_eval(h, x, y)
+            call treeweave_eval_c(h, x, y)
             if (res(i) /= y(1)) same = .false.
         end do
         call check(same, "batch == per-point eval (bit-exact)", failures)
@@ -258,7 +260,7 @@ contains
         max_err = 0.0_c_double
         do i = 1, 20
             x(1) = real(i - 1, c_double) / 20.0_c_double
-            call treeweave_eval(h, x, y)
+            call treeweave_eval_c(h, x, y)
             exact = params%amplitude * sin(params%frequency * x(1))
             if (abs(y(1) - exact) > max_err) max_err = abs(y(1) - exact)
         end do
@@ -352,6 +354,157 @@ contains
         call check(.true., "treeweave_print_stats(NULL) is a no-op", failures)
         h = treeweave_free(h)
     end subroutine test_print_stats
+
+    ! The generic treeweave_eval picks point vs batch from the rank of x, and
+    ! must agree bit-for-bit with the explicit C entry points it wraps.
+    subroutine test_generic_eval(failures)
+        integer, intent(inout) :: failures
+        type(c_ptr)    :: h, h2, hv, hf, hf2
+        real(c_double) :: a(1), b(1), a2(2), b2(2)
+        real(c_double) :: xs(64), ref(64), point(2), ref_point(1), ref_vec(2)
+        real(c_double) :: xs2(2, 64), ref2(64), ref2v(2, 64)
+        real(c_float)  :: a1f(1), b1f(1), xsf(8), reff(8)
+        real(c_float)  :: af2(2), bf2(2), xf2(2, 8), ref2f(8)
+        real(c_double), allocatable :: y(:), ybad(:)
+        real(c_double), allocatable :: y2(:, :)
+        real(c_float),  allocatable :: yf(:), yf2(:, :)
+        real(c_float)               :: yf_s
+        real(c_double)              :: yd_s
+        character(len=64)           :: msg
+        integer        :: i
+
+        ! --- dim == 1, out_dim == 1: scalar and vector routes ---------------
+        a(1) = 0.0_c_double; b(1) = 1.0_c_double
+        h = treeweave_fit(c_funloc(k_1d), 1_c_int, 1_c_int, a, b, 1.0e-8_c_double, &
+                          c_null_ptr, c_null_ptr)
+        if (.not. c_associated(h)) then
+            call check(.false., "generic-eval fit returns a handle", failures)
+            return
+        end if
+        do i = 1, 64
+            xs(i) = real(i - 1, c_double) / 64.0_c_double
+        end do
+        call treeweave_batch(h, xs, ref, int(64, c_size_t))
+        y = treeweave_eval(h, xs)
+        call check(size(y) == 64, "generic eval x(:) returns size(x) values", failures)
+        call check(all(y == ref), "generic eval x(:) == treeweave_batch (bit-exact)", failures)
+        call check(treeweave_eval(h, 0.5_c_double) == treeweave_eval_1d(h, 0.5_c_double), &
+                   "generic eval scalar == treeweave_eval_1d (bit-exact)", failures)
+
+        ! A rank-1 argument of the wrong length is neither a point nor a batch.
+        ybad = treeweave_eval(h, xs(1:0))
+        call check(size(ybad) == 1 .and. ieee_is_nan(ybad(1)), &
+                   "generic eval rejects an empty batch with NaN", failures)
+        yf_s = treeweave_eval(h, 0.5_c_float)
+        call check(ieee_is_nan(yf_s), "generic eval f32 scalar NaNs on an f64 handle", failures)
+        h = treeweave_free(h)
+
+        ! --- dim == 2: rank-1 is one point, rank-2 is a batch ---------------
+        a2 = [0.1_c_double, 0.1_c_double]; b2 = [1.0_c_double, 1.0_c_double]
+        h2 = treeweave_fit(c_funloc(k_2d1), 2_c_int, 1_c_int, a2, b2, 1.0e-7_c_double, &
+                           c_null_ptr, c_null_ptr)
+        if (.not. c_associated(h2)) then
+            call check(.false., "generic-eval 2D fit returns a handle", failures)
+            return
+        end if
+        point = [0.4_c_double, 0.6_c_double]
+        call treeweave_eval_c(h2, point, ref_point)
+        y = treeweave_eval(h2, point)
+        call check(size(y) == 1 .and. y(1) == ref_point(1), &
+                   "generic eval x(dim) is one point (bit-exact)", failures)
+        ! Keep every point strictly inside the box: a NaN from an out-of-domain
+        ! point would fail the bit-exact comparison below, since NaN /= NaN.
+        do i = 1, 64
+            xs2(1, i) = 0.2_c_double + 0.6_c_double * real(i - 1, c_double) / 63.0_c_double
+            xs2(2, i) = 0.8_c_double - 0.6_c_double * real(i - 1, c_double) / 63.0_c_double
+        end do
+        call treeweave_batch(h2, xs2, ref2, int(64, c_size_t))
+        y2 = treeweave_eval(h2, xs2)
+        call check(size(y2, 1) == 1 .and. size(y2, 2) == 64, &
+                   "generic eval x(dim, n) returns y(out_dim, n)", failures)
+        call check(all(y2(1, :) == ref2), &
+                   "generic eval x(dim, n) == treeweave_batch (bit-exact)", failures)
+        y2 = treeweave_eval(h2, xs2(1:1, :))
+        call check(ieee_is_nan(y2(1, 1)), &
+                   "generic eval rejects a wrong column count with NaN", failures)
+        h2 = treeweave_free(h2)
+
+        ! --- out_dim == 2: the AoS result carries both components ----------
+        hv = treeweave_fit(c_funloc(k_2d2), 2_c_int, 2_c_int, a2, b2, 1.0e-7_c_double, &
+                           c_null_ptr, c_null_ptr)
+        if (.not. c_associated(hv)) then
+            call check(.false., "generic-eval vector-output fit returns a handle", failures)
+            return
+        end if
+        call treeweave_eval_c(hv, point, ref_vec)
+        y = treeweave_eval(hv, point)
+        call check(size(y) == 2 .and. all(y == ref_vec), &
+                   "generic eval point carries out_dim components", failures)
+        y2 = treeweave_eval(hv, xs2)
+        call check(size(y2, 1) == 2 .and. size(y2, 2) == 64, &
+                   "generic eval batch returns y(2, n) for out_dim == 2", failures)
+        call treeweave_batch(hv, xs2, ref2v, int(64, c_size_t))
+        call check(all(y2 == ref2v), &
+                   "generic eval x(dim, n) both components == treeweave_batch (bit-exact)", &
+                   failures)
+        hv = treeweave_free(hv)
+
+        ! --- float32 handle: the real(c_float) specifics ------------------
+        a1f(1) = 0.0_c_float; b1f(1) = 1.0_c_float
+        hf = treeweavef_fit(c_funloc(k_1d_f32), 1_c_int, 1_c_int, a1f, b1f, 1.0e-5_c_double, &
+                            c_null_ptr, c_null_ptr)
+        if (.not. c_associated(hf)) then
+            call check(.false., "generic-eval f32 fit returns a handle", failures)
+            return
+        end if
+        do i = 1, 8
+            xsf(i) = real(i - 1, c_float) / 8.0_c_float
+        end do
+        call treeweavef_batch(hf, xsf, reff, int(8, c_size_t))
+        yf = treeweave_eval(hf, xsf)
+        call check(size(yf) == 8 .and. all(yf == reff), &
+                   "generic eval dispatches on kind (f32, bit-exact)", failures)
+        ! The f32 scalar specific.
+        yf_s = treeweave_eval(hf, 0.5_c_float)
+        call check(yf_s == treeweavef_eval_1d(hf, 0.5_c_float), &
+                   "generic eval f32 scalar == treeweavef_eval_1d (bit-exact)", failures)
+        ! A double call on an f32 handle must not read the result buffer.
+        y = treeweave_eval(hf, xs)
+        call check(all(ieee_is_nan(y)), "generic eval NaNs on a dtype mismatch", failures)
+        yd_s = treeweave_eval(hf, 0.5_c_double)
+        call check(ieee_is_nan(yd_s), "generic eval f64 scalar NaNs on an f32 handle", failures)
+        call check(treeweave_error_message() /= "", &
+                   "a C rejection leaves a message for treeweave_error_message()", failures)
+        hf = treeweave_free(hf)
+
+        ! --- f32 matrix route ---------------------------------------------
+        af2 = [0.0_c_float, 0.0_c_float]; bf2 = [1.0_c_float, 1.0_c_float]
+        hf2 = treeweavef_fit(c_funloc(k_2d1_f32), 2_c_int, 1_c_int, af2, bf2, &
+                             1.0e-5_c_double, c_null_ptr, c_null_ptr)
+        if (.not. c_associated(hf2)) then
+            call check(.false., "generic-eval f32 2D fit returns a handle", failures)
+            return
+        end if
+        do i = 1, 8
+            xf2(1, i) = 0.2_c_float + 0.6_c_float * real(i - 1, c_float) / 7.0_c_float
+            xf2(2, i) = 0.8_c_float - 0.6_c_float * real(i - 1, c_float) / 7.0_c_float
+        end do
+        call treeweavef_batch(hf2, xf2, ref2f, int(8, c_size_t))
+        yf2 = treeweave_eval(hf2, xf2)
+        call check(size(yf2, 1) == 1 .and. size(yf2, 2) == 8, &
+                   "generic eval f32 x(dim, n) returns y(out_dim, n)", failures)
+        call check(all(yf2(1, :) == ref2f), &
+                   "generic eval f32 matrix == treeweavef_batch (bit-exact)", failures)
+        ! A wrapper shape error returns NaN and must not rewrite the C message.
+        yf_s = treeweavef_eval_1d(c_null_ptr, 0.0_c_float)  ! stamps the C buffer
+        msg = treeweave_error_message()
+        yf2 = treeweave_eval(hf2, xf2(1:1, :))
+        call check(ieee_is_nan(yf2(1, 1)), &
+                   "generic eval f32 rejects a wrong column count with NaN", failures)
+        call check(treeweave_error_message() == msg .and. msg /= "", &
+                   "a wrapper shape error leaves the C message unchanged", failures)
+        hf2 = treeweave_free(hf2)
+    end subroutine test_generic_eval
 
     subroutine test_scalar_eval_byvalue(failures)
         integer, intent(inout) :: failures

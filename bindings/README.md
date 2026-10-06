@@ -118,7 +118,7 @@ real(c_double) :: a(1) = [2.0_c_double], b(1) = [10.0_c_double], x(1), y(1)
 h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
                c_null_ptr, c_null_ptr)   ! kernel: bind(C) zeta_N(s) = sum_{k=1..N} k^-s
 x(1) = 3.5_c_double
-call treeweave_eval(h, x, y)
+y = treeweave_eval(h, x)
 h = treeweave_free(h)
 ```
 

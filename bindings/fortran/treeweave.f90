@@ -3,9 +3,10 @@
 ! This is a faithful, thin binding over `iso_c_binding`: every C entry point is
 ! exposed as a Fortran procedure of the same name via an `interface` block, so
 ! the mapping is one-to-one and explicit. Unlike the Python / Julia / MATLAB
-! wrappers there is no call operator, no keyword arguments, and no inference,
-! the caller passes `input_dim` / `output_dim` explicitly, exactly as a C
-! consumer would.
+! wrappers there are no keyword arguments: `treeweave_fit` takes
+! `input_dim` / `output_dim` explicitly, exactly as a C consumer would. Eval is
+! the exception. The generic `treeweave_eval` reads both dims off the handle and
+! picks the point or the batch entry point from the rank of its argument.
 !
 ! Precision lives in the symbol prefix, FINUFFT/FFTW style: the `treeweave_*`
 ! procedures operate on `real(c_double)`, the `treeweavef_*` twins on
@@ -22,8 +23,12 @@
 ! and pass `c_loc(my_opts)`.
 module treeweave
     use, intrinsic :: iso_c_binding
+    use, intrinsic :: iso_fortran_env, only: int64
+    use, intrinsic :: ieee_arithmetic, only: ieee_value, ieee_quiet_nan
     implicit none
     public
+    ! Implementation imports stay out of the public namespace.
+    private :: int64, ieee_value, ieee_quiet_nan
 
     ! ---- tolerance interpretation (treeweave_tol_kind_t) --------------------
     integer(c_int), parameter :: TREEWEAVE_RELATIVE_TAIL = 0_c_int
@@ -47,6 +52,36 @@ module treeweave
         integer(c_int) :: allow_max_depth_leaves
         integer(c_int) :: min_uniform_depth
     end type treeweave_opts
+
+    ! ---- eval: rank-dispatched convenience ---------------------------------
+    ! `treeweave_eval` reads `input_dim` / `output_dim` off the handle and picks
+    ! the C entry point from the rank of `x`, so no call site selects the batch
+    ! route by hand:
+    !
+    !   scalar x              -> scalar y             point (input_dim == 1)
+    !   x(:)                  -> y(:)                 batch of size(x) points
+    !                                                 when input_dim == 1, else
+    !                                                 one input_dim-point
+    !   x(input_dim, n)       -> y(output_dim, n)      batch of n points
+    !
+    ! One column of the rank-2 form is one point, which is the layout the C ABI
+    ! reads. A contiguous rank-2 argument passes with no copy; a strided
+    ! section pays a contiguous temporary. Results are AoS: the `output_dim`
+    ! components of a point are contiguous. A null handle or a dtype mismatch
+    ! fills the result with NaN and leaves the reason in
+    ! `treeweave_last_error()`. A shape the wrapper itself rejects (wrong first
+    ! extent of x, an empty batch, a length that is neither a point nor a
+    ! batch) also returns NaN but leaves
+    ! `treeweave_last_error()` unchanged: the C ABI has no set-error function.
+    ! `treeweave_sorted` stays explicit: it is an unchecked promise about the
+    ! input, not something to infer.
+    interface treeweave_eval
+        module procedure tw_eval_scalar_d, tw_eval_vec_d, tw_eval_mat_d
+        module procedure tw_eval_scalar_f, tw_eval_vec_f, tw_eval_mat_f
+    end interface treeweave_eval
+
+    private :: tw_eval_scalar_d, tw_eval_vec_d, tw_eval_mat_d
+    private :: tw_eval_scalar_f, tw_eval_vec_f, tw_eval_mat_f
 
     interface
         ! ---- fit ---------------------------------------------------------
@@ -75,12 +110,12 @@ module treeweave
         end function treeweavef_fit
 
         ! ---- eval: single point -----------------------------------------
-        subroutine treeweave_eval(f, x, y) bind(C, name="treeweave_eval")
+        subroutine treeweave_eval_c(f, x, y) bind(C, name="treeweave_eval")
             import :: c_ptr, c_double
             type(c_ptr),    value       :: f
             real(c_double), intent(in)  :: x(*)
             real(c_double), intent(out) :: y(*)
-        end subroutine treeweave_eval
+        end subroutine treeweave_eval_c
 
         subroutine treeweavef_eval(f, x, y) bind(C, name="treeweavef_eval")
             import :: c_ptr, c_float
@@ -276,5 +311,120 @@ contains
             msg(i:i) = buf(i)
         end do
     end function treeweave_error_message
+
+    ! ---- rank-dispatched eval ----------------------------------------------
+    ! The raw C result buffers are intent(out), so after a rejected C call
+    ! (null handle, dtype mismatch) they hold nothing defined. The C eval
+    ! entry points return void and signal failure only through
+    ! treeweave_last_error(), which they clear on entry and set on rejection.
+    ! Every specific reads it after the C call and assigns NaN on failure.
+
+    function tw_eval_scalar_d(h, x) result(y)
+        type(c_ptr),    intent(in) :: h
+        real(c_double), intent(in) :: x
+        real(c_double)             :: y
+        real(c_double)             :: xv(1), yv(1)
+        y = ieee_value(y, ieee_quiet_nan)
+        if (treeweave_input_dim(h) /= 1_c_int .or. treeweave_output_dim(h) /= 1_c_int) return
+        xv(1) = x
+        call treeweave_eval_c(h, xv, yv)
+        if (len(treeweave_error_message()) == 0) y = yv(1)
+    end function tw_eval_scalar_d
+
+    function tw_eval_vec_d(h, x) result(y)
+        type(c_ptr),    intent(in)             :: h
+        real(c_double), intent(in), contiguous :: x(:)
+        real(c_double), allocatable            :: y(:)
+        integer(c_int) :: dim, od
+        integer(int64) :: n
+        dim = treeweave_input_dim(h)
+        od  = treeweave_output_dim(h)
+        n   = size(x, kind=int64)
+        if (dim == 1_c_int .and. n > 0_int64 .and. od > 0_c_int) then
+            allocate (y(n * int(od, int64)))
+            call treeweave_batch(h, x, y, int(n, c_size_t))
+        else if (n == int(dim, int64) .and. od > 0_c_int) then
+            allocate (y(od))
+            call treeweave_eval_c(h, x, y)
+        else
+            allocate (y(1))
+            y = ieee_value(1.0_c_double, ieee_quiet_nan)
+            return
+        end if
+        if (len(treeweave_error_message()) > 0) y = ieee_value(1.0_c_double, ieee_quiet_nan)
+    end function tw_eval_vec_d
+
+    function tw_eval_mat_d(h, x) result(y)
+        type(c_ptr),    intent(in)             :: h
+        real(c_double), intent(in), contiguous :: x(:, :)
+        real(c_double), allocatable            :: y(:, :)
+        integer(c_int) :: dim, od
+        integer(int64) :: n
+        dim = treeweave_input_dim(h)
+        od  = treeweave_output_dim(h)
+        n   = size(x, 2, kind=int64)
+        if (size(x, 1, kind=int64) /= int(dim, int64) .or. n == 0_int64 .or. od < 1_c_int) then
+            allocate (y(1, 1))
+            y = ieee_value(1.0_c_double, ieee_quiet_nan)
+            return
+        end if
+        allocate (y(od, n))
+        call treeweave_batch(h, x, y, int(n, c_size_t))
+        if (len(treeweave_error_message()) > 0) y = ieee_value(1.0_c_double, ieee_quiet_nan)
+    end function tw_eval_mat_d
+
+    function tw_eval_scalar_f(h, x) result(y)
+        type(c_ptr),   intent(in) :: h
+        real(c_float), intent(in) :: x
+        real(c_float)             :: y
+        real(c_float)             :: xv(1), yv(1)
+        y = ieee_value(y, ieee_quiet_nan)
+        if (treeweave_input_dim(h) /= 1_c_int .or. treeweave_output_dim(h) /= 1_c_int) return
+        xv(1) = x
+        call treeweavef_eval(h, xv, yv)
+        if (len(treeweave_error_message()) == 0) y = yv(1)
+    end function tw_eval_scalar_f
+
+    function tw_eval_vec_f(h, x) result(y)
+        type(c_ptr),   intent(in)             :: h
+        real(c_float), intent(in), contiguous :: x(:)
+        real(c_float), allocatable            :: y(:)
+        integer(c_int) :: dim, od
+        integer(int64) :: n
+        dim = treeweave_input_dim(h)
+        od  = treeweave_output_dim(h)
+        n   = size(x, kind=int64)
+        if (dim == 1_c_int .and. n > 0_int64 .and. od > 0_c_int) then
+            allocate (y(n * int(od, int64)))
+            call treeweavef_batch(h, x, y, int(n, c_size_t))
+        else if (n == int(dim, int64) .and. od > 0_c_int) then
+            allocate (y(od))
+            call treeweavef_eval(h, x, y)
+        else
+            allocate (y(1))
+            y = ieee_value(1.0_c_float, ieee_quiet_nan)
+            return
+        end if
+        if (len(treeweave_error_message()) > 0) y = ieee_value(1.0_c_float, ieee_quiet_nan)
+    end function tw_eval_vec_f
+
+    function tw_eval_mat_f(h, x) result(y)
+        type(c_ptr),   intent(in)             :: h
+        real(c_float), intent(in), contiguous :: x(:, :)
+        real(c_float), allocatable            :: y(:, :)
+        integer(c_int) :: dim, od
+        integer(int64) :: n
+        dim = treeweave_input_dim(h)
+        od  = treeweave_output_dim(h)
+        n   = size(x, 2, kind=int64)
+        if (size(x, 1, kind=int64) /= int(dim, int64) .or. n == 0_int64 .or. od < 1_c_int) then
+            allocate (y(1, 1))
+            y = ieee_value(1.0_c_float, ieee_quiet_nan)
+            return
+        end if
+        allocate (y(od, n))
+        call treeweavef_batch(h, x, y, int(n, c_size_t))
+        if (len(treeweave_error_message()) > 0) y = ieee_value(1.0_c_float, ieee_quiet_nan)
+    end function tw_eval_mat_f
 
 end module treeweave
