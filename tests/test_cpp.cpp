@@ -1351,7 +1351,9 @@ TEST_CASE("the RelativeL2 check scales the norm, no overflow or underflow", "[tr
         auto        err_of  = [mag, ref_of](double x) { return 1e-3 * mag * ref_of(x); };
         long double ssq_err = 0.0L, ssq_f = 0.0L;
         for (std::size_t i = 0; i < kTestSamples; ++i) {
-            const long double f = static_cast<long double>(mag) * base[i];
+            // mag cancels in the ratio; drop it so the oracle does not overflow
+            // on platforms where long double has double's exponent range.
+            const long double f = static_cast<long double>(base[i]);
             const long double e = 1e-3L * f;
             ssq_err += e * e;
             ssq_f += f * f;
@@ -1396,7 +1398,8 @@ TEST_CASE("the RelativeL2 check scales the norm, no overflow or underflow", "[tr
                 hi = mid;
         }
         const double      got = 0.5 * (lo + hi);
-        const long double ulp = std::numeric_limits<double>::epsilon() * static_cast<long double>(std::abs(got));
+        const long double ulp =
+            static_cast<long double>(std::numeric_limits<double>::epsilon()) * static_cast<long double>(std::abs(got));
         INFO("bisected relative L2 " << got << ", oracle " << static_cast<double>(expected));
         REQUIRE(std::abs(static_cast<long double>(got) - expected) <= 8.0L * ulp);
     }
@@ -1423,10 +1426,15 @@ TEST_CASE("the AbsoluteL2 check scales the norm, no overflow or underflow", "[tr
         auto        err_of = [mag, err_base_of](double x) { return mag * err_base_of(x); };
         long double ssq    = 0.0L;
         for (std::size_t i = 0; i < kTestSamples; ++i) {
-            const long double e = static_cast<long double>(mag) * ebase[i];
+            // Compute at mag=1 and scale afterwards: e = mag * ebase, so the
+            // oracle scales linearly with mag. Doing the sum at mag directly
+            // overflows on platforms where long double has double's exponent
+            // range.
+            const long double e = static_cast<long double>(ebase[i]);
             ssq += e * e;
         }
-        const long double oracle = std::sqrt(ssq) / static_cast<long double>(kTestSamples);
+        const long double oracle =
+            static_cast<long double>(mag) * std::sqrt(ssq) / static_cast<long double>(kTestSamples);
         INFO("magnitude " << mag << ", oracle absolute L2 " << static_cast<long double>(oracle));
         REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 2.0 * static_cast<double>(oracle), ref, err_of) == false);
         REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 0.5 * static_cast<double>(oracle), ref, err_of) == true);
@@ -1464,7 +1472,8 @@ TEST_CASE("the AbsoluteL2 check scales the norm, no overflow or underflow", "[tr
                 hi = mid;
         }
         const double      got = 0.5 * (lo + hi);
-        const long double ulp = std::numeric_limits<double>::epsilon() * static_cast<long double>(std::abs(got));
+        const long double ulp =
+            static_cast<long double>(std::numeric_limits<double>::epsilon()) * static_cast<long double>(std::abs(got));
         INFO("bisected absolute L2 " << got << ", oracle " << static_cast<double>(expected));
         REQUIRE(std::abs(static_cast<long double>(got) - expected) <= 8.0L * ulp);
     }

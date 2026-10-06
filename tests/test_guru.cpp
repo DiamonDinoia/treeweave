@@ -631,7 +631,7 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
                 nan_guard_touched = 1;
                 ::siglongjmp(nan_guard_env, 1);
             };
-            ::sigemptyset(&sa.sa_mask);
+            sigemptyset(&sa.sa_mask); // Apple SDK macro; no :: prefix
             sa.sa_flags = SA_NODEFER;
             REQUIRE(cleanup.arm(sa));
 

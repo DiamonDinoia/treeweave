@@ -131,7 +131,7 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
         // step can jump over an interior NaN and merge the runs on both
         // sides of it, so the walk checks for NaN once per batch before the
         // first gallop and stays linear whenever a NaN lies ahead.
-        auto        same = [&](std::size_t p) { return f.sorted_leaf_id_at(xs, p, ood_id, fast) == id; };
+        auto        same = [&](std::size_t p) -> bool { return f.sorted_leaf_id_at(xs, p, ood_id, fast) == id; };
         std::size_t j    = i + 1; // same on [i, j)
         while (j < n && j - i <= detail::small_run_cutoff && same(j))
             ++j;
@@ -142,7 +142,7 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
                 // out-of-domain suffix (see above), which covers any NaN
                 // past it, so scanning that suffix is wasted work.
                 for (std::size_t p = i; p < n && !(xs[p] > hi); ++p) {
-                    if (xs[p] != xs[p]) {
+                    if (std::isnan(xs[p])) {
                         first_nan = p;
                         break;
                     }
