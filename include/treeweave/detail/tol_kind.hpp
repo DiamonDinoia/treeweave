@@ -15,6 +15,7 @@ enum class TolKind : std::uint8_t {
     AbsoluteMax  = 3, ///< sample-based, max-abs absolute error
     RelativeL2   = 4, ///< sample-based, L2 relative error
     AbsoluteL2   = 5, ///< sample-based, L2 absolute error
+    RelativePointwise = 6, ///< sample-based, |p - f| <= tol * |f| at every sample; a zero sample needs p == f
 };
 
 namespace detail {

@@ -834,6 +834,55 @@ static void test_absolute_max_tol(void) {
     treeweave_free(h);
 }
 
+/* ---- G11: RelativePointwise tol_kind through the C ABI ------------------ */
+
+static void k_decay(const double *x, double *y, void *d) {
+    (void)d;
+    y[0] = exp(-50.0 * x[0]);
+}
+
+static void test_relative_pointwise_tol(void) {
+    const double tol = 1e-8;
+    const double a = 0.0, b = 1.0;
+
+    /* exp(-50x) decays ~22 orders of magnitude over [0, 1]: a fit that passes
+     * RelativeMax leaves a large relative error in the tail, so the pointwise
+     * kind must subdivide more deeply there. */
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
+    opts.tol_kind     = TREEWEAVE_RELATIVE_MAX;
+    treeweave_t h_max = treeweave_fit(k_decay, 1, 1, &a, &b, tol, NULL, &opts);
+    CHECK(h_max != NULL);
+    opts.tol_kind       = TREEWEAVE_RELATIVE_POINTWISE;
+    treeweave_t h_point = treeweave_fit(k_decay, 1, 1, &a, &b, tol, NULL, &opts);
+    CHECK(h_point != NULL);
+    if (h_max == NULL || h_point == NULL) {
+        treeweave_free(h_max);
+        treeweave_free(h_point);
+        return;
+    }
+    /* No leaf count in the C ABI: memory use grows with the leaf count. */
+    CHECK(treeweave_memory_usage(h_point) > treeweave_memory_usage(h_max));
+
+    /* The pointwise fit honours |p - f| <= ~tol * |f| on a dense sweep. */
+    unsigned int seed   = 91U;
+    double       maxrel = 0.0;
+    for (int i = 0; i < 300; ++i) {
+        const double x = next_unit(&seed);
+        double       y = 0.0;
+        treeweave_eval(h_point, &x, &y);
+        const double f = exp(-50.0 * x);
+        if (f > 1e-300) {
+            const double r = fabs(y - f) / f;
+            if (r > maxrel)
+                maxrel = r;
+        }
+    }
+    CHECK(maxrel < tol * 100.0);
+    treeweave_free(h_max);
+    treeweave_free(h_point);
+}
+
 /* ---- G6: allow_max_depth_leaves option through the C ABI --------------- *
  * With allow_max_depth_leaves=1 the fit must NOT throw even if max_depth
  * is reached; it accepts approximate leaves and returns a valid handle. */
@@ -1107,6 +1156,7 @@ int main(void) {
     test_ood_contract();
     test_nan_input_2d_3d();
     test_absolute_max_tol();
+    test_relative_pointwise_tol();
     test_allow_max_depth_leaves();
     test_max_memory_mib_zero();
     test_max_depth_exceeded_error();

@@ -351,7 +351,8 @@ NB_MODULE(_treeweave, m) {
         .value("RELATIVE_MAX", TREEWEAVE_RELATIVE_MAX)
         .value("ABSOLUTE_MAX", TREEWEAVE_ABSOLUTE_MAX)
         .value("RELATIVE_L2", TREEWEAVE_RELATIVE_L2)
-        .value("ABSOLUTE_L2", TREEWEAVE_ABSOLUTE_L2);
+        .value("ABSOLUTE_L2", TREEWEAVE_ABSOLUTE_L2)
+        .value("RELATIVE_POINTWISE", TREEWEAVE_RELATIVE_POINTWISE);
 
     nb::enum_<treeweave_dtype_t>(m, "DType").value("F64", TREEWEAVE_F64).value("F32", TREEWEAVE_F32);
 

@@ -126,6 +126,10 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     double ssq_f{0.0}, scale_f{0.0};
     double panel_max_abs_f{0.0};
     bool   all_finite{true};
+    // RelativePointwise: |err_i| <= tol * |f_i| at each sample i. A zero
+    // reference sample converges iff its error is 0 (the RelativeMax
+    // all-zero-reference contract, applied per sample).
+    bool pointwise_ok{true};
     for (std::size_t linear_index = 0; linear_index < n_samples; ++linear_index) {
         Value<T, input_dim> sample_point;
         std::size_t         curr_index = linear_index;
@@ -157,6 +161,7 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
                 ssq_err += r * r;
             }
             const double abs_f = std::abs(static_cast<double>(actual[i]));
+            pointwise_ok       = pointwise_ok && (abs_err <= tol * abs_f);
             if (abs_f > scale_f) {
                 const double r = scale_f / abs_f;
                 ssq_f          = ssq_f * r * r + 1.0;
@@ -191,6 +196,8 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
         return max_abs_err > tol * max_abs_f;
     case TolKind::AbsoluteMax:
         return max_abs_err > tol;
+    case TolKind::RelativePointwise:
+        return !pointwise_ok;
     default:
         throw std::runtime_error("Treeweave fit error: unknown tolerance type for sampling");
     }

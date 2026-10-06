@@ -121,6 +121,7 @@ const TREEWEAVE_RELATIVE_MAX   = Cint(2)
 const TREEWEAVE_ABSOLUTE_MAX   = Cint(3)
 const TREEWEAVE_RELATIVE_L2    = Cint(4)
 const TREEWEAVE_ABSOLUTE_L2    = Cint(5)
+const TREEWEAVE_RELATIVE_POINTWISE = Cint(6)
 
 # treeweave_dtype_t
 const TREEWEAVE_F64 = Cint(0)
@@ -536,6 +537,7 @@ end
 export TreeweaveOptions, TreeweaveFn, fit, memory_usage, print_stats
 export TREEWEAVE_RELATIVE_TAIL, TREEWEAVE_ABSOLUTE_TAIL, TREEWEAVE_RELATIVE_MAX
 export TREEWEAVE_ABSOLUTE_MAX, TREEWEAVE_RELATIVE_L2, TREEWEAVE_ABSOLUTE_L2
+export TREEWEAVE_RELATIVE_POINTWISE
 export TREEWEAVE_F64, TREEWEAVE_F32
 
 end # module Treeweave

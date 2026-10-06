@@ -97,6 +97,8 @@ Some bindings add convenience fields around the shared C ABI:
      - sample-grid L2 relative error
    * - ``AbsoluteL2``
      - sample-grid L2 absolute error
+   * - ``RelativePointwise``
+     - sample-grid per-sample relative error: ``|p - f| <= tol * |f|`` at every sample; a zero reference sample converges iff its error is 0, so it fails near zeros of ``f``
    * - ``RelativeTail``
      - 1-D only, relative coefficient-tail estimate
    * - ``AbsoluteTail``

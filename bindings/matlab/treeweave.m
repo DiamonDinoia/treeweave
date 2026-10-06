@@ -17,7 +17,7 @@ classdef treeweave < handle
 %     'dim'                   input dimension (default: numel(a))
 %     'out_dim'               output dimension (default: inferred by probing f
 %                             once at the box midpoint)
-%     'tol_kind'              0=REL_TAIL..5=ABS_L2 (default: 2=REL_MAX)
+%     'tol_kind'              0=REL_TAIL..6=REL_POINTWISE (default: 2=REL_MAX)
 %     'max_depth'             max tree depth (default: 50)
 %     'max_memory_mib'        memory budget in MiB (default: -1 → auto: 4/8/16 MiB by dim)
 %     'allow_max_depth_leaves' int bool (default: 0)

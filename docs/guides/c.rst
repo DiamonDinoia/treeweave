@@ -163,7 +163,7 @@ Pass a ``treeweave_opts*`` as the last argument (or ``NULL`` for defaults):
 
 ``treeweave_tol_kind_t`` values: ``TREEWEAVE_RELATIVE_MAX`` (default),
 ``TREEWEAVE_ABSOLUTE_MAX``, ``TREEWEAVE_RELATIVE_L2``, ``TREEWEAVE_ABSOLUTE_L2``,
-``TREEWEAVE_RELATIVE_TAIL``, ``TREEWEAVE_ABSOLUTE_TAIL``.
+``TREEWEAVE_RELATIVE_TAIL``, ``TREEWEAVE_ABSOLUTE_TAIL``, ``TREEWEAVE_RELATIVE_POINTWISE``.
 
 See :doc:`options` for the full description of each field.
 

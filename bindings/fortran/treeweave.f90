@@ -37,6 +37,7 @@ module treeweave
     integer(c_int), parameter :: TREEWEAVE_ABSOLUTE_MAX  = 3_c_int
     integer(c_int), parameter :: TREEWEAVE_RELATIVE_L2   = 4_c_int
     integer(c_int), parameter :: TREEWEAVE_ABSOLUTE_L2   = 5_c_int
+    integer(c_int), parameter :: TREEWEAVE_RELATIVE_POINTWISE = 6_c_int
 
     ! ---- value type carried by a handle (treeweave_dtype_t) -----------------
     integer(c_int), parameter :: TREEWEAVE_F64 = 0_c_int

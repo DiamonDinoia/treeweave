@@ -18,6 +18,7 @@ export const TOL_KIND = {
     absolute_max: 3,
     relative_l2: 4,
     absolute_l2: 5,
+    relative_pointwise: 6,
 } as const;
 export type TolKind = keyof typeof TOL_KIND;
 

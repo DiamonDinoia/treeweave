@@ -204,6 +204,51 @@ TEST_CASE("RelativeMax fits a function with zeros", "[treeweave][relmax]") {
     }
 }
 
+TEST_CASE("RelativePointwise is per-sample, RelativeMax is not", "[treeweave][relpointwise]") {
+    using treeweave::TolKind;
+    // exp(-50x) decays ~22 orders of magnitude over [0, 1]: any fixed
+    // max-abs error that passes RelativeMax (scaled by max|f| = 1) is a huge
+    // relative error where |f| is small, so RelativePointwise refines more.
+    auto             f        = [](double x) { return std::exp(-50.0 * x); };
+    constexpr double tol      = 1e-8;
+    auto             fn_max   = fit<8>(f, 0.0, 1.0, tol, options{.tol_kind = TolKind::RelativeMax});
+    auto             fn_point = fit<8>(f, 0.0, 1.0, tol, options{.tol_kind = TolKind::RelativePointwise});
+    INFO("RelativeMax leaves " << fn_max.num_leaves() << ", RelativePointwise leaves " << fn_point.num_leaves());
+    REQUIRE(fn_point.num_leaves() > fn_max.num_leaves());
+    // And the pointwise fit honours the per-sample contract on a dense sweep.
+    const double rel_err = max_rel_err_1d(f, fn_point, 0.0, 1.0, N_SAMPLE);
+    INFO("max |p-f|/|f| = " << rel_err);
+    REQUIRE(rel_err <= 10 * tol);
+
+    // Zero reference, zero error: an all-zero f converges in one leaf, exactly.
+    auto zero = fit<8>([](double) { return 0.0; }, -1.0, 1.0, 1e-10, options{.tol_kind = TolKind::RelativePointwise});
+    REQUIRE(zero.num_leaves() == 1);
+    for (const double x : {-0.75, 0.0, 0.25, 0.9})
+        REQUIRE(zero(x) == 0.0);
+
+    // Zero reference, nonzero error: f = x - 0.0625 is exactly 0 at the first
+    // cell-centre sample (0.0625 on the degree-8 8-per-panel grid of [0, 1]).
+    // The polynomial roundoff there is nonzero, err <= tol*|f| = 0 fails, so
+    // RelativePointwise keeps subdividing while RelativeMax accepts the root.
+    auto          g          = [](double x) { return x - 0.0625; };
+    constexpr int forced_max = 4;
+    auto          fn_g_point = fit<8>(
+        g, 0.0, 1.0, 1e-12,
+        options{.tol_kind = TolKind::RelativePointwise, .max_depth = forced_max, .allow_max_depth_leaves = true});
+    auto fn_g_max = fit<8>(g, 0.0, 1.0, 1e-12, options{.tol_kind = TolKind::RelativeMax});
+    INFO("pointwise leaves " << fn_g_point.num_leaves() << " vs RelativeMax " << fn_g_max.num_leaves());
+    REQUIRE(fn_g_point.num_leaves() > fn_g_max.num_leaves());
+    // With the root panel forced (max_depth 0), the zero sits on its sample
+    // grid, so RelativePointwise never converges while RelativeMax does.
+    auto root_point =
+        fit<8>(g, 0.0, 1.0, 1e-12,
+               options{.tol_kind = TolKind::RelativePointwise, .max_depth = 0, .allow_max_depth_leaves = true});
+    auto root_max = fit<8>(g, 0.0, 1.0, 1e-12,
+                           options{.tol_kind = TolKind::RelativeMax, .max_depth = 0, .allow_max_depth_leaves = true});
+    REQUIRE(root_point.non_converged_panels().size() == 1);
+    REQUIRE(root_max.non_converged_panels().empty());
+}
+
 TEST_CASE("RelativeMax on cos far from the origin: tol 1e-14 converges, tol 2e-15 is unreachable",
           "[treeweave][relmax]") {
     // Degree-8 polyfit Horner evaluation of cos near x ~ 64 bottoms out at

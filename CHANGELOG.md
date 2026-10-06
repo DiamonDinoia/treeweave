@@ -10,6 +10,13 @@ section verbatim into that release's GitHub Release notes.
 
 ## [Unreleased]
 
+### Added
+- `TolKind::RelativePointwise`, an opt-in tolerance kind that accepts a panel
+  when `|p - f| <= tol * |f|` at every sample. A zero reference sample
+  converges iff its error is 0, so the kind fails near zeros of `f`.
+  Available in the C API and every binding as
+  `TREEWEAVE_RELATIVE_POINTWISE` / `"relative_pointwise"`.
+
 ### Changed
 - `TolKind::RelativeMax`, the default, now accepts a panel when
   `max|p - f| <= tol * max|f|` on its sample grid, where `max|f|` is the

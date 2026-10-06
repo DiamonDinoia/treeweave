@@ -43,6 +43,7 @@ _TOL_KIND = {
     "absolute_max":  3,
     "relative_l2":   4,
     "absolute_l2":   5,
+    "relative_pointwise": 6,
 }
 
 
@@ -241,7 +242,7 @@ def fit(
     tol_kind : str
         Tolerance interpretation. One of ``'relative_max'``,
         ``'absolute_max'``, ``'relative_l2'``, ``'absolute_l2'``,
-        ``'relative_tail'``, ``'absolute_tail'``.
+        ``'relative_tail'``, ``'absolute_tail'``, ``'relative_pointwise'``.
     max_depth : int
         Maximum adaptive tree depth.
     max_memory_mib : int

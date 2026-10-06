@@ -74,7 +74,7 @@ const approx = await Treeweave.fit(f, 0.0, 10.0, 1e-10, {
 | `dim` | inferred | Input dimension; inferred from `a`/`b` length. |
 | `outDim` | inferred | Output dimension; inferred by probing `f` at the box midpoint. |
 | `dtype` | `"f64"` | Floating-point precision: `"f64"` or `"f32"`. |
-| `tolKind` | `"relative_max"` | Tolerance interpretation. One of `"relative_max"`, `"absolute_max"`, `"relative_l2"`, `"absolute_l2"`, `"relative_tail"`, `"absolute_tail"`. |
+| `tolKind` | `"relative_max"` | Tolerance interpretation. One of `"relative_max"`, `"absolute_max"`, `"relative_l2"`, `"absolute_l2"`, `"relative_tail"`, `"absolute_tail"`, `"relative_pointwise"`. |
 | `maxDepth` | `50` | Tree-depth ceiling. |
 | `maxMemoryMib` | `-1` (auto) | Memory budget in MiB. `-1` = auto (4/8/16 MiB for dim 1/2/3); `0` = no cap. |
 | `allowMaxDepthLeaves` | `false` | Keep non-converged panels at max depth instead of throwing. |
