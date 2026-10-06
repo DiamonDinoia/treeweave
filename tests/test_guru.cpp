@@ -620,12 +620,12 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
             double               *xs    = static_cast<double *>(
                 ::mmap(nullptr, mlen, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
             REQUIRE(xs != MAP_FAILED);
+            // Owns the mapping from here on; restores the handler when armed.
+            segv_guard cleanup(xs, mlen);
             xs[0] = xs[1] = xs[2] = 0.5;
             std::fill_n(xs + 3, n - 3, 2.0); // > hi for both fixtures
             REQUIRE(::mprotect(reinterpret_cast<char *>(xs) + psz, mlen - psz, PROT_NONE) == 0);
 
-            // Owns the mapping from here on; restores the handler when armed.
-            segv_guard       cleanup(xs, mlen);
             struct sigaction sa{};
             sa.sa_handler = [](int) {
                 nan_guard_touched = 1;
