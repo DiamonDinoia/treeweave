@@ -14,11 +14,25 @@
 #include <span>
 #include <vector>
 
+#ifdef __unix__
+#include <csetjmp>
+#include <csignal>
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <treeweave/guru.hpp>
 
 namespace {
+
+#ifdef __unix__
+// SIGSEGV guard state for the lazy-NaN-scan regression test. File scope:
+// a signal handler reads only these. Nan read = the guard page got touched.
+volatile sig_atomic_t nan_guard_touched = 0;
+sigjmp_buf            nan_guard_env;
+#endif
 
 // Easy fit: the root panel converges on its own, min_uniform_depth force-refines
 // inside the single subtree -> live leaf table, the fast quantize path is live.
@@ -372,6 +386,237 @@ TEST_CASE("guru for_each_sorted_run parity with Function::sorted", "[guru][sorte
                 REQUIRE(og[i] == oref[i]);
         }
     }
+}
+
+TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][sorted][edge]") {
+    auto f  = make_descent_f64();
+    auto ft = make_table_f64();
+
+    auto fill_or_eval_aos = [](const auto &ff, std::uint32_t id, const double *xref, std::size_t begin,
+                               std::size_t count, double *dst) {
+        if (id == ff.out_of_domain_id()) {
+            treeweave::guru::fill_out_of_domain(ff, dst + begin, count);
+            return;
+        }
+        treeweave::guru::eval_leaf_aos(ff, id, xref + begin, dst + begin, count);
+    };
+
+    // No OOD suffix: the last in-domain run ends exactly at n; the gallop
+    // probes k over the array end and must clamp at n. An interior NaN breaks
+    // a run mid-array.
+    const auto nan = std::numeric_limits<double>::quiet_NaN();
+    auto       run = [&](const auto &ff) {
+        // Sort only the finite values; sorting NaN is undefined behaviour
+        // (NaN breaks the strict weak ordering std::sort requires). Insert
+        // the NaN at its interior slot afterwards.
+        std::vector<double> xs = {-0.9, -0.7, -0.5, -0.3, 0.4, 0.6, 0.8, 0.95};
+        // Extend the last run with 15 exact duplicates of 0.95 so the tail
+        // is one leaf run of length 16; a galloping probe overshoots past n
+        // and a bad clamp truncates that tail.
+        for (int r = 1; r < 16; ++r)
+            xs.push_back(0.95);
+        std::sort(xs.begin(), xs.end());
+        xs.insert(xs.begin() + 4, nan);
+        std::vector<double> out_guru(xs.size()), out_ref(xs.size());
+        std::uint32_t       prev_id   = ff.out_of_domain_id();
+        std::size_t         prev_last = 0;
+        std::size_t         n_runs    = 0;
+        treeweave::guru::for_each_sorted_run(ff, xs.data(), xs.size(),
+                                             [&](std::uint32_t id, std::size_t begin, std::size_t count) {
+                                                 // Runs are disjoint, ascending, and merged: no
+                                                 // two adjacent runs share one real leaf id
+                                                 // (ood_id CAN repeat: the OOD-prefix run can
+                                                 // abut an interior-NaN sentinel run).
+                                                 REQUIRE(begin == prev_last);
+                                                 if (n_runs > 0 && id != ff.out_of_domain_id())
+                                                     REQUIRE(id != prev_id);
+                                                 prev_id   = id;
+                                                 prev_last = begin + count;
+                                                 ++n_runs;
+                                                 fill_or_eval_aos(ff, id, xs.data(), begin, count, out_guru.data());
+                                             });
+        REQUIRE(prev_last == xs.size());
+        ff.sorted(xs.data(), out_ref.data(), xs.size());
+        for (std::size_t i = 0; i < xs.size(); ++i) {
+            if (std::isnan(out_ref[i]))
+                REQUIRE(std::isnan(out_guru[i]));
+            else
+                REQUIRE(out_guru[i] == out_ref[i]);
+        }
+    };
+    run(f);
+    run(ft);
+
+    // Cutoff boundary: runs of length exactly K and K+1 (K = small_run_cutoff)
+    // must come out whole, on both sides of the scan-to-gallop switch.
+    auto run_len = [&](const auto &ff, std::size_t len) {
+        std::vector<double> xs(len, 0.5); // one leaf run: exact duplicates
+        std::size_t         n_runs = 0, first_begin = 0, first_count = 0;
+        treeweave::guru::for_each_sorted_run(ff, xs.data(), xs.size(),
+                                             [&](std::uint32_t, std::size_t begin, std::size_t count) {
+                                                 if (n_runs == 0) {
+                                                     first_begin = begin;
+                                                     first_count = count;
+                                                 }
+                                                 ++n_runs;
+                                             });
+        REQUIRE(n_runs == 1);
+        REQUIRE(first_begin == 0);
+        REQUIRE(first_count == len);
+    };
+    constexpr std::size_t K = treeweave::detail::small_run_cutoff;
+    for (std::size_t len : {K, K + 1}) {
+        run_len(f, len);
+        run_len(ft, len);
+    }
+
+    // Same leaf on both sides of an interior NaN: L equal points, a NaN, one
+    // more equal point. The run must break at the NaN for every L, so a
+    // gallop probe that jumps over the NaN at any distance is caught.
+    auto nan_between = [&](const auto &ff) {
+        for (std::size_t len = 1; len <= 40; ++len) {
+            std::vector<double> xs(len, 0.9);
+            xs.push_back(nan);
+            xs.push_back(0.9);
+            std::vector<std::size_t> counts;
+            treeweave::guru::for_each_sorted_run(
+                ff, xs.data(), xs.size(),
+                [&](std::uint32_t, std::size_t, std::size_t count) { counts.push_back(count); });
+            REQUIRE(counts == std::vector<std::size_t>{len, 1, 1});
+        }
+    };
+    nan_between(f);
+    nan_between(ft);
+
+    // Exercise the gallop body: one NaN-free batch, a run of `len` equal
+    // points of one leaf followed by 10 points of another leaf. Sweeping len
+    // (past small_run_cutoff, up to 1000) drives many gallop/bisection paths,
+    // so an off-by-one in the bracket shows up for some len.
+    // Reference: a hand-written linear walk over the public
+    // sorted_leaf_id_at, not Function::sorted, which shares this walker.
+    auto gallop_body = [&](const auto &ff, std::size_t len) {
+        std::vector<double> xs(len, 0.25);
+        for (int r = 0; r < 10; ++r)
+            xs.push_back(0.75);
+        const auto [lower, upper] = ff.get_bounds();
+        const auto lo             = lower[0];
+        const auto hi             = upper[0];
+        const auto ood_id         = ff.out_of_domain_id();
+        const auto &subs          = ff.get_subtrees();
+        const bool fast           = subs.size() == 1 && subs.front().has_leaf_table();
+        using Run = std::tuple<std::uint32_t, std::size_t, std::size_t>;
+        std::vector<Run> want;
+        std::size_t      w = 0;
+        while (w < xs.size() && xs[w] < lo)
+            ++w;
+        if (w > 0)
+            want.emplace_back(ood_id, 0, w);
+        while (w < xs.size()) {
+            if (xs[w] > hi) {
+                want.emplace_back(ood_id, w, xs.size() - w);
+                break;
+            }
+            const std::uint32_t wid = ff.sorted_leaf_id_at(xs.data(), w, ood_id, fast);
+            if (wid == ood_id) {
+                want.emplace_back(ood_id, w, 1);
+                ++w;
+                continue;
+            }
+            std::size_t v = w + 1;
+            while (v < xs.size() && ff.sorted_leaf_id_at(xs.data(), v, ood_id, fast) == wid)
+                ++v;
+            want.emplace_back(wid, w, v - w);
+            w = v;
+        }
+        std::vector<Run> got;
+        treeweave::guru::for_each_sorted_run(ff, xs.data(), xs.size(),
+                                             [&](std::uint32_t id, std::size_t begin, std::size_t count) {
+                                                 got.emplace_back(id, begin, count);
+                                             });
+        REQUIRE(got == want);
+        // Hand-check the shape: exactly two runs, len + 10.
+        REQUIRE(got.size() == 2);
+        REQUIRE(std::get<1>(got[0]) == 0);
+        REQUIRE(std::get<2>(got[0]) == len);
+        REQUIRE(std::get<1>(got[1]) == len);
+        REQUIRE(std::get<2>(got[1]) == 10);
+    };
+    for (std::size_t len = K + 1; len <= 70; ++len) {
+        gallop_body(f, len);
+        gallop_body(ft, len);
+    }
+    gallop_body(f, 1000);
+    gallop_body(ft, 1000);
+
+    // Lazy NaN scan: a long run, then an out-of-domain suffix that ends in a
+    // NaN. The NaN sits after the suffix start, so main's walk gives the run
+    // and one suffix run covering the NaN. A huge all-out-of-domain batch
+    // gives one callback.
+    auto nan_after_suffix = [&](const auto &ff) {
+        std::vector<double> xs(40, 0.25);
+        xs.insert(xs.end(), 20, 2.0);
+        xs.push_back(nan);
+        std::vector<std::pair<std::size_t, std::size_t>> runs;
+        treeweave::guru::for_each_sorted_run(
+            ff, xs.data(), xs.size(),
+            [&](std::uint32_t, std::size_t begin, std::size_t count) { runs.emplace_back(begin, count); });
+        REQUIRE(runs == std::vector<std::pair<std::size_t, std::size_t>>{{0, 40}, {40, 21}});
+
+        std::vector<double> big(1000000, 2.0);
+        std::size_t         calls = 0;
+        treeweave::guru::for_each_sorted_run(ff, big.data(), big.size(),
+                                             [&](std::uint32_t, std::size_t, std::size_t) { ++calls; });
+        REQUIRE(calls == 1);
+    };
+    nan_after_suffix(f);
+    nan_after_suffix(ft);
+
+#ifdef __unix__
+    // Inspected-points regression: the lazy NaN scan must stop at the first
+    // xs[p] > hi. 3 equal in-domain points, then 10^6 points above hi, all
+    // in one page-aligned mapping. Pages after page 0 (indices >= 512) get
+    // PROT_NONE: the fixed walk reads indices 0..3 only, so it completes;
+    // a scan that reads the suffix faults, the handler longjmps out, and the
+    // test fails. A leaf-id call counter cannot see the raw xs reads, and
+    // there is no read-count hook, so this SIGSEGV guard is the proxy.
+    SECTION("lazy NaN scan stops at the out-of-domain suffix start") {
+        auto guard_body = [&](const auto &ff) {
+            constexpr std::size_t n     = 1000000;
+            const std::size_t     psz   = static_cast<std::size_t>(::sysconf(_SC_PAGESIZE));
+            const std::size_t     bytes = n * sizeof(double);
+            const std::size_t     mlen  = (bytes + psz - 1) / psz * psz;
+            double               *xs    = static_cast<double *>(
+                ::mmap(nullptr, mlen, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+            REQUIRE(xs != MAP_FAILED);
+            xs[0] = xs[1] = xs[2] = 0.5;
+            std::fill_n(xs + 3, n - 3, 2.0); // > hi for both fixtures
+            REQUIRE(::mprotect(reinterpret_cast<char *>(xs) + psz, mlen - psz, PROT_NONE) == 0);
+
+            struct sigaction sa{}, old{};
+            sa.sa_handler = [](int) {
+                nan_guard_touched = 1;
+                ::siglongjmp(nan_guard_env, 1);
+            };
+            ::sigemptyset(&sa.sa_mask);
+            sa.sa_flags = SA_NODEFER;
+            REQUIRE(::sigaction(SIGSEGV, &sa, &old) == 0);
+
+            std::vector<std::pair<std::size_t, std::size_t>> runs;
+            if (::sigsetjmp(nan_guard_env, 1) == 0) {
+                treeweave::guru::for_each_sorted_run(
+                    ff, xs, n,
+                    [&](std::uint32_t, std::size_t begin, std::size_t count) { runs.emplace_back(begin, count); });
+            }
+            ::sigaction(SIGSEGV, &old, nullptr);
+            REQUIRE(nan_guard_touched == 0);
+            REQUIRE(runs == std::vector<std::pair<std::size_t, std::size_t>>{{0, 3}, {3, n - 3}});
+            ::munmap(xs, mlen);
+        };
+        nan_guard_touched = 0;
+        guard_body(f);
+        guard_body(ft);
+    }
+#endif
 }
 
 TEST_CASE("guru for_each_sorted_run on a tuple-input fit", "[guru][sorted][soa]") {
