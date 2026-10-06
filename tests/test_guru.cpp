@@ -32,20 +32,32 @@ namespace {
 // a signal handler reads only these. Nan read = the guard page got touched.
 volatile sig_atomic_t nan_guard_touched = 0;
 sigjmp_buf            nan_guard_env;
+// Run records from the callback. Plain globals: a siglongjmp on the fault
+// path must not bypass a nontrivial destructor, so the callback writes here
+// instead of into a capturing lambda or a vector.
+std::pair<std::size_t, std::size_t> nan_guard_runs[4];
+std::size_t                         nan_guard_calls = 0;
 
 // Scope-bound cleanup for the mapping and the installed SIGSEGV handler.
-// Destructors run on every exit path (return, REQUIRE throw), so the old
-// handler goes back and the mapping is released even when the test fails.
+// Destructors run on every exit path (return, REQUIRE throw), so the handler
+// goes back and the mapping is released even when the test fails. The handler
+// is restored only when arm() succeeded; the mapping is released always.
 // siglongjmp bypasses them only on the fault path; the check after
 // sigsetjmp still runs, and a fault means the test fails anyway.
 struct segv_guard {
     double          *map    = nullptr;
     std::size_t      length = 0;
     struct sigaction old{};
+    bool             armed = false;
     segv_guard(double *m, std::size_t len) : map(m), length(len) {}
     ~segv_guard() {
-        ::sigaction(SIGSEGV, &old, nullptr);
+        if (armed)
+            ::sigaction(SIGSEGV, &old, nullptr);
         ::munmap(map, length);
+    }
+    bool arm(const struct sigaction &sa) {
+        armed = ::sigaction(SIGSEGV, &sa, &old) == 0;
+        return armed;
     }
 };
 #endif
@@ -432,7 +444,11 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
         for (int r = 1; r < 16; ++r)
             xs.push_back(0.95);
         std::sort(xs.begin(), xs.end());
-        xs.insert(xs.begin() + 4, nan);
+        // Insert the NaN at slot 4 without vector::insert: gcc 13
+        // -Wnull-dereference misfires on the insert relocation path.
+        xs.push_back(0.95);
+        std::copy_backward(xs.begin() + 4, xs.end() - 1, xs.end());
+        xs[4] = nan;
         std::vector<double> out_guru(xs.size()), out_ref(xs.size());
         std::uint32_t       prev_id   = ff.out_of_domain_id();
         std::size_t         prev_last = 0;
@@ -608,7 +624,7 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
             std::fill_n(xs + 3, n - 3, 2.0); // > hi for both fixtures
             REQUIRE(::mprotect(reinterpret_cast<char *>(xs) + psz, mlen - psz, PROT_NONE) == 0);
 
-            // Restores the old handler and unmaps on every exit path.
+            // Owns the mapping from here on; restores the handler when armed.
             segv_guard       cleanup(xs, mlen);
             struct sigaction sa{};
             sa.sa_handler = [](int) {
@@ -617,16 +633,21 @@ TEST_CASE("guru for_each_sorted_run: interior NaN and run reaching n", "[guru][s
             };
             ::sigemptyset(&sa.sa_mask);
             sa.sa_flags = SA_NODEFER;
-            REQUIRE(::sigaction(SIGSEGV, &sa, &cleanup.old) == 0);
+            REQUIRE(cleanup.arm(sa));
 
-            std::vector<std::pair<std::size_t, std::size_t>> runs;
+            nan_guard_calls = 0;
             if (::sigsetjmp(nan_guard_env, 1) == 0) {
-                treeweave::guru::for_each_sorted_run(
-                    ff, xs, n,
-                    [&](std::uint32_t, std::size_t begin, std::size_t count) { runs.emplace_back(begin, count); });
+                treeweave::guru::for_each_sorted_run(ff, xs, n,
+                                                     [](std::uint32_t, std::size_t begin, std::size_t count) {
+                                                         if (nan_guard_calls < 4)
+                                                             nan_guard_runs[nan_guard_calls] = {begin, count};
+                                                         ++nan_guard_calls;
+                                                     });
             }
             REQUIRE(nan_guard_touched == 0);
-            REQUIRE(runs == std::vector<std::pair<std::size_t, std::size_t>>{{0, 3}, {3, n - 3}});
+            REQUIRE(nan_guard_calls == 2);
+            REQUIRE(nan_guard_runs[0] == std::pair<std::size_t, std::size_t>{0, 3});
+            REQUIRE(nan_guard_runs[1] == std::pair<std::size_t, std::size_t>{3, n - 3});
         };
         nan_guard_touched = 0;
         guard_body(f);
