@@ -442,6 +442,14 @@ the C ABI’s CPU-selected degree.</p></td>
 </table>
 <p>Switch to an <code class="docutils literal notranslate"><span class="pre">Absolute*</span></code> kind when relative accuracy is not meaningful. In the C ABI these are the <code class="docutils literal notranslate"><span class="pre">treeweave_tol_kind_t</span></code> enum
 values (<code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_MAX</span></code> …).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">RelativeMax</span></code> measures the error against the largest <code class="docutils literal notranslate"><span class="pre">|f|</span></code> seen
+so far. A function whose large values appear only late in the visit order
+can throw <code class="docutils literal notranslate"><span class="pre">MaxDepthExceeded</span></code>. The throw is correct. The measurements
+showed that the failing panels miss the target even against the final max.
+Use <code class="docutils literal notranslate"><span class="pre">AbsoluteMax</span></code> with a known scale of <code class="docutils literal notranslate"><span class="pre">f</span></code>, or a larger <code class="docutils literal notranslate"><span class="pre">max_depth</span></code>.</p>
+</div>
 </section>
 </section>
 

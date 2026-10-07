@@ -106,3 +106,9 @@ Some bindings add convenience fields around the shared C ABI:
 
 Switch to an ``Absolute*`` kind when relative accuracy is not meaningful. In the C ABI these are the ``treeweave_tol_kind_t`` enum
 values (``TREEWEAVE_RELATIVE_MAX`` …).
+
+.. note:: ``RelativeMax`` measures the error against the largest ``|f|`` seen
+   so far. A function whose large values appear only late in the visit order
+   can throw ``MaxDepthExceeded``. The throw is correct. The measurements
+   showed that the failing panels miss the target even against the final max.
+   Use ``AbsoluteMax`` with a known scale of ``f``, or a larger ``max_depth``.
