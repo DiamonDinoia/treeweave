@@ -48,6 +48,9 @@ section verbatim into that release's GitHub Release notes.
   callers: use `call treeweave_eval_c(h, x, y)` for the raw C route, or switch
   to the new generic `treeweave_eval`. The f32 twin keeps the name
   `treeweavef_eval`.
+- The options guide now explains why `RelativeMax` can throw
+  `MaxDepthExceeded` when the largest `|f|` shows up late, and gives the
+  workarounds.
 
 ### Added
 - The Fortran binding gains a generic `treeweave_eval` over six specifics that
