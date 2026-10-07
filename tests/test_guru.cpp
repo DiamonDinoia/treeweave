@@ -372,7 +372,9 @@ TEST_CASE("guru for_each_sorted_run parity with Function::sorted", "[guru][sorte
         for (auto &x : xs)
             x = d(gen);
         // Adversarial: OOD prefix, OOD suffix.
-        xs.insert(xs.begin(), {-2.5, -1.0 - 1e-9});
+        // push_back, not insert(): gcc 13 -Wnull-dereference false positive.
+        xs.push_back(-2.5);
+        xs.push_back(-1.0 - 1e-9);
         xs.push_back(1.5);
         std::sort(xs.begin(), xs.end());
         const std::size_t n = xs.size();
@@ -398,9 +400,9 @@ TEST_CASE("guru for_each_sorted_run parity with Function::sorted", "[guru][sorte
         std::vector<double>            xt(3000);
         for (auto &x : xt)
             x = dt(gen);
+        xt.push_back(-0.25); // OOD prefix after the sort (not insert(): gcc 13 false positive)
+        xt.push_back(1.25);  // OOD suffix
         std::sort(xt.begin(), xt.end());
-        xt.insert(xt.begin(), -0.25); // OOD prefix
-        xt.push_back(1.25);           // OOD suffix
         std::vector<double> og(xt.size()), oref(xt.size());
         treeweave::guru::for_each_sorted_run(ft, xt.data(), xt.size(),
                                              [&](std::uint32_t id, std::size_t begin, std::size_t count) {
