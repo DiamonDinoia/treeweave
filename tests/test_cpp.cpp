@@ -403,6 +403,60 @@ TEST_CASE("Sharp tanh step forces subdivision", "[treeweave][sharp]") {
     REQUIRE(mx < 1e-5);
 }
 
+TEST_CASE("Narrow bump between sample nodes aliases through the midpoint grid", "[treeweave][aliasing]") {
+    // From the sweep-2 characterisation: a bump of width 0.001 at x = 0.3 with
+    // amplitude 100 passes the 8-midpoint panel check untouched and leaks a
+    // max error of 1.105 against tol * max|f| = 0.99999 at tol 1e-2. The
+    // between-node probes must catch it and refine until the true error is
+    // below tol * max|f|. Checked on a dense 1e4-point grid.
+    auto f = [](double x) { return 0.001 * std::cos(30.0 * x) + 100.0 * std::exp(-std::pow((x - 0.3) / 0.001, 2)); };
+    constexpr double tol = 1e-2;
+    auto             fn  = fit<8>(f, -1.0, 1.0, tol, options{.max_depth = 11});
+    double           err = 0.0, fmax = 0.0;
+    constexpr int    n = 10000;
+    for (int i = 0; i <= n; ++i) {
+        const double x   = -1.0 + 2.0 * i / n;
+        const double fx  = f(x);
+        const double res = std::abs(fn(x) - fx);
+        // std::max drops a NaN: a non-finite residual or f would pass unseen.
+        REQUIRE(std::isfinite(fx));
+        REQUIRE(std::isfinite(res));
+        err  = std::max(err, res);
+        fmax = std::max(fmax, std::abs(fx));
+    }
+    INFO("max err " << err << " vs tol*max|f| " << tol * fmax);
+    REQUIRE(err <= tol * fmax);
+}
+
+TEST_CASE("2D bump at the lower panel boundary passes the midpoint grid unseen", "[treeweave][aliasing][2d]") {
+    // f is y-xtruded, so a degree-8 panel fits the y direction exactly and
+    // the fit sees only the x direction. After one x split, the bump centre
+    // sits at the lower endpoint of panel x in [0.5, 1], where no midpoint
+    // probes; on the width-1 root panel the bump is invisible to the open
+    // 8x8 grid and too narrow for a degree-8 Chebyshev fit to leave a tail.
+    // The closed 9-per-axis grid probes that boundary and refines.
+    const double w = 0.002;
+    auto         f = [w](std::array<double, 2> x) -> std::array<double, 1> {
+        const double t = (x[0] - 0.5) / w;
+        return {std::exp(-t * t)};
+    };
+    const double tol = 1e-3;
+    auto         fn  = fit<8>(f, std::array{0.0, 0.0}, std::array{1.0, 1.0}, tol, options{.max_depth = 20});
+    double       err = 0.0, fmax = 0.0;
+    for (int i = 0; i <= 4000; ++i) {
+        for (int j = 0; j <= 40; ++j) {
+            const std::array<double, 2> x{0.5 + 0.5 * i / 4000, 0.025 * j};
+            const double                fx  = f(x)[0];
+            const double                res = std::abs(fn(x)[0] - fx);
+            REQUIRE(std::isfinite(res));
+            err  = std::max(err, res);
+            fmax = std::max(fmax, std::abs(fx));
+        }
+    }
+    INFO("max err " << err << " vs tol*max|f| " << tol * fmax);
+    REQUIRE(err <= tol * fmax);
+}
+
 TEST_CASE("2D anisotropic gaussian bump", "[treeweave][2d][bump]") {
     auto f = [](std::array<double, 2> x) -> std::array<double, 1> {
         return {std::exp(-100.0 * (x[0] - 0.5) * (x[0] - 0.5) - (x[1] - 0.5) * (x[1] - 0.5))};
@@ -410,8 +464,8 @@ TEST_CASE("2D anisotropic gaussian bump", "[treeweave][2d][bump]") {
     auto exact = [](std::array<double, 2> x) {
         return std::exp(-100.0 * (x[0] - 0.5) * (x[0] - 0.5) - (x[1] - 0.5) * (x[1] - 0.5));
     };
-    auto fn     = fit<10>(f, std::array{0.0, 0.0}, std::array{1.0, 1.0},
-                          /*tol=*/1e-10);
+    auto fn = fit<10>(f, std::array{0.0, 0.0}, std::array{1.0, 1.0},
+                      /*tol=*/1e-10);
     // max|f| = 1 and the default tol is relative to it, so the error bound is absolute; the tails fall to 1e-11.
     std::mt19937                           gen(1);
     std::uniform_real_distribution<double> d(0.0, 1.0);
@@ -1241,11 +1295,11 @@ TEST_CASE("Boundary sqrt singularity throws", "[treeweave][singularities]") {
 namespace {
 // Stand-in for a polyfit: tail_error_exceeds_tol reads only the type aliases, NCOEFFS and coeffs().
 struct FakeFit {
-    using InputType  = double;
-    using OutputType = double;
+    using InputType                      = double;
+    using OutputType                     = double;
     static constexpr std::size_t NCOEFFS = 8;
     std::array<double, NCOEFFS>  c{};
-    [[nodiscard]] auto coeffs() const -> const std::array<double, NCOEFFS> & { return c; }
+    [[nodiscard]] auto           coeffs() const -> const std::array<double, NCOEFFS>           &{ return c; }
 };
 
 // Stand-in for a polyfit on the sampled path: sample_error_exceeds_tol reads
@@ -1289,7 +1343,7 @@ TEST_CASE("a non-finite sample never poisons the RelativeMax normaliser", "[tree
                 return use_nan ? std::numeric_limits<double>::quiet_NaN() : std::numeric_limits<double>::infinity();
             return std::sin(200.0 * x);
         };
-        auto fn = fit(f, 0.0, 2.0, 1e-8, options{.max_depth = 3, .allow_max_depth_leaves = true});
+        auto fn      = fit(f, 0.0, 2.0, 1e-8, options{.max_depth = 3, .allow_max_depth_leaves = true});
         bool bad_low = false, bad_high = false;
         for (const auto &p : fn.non_converged_panels()) {
             bad_low  = bad_low || p.b[0] <= 0.5;
@@ -1325,15 +1379,157 @@ constexpr double kCenter = 2.0, kHalf = 1.0;
 double           kTestGridPoint(std::size_t i) { return 1.125 + 0.25 * static_cast<double>(i); }
 
 // Runs the checker with the reference closed over `ref` and every grid point
-// approximated by `ref(x) + err_of(x)`. Returns the checker verdict.
+// approximated by `ref(x) + err_of(x)`. Returns the checker verdict and the
+// post-call fit-wide max|f| scale.
 template <class Ref, class Err>
-bool sample_tol_check(treeweave::TolKind kind, double tol, Ref ref, Err err_of) {
+std::pair<bool, double> sample_tol_check2(treeweave::TolKind kind, double tol, Ref ref, Err err_of) {
     double        max_abs_f = 0.0;
     auto          func      = [ref](double x) { return ref(x); };
     FakeSampleFit fit{[ref, err_of](double x) { return ref(x) + err_of(x); }};
-    return treeweave::detail::sample_error_exceeds_tol(kTestSamples, kind, tol, max_abs_f, kCenter, kHalf, func, fit);
+    const bool exceeds = treeweave::detail::sample_error_exceeds_tol(kTestSamples, kind, tol, max_abs_f, kCenter, kHalf,
+                                                                     kCenter - kHalf, kCenter + kHalf, func, fit);
+    return {exceeds, max_abs_f};
+}
+// Same, verdict only.
+template <class Ref, class Err>
+bool sample_tol_check(treeweave::TolKind kind, double tol, Ref ref, Err err_of) {
+    return sample_tol_check2(kind, tol, ref, err_of).first;
 }
 } // namespace
+
+TEST_CASE("max_abs_f is committed only when both grids are finite", "[treeweave][relmax][scale][gates]") {
+    using treeweave::TolKind;
+    using treeweave::detail::sample_error_exceeds_tol;
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    // Under a per-grid commit the panel raises the fit-wide max|f| to 1e100
+    // on its open grid before the closed-grid NaN rejects it. Committing only
+    // when both grids are finite keeps the scale untouched. A later panel
+    // inherits exactly what this call leaves in max_abs_f, so the returned
+    // scale is the observable that matters downstream. The NaN is a
+    // closed-grid point: 3.0 is kTestGridPoint(8) on the closed grid, and
+    // the open grid samples only the midpoints 1.125 + 0.25*i.
+    auto ref_fixed = [](double x) { return x == 3.0 ? nan : 1e100; };
+    auto no_err    = [](double) { return 0.0; };
+    {
+        double        max_abs_f = 0.0;
+        auto          func      = [ref_fixed](double x) { return ref_fixed(x); };
+        FakeSampleFit fit{[ref_fixed](double x) { return x == 3.0 ? 0.0 : ref_fixed(x); }};
+        const bool    exceeds = sample_error_exceeds_tol(kTestSamples, TolKind::RelativeMax, 1e-2, max_abs_f, kCenter,
+                                                         kHalf, kCenter - kHalf, kCenter + kHalf, func, fit);
+        REQUIRE(exceeds);          // the closed-grid NaN must reject the panel
+        REQUIRE(max_abs_f == 0.0); // and it must not commit its scale
+    }
+    // A fully finite panel raises the scale, matching main per panel.
+    const auto [exceeded_f, scale_f] =
+        sample_tol_check2(TolKind::RelativeMax, 1e-2, [](double) { return 1e100; }, no_err);
+    REQUIRE(!exceeded_f);
+    REQUIRE(scale_f == 1e100);
+    // A padded scale does leak downstream: err 1 vs f 1 at tol 1e-2 passes
+    // when the inherited scale is 1e100 and is rejected when it is not.
+    double        padded = 1e100;
+    auto          func   = [](double) { return 1.0; };
+    FakeSampleFit fit2{[](double) { return 2.0; }};
+    REQUIRE(!sample_error_exceeds_tol(kTestSamples, TolKind::RelativeMax, 1e-2, padded, kCenter, kHalf, kCenter - kHalf,
+                                      kCenter + kHalf, func, fit2));
+    double clean = 1.0;
+    REQUIRE(sample_error_exceeds_tol(kTestSamples, TolKind::RelativeMax, 1e-2, clean, kCenter, kHalf, kCenter - kHalf,
+                                     kCenter + kHalf, func, fit2));
+}
+
+TEST_CASE("both RelativeMax gates decide against one shared panel scale", "[treeweave][relmax][scale][shared]") {
+    using treeweave::TolKind;
+    // Panel [1, 3] via kCenter/kHalf. The open grid probes the midpoints
+    // 1.125 + 0.25*i; the closed grid probes 1 + 0.25*i, i in [0, 8]. The
+    // two grids are disjoint, and 3.0 occurs only on the closed grid.
+    // Case A: |f| = 100 only at x == 3.0 (closed grid), error 0.1
+    // everywhere. With a per-gate scale the open gate normalises by its own
+    // maximum 1 and rejects (0.1 > 1e-2 * 1); the shared scale is 100, so
+    // both gates accept (0.1 <= 1e-2 * 100).
+    auto ref_big_on_closed = [](double x) { return x == 3.0 ? 100.0 : 1.0; };
+    auto err_everywhere    = [](double) { return 0.1; };
+    REQUIRE(!sample_tol_check(TolKind::RelativeMax, 1e-2, ref_big_on_closed, err_everywhere));
+    // Case B (swap): |f| = 100 on every open point, 1 on the closed grid.
+    // x*8 is an odd integer exactly on the open grid points.
+    auto ref_big_on_open = [](double x) {
+        const long n = std::lround(x * 8.0);
+        return n % 2 != 0 ? 100.0 : 1.0;
+    };
+    REQUIRE(!sample_tol_check(TolKind::RelativeMax, 1e-2, ref_big_on_open, err_everywhere));
+}
+
+TEST_CASE("the closed grid stays inside the exact panel bounds", "[treeweave][closed][bounds]") {
+    using treeweave::TolKind;
+    using treeweave::detail::sample_error_exceeds_tol;
+    // center 0.05, half 0.15000000000000002: center - half is
+    // -0.10000000000000002, one rounding step below the -0.1 bound, so a
+    // domain-checked callback throws when the closed grid is built from
+    // center - half_len. Exact bounds keep every sample in [-0.1, 0.2].
+    const double a = -0.1, b = 0.2;
+    const double c = 0.5 * (a + b), h = 0.5 * (b - a);
+    auto         domain_checked = [a, b](double x) {
+        if (x < a || x > b)
+            throw std::domain_error("sample outside panel bounds");
+        return x;
+    };
+    double        max_abs_f = 0.0;
+    FakeSampleFit fit{[](double x) { return x; }};
+    for (const auto kind : {TolKind::RelativeMax, TolKind::AbsoluteMax}) {
+        INFO("kind " << static_cast<int>(kind));
+        REQUIRE_NOTHROW(sample_error_exceeds_tol(kTestSamples, kind, 1.0, max_abs_f, c, h, a, b, domain_checked, fit));
+    }
+    // ND twin on [-0.1, 0.2] x [-0.1, 0.2], y-extruded.
+    const std::array<double, 2> a2{a, a}, b2{b, b};
+    const std::array<double, 2> c2{c, c}, h2{h, h};
+    auto                        domain_checked2 = [a, b](std::array<double, 2> x) -> std::array<double, 1> {
+        if (x[0] < a || x[0] > b || x[1] < a || x[1] > b)
+            throw std::domain_error("sample outside panel bounds");
+        return {x[0]};
+    };
+    struct FakeSampleFit2 {
+        using InputType  = std::array<double, 2>;
+        using OutputType = std::array<double, 1>;
+        auto operator()(InputType x) const -> OutputType { return {x[0]}; }
+    } fit2;
+    max_abs_f = 0.0;
+    REQUIRE_NOTHROW(sample_error_exceeds_tol(kTestSamples, TolKind::AbsoluteMax, 1.0, max_abs_f, c2, h2, a2, b2,
+                                             domain_checked2, fit2));
+    // Sanity: the endpoints themselves are probed (index 0 is exactly a).
+    bool saw_a = false, saw_b = false;
+    auto probe = [a, b, &saw_a, &saw_b](double x) {
+        saw_a = saw_a || x == a;
+        saw_b = saw_b || x == b;
+        return x;
+    };
+    max_abs_f = 0.0;
+    sample_error_exceeds_tol(kTestSamples, TolKind::AbsoluteMax, 1.0, max_abs_f, c, h, a, b, probe, fit);
+    REQUIRE(saw_a);
+    REQUIRE(saw_b);
+}
+
+TEST_CASE("each grid gates AbsoluteL2 alone, no dilution between the grids", "[treeweave][absl2][gates]") {
+    using treeweave::TolKind;
+    // The grids gate independently: an error on only one grid is judged by
+    // that grid's norm alone, not by a pooled norm the other grid dilutes.
+    // Residual 1 on all 8 midpoints gives sqrt(8)/8 ~= 0.354 on the open
+    // grid; the pooled 17-point norm of 0.166 would accept at tol 0.25.
+    // Residual 1 on all 9 closed points gives sqrt(9)/9 ~= 0.333; the pooled
+    // norm of 0.208 would accept too.
+    const auto ref     = [](double) { return 0.0; };
+    const auto is_open = [](double x) {
+        for (std::size_t i = 0; i < kTestSamples; ++i)
+            if (x == kTestGridPoint(i))
+                return true;
+        return false;
+    };
+    const auto mid_err  = [is_open](double x) { return is_open(x) ? 1.0 : 0.0; };
+    const auto vert_err = [is_open](double x) { return is_open(x) ? 0.0 : 1.0; };
+    INFO("open-grid norm " << std::sqrt(8.0) / 8.0 << ", closed-grid norm " << 1.0 / 3.0);
+    REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 0.25, ref, mid_err));
+    REQUIRE(sample_tol_check(TolKind::AbsoluteL2, 0.25, ref, vert_err));
+    // The residual is zero everywhere: both gates pass.
+    const auto no_err = [](double) { return 0.0; };
+    REQUIRE(!sample_tol_check(TolKind::AbsoluteL2, 0.25, ref, no_err));
+}
 
 TEST_CASE("the RelativeL2 check scales the norm, no overflow or underflow", "[treeweave][rell2][scaled]") {
     using treeweave::TolKind;
@@ -1517,7 +1713,7 @@ TEST_CASE("an isolated non-finite error is rejected at every grid position", "[t
                 FakeSampleFit fit{[ref, err_of](double x) { return ref(x) + err_of(x); }};
                 INFO("kind " << static_cast<int>(kind) << ", position " << pos << ", value " << bad);
                 REQUIRE(treeweave::detail::sample_error_exceeds_tol(kTestSamples, kind, 1e-8, max_abs_f, kCenter, kHalf,
-                                                                    func, fit));
+                                                                    kCenter - kHalf, kCenter + kHalf, func, fit));
             }
         }
     }

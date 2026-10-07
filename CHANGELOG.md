@@ -27,6 +27,17 @@ section verbatim into that release's GitHub Release notes.
   relative. Functions with zeros now fit; leaf counts change.
 
 ### Fixed
+- `TolKind::RelativeMax`, `AbsoluteMax`, `RelativeL2`, `AbsoluteL2`, and
+  `RelativePointwise` convergence checks now gate on the open 8-point
+  midpoint grid and, independently, on the closed 9-point grid per axis
+  (both endpoints and the 7 interior cell vertices). The check now also
+  samples cell vertices and panel boundaries; a feature narrower than the
+  grid spacing that falls between all sampled points can still pass, in any
+  dimension. Fixes silently wrong fits on such functions, in 1D and ND, at
+  (8^d + 9^d) / 8^d the convergence-check f-evals (2.13x for d=1, 2.42x for
+  d=3). Tail kinds (`RelativeTail`, `AbsoluteTail`) do not run these sample
+  checks; the low-degree `RelativeTail` fallback (NCOEFFS <= 2) uses
+  `RelativeMax` on the same grids.
 - `Function::leaf_id`'s descent-mode OOD gate used negative logic, letting
   `NaN` fall through to `get_linear_bin(NaN)` (a UB narrowing conversion plus
   an out-of-bounds subtree index; segfaults observed). The descent gate is now

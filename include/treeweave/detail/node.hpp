@@ -81,9 +81,9 @@ class Node {
             if (wants_tail && !low_degree) {
                 if (tail_error_exceeds_tol(input.tol_kind, input.tol, polyfit))
                     return rollback_and_fail();
-            } else if (sample_error_exceeds_tol(kFitSamplesPerDim,
-                                                low_degree ? TolKind::RelativeMax : input.tol_kind, input.tol,
-                                                input.max_abs_f, center, half_length, func, polyfit)) {
+            } else if (sample_error_exceeds_tol(kFitSamplesPerDim, low_degree ? TolKind::RelativeMax : input.tol_kind,
+                                                input.tol, input.max_abs_f, center, half_length, lb, ub, func,
+                                                polyfit)) {
                 return rollback_and_fail();
             }
         } else {
@@ -92,7 +92,7 @@ class Node {
                                          "is only supported for 1D scalar→scalar fits; use a "
                                          "sample-based TolKind for array-valued or ND fits");
             if (sample_error_exceeds_tol(kFitSamplesPerDim, input.tol_kind, input.tol, input.max_abs_f, center,
-                                         half_length, func, polyfit))
+                                         half_length, lb, ub, func, polyfit))
                 return rollback_and_fail();
         }
 
