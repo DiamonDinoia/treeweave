@@ -18,6 +18,9 @@ section verbatim into that release's GitHub Release notes.
   `TREEWEAVE_RELATIVE_POINTWISE` / `"relative_pointwise"`.
 
 ### Changed
+- The nanobind build requirement now excludes only 3.0.0
+  (`nanobind>=2.0,!=3.0.0`) instead of the full 3.0 line. nanobind 3.0.1 has
+  the clang-cl fix (wjakob/nanobind#1421), so 3.0.1 and later are allowed.
 - `TolKind::RelativeMax`, the default, now accepts a panel when
   `max|p - f| <= tol * max|f|` on its sample grid, where `max|f|` is the
   largest `|f|` sampled so far over the whole domain, instead of pointwise
