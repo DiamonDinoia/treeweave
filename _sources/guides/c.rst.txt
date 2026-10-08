@@ -32,6 +32,9 @@ Other platforms: ``linux-aarch64``, ``macos-arm64``, ``macos-x86_64``, ``windows
 (zip). The tarball includes ``include/treeweave.h``, ``lib/libtreeweave_c``, and a
 ``find_package(treeweave)`` CMake package.
 
+To pin a release, use the numeric version (e.g. ``0.0.6``) in the asset name and prefix
+the tag with ``v``: ``.../releases/download/v0.0.6/treeweave-0.0.6-linux-x86_64.tar.gz``.
+
 CMake package
 ^^^^^^^^^^^^^
 
