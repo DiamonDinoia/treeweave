@@ -2,6 +2,7 @@
 #define TREEWEAVE_DETAIL_NUMERICS_HPP
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
@@ -151,19 +152,22 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     // Per-grid finite flag and max|f| local to each grid. The fit-wide
     // `max_abs_f` is committed only when both grids are finite, the same
     // commit main makes for its one grid there (see the reset calls below).
-    bool   grid_finite[2]{true, true};
-    double grid_max_abs_f[2]{0.0, 0.0};
+    std::array<bool, 2>   grid_finite{true, true};
+    std::array<double, 2> grid_max_abs_f{0.0, 0.0};
     // Per-grid saved norm accumulators, so each grid runs once and both
     // gates still see their own private error/norm after the commit below.
-    double      saved_max_abs_err[2]{0.0, 0.0};
-    double      saved_ssq_err[2]{0.0, 0.0};
-    double      saved_scale_err[2]{0.0, 0.0};
-    double      saved_ssq_f[2]{0.0, 0.0};
-    double      saved_scale_f[2]{0.0, 0.0};
-    std::size_t saved_n_accum[2]{0, 0};
-    bool        saved_pointwise_ok[2]{true, true};
+    struct Accums {
+        double      max_abs_err{0.0};
+        double      ssq_err{0.0};
+        double      scale_err{0.0};
+        double      ssq_f{0.0};
+        double      scale_f{0.0};
+        std::size_t n_accum{0};
+        bool        pointwise_ok{true};
+    };
+    std::array<Accums, 2> saved{};
 
-    const auto accumulate = [&](const Value<T, input_dim> &sample_point, std::size_t grid) {
+    const auto accumulate = [&](const Value<T, input_dim> &sample_point, std::size_t grid) -> void {
         Value<T, output_dim> actual = func(sample_point);
         Value<T, output_dim> approx = polyfit(sample_point);
         for (std::size_t i = 0; i < output_dim; ++i) {
@@ -200,7 +204,7 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     // d=2, 2.42x for d=3. Gate 2 must start from scratch (no dilution), so
     // `reset()` restores the norm accumulators; the per-grid finite flags
     // and maxima above stay until the final commit.
-    const auto run_grid = [&](bool closed) {
+    const auto run_grid = [&](bool closed) -> void {
         const std::size_t grid     = closed ? 1u : 0u;
         const std::size_t pts_1d   = n_sample_1d_sz + (closed ? 1 : 0);
         const std::size_t n_points = closed ? powi<static_cast<int>(input_dim)>(pts_1d) : n_samples;
@@ -215,11 +219,12 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
                     // lb + i*(ub-lb)/n can otherwise land outside the domain
                     // (e.g. center-half_len on [-0.1, 0.2]).
                     const T span = (ub[dim] - lb[dim]) / static_cast<T>(n_sample_1d_sz);
-                    sample_point[dim] =
-                        i == 0
-                            ? lb[dim]
-                            : (i == n_sample_1d_sz ? ub[dim]
-                                                   : std::clamp(lb[dim] + span * static_cast<T>(i), lb[dim], ub[dim]));
+                    if (i == 0)
+                        sample_point[dim] = lb[dim];
+                    else if (i == n_sample_1d_sz)
+                        sample_point[dim] = ub[dim];
+                    else
+                        sample_point[dim] = std::clamp(lb[dim] + span * static_cast<T>(i), lb[dim], ub[dim]);
                 } else {
                     const T dx        = T{2} * half_len[dim] / static_cast<T>(n_sample_1d_sz);
                     sample_point[dim] = center[dim] - half_len[dim] + dx / T{2} + dx * static_cast<T>(i);
@@ -229,7 +234,7 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
             accumulate(sample_point, grid);
         }
     };
-    const auto reset = [&] {
+    const auto reset = [&]() -> void {
         max_abs_err  = 0.0;
         ssq_err      = 0.0;
         scale_err    = 0.0;
@@ -238,25 +243,25 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
         n_accum      = 0;
         pointwise_ok = true;
     };
-    const auto save = [&](std::size_t grid) {
-        saved_max_abs_err[grid]  = max_abs_err;
-        saved_ssq_err[grid]      = ssq_err;
-        saved_scale_err[grid]    = scale_err;
-        saved_ssq_f[grid]        = ssq_f;
-        saved_scale_f[grid]      = scale_f;
-        saved_n_accum[grid]      = n_accum;
-        saved_pointwise_ok[grid] = pointwise_ok;
+    const auto save = [&](std::size_t grid) -> void {
+        saved[grid].max_abs_err  = max_abs_err;
+        saved[grid].ssq_err      = ssq_err;
+        saved[grid].scale_err    = scale_err;
+        saved[grid].ssq_f        = ssq_f;
+        saved[grid].scale_f      = scale_f;
+        saved[grid].n_accum      = n_accum;
+        saved[grid].pointwise_ok = pointwise_ok;
     };
-    const auto restore = [&](std::size_t grid) {
-        max_abs_err  = saved_max_abs_err[grid];
-        ssq_err      = saved_ssq_err[grid];
-        scale_err    = saved_scale_err[grid];
-        ssq_f        = saved_ssq_f[grid];
-        scale_f      = saved_scale_f[grid];
-        n_accum      = saved_n_accum[grid];
-        pointwise_ok = saved_pointwise_ok[grid];
+    const auto restore = [&](std::size_t grid) -> void {
+        max_abs_err  = saved[grid].max_abs_err;
+        ssq_err      = saved[grid].ssq_err;
+        scale_err    = saved[grid].scale_err;
+        ssq_f        = saved[grid].ssq_f;
+        scale_f      = saved[grid].scale_f;
+        n_accum      = saved[grid].n_accum;
+        pointwise_ok = saved[grid].pointwise_ok;
     };
-    const auto decide = [&](std::size_t grid, double shared_scale) {
+    const auto decide = [&](std::size_t grid, double shared_scale) -> bool {
         // A non-finite sample or error can never satisfy any check below
         // (`inf > tol*inf` is false): reject the panel outright.
         if (!grid_finite[grid])
@@ -302,7 +307,7 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     run_grid(true);
     save(1);
 
-    const double panel_scale = std::max(max_abs_f, std::max(grid_max_abs_f[0], grid_max_abs_f[1]));
+    const double panel_scale = std::max({max_abs_f, grid_max_abs_f[0], grid_max_abs_f[1]});
 
     // Gate 1: the open grid probes the cell midpoints only.
     restore(0);
@@ -320,7 +325,7 @@ inline auto sample_error_exceeds_tol(int n_sample_1d, TolKind tol_type, double t
     // raises `max_abs_f`, so later panels keep the larger normaliser; a
     // non-finite panel does not.
     if (tol_type == TolKind::RelativeMax && grid_finite[0] && grid_finite[1])
-        max_abs_f = std::max(max_abs_f, std::max(grid_max_abs_f[0], grid_max_abs_f[1]));
+        max_abs_f = std::max({max_abs_f, grid_max_abs_f[0], grid_max_abs_f[1]});
 
     return open_exceeds || closed_exceeds;
 }
