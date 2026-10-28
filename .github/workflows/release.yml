@@ -532,7 +532,7 @@ jobs:
         # Default repository-url is the real PyPI (upload.pypi.org). A version
         # PyPI already has is immutable, so skip-existing stays off: a duplicate
         # upload should fail loudly rather than pass silently.
-        uses: pypa/gh-action-pypi-publish@v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.3
 
       - name: Rollback tag on PyPI failure
         if: failure() && steps.tag.outputs.pushed == 'true'
