@@ -95,7 +95,7 @@ jobs:
           vcvarsall: true
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.3.1
+        uses: pypa/cibuildwheel@v4.3.4
         with:
           package-dir: bindings/python
         env:
