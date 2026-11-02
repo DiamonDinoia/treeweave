@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793017878705,
+  "lastUpdate": 1793632025968,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -3900,6 +3900,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000514306111111111,
             "unit": "s/batch",
             "extra": "MdAPE=0.00212920427319562; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]",
+            "email": "49699333+dependabot[bot]@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "GitHub",
+            "username": "web-flow",
+            "email": "noreply@github.com"
+          },
+          "id": "0549e1dce04ae20d46005fcc8cf0d2aee47179aa",
+          "message": "Build(deps): Bump the github-actions group with 2 updates (#61)\n\nBumps the github-actions group with 2 updates: [pypa/gh-action-pypi-publish](https://github.com/pypa/gh-action-pypi-publish) and [pypa/cibuildwheel](https://github.com/pypa/cibuildwheel).\n\n\nUpdates `pypa/gh-action-pypi-publish` from 1.14.2 to 1.14.3\n- [Release notes](https://github.com/pypa/gh-action-pypi-publish/releases)\n- [Commits](https://github.com/pypa/gh-action-pypi-publish/compare/v1.14.2...v1.14.3)\n\nUpdates `pypa/cibuildwheel` from 4.3.1 to 4.3.4\n- [Release notes](https://github.com/pypa/cibuildwheel/releases)\n- [Changelog](https://github.com/pypa/cibuildwheel/blob/main/docs/changelog.md)\n- [Commits](https://github.com/pypa/cibuildwheel/compare/v4.3.1...v4.3.4)\n\n---\nupdated-dependencies:\n- dependency-name: pypa/gh-action-pypi-publish\n  dependency-version: 1.14.3\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n  dependency-group: github-actions\n- dependency-name: pypa/cibuildwheel\n  dependency-version: 4.3.4\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n  dependency-group: github-actions\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-10-28T20:09:24Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/0549e1dce04ae20d46005fcc8cf0d2aee47179aa"
+        },
+        "date": 1793632024856,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000700387777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00518453789024294; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.001208782,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00475636788116026; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000597826222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00193835152039252; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.001001148125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00162959107024489; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00237556333333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00569030576161221; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.00464727833333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0224444691017834; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.009656125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00445727346224129; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.00137978755555556,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0025502339869803; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000300748777777778,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0046711788668411; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.00057968825,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00708295394596011; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.000513361875,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00257546666601563; batch=65536 pts/call"
           }
         ]
       }
