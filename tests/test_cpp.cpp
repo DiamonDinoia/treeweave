@@ -160,6 +160,26 @@ TEST_CASE("Rejects non-positive tolerance", "[treeweave][errors]") {
     REQUIRE_THROWS_AS(fit(f, 0.0, 1.0, /*tol=*/-1.0), std::invalid_argument);
 }
 
+TEST_CASE("checked_options enforces the tol floor and clamps the double budget", "[treeweave][errors]") {
+    using treeweave::checked_options;
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    REQUIRE_THROWS_AS(checked_options(nan, 4e-16), std::invalid_argument);
+    REQUIRE_THROWS_AS(checked_options(1e-17, 4e-16), std::invalid_argument);
+    // An infinite tolerance is accepted (coarse first panel), matching fit().
+    REQUIRE(checked_options(std::numeric_limits<double>::infinity(), 4e-16).max_memory_mib == -1);
+    // The budget is clamped into the int field before the cast.
+    REQUIRE(checked_options(1e-15, 4e-16, 0.5).max_memory_mib == 1);
+    REQUIRE(checked_options(1e-15, 4e-16, 256.0).max_memory_mib == 256);
+    REQUIRE(checked_options(1e-15, 4e-16, 1e18).max_memory_mib == std::numeric_limits<int>::max());
+    // A non-positive budget keeps the tri-state (auto / off).
+    REQUIRE(checked_options(1e-15, 4e-16, 0.0).max_memory_mib == -1);
+    REQUIRE(checked_options(1e-15, 4e-16, -3.0).max_memory_mib == -1);
+    // Caller options pass through untouched.
+    const auto opts = checked_options(1e-15, 4e-16, 64.0, {.max_depth = 25, .allow_max_depth_leaves = true});
+    REQUIRE(opts.max_depth == 25);
+    REQUIRE(opts.allow_max_depth_leaves);
+}
+
 TEST_CASE("Tolerance-driven overload converges", "[treeweave][tol-driven]") {
     auto f  = [](double x) { return std::sin(5.0 * x); };
     auto fn = fit(f, 0.0, 1.0, /*tol=*/1e-8);
