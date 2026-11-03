@@ -584,8 +584,8 @@ TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][la
 }
 
 TEST_CASE("1D smooth fit on far-shifted domain centred at 1e6", "[treeweave][large-domain][shifted]") {
-    // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, leaf-table quantize at large x); ~6 digits
-    // lost so tols reflect that floor.
+    // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, large-x quantize).
+    // About 6 digits are lost, so tols reflect that floor.
     const double centre = 1.0e6;
     const double a      = centre;
     const double b      = centre + 1.0;
@@ -624,11 +624,11 @@ TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][mem
         const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
         return {std::exp(-r) / r};
     };
-    REQUIRE_THROWS_AS(fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
-                             /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 1}),
+    REQUIRE_THROWS_AS(fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5}, /*tol=*/1e-9,
+                             options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 1}),
                       treeweave::MemoryBudgetExceeded);
-    auto fn = fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
-                     /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 8});
+    auto fn = fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5}, /*tol=*/1e-9,
+                     options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 8});
     REQUIRE(std::isfinite(fn(std::array{1.0, 1.0, 1.0})[0]));
 }
 
@@ -802,7 +802,7 @@ TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table
     REQUIRE(shallow.has_fast_quantize());
 }
 
-// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2 and skips it.
+// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2.
 TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
           "[treeweave][min_uniform_depth][leaf-table]") {
     auto f  = [](double x) { return std::cos(x); };
@@ -893,7 +893,7 @@ TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[tr
     for (std::size_t i = 0; i < N; ++i)
         REQUIRE(std::abs(fn(xs[i]) - batch[i]) <= 8.0F * ulp_f * std::max(1.0F, std::abs(fn(xs[i]))));
 
-    // Sorted path (COV-G3): OOD-low (NaN), in-domain, above-b (leaf-table may extrapolate finite, matching batch).
+    // Sorted path (COV-G3): OOD-low (NaN), in-domain, above-b (leaf-table may extrapolate finite).
     constexpr std::size_t N_OOD_LO = 3, N_OOD_HI = 4;
     std::vector<float>    sxs;
     sxs.reserve(N + N_OOD_LO + N_OOD_HI);
