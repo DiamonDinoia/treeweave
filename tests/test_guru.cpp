@@ -634,3 +634,56 @@ TEST_CASE("guru LaneQuantizer lanes match leaf_id (f64 scalar, f64 1D->4D, f32)"
     // The descent-mode fit has no leaf table: the precondition must say so.
     REQUIRE(!treeweave::guru::LaneQuantizer<double>::supports(make_descent_f64()));
 }
+
+TEST_CASE("guru batch ids and batch leaf eval match the scalar paths", "[guru][batch]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    REQUIRE(f.num_leaves() == 64);
+    using B = xsimd::batch<double>;
+    constexpr std::size_t W = B::size;
+
+    // Interior points plus ULP triples around every leaf boundary k/64.
+    std::mt19937                   gen(7);
+    std::uniform_real_distribution u(0.0, 1.0);
+    std::vector<double>            xs;
+    for (int i = 0; i < 200; ++i) xs.push_back(u(gen));
+    for (std::size_t k = 1; k < 64; ++k) {
+        const double b = static_cast<double>(k) / 64.0;
+        xs.push_back(b);
+        xs.push_back(std::nextafter(b, 0.0));
+        xs.push_back(std::nextafter(b, 1.0));
+    }
+    while (xs.size() % W) xs.push_back(0.37);
+
+    const double                eps8 = 8.0 * std::numeric_limits<double>::epsilon();
+    std::vector<double>         ref(xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) ref[i] = f(xs[i]);
+
+    for (std::size_t i = 0; i < xs.size(); i += W) {
+        const B          x = B::load_unaligned(xs.data() + i);
+        std::uint32_t    ids[W];
+        treeweave::guru::leaf_ids(f, x, ids);
+        double yv[W];
+        for (std::size_t l = 0; l < W; ++l) {
+            REQUIRE(ids[l] == f.leaf_id(xs[i + l]));
+            treeweave::guru::eval_leaf_batch(f, ids[l], B(xs[i + l])).store_unaligned(yv);
+            REQUIRE(std::abs(yv[0] - ref[i + l]) <= eps8 * std::max(1.0, std::abs(ref[i + l])));
+        }
+        treeweave::guru::eval_batch(f, x).store_unaligned(yv);
+        for (std::size_t l = 0; l < W; ++l)
+            REQUIRE(std::abs(yv[l] - ref[i + l]) <= eps8 * std::max(1.0, std::abs(ref[i + l])));
+    }
+
+    // One-leaf fit takes the broadcast shortcut: no id lookup, same values.
+    treeweave::options o;
+    o.max_memory_mib = 0;
+    auto f1 = treeweave::fit<7>([](double x) { return std::exp(x); }, 0.0, 1.0, 1e-3, o);
+    REQUIRE(f1.num_leaves() == 1);
+    for (std::size_t i = 0; i < xs.size(); i += W) {
+        double yv[W];
+        treeweave::guru::eval_batch(f1, B::load_unaligned(xs.data() + i)).store_unaligned(yv);
+        for (std::size_t l = 0; l < W; ++l) {
+            const double one = f1(xs[i + l]);
+            REQUIRE(std::abs(yv[l] - one) <= eps8 * std::max(1.0, std::abs(one)));
+        }
+    }
+}

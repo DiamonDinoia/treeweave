@@ -255,10 +255,88 @@ class LaneQuantizer {
         return id_batch_type::gather(table_, qi);
     }
 
+    /// Per-lane ids written to `out` (one uint32 per lane). In-domain lanes
+    /// only. Scalar table loads, not the `ids` gather: vpgatherqq is slower.
+    auto store_ids(batch_type x, std::uint32_t *out) const noexcept -> void {
+        const batch_type q = xsimd::min(xsimd::floor((x - lo_) * inv_), last_);
+        constexpr std::size_t lanes = batch_type::size;
+        alignas(batch_type::arch_type::alignment()) T qd[lanes];
+        q.store_aligned(qd);
+        for (std::size_t j = 0; j < lanes; ++j) out[j] = table_[static_cast<std::int64_t>(qd[j])];
+    }
+
   private:
     const std::uint32_t *table_;
     batch_type           lo_, hi_, inv_, last_;
 };
+
+// ---------------------------------------------------------------------------
+// Batch leaf ids and batch leaf evaluation (1D scalar double fits)
+// ---------------------------------------------------------------------------
+
+/// Batch form of the leaf-id lookup: one id per lane of `x`, the same
+/// classification as `Function::leaf_ids` and `LaneQuantizer::ids`.
+/// Precondition: every lane is in `f`'s domain and `f` is a multi-leaf 1D
+/// scalar double fit with one live leaf-table subtree.
+template <class F, class A>
+auto leaf_ids(const F &f, xsimd::batch<double, A> x, std::uint32_t *ids) -> void {
+    LaneQuantizer<double, A> q(f);
+    q.store_ids(x, ids);
+}
+
+/// Evaluate leaf `id`'s polynomial at one batch: the affine map, then the
+/// highest-first Horner chain (polyfit's storage order). The identity-leaf
+/// map (inv_span 0.5, sum_endpoints 0) makes the one map expression
+/// bit-exact; polyfit's scalar order maps first, so results differ in the
+/// last bits. Precondition: every lane is in `f`'s domain.
+template <class F, class A>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto eval_leaf_batch(const F &f, std::uint32_t id,
+                                                           xsimd::batch<double, A> x) noexcept
+    -> xsimd::batch<double, A> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1 && std::is_same_v<typename F::value_type, double>,
+                  "eval_leaf_batch: 1D scalar double fits only");
+    using batch_t = xsimd::batch<double, A>;
+    const auto    lv = f.leaf_view_of(id);
+    const auto xm = xsimd::fma(batch_t(2.0), x, -batch_t(lv.sum_endpoints)) * batch_t(lv.inv_span);
+    // Horner, highest coefficient first (polyfit's storage order).
+    auto acc = batch_t(lv.coeffs[0]);
+    for (std::size_t k = 1; k < F::degree; ++k) acc = xsimd::fma(acc, xm, batch_t(lv.coeffs[k]));
+    return acc;
+}
+
+/// Evaluate one fit at one batch: a one-leaf fit takes the broadcast
+/// shortcut (no id lookup), otherwise one id lookup plus one Horner chain
+/// per distinct leaf, lanes selected by their scalar ids. Precondition:
+/// every lane is in `f`'s domain (the batch entries sanitize and clamp
+/// before the call).
+template <class F, class A>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto eval_batch(const F &f, xsimd::batch<double, A> x) noexcept
+    -> xsimd::batch<double, A> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1 && std::is_same_v<typename F::value_type, double>,
+                  "eval_batch: 1D scalar double fits only");
+    using batch_t = xsimd::batch<double, A>;
+
+    if (f.num_leaves() == 1) {
+        return eval_leaf_batch(f, 0, x);
+    }
+    constexpr std::size_t lanes = batch_t::size;
+    std::uint32_t         ids[lanes];
+    leaf_ids(f, x, ids);
+
+    batch_t y(0.0);
+    for (std::size_t j = 0; j < lanes; ++j) {
+        const std::uint32_t id = ids[j];
+        std::size_t         t  = 0;
+        while (t < j && ids[t] != id) ++t;
+        if (t < j) continue;
+        const auto acc = eval_leaf_batch(f, id, x);
+        // lane mask from the scalar ids: portable, avoids emulated int64 compares
+        alignas(A::alignment()) bool mbool[lanes];
+        for (std::size_t l = 0; l < lanes; ++l) mbool[l] = (ids[l] == id);
+        y = xsimd::select(xsimd::batch_bool<double, A>::load_aligned(mbool), acc, y);
+    }
+    return y;
+}
 
 // ---------------------------------------------------------------------------
 // Packed-run leaf evaluation
