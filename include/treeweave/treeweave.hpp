@@ -32,6 +32,7 @@
 #include <complex>
 #include <concepts>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -133,6 +134,22 @@ struct options {
     /// same arguments loads without an error.
     std::optional<std::string> filename = std::nullopt;
 };
+
+/// Fit options with the shared construction checks. `tol` must reach
+/// `tol_floor` (NaN throws, the `fit()` convention). A positive
+/// `max_memory_mib` is clamped into the int field: a plain double -> int
+/// cast above INT_MAX is undefined. A non-positive budget leaves the
+/// tri-state of `options::max_memory_mib` alone.
+[[nodiscard]] constexpr auto checked_options(double tol, double tol_floor, double max_memory_mib = 0.0,
+                                             options opts = {}) -> options {
+    if (!(tol >= tol_floor))
+        throw std::invalid_argument("treeweave::checked_options: tolerance below the fit floor or NaN");
+    if (max_memory_mib > 0.0) {
+        const double cap = std::clamp(max_memory_mib, 1.0, static_cast<double>(std::numeric_limits<int>::max()));
+        opts.max_memory_mib = static_cast<int>(cap);
+    }
+    return opts;
+}
 
 /// Any callable that accepts `Domain` and returns a value.
 template <class F, class Domain>
