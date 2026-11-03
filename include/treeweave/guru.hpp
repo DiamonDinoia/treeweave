@@ -271,6 +271,39 @@ class LaneQuantizer {
 };
 
 // ---------------------------------------------------------------------------
+// Leaf data view (1D scalar fits)
+// ---------------------------------------------------------------------------
+
+/// The leaf data view of a 1D fit: the flat leaf rows behind
+/// `Function::leaf_view_of`. One row is
+/// [inv_span, sum_endpoints, identity_map, coeff 0, ..., coeff width-1];
+/// `map` points at the row head of leaf 0, so one 4-double load covers both
+/// map fields and coefficient 0.
+template <class T>
+struct LeafData {
+    const T         *map;    // row head of leaf 0 ([0] = inv_span, [1] = sum_endpoints)
+    const T         *coeffs; // coefficient 0 of leaf 0
+    std::ptrdiff_t   stride; // doubles from one row head to the next
+    std::size_t      width;  // coefficients per row
+
+    [[nodiscard]] T inv_span() const noexcept { return map[0]; }
+    [[nodiscard]] T sum_endpoints() const noexcept { return map[1]; }
+    // Row head behind any coefficient pointer of the same row (the map
+    // fields sit 3 doubles before the coefficients, Leaf1D::map_window).
+    [[nodiscard]] const T *map_head(const T *row_coeffs) const noexcept { return row_coeffs - 3; }
+};
+
+/// The leaf data view of `f`. Precondition: a 1D scalar fit with 2+ leaves
+/// (stride is the row distance from leaf 0 to leaf 1).
+template <class F>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_data(const F &f) noexcept -> LeafData<typename F::value_type> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1, "leaf_data: 1D scalar fits only");
+    const auto l0 = f.leaf_view_of(0);
+    const auto l1 = f.leaf_view_of(1);
+    return LeafData<typename F::value_type>{l0.map_window(), l0.coeffs, l1.coeffs - l0.coeffs, F::degree};
+}
+
+// ---------------------------------------------------------------------------
 // Batch leaf ids and batch leaf evaluation (1D scalar double fits)
 // ---------------------------------------------------------------------------
 

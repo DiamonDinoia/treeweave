@@ -687,3 +687,23 @@ TEST_CASE("guru batch ids and batch leaf eval match the scalar paths", "[guru][b
         }
     }
 }
+
+TEST_CASE("guru leaf_data view matches the leaf views and the row layout", "[guru][leafdata]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    using F = decltype(f);
+    const auto ld = treeweave::guru::leaf_data(f);
+    REQUIRE(ld.width == F::degree);
+    REQUIRE(ld.coeffs == f.leaf_view_of(0).coeffs);
+    REQUIRE(ld.inv_span() == f.leaf_view_of(0).inv_span);
+    REQUIRE(ld.sum_endpoints() == f.leaf_view_of(0).sum_endpoints);
+
+    // Rows step by stride; the map fields sit at the row head, 3 doubles
+    // before the coefficients (polyfit's FuncEval layout).
+    for (std::uint32_t k : {0u, 1u, 5u, 63u}) {
+        const double* head = ld.map + static_cast<std::ptrdiff_t>(k) * ld.stride;
+        const auto     lv  = f.leaf_view_of(k);
+        REQUIRE(head + 3 == lv.coeffs);
+        REQUIRE(head[0] == lv.inv_span);
+        REQUIRE(head[1] == lv.sum_endpoints);
+    }
+}
