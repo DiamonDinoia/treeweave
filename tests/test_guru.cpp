@@ -707,3 +707,30 @@ TEST_CASE("guru leaf_data view matches the leaf views and the row layout", "[gur
         REQUIRE(head[1] == lv.sum_endpoints);
     }
 }
+
+TEST_CASE("guru eval_sorted matches the scalar evaluation on unsorted input", "[guru][sorted-batch]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    const std::size_t ood = f.out_of_domain_id();
+    std::mt19937      gen(11);
+    std::uniform_real_distribution u(-0.5, 1.5); // past both ends on purpose
+    // Over one tile so the loop spans tiles; boundaries and OOD inside.
+    std::vector<double> xs;
+    for (int i = 0; i < 40000; ++i) xs.push_back(u(gen));
+    for (std::size_t k = 0; k < 64; ++k) {
+        xs.push_back(static_cast<double>(k) / 64.0);
+        xs.push_back(std::nextafter(static_cast<double>(k) / 64.0, 0.0));
+    }
+    xs.push_back(std::numeric_limits<double>::quiet_NaN());
+    xs.push_back(std::numeric_limits<double>::infinity());
+    std::vector<double> out(xs.size()), ref(xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) ref[i] = f(xs[i]);
+    treeweave::guru::eval_sorted(f, xs.data(), xs.size(), out.data());
+    const double eps8 = 8.0 * std::numeric_limits<double>::epsilon();
+    for (std::size_t i = 0; i < xs.size(); ++i) {
+        if (f.leaf_id(xs[i]) == ood) {
+            REQUIRE(std::isnan(out[i]));
+        } else {
+            REQUIRE(std::abs(out[i] - ref[i]) <= eps8 * std::max(1.0, std::abs(ref[i])));
+        }
+    }
+}

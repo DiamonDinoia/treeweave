@@ -457,6 +457,90 @@ auto for_each_sorted_run(const F &f, const typename F::value_type *xs, std::size
     for_each_sorted_run_1d(f, xs, n, fn);
 }
 
+// ---------------------------------------------------------------------------
+// Sorted-batch tile evaluation (unsorted input, counting sort inside)
+// ---------------------------------------------------------------------------
+
+/// The sorted-batch tile: ~24 B of scratch per point keeps one tile
+/// L2-resident.
+inline constexpr std::size_t kSortTile = 16384;
+
+namespace gdetail {
+
+template <class T, std::size_t NCH>
+struct SortScratch {
+    std::vector<std::uint32_t>      keys, rank, counts;
+    std::vector<T>                  x;
+    std::array<std::vector<T>, NCH> y;
+};
+
+template <class T, std::size_t NCH>
+auto sort_scratch(std::uint32_t nbins, std::size_t tile) -> SortScratch<T, NCH> & {
+    static thread_local SortScratch<T, NCH> s;
+    if (s.counts.size() < nbins) s.counts.resize(nbins);
+    if (s.keys.size() < tile) {
+        s.keys.resize(tile);
+        s.rank.resize(tile);
+        s.x.resize(tile);
+        for (auto &v : s.y) v.resize(tile);
+    }
+    return s;
+}
+
+} // namespace gdetail
+
+/// Unsorted-batch evaluation through the counting sort. Per tile of
+/// `kSortTile` points: `classify(xt, ot, tile, keys, counts)` fills the key
+/// histogram and returns true when it already wrote `ot` (a tile-level fast
+/// path skips the sort). Otherwise one `on_run(key, x_run, run_out, count)`
+/// per sorted run writes the packed tile and `gather` restores input order.
+/// Scratch is thread-local and reused.
+template <class T, std::size_t NCH, class Classify, class Run>
+auto eval_sorted_keyed(const T *xs, std::size_t n, std::uint32_t nbins, Classify &&classify, Run &&on_run,
+                       std::array<T *, NCH> out) -> void {
+    for (std::size_t off = 0; off < n; off += kSortTile) {
+        const std::size_t tile = std::min(kSortTile, n - off);
+        const T          *xt   = xs + off;
+        std::array<T *, NCH> ot{};
+        for (std::size_t d = 0; d < NCH; ++d) ot[d] = out[d] + off;
+        auto             &s = gdetail::sort_scratch<T, NCH>(nbins, tile);
+        std::span keys{s.keys.data(), tile}, rank{s.rank.data(), tile}, counts{s.counts.data(), nbins};
+        if (classify(xt, ot, tile, keys.data(), counts.data())) continue;
+        exclusive_scan(counts);
+        scatter(keys, std::span<const T>{xt, tile}, s.x, counts, rank);
+        for_each_run(counts, [&](std::uint32_t b, std::size_t begin, std::size_t count) {
+            std::array<T *, NCH> run{};
+            for (std::size_t d = 0; d < NCH; ++d) run[d] = s.y[d].data() + begin;
+            on_run(b, s.x.data() + begin, run, count);
+        });
+        // One rank load per channel and point; `gather` owns the prefetch.
+        for (std::size_t d = 0; d < NCH; ++d)
+            gather(rank, std::span{s.y[d].data(), tile}, std::span{ot[d], tile});
+    }
+}
+
+/// `eval_sorted_keyed` with the leaf ids as keys and leaf evaluation as the
+/// run: out-of-domain lanes get NaN. Precondition: a 1D scalar fit.
+template <class F, class T = typename F::value_type>
+auto eval_sorted(const F &f, const T *xs, std::size_t n, T *out) -> void {
+    static_assert(F::input_dim == 1 && F::output_dim == 1, "guru::eval_sorted: 1D scalar fits only");
+    const std::uint32_t ood = f.out_of_domain_id(), nbins = ood + 1;
+    eval_sorted_keyed<T, 1>(
+        xs, n, nbins,
+        [&](const T *xt, std::array<T *, 1>, std::size_t tile, std::uint32_t *keys, std::uint32_t *counts) {
+            f.leaf_ids(xt, keys, tile);
+            histogram(std::span<const std::uint32_t>{keys, tile}, std::span{counts, nbins});
+            return false;
+        },
+        [&](std::uint32_t key, const T *x, std::array<T *, 1> run, std::size_t count) {
+            if (key == ood)
+                fill_out_of_domain(f, run[0], count);
+            else
+                eval_leaf_aos(f, key, x, run[0], count);
+        },
+        std::array<T *, 1>{out});
+}
+
 } // namespace treeweave::guru
 
 #endif // TREEWEAVE_GURU_HPP
