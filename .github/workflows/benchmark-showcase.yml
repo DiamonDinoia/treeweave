@@ -51,7 +51,7 @@ jobs:
           cache-tools: true
 
       # The C and C++ benches share one build, so both get every baseline:
-      # Boost.Math chebyshev_transform (needs FFTW), GSL gsl_cheb and baobzi.
+      # Boost.Math (chebyshev_transform needs FFTW), GSL and baobzi.
       - name: Install interpolator baselines (C, C++)
         if: matrix.lang == 'c' || matrix.lang == 'cpp'
         env:
@@ -81,7 +81,7 @@ jobs:
 
       - name: Install Python deps
         if: matrix.lang == 'python'
-        run: python -m pip install --upgrade pip numpy "nanobind>=2.0,!=3.0.0"
+        run: python -m pip install --upgrade pip numpy scipy "nanobind>=2.0,!=3.0.0"
 
       - name: Set up Julia
         if: matrix.lang == 'julia'
@@ -147,10 +147,10 @@ jobs:
               # later run fails to dlopen. Set it for both invocations.
               export LIBTREEWEAVE_C="$PWD/$lib"
               julia --project=bindings/julia/Treeweave -e 'using Pkg; Pkg.instantiate()'
-              # FastChebInterp is the bench's baseline, not a Treeweave
-              # dependency: it lives in its own environment, stacked after the
-              # project on the load path.
-              julia --project="$RUNNER_TEMP/jlbench" -e 'using Pkg; Pkg.add(name="FastChebInterp", version="1.3.1")'
+              # FastChebInterp and Interpolations are the bench's baselines, not
+              # Treeweave dependencies: they live in their own environment,
+              # stacked after the project on the load path.
+              julia --project="$RUNNER_TEMP/jlbench" -e 'using Pkg; Pkg.add([PackageSpec(name="FastChebInterp", version="1.3.1"), PackageSpec(name="Interpolations", version="0.16.3")])'
               JULIA_LOAD_PATH="@:$RUNNER_TEMP/jlbench:@stdlib" TREEWEAVE_BENCH_YAML="$yaml" \
                 julia --project=bindings/julia/Treeweave bindings/julia/Treeweave/benchmarks/zeta_bench.jl
               ;;

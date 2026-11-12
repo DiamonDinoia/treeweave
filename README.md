@@ -19,10 +19,10 @@
 
 An expensive function becomes a few nanoseconds per call after a one-line fit, works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS.
 
-Example: a 160-term Riemann-zeta sum on `[2, 10]` runs at about 1 Mevals/s in C++. Fit it to `1e-10` relative error, and treeweave evaluates it at about 200 Mevals/s in batch and 1,000 Mevals/s on sorted input from C, C++ and Python (CI runner). The interpolator of each language (numpy `Chebyshev`, FastChebInterp.jl, Boost.Math, GSL, `spline`) needs degree 26 to 27 or 2048 knots for the same accuracy. The [comparison page](https://diamondinoia.github.io/treeweave/comparison.html) has the rules and the full table.
+Example: a 160-term Riemann-zeta sum on `[2, 10]` runs at about 1 Mevals/s in C++. Fit it to `1e-10` relative error, and treeweave evaluates it at 200 to 300 Mevals/s in batch and 900 to 1,700 Mevals/s on sorted input from C, C++ and Python (CI runner). For the same accuracy, a Chebyshev series needs degree 26 to 27, a spline needs 512 to 32,768 knots and a linear lookup table needs 524,288 knots. The [comparison page](https://diamondinoia.github.io/treeweave/comparison.html) has the rules and the full table.
 
 <!-- bench-summary -->
-Against the native interpolator of each language (GSL gsl_cheb, Boost.Math chebyshev_transform, numpy Chebyshev, FastChebInterp.jl, spline), each grown until it meets the same tolerance, treeweave's throughput is 4.7× to 15× theirs in batch, 13× to 38× on sorted batches, and 0.25× to 10× one point at a time. Against baobzi, the library that inspired treeweave, from C: 3.8× in batch, 6.4× on sorted batches, 1.4× one point at a time. The benchmark-showcase CI workflow writes these numbers; see [Benchmarks](#benchmarks).
+Against 16 native interpolators in 5 languages, each grown until it meets the same tolerance, treeweave's throughput is 1× to 56× theirs in batch, 2.2× to 114× on sorted batches, and 0.39× to 19× one point at a time. Against baobzi, the library that inspired treeweave, from C: 3.5× in batch, 6.5× on sorted batches, 1.1× one point at a time. The benchmark-showcase CI workflow writes these numbers; see [Benchmarks](#benchmarks).
 <!-- /bench-summary -->
 
 ## Benchmarks
@@ -50,17 +50,28 @@ Each language's own interpolator fits the same function: numpy `Chebyshev.interp
 <!-- bench-table -->
 | Language | Method | Size | Max err / max\|f\| | Max rel err | Single (Mevals/s) | Batch (Mevals/s) | Sorted batch (Mevals/s) |
 |---|---|---|---|---|---|---|---|
-| C | treeweave | tol 1e-10 | 1.0e-10 | 1.6e-10 | 81.5 | 249 | 1,121 |
-| C | GSL gsl_cheb | degree 26 | 4.7e-11 | 5.0e-11 | 29.2 (2.8×) | 29.1 (8.6×) | 29.2 (38×) |
-| C | baobzi | order 10, tol 1e-08 | 4.5e-11 | 6.2e-11 | 57.1 (1.4×) | 65.0 (3.8×) | 174 (6.4×) |
-| C++ | treeweave | tol 1e-10 | 9.8e-11 | 1.6e-10 | 279 | 253 | 1,123 |
-| C++ | Boost.Math chebyshev_transform | degree 27 | 1.1e-11 | 1.3e-11 | 27.6 (10×) | 27.7 (9.2×) | 34.7 (32×) |
-| Python | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 0.7 | 195 | 980 |
-| Python | numpy Chebyshev | degree 26 | 4.7e-11 | 5.0e-11 | 0.1 (6.6×) | 17.7 (11×) | 25.6 (38×) |
-| Julia | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 9.6 | 189 | 544 |
-| Julia | FastChebInterp.jl | degree 26 | 5.6e-11 | 8.5e-11 | 37.9 (0.25×) | 40.5 (4.7×) | 40.5 (13×) |
-| Octave | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 2e-03 | 136 | 237 |
-| Octave | spline | 2048 knots | 2.0e-11 | 2.0e-11 | 4e-03 (0.41×) | 9.3 (15×) | 14.0 (17×) |
+| C | treeweave | tol 1e-10 | 1.0e-10 | 1.6e-10 | 56.5 | 195 | 929 |
+| C | GSL gsl_cheb | degree 26 | 4.7e-11 | 5.0e-11 | 24.7 (2.3×) | 24.6 (7.9×) | 24.7 (38×) |
+| C | GSL cubic spline | 32768 knots | 7.8e-11 | 7.8e-11 | 8.5 (6.6×) | 8.5 (23×) | 89.4 (10×) |
+| C | GSL linear | 524288 knots | 3.1e-11 | 3.1e-11 | 4.1 (14×) | 4.1 (48×) | 50.4 (18×) |
+| C | baobzi | order 10, tol 1e-08 | 4.5e-11 | 6.2e-11 | 49.5 (1.1×) | 55.4 (3.5×) | 143 (6.5×) |
+| C++ | treeweave | tol 1e-10 | 9.8e-11 | 1.6e-10 | 270 | 246 | 1,144 |
+| C++ | Boost.Math chebyshev_transform | degree 27 | 1.1e-11 | 1.3e-11 | 27.2 (9.9×) | 27.7 (8.9×) | 34.6 (33×) |
+| C++ | Boost.Math cubic B-spline | 1024 knots | 8.3e-11 | 8.4e-11 | 85.2 (3.2×) | 85.2 (2.9×) | 85.2 (13×) |
+| C++ | Boost.Math quintic B-spline | 512 knots | 3.2e-12 | 3.2e-12 | 14.2 (19×) | 14.3 (17×) | 14.3 (80×) |
+| Python | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 1.2 | 295 | 1,654 |
+| Python | numpy Chebyshev | degree 26 | 4.7e-11 | 5.0e-11 | 0.2 (6.8×) | 30.9 (9.5×) | 24.1 (69×) |
+| Python | SciPy CubicSpline | 2048 knots | 2.0e-11 | 2.0e-11 | 0.2 (5.8×) | 14.6 (20×) | 172 (9.6×) |
+| Python | SciPy quintic B-spline | 512 knots | 2.0e-11 | 2.0e-11 | 0.3 (4.4×) | 8.0 (37×) | 14.6 (114×) |
+| Python | numpy.interp | 524288 knots | 3.0e-11 | 3.0e-11 | 0.8 (1.4×) | 5.3 (56×) | 118 (14×) |
+| Julia | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 42.2 | 313 | 883 |
+| Julia | FastChebInterp.jl | degree 26 | 5.6e-11 | 8.5e-11 | 57.4 (0.74×) | 64.2 (4.9×) | 65.1 (14×) |
+| Julia | Interpolations.jl cubic | 32768 knots | 4.1e-11 | 4.1e-11 | 101 (0.42×) | 102 (3.1×) | 101 (8.7×) |
+| Julia | Interpolations.jl linear | 524288 knots | 3.1e-11 | 3.1e-11 | 85.8 (0.49×) | 314 (1×) | 396 (2.2×) |
+| Octave | treeweave | tol 1e-10 | 9.9e-11 | 1.6e-10 | 1e-03 | 110 | 214 |
+| Octave | spline | 2048 knots | 5.4e-11 | 5.4e-11 | 4e-03 (0.39×) | 8.0 (14×) | 20.6 (10×) |
+| Octave | pchip | 8192 knots | 5.8e-12 | 5.8e-12 | 3e-03 (0.5×) | 7.6 (14×) | 20.6 (10×) |
+| Octave | interp1 linear | 524288 knots | 3.1e-11 | 3.1e-11 | 2e-04 (8.8×) | 4.7 (24×) | 23.9 (9.0×) |
 <!-- /bench-table -->
 
 See the [performance guide](https://diamondinoia.github.io/treeweave/guides/performance.html) for throughput and latency details.

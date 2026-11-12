@@ -10,6 +10,8 @@
 #include <treeweave/treeweave.hpp>
 
 #ifdef TREEWEAVE_BENCH_BASELINES
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
+#include <boost/math/interpolators/cardinal_quintic_b_spline.hpp>
 #include <boost/math/special_functions/chebyshev_transform.hpp>
 #endif
 
@@ -189,6 +191,36 @@ int main() {
                 return 1;
             }
         }
+
+        // Boost.Math cardinal B-splines on uniform knots: double the knot count
+        // from 16 until the spline meets tol. Default end conditions (Boost
+        // estimates the end derivatives from the data).
+        const auto grow_knots = [&](const std::string &name, const auto &make) {
+            for (std::size_t knots = 16; knots <= (std::size_t{1} << 24); knots *= 2) {
+                const double        h = (b - a) / static_cast<double>(knots - 1);
+                std::vector<double> y(knots);
+                for (std::size_t i = 0; i < knots; ++i)
+                    y[i] = zeta_smooth(a + h * static_cast<double>(i));
+                const auto spline = make(y, h);
+                const auto err    = rel_errors(spline, xs_check, ref_check);
+                if (err[0] <= tol) {
+                    const auto r = time_scalar_api(spline, xs, xs_sorted, n_scalar);
+                    baselines.push_back({name, std::to_string(knots) + " knots", err[0], err[1], r[0], r[1], r[2]});
+                    return true;
+                }
+            }
+            std::cerr << name << " never met tol " << tol << "\n";
+            return false;
+        };
+        if (!grow_knots("Boost.Math cubic B-spline",
+                        [&](const std::vector<double> &y, double h) {
+                            return boost::math::interpolators::cardinal_cubic_b_spline<double>(y.data(), y.size(), a,
+                                                                                               h);
+                        }) ||
+            !grow_knots("Boost.Math quintic B-spline", [&](const std::vector<double> &y, double h) {
+                return boost::math::interpolators::cardinal_quintic_b_spline<double>(y, a, h);
+            }))
+            return 1;
     }
 #endif
 

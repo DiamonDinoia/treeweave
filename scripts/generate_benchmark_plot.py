@@ -337,13 +337,9 @@ def summary_markdown(records) -> tuple[str, str]:
             else f"{_fmt(lo, 'speedup')} to {_fmt(hi, 'speedup')}"
         )
 
-    names = ", ".join(
-        dict.fromkeys(
-            bl["name"] for _, _, bls in rows for bl in bls if bl["name"] != "baobzi"
-        )
-    )
+    n_native = sum(bl["name"] != "baobzi" for _, _, bls in rows for bl in bls)
     lines = [
-        f"Against the native interpolator of each language ({names}), each grown until it "
+        f"Against {n_native} native interpolators in {len(rows)} languages, each grown until it "
         f"meets the same tolerance, treeweave's throughput is {span(native['multi_eval'])} "
         f"theirs in batch, {span(native['sorted_eval'])} on sorted batches, and "
         f"{span(native['single_eval'])} one point at a time."

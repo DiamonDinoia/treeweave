@@ -5,7 +5,7 @@
 # TREEWEAVE_BENCH_YAML=path emits YAML.
 using Treeweave
 using Printf
-using FastChebInterp  # baseline only; not a Treeweave dependency (see benchmark-showcase.yml)
+using FastChebInterp, Interpolations  # baselines only; not Treeweave dependencies (see benchmark-showcase.yml)
 
 # Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
 # total, capped at ZETA_MAX_TERMS: a competent zeta stops early.
@@ -134,6 +134,24 @@ let found = false
         end
     end
     found || error("FastChebInterp never met tol $tol")
+end
+
+# Interpolations.jl on uniform knots: double the knot count from 16 until the
+# method meets tol. linear_interpolation is the lookup-table method.
+for (name, make) in (("Interpolations.jl cubic", cubic_spline_interpolation),
+                     ("Interpolations.jl linear", linear_interpolation))
+    found = false
+    for knots in (16 << i for i in 0:20)
+        r = range(a, b; length=knots)
+        itp = make(r, zeta_smooth.(r))
+        crit, err = rel_errors(itp)
+        if crit <= tol
+            push!(baselines, (name, "$knots knots", crit, err, time_scalar_api(itp)...))
+            found = true
+            break
+        end
+    end
+    found || error("$name never met tol $tol")
 end
 
 tw_single = mevals(n_scalar, tw_single_s)

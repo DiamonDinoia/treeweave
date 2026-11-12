@@ -12,6 +12,7 @@
 #ifdef TREEWEAVE_BENCH_BASELINES
 #include <baobzi.h>
 #include <gsl/gsl_chebyshev.h>
+#include <gsl/gsl_spline.h>
 #endif
 
 /* Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
@@ -105,6 +106,18 @@ typedef struct {
 } baseline_t;
 
 static double gsl_cheb_eval_1d(const void *obj, double x) { return gsl_cheb_eval((const gsl_cheb_series *)obj, x); }
+
+/* A GSL spline with its lookup accelerator, which caches the last interval and so
+ * favours sorted queries, as GSL intends. */
+typedef struct {
+    gsl_spline       *spline;
+    gsl_interp_accel *acc;
+} gsl_spline_obj;
+
+static double gsl_spline_eval_1d(const void *obj, double x) {
+    const gsl_spline_obj *o = (const gsl_spline_obj *)obj;
+    return gsl_spline_eval(o->spline, x, o->acc);
+}
 
 static double baobzi_eval_1d(const void *obj, double x) {
     double y;
@@ -221,7 +234,7 @@ int main(void) {
     sink                     = out[0];
 
 #ifdef TREEWEAVE_BENCH_BASELINES
-    baseline_t baselines[2];
+    baseline_t baselines[4];
     size_t     n_baselines = 0;
     {
         /* Every baseline must meet tol on the check sample before it is timed. */
@@ -250,6 +263,51 @@ int main(void) {
             if (order == 1000) {
                 fprintf(stderr, "GSL gsl_cheb never met tol %g\n", tol);
                 return EXIT_FAILURE;
+            }
+        }
+
+        /* GSL splines on uniform knots: double the knot count from 16 until the
+         * spline meets tol. Linear interpolation is the lookup-table method. */
+        const struct {
+            const char            *name;
+            const gsl_interp_type *type;
+        } splines[] = {{"GSL cubic spline", gsl_interp_cspline}, {"GSL linear", gsl_interp_linear}};
+        for (size_t k = 0; k < sizeof splines / sizeof splines[0]; ++k) {
+            for (size_t knots = 16;; knots *= 2) {
+                double *kx = (double *)malloc(knots * sizeof(double));
+                double *ky = (double *)malloc(knots * sizeof(double));
+                if (kx == NULL || ky == NULL) {
+                    fprintf(stderr, "alloc failed\n");
+                    return EXIT_FAILURE;
+                }
+                for (size_t i = 0; i < knots; ++i) {
+                    kx[i] = a + (b - a) * (double)i / (double)(knots - 1);
+                    ky[i] = zeta_smooth(kx[i]);
+                }
+                gsl_spline_obj sp = {gsl_spline_alloc(splines[k].type, knots), gsl_interp_accel_alloc()};
+                gsl_spline_init(sp.spline, kx, ky, knots);
+                free(kx);
+                free(ky);
+                rel_errors(gsl_spline_eval_1d, &sp, xs, ref_check, n_check, err);
+                const int done = err[0] <= tol;
+                if (done) {
+                    baseline_t *bl = &baselines[n_baselines++];
+                    bl->name       = splines[k].name;
+                    snprintf(bl->size, sizeof bl->size, "%zu knots", knots);
+                    bl->relmax  = err[0];
+                    bl->max_rel = err[1];
+                    bl->single  = scalar_rate(gsl_spline_eval_1d, &sp, xs, n_scalar);
+                    bl->multi   = scalar_rate(gsl_spline_eval_1d, &sp, xs, n);
+                    bl->sorted  = scalar_rate(gsl_spline_eval_1d, &sp, xs_sorted, n);
+                }
+                gsl_spline_free(sp.spline);
+                gsl_interp_accel_free(sp.acc);
+                if (done)
+                    break;
+                if (knots >= (size_t)1 << 24) {
+                    fprintf(stderr, "%s never met tol %g\n", splines[k].name, tol);
+                    return EXIT_FAILURE;
+                }
             }
         }
 

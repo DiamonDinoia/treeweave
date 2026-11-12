@@ -2,7 +2,8 @@
 % See benchmarks/zeta_bench.cpp for the rationale. zeta(s) = sum_k k^-s summed
 % until the tail is negligible (rel 1e-10, <=160 terms) yet smooth on [2,10]: fit
 % once, eval a polynomial. Times single/multi/sorted; the native rate is sampled
-% over n_native and reused. Octave spline/ppval is the native interpolator baseline.
+% over n_native and reused. Octave spline, pchip and interp1 'linear' are the
+% native interpolator baselines.
 % No in-place out= (copy-on-write); every mode allocates.
 % TREEWEAVE_BENCH_YAML=path emits YAML.
 addpath(fileparts(fileparts(mfilename('fullpath'))));   % bindings/matlab (treeweave.m)
@@ -57,35 +58,42 @@ Yt = fn.eval(Xsorted, 'sorted', true);                  % warm-up
 t = tic; Yt = fn.eval(Xsorted, 'sorted', true); tw_sorted_s = toc(t);
 assert(isfinite(sum(Yt)));
 
-% --- native interpolator, grown until it meets tol on the check sample -------
-% spline: not-a-knot cubic on a uniform grid, knots doubled until it meets tol.
-% The pp struct from spline is what interp1(..., 'spline') builds too.
-nknots = 16;
-while true
-    knots = linspace(a, b, nknots);
-    pp = spline(knots, arrayfun(zeta_partial, knots));
-    err = abs(ppval(pp, Xcheck) - Refcheck);
-    sp_relmax = max(err) / max(abs(Refcheck));
-    if sp_relmax <= tol
-        break;
+% --- native interpolators, each grown until it meets tol on the check sample -
+% Uniform knots, doubled from 16 until the method meets tol. spline is the
+% not-a-knot cubic that interp1(..., 'spline') builds too; pchip is the
+% shape-preserving cubic; interp1 'linear' is the lookup-table method.
+methods = {'spline', 'pchip', 'interp1 linear'};
+bl = struct('name', methods, 'size', '', 'relmax', 0, 'max_rel', 0, 'single', 0, 'multi', 0, 'sorted', 0);
+for m = 1:numel(methods)
+    nknots = 16;
+    while true
+        knots = linspace(a, b, nknots);
+        y = arrayfun(zeta_partial, knots);
+        switch methods{m}
+            case 'spline', pp = spline(knots, y); ev = @(q) ppval(pp, q);
+            case 'pchip', pp = pchip(knots, y); ev = @(q) ppval(pp, q);
+            otherwise, ev = @(q) interp1(knots, y, q, 'linear');
+        end
+        err = abs(ev(Xcheck) - Refcheck);
+        bl(m).relmax = max(err) / max(abs(Refcheck));
+        if bl(m).relmax <= tol
+            break;
+        end
+        nknots = 2 * nknots;
+        assert(nknots <= 2^22, [methods{m} ' never met tol']);
     end
-    nknots = 2 * nknots;
-    assert(nknots <= 2^22, 'spline never met tol');
+    bl(m).size = sprintf('%d knots', nknots);
+    bl(m).max_rel = max(err ./ abs(Refcheck));
+    s = 0; for i = 1:n_scalar, s = s + ev(Xs(i)); end                  % warm-up
+    t = tic; s = 0; for i = 1:n_scalar, s = s + ev(Xs(i)); end; bl(m).single = n_scalar / (toc(t) * 1e6);
+    assert(isfinite(s));
+    Yt = ev(X);                                                        % warm-up
+    t = tic; Yt = ev(X); bl(m).multi = n / (toc(t) * 1e6);
+    assert(isfinite(sum(Yt)));
+    Yt = ev(Xsorted);                                                  % warm-up
+    t = tic; Yt = ev(Xsorted); bl(m).sorted = n / (toc(t) * 1e6);
+    assert(isfinite(sum(Yt)));
 end
-sp_max_rel = max(err ./ abs(Refcheck));
-
-s = 0; for i = 1:n_scalar, s = s + ppval(pp, Xs(i)); end              % warm-up
-t = tic; s = 0; for i = 1:n_scalar, s = s + ppval(pp, Xs(i)); end; sp_single_s = toc(t);
-assert(isfinite(s));
-Yt = ppval(pp, X);                                                     % warm-up
-t = tic; Yt = ppval(pp, X); sp_multi_s = toc(t);
-assert(isfinite(sum(Yt)));
-Yt = ppval(pp, Xsorted);                                               % warm-up
-t = tic; Yt = ppval(pp, Xsorted); sp_sorted_s = toc(t);
-assert(isfinite(sum(Yt)));
-sp_single = n_scalar / (sp_single_s * 1e6);
-sp_multi  = n / (sp_multi_s * 1e6);
-sp_sorted = n / (sp_sorted_s * 1e6);
 
 % --- throughput (Mevals/s) and speedup per mode ------------------------------
 tw_single = n_scalar / (tw_single_s * 1e6);
@@ -97,7 +105,9 @@ fprintf('  max rel err: %.3e\n', max_rel);
 fprintf('  single-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n', tw_single, nat_rate, tw_single / nat_rate);
 fprintf('  multi-eval   treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n', tw_multi, nat_rate, tw_multi / nat_rate);
 fprintf('  sorted-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n', tw_sorted, nat_rate, tw_sorted / nat_rate);
-fprintf('  spline (%d knots, max rel err %.3e)  single %.2f  multi %.2f  sorted %.2f Mevals/s\n', nknots, sp_max_rel, sp_single, sp_multi, sp_sorted);
+for m = 1:numel(bl)
+    fprintf('  %s (%s, max rel err %.3e)  single %.2g  multi %.2f  sorted %.2f Mevals/s\n', bl(m).name, bl(m).size, bl(m).max_rel, bl(m).single, bl(m).multi, bl(m).sorted);
+end
 
 % --- machine-readable YAML (optional) ----------------------------------------
 % %.17e always carries a dot, so a YAML 1.1 parser reads each value as a float.
@@ -114,9 +124,12 @@ if ~isempty(yaml_path)
         fprintf(fid, 'single_eval:\n  treeweave_mevals_s: %.17e\n  native_mevals_s: %.17e\n  speedup: %.17e\n', tw_single, nat_rate, tw_single / nat_rate);
         fprintf(fid, 'multi_eval:\n  treeweave_mevals_s: %.17e\n  native_mevals_s: %.17e\n  speedup: %.17e\n', tw_multi, nat_rate, tw_multi / nat_rate);
         fprintf(fid, 'sorted_eval:\n  treeweave_mevals_s: %.17e\n  native_mevals_s: %.17e\n  speedup: %.17e\n', tw_sorted, nat_rate, tw_sorted / nat_rate);
-        fprintf(fid, 'interp:\n  - name: "spline"\n    size: "%d knots"\n', nknots);
-        fprintf(fid, '    relmax_err: %.17e\n    max_rel_err: %.17e\n', sp_relmax, sp_max_rel);
-        fprintf(fid, '    single_eval: %.17e\n    multi_eval: %.17e\n    sorted_eval: %.17e\n', sp_single, sp_multi, sp_sorted);
+        fprintf(fid, 'interp:\n');
+        for m = 1:numel(bl)
+            fprintf(fid, '  - name: "%s"\n    size: "%s"\n', bl(m).name, bl(m).size);
+            fprintf(fid, '    relmax_err: %.17e\n    max_rel_err: %.17e\n', bl(m).relmax, bl(m).max_rel);
+            fprintf(fid, '    single_eval: %.17e\n    multi_eval: %.17e\n    sorted_eval: %.17e\n', bl(m).single, bl(m).multi, bl(m).sorted);
+        end
         fclose(fid);
     end
 end

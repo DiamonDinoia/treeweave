@@ -3,14 +3,16 @@
 See benchmarks/zeta_bench.cpp for the rationale. zeta(s) = sum_k k**-s summed
 until the tail is negligible (rel 1e-10, <=160 terms) yet smooth on [2, 10]: fit
 once, eval a polynomial. Times single/multi/sorted; the native rate is sampled
-over n_native and reused. numpy Chebyshev is the native interpolator baseline.
-TREEWEAVE_BENCH_YAML=path emits YAML. NumPy only (no SciPy).
+over n_native and reused. The interpolator baselines are numpy Chebyshev,
+numpy.interp (a linear lookup table) and SciPy splines.
+TREEWEAVE_BENCH_YAML=path emits YAML.
 """
 
 import os
 import time
 
 import numpy as np
+from scipy.interpolate import CubicSpline, make_interp_spline
 
 import treeweave
 
@@ -41,8 +43,12 @@ KS = np.arange(1.0, MAX_TERMS + 1.0)
 
 
 def zeta_smooth(s):
-    """Vectorized over s: one row of k**-s per point, summed over k."""
-    return (KS[:, None] ** -np.atleast_1d(s)).sum(axis=0)
+    """Vectorized over s, one term at a time: temporaries stay at len(s)."""
+    s = np.atleast_1d(s)
+    acc = np.zeros_like(s, dtype=float)
+    for k in KS:
+        acc += k**-s
+    return acc
 
 
 fn = treeweave.fit(lambda x: float(zeta_smooth(x[0])[0]), a, b, tol=1e-10)
@@ -148,6 +154,25 @@ else:
 baselines.append(
     ("numpy Chebyshev", f"degree {deg}", crit, max_rel_cheb, *time_numpy_api(cheb))
 )
+
+
+# Splines and the linear table on uniform knots: double the knot count from 16
+# until the method meets tol.
+methods = [
+    ("SciPy CubicSpline", CubicSpline),
+    ("SciPy quintic B-spline", lambda x, y: make_interp_spline(x, y, k=5)),
+    ("numpy.interp", lambda x, y: lambda q: np.interp(q, x, y)),
+]
+for name, make in methods:
+    for knots in (16 << i for i in range(21)):
+        kx = np.linspace(a, b, knots)
+        p = make(kx, zeta_smooth(kx))
+        crit, err = rel_errors(p)
+        if crit <= tol:
+            break
+    else:
+        raise SystemExit(f"{name} never met tol {tol}")
+    baselines.append((name, f"{knots} knots", crit, err, *time_numpy_api(p)))
 
 # --- throughput (Mevals/s) and speedup per mode ------------------------------
 tw_single = mevals(n_scalar, tw_single_s)
