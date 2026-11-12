@@ -62,6 +62,8 @@ jobs:
           # macOS: apple-clang on arm64; gcc-14 for GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
           - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
           - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
+          - {os: macos-26,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
+          - {os: macos-26,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           # arch_native: this leg is the one that resolves to -mcpu=native
           # (Homebrew gcc on Apple Silicon doesn't know apple-m1, see
           # treeweave_toolchain.cmake). A cross-run cache is unsafe for native
