@@ -19,6 +19,8 @@
 
 An expensive function becomes a few nanoseconds per call after a one-line fit, works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS.
 
+Example: a 160-term Riemann-zeta sum on `[2, 10]` runs at about 1 Mevals/s in C++. Fit it to `1e-10` relative error, and treeweave evaluates it at about 200 Mevals/s in batch and 1,000 Mevals/s on sorted input from C, C++ and Python (CI runner). The interpolator of each language (numpy `Chebyshev`, FastChebInterp.jl, Boost.Math, GSL, `spline`) needs degree 26 to 27 or 2048 knots for the same accuracy. The [comparison page](https://diamondinoia.github.io/treeweave/comparison.html) has the rules and the full table.
+
 <!-- bench-summary -->
 <!-- /bench-summary -->
 

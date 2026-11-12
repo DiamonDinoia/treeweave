@@ -40,6 +40,7 @@ Call it from C++, header-only or compiled. C, Fortran, Python, Julia, MATLAB/Oct
    guides/performance
    guides/dispatch
    guides/guru
+   comparison
    how-treeweave-works
    known-issues
 
