@@ -195,6 +195,15 @@
 <li class="toctree-l2"><a class="reference internal" href="guru.html#rules-worth-pinning">Rules worth pinning</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../comparison.html">Comparison with native interpolators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#the-problem">The problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#the-rules">The rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#results">Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#why-treeweave-is-faster">Why treeweave is faster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#where-treeweave-is-not-faster">Where treeweave is not faster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comparison.html#reproduce">Reproduce</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../how-treeweave-works.html">How treeweave works</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-1-fit-adaptive-paneling">Phase 1, fit: adaptive paneling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../how-treeweave-works.html#phase-2-eval-descent">Phase 2, eval: descent</a></li>
@@ -438,6 +447,10 @@ vendoring treeweave into another project.</p>
 <span class="c"># sources are not clang-tidy clean, so a top-level default would drag them into</span>
 <span class="c"># the analysis preset. Turn on via the bench preset.</span>
 <span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_BENCHMARKS</span><span class="w"> </span><span class="s2">"Build benchmarks"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
+<span class="c"># Add the native-interpolator baselines to the zeta benches: Boost.Math</span>
+<span class="c"># chebyshev_transform (C++, needs FFTW), GSL gsl_cheb and baobzi (C). Every</span>
+<span class="c"># dependency is REQUIRED once this is ON, so a missing one fails the configure.</span>
+<span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BENCH_BASELINES</span><span class="w"> </span><span class="s2">"Add native interpolators to the zeta benches"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Build the CodSpeed benchmark used by CI. Prefer the codspeed preset.</span>
 <span class="nb">option</span><span class="p">(</span><span class="s">TREEWEAVE_BUILD_CODSPEED</span><span class="w"> </span><span class="s2">"Build CodSpeed benchmark"</span><span class="w"> </span><span class="s">OFF</span><span class="p">)</span>
 <span class="c"># Add documentation targets: doxygen, sphinx, and docs. Requires Doxygen,</span>
