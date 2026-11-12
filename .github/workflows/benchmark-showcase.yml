@@ -9,7 +9,8 @@ name: Benchmark Showcase
 # This is intentionally separate from bench.yml (nanobench time-series) and
 # docs.yml (gh-pages): a distinct workflow, concurrency group, and result
 # branch, so it never collides with either.
-# Non-gating dashboard — only regenerates the README throughput charts. Runs
+# Non-gating dashboard: regenerates the README throughput charts and rewrites
+# the README benchmark summary between its marker comments. Runs
 # per-release (the correct cadence) plus weekly + on demand, so it no longer
 # fires on every push (it was one of the two heaviest non-gating per-push jobs).
 on:
@@ -48,6 +49,25 @@ jobs:
           cmake: true
           ninja: true
           cache-tools: true
+
+      # The C and C++ benches share one build, so both get every baseline:
+      # Boost.Math chebyshev_transform (needs FFTW), GSL gsl_cheb and baobzi.
+      - name: Install interpolator baselines (C, C++)
+        if: matrix.lang == 'c' || matrix.lang == 'cpp'
+        env:
+          BAOBZI_SHA: bf0be03f0b997d35a1ea53315896b1e2f847ea02
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y libboost-dev libfftw3-dev libgsl-dev
+          git init -q "$RUNNER_TEMP/baobzi"
+          git -C "$RUNNER_TEMP/baobzi" fetch -q --depth 1 https://github.com/flatironinstitute/baobzi.git "$BAOBZI_SHA"
+          git -C "$RUNNER_TEMP/baobzi" checkout -q FETCH_HEAD
+          cmake -S "$RUNNER_TEMP/baobzi" -B "$RUNNER_TEMP/baobzi/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DBAOBZI_BUILD_TESTS=OFF -DBAOBZI_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/baobzi-install"
+          cmake --build "$RUNNER_TEMP/baobzi/build" -j
+          cmake --install "$RUNNER_TEMP/baobzi/build"
+          echo "BAOBZI_PREFIX=$RUNNER_TEMP/baobzi-install" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/baobzi-install/lib" >> "$GITHUB_ENV"
 
       - name: Install gfortran
         if: matrix.lang == 'fortran'
@@ -90,13 +110,13 @@ jobs:
           yaml="$OUT/${{ matrix.lang }}.yaml"
           case "${{ matrix.lang }}" in
             c)
-              cmake --preset bench && cmake --build build/bench -j
+              cmake --preset bench -DTREEWEAVE_BENCH_BASELINES=ON -DCMAKE_PREFIX_PATH="$BAOBZI_PREFIX" && cmake --build build/bench -j
               bin=$(find build/bench -type f -name treeweave_c_zeta_bench -perm -u+x | head -1)
               [[ -n "$bin" ]] || { echo "::error::C bench binary not found under build/bench"; exit 1; }
               TREEWEAVE_BENCH_YAML="$yaml" "$bin"
               ;;
             cpp)
-              cmake --preset bench && cmake --build build/bench -j
+              cmake --preset bench -DTREEWEAVE_BENCH_BASELINES=ON -DCMAKE_PREFIX_PATH="$BAOBZI_PREFIX" && cmake --build build/bench -j
               bin=$(find build/bench -type f -name zeta_bench -perm -u+x | head -1)
               [[ -n "$bin" ]] || { echo "::error::C++ bench binary not found under build/bench"; exit 1; }
               TREEWEAVE_BENCH_YAML="$yaml" "$bin"
@@ -127,7 +147,11 @@ jobs:
               # later run fails to dlopen. Set it for both invocations.
               export LIBTREEWEAVE_C="$PWD/$lib"
               julia --project=bindings/julia/Treeweave -e 'using Pkg; Pkg.instantiate()'
-              TREEWEAVE_BENCH_YAML="$yaml" \
+              # FastChebInterp is the bench's baseline, not a Treeweave
+              # dependency: it lives in its own environment, stacked after the
+              # project on the load path.
+              julia --project="$RUNNER_TEMP/jlbench" -e 'using Pkg; Pkg.add(name="FastChebInterp", version="1.3.1")'
+              JULIA_LOAD_PATH="@:$RUNNER_TEMP/jlbench:@stdlib" TREEWEAVE_BENCH_YAML="$yaml" \
                 julia --project=bindings/julia/Treeweave bindings/julia/Treeweave/benchmarks/zeta_bench.jl
               ;;
             octave)
@@ -167,7 +191,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      # A dispatch on a branch writes that branch's README; the release and
+      # schedule runs write main's.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || 'main' }}
+          fetch-depth: 0  # the README push rebases onto the branch tip
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -184,24 +213,48 @@ jobs:
       - name: Install plot deps
         run: python -m pip install --upgrade matplotlib numpy pyyaml
 
-      - name: Generate charts
+      - name: Generate charts and the README summary
         run: |
-          ls -la bench_results || true
+          python scripts/generate_benchmark_plot.py --self-test
+          ls -la bench_results
           python scripts/generate_benchmark_plot.py --results-dir bench_results --output-dir charts
           ls -la charts
+          cat charts/summary.md >> "$GITHUB_STEP_SUMMARY"
 
+      # Charts first, from a scratch repo, so a rejected README push below can
+      # never leave them stale.
       - name: Publish to the benchmark-results branch
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          pub="$RUNNER_TEMP/benchmark-results"
+          git init -q -b benchmark-results "$pub"
+          cp charts/*.svg "$pub"/
+          cd "$pub"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Orphan branch holding only the SVGs at its root (no repo history).
-          git checkout --orphan benchmark-results
-          git reset                       # unstage the inherited tree
-          cp charts/*.svg .
           git add ./*.svg
-          git commit -m "Update benchmark charts ($(date -u +%Y-%m-%dT%H:%M:%SZ)) [skip ci]"
+          git commit -q -m "Update benchmark charts ($(date -u +%Y-%m-%dT%H:%M:%SZ)) [skip ci]"
           git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}" benchmark-results
+
+      # The README summary needs every language: a failed bench job leaves it
+      # unchanged. A dispatch from a tag has no branch to write to.
+      - name: Commit the README summary
+        if: needs.bench.result == 'success' && (github.event_name != 'workflow_dispatch' || github.ref_type == 'branch')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || 'main' }}
+        run: |
+          set -euo pipefail
+          python scripts/generate_benchmark_plot.py --results-dir bench_results --output-dir charts --readme README.md
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet README.md; then
+            echo "README summary unchanged"
+            exit 0
+          fi
+          git commit -m "docs: update the README benchmark summary [skip ci]" README.md
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
+          git pull --rebase "$remote" "$BRANCH"
+          git push "$remote" "HEAD:$BRANCH"

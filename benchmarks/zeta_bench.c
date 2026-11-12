@@ -9,6 +9,11 @@
 
 #include <treeweave.h>
 
+#ifdef TREEWEAVE_BENCH_BASELINES
+#include <baobzi.h>
+#include <gsl/gsl_chebyshev.h>
+#endif
+
 /* Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
  * total, capped at ZETA_MAX_TERMS: a competent zeta stops early. */
 #define ZETA_EPS 1e-10
@@ -26,9 +31,21 @@ static double zeta_partial(double s) {
     return acc;
 }
 
+/* Fit target: all ZETA_MAX_TERMS terms. The early stop above makes zeta_partial
+ * jump by up to ZETA_EPS relative where the term count changes, and a global
+ * Chebyshev series then needs degree 177 instead of 26 on [2, 10]. Every
+ * interpolator, treeweave included, fits this smooth sum; the native rate uses
+ * zeta_partial. */
+static double zeta_smooth(double s) {
+    double acc = 0.0;
+    for (long k = 1; k <= ZETA_MAX_TERMS; ++k)
+        acc += pow((double)k, -s);
+    return acc;
+}
+
 static void kernel(const double *x, double *y, void *context) {
     (void)context;
-    y[0] = zeta_partial(x[0]);
+    y[0] = zeta_smooth(x[0]);
 }
 
 /* Seconds from an arbitrary epoch. CLOCK_MONOTONIC where available (POSIX),
@@ -56,6 +73,74 @@ static void emit_block(FILE *y, const char *name, double tw, double nat) {
     fprintf(y, "  native_mevals_s: %.17e\n", nat);
     fprintf(y, "  speedup: %.17e\n", tw / nat);
 }
+
+/* One point through a library's scalar call. */
+typedef double (*eval_1d_t)(const void *obj, double x);
+
+static double tw_eval_1d(const void *obj, double x) { return treeweave_eval_1d((treeweave_t)obj, x); }
+
+/* err[0] = max|p - f| / max|f|, treeweave's default RelativeMax criterion, which
+ * every baseline is grown against; err[1] = max |p - f| / |f|, the pointwise
+ * error. Both are reported for every method, treeweave included. */
+static void rel_errors(eval_1d_t f, const void *obj, const double *xs, const double *ref, size_t n, double err[2]) {
+    double max_abs = 0.0, max_f = 0.0, max_rel = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const double e = fabs(f(obj, xs[i]) - ref[i]);
+        max_abs        = e > max_abs ? e : max_abs;
+        max_f          = fabs(ref[i]) > max_f ? fabs(ref[i]) : max_f;
+        max_rel        = e / fabs(ref[i]) > max_rel ? e / fabs(ref[i]) : max_rel;
+    }
+    err[0] = max_abs / max_f;
+    err[1] = max_rel;
+}
+
+#ifdef TREEWEAVE_BENCH_BASELINES
+/* A native interpolator grown until it meets the tolerance on the check sample,
+ * then timed with the same protocol as treeweave. Every rate is Mevals/s. */
+typedef struct {
+    const char *name;
+    char        size[64];
+    double      relmax, max_rel;
+    double      single, multi, sorted;
+} baseline_t;
+
+static double gsl_cheb_eval_1d(const void *obj, double x) { return gsl_cheb_eval((const gsl_cheb_series *)obj, x); }
+
+static double baobzi_eval_1d(const void *obj, double x) {
+    double y;
+    baobzi_eval((const baobzi_t)obj, &x, &y);
+    return y;
+}
+
+static double gsl_target(double x, void *params) {
+    (void)params;
+    return zeta_smooth(x);
+}
+
+static void baobzi_target(const double *x, double *y, const void *data) {
+    (void)data;
+    y[0] = zeta_smooth(x[0]);
+}
+
+/* Mevals/s of the scalar call over pts[0..n). */
+static double scalar_rate(eval_1d_t f, const void *obj, const double *pts, size_t n) {
+    volatile double sink = 0.0;
+    for (size_t i = 0; i < n; ++i)
+        sink = sink + f(obj, pts[i]); /* warm-up (untimed) */
+    const double t0 = now_s();
+    for (size_t i = 0; i < n; ++i)
+        sink = sink + f(obj, pts[i]);
+    return (double)n / ((now_s() - t0) * 1e6);
+}
+
+/* Mevals/s of baobzi's batch call over pts[0..n). */
+static double baobzi_multi_rate(baobzi_t f, const double *pts, double *out, size_t n) {
+    baobzi_eval_multi(f, pts, out, (int)n); /* warm-up (untimed) */
+    const double t0 = now_s();
+    baobzi_eval_multi(f, pts, out, (int)n);
+    return (double)n / ((now_s() - t0) * 1e6);
+}
+#endif
 
 int main(void) {
     const double a   = 2.0;
@@ -88,14 +173,14 @@ int main(void) {
     for (size_t i = 0; i < n; ++i)
         xs[i] = a + (b - a) * ((double)rand() / (double)RAND_MAX);
 
-    double max_rel = 0.0;
-    for (size_t i = 0; i < n_native; ++i) {
-        const double approx = treeweave_eval_1d(fn, xs[i]);
-        const double exact  = zeta_partial(xs[i]);
-        const double rel    = fabs(approx - exact) / fabs(exact);
-        if (rel > max_rel)
-            max_rel = rel;
-    }
+    /* Accuracy of every method, treeweave included, on the same sample. */
+    enum { n_check = 4096 };
+    static double ref_check[n_check];
+    for (size_t i = 0; i < n_check; ++i)
+        ref_check[i] = zeta_smooth(xs[i]);
+    double tw_err[2];
+    rel_errors(tw_eval_1d, fn, xs, ref_check, n_check, tw_err);
+    const double max_rel = tw_err[1];
 
     volatile double sink = 0.0; /* anti-DCE sink for every timed loop */
     double          t0, t1;
@@ -135,6 +220,87 @@ int main(void) {
     const double tw_sorted_s = t1 - t0;
     sink                     = out[0];
 
+#ifdef TREEWEAVE_BENCH_BASELINES
+    baseline_t baselines[2];
+    size_t     n_baselines = 0;
+    {
+        /* Every baseline must meet tol on the check sample before it is timed. */
+        double err[2];
+
+        /* GSL gsl_cheb: Chebyshev series from order + 1 Chebyshev nodes. Grow
+         * the order by one until it meets tol: the smallest series that does. */
+        gsl_function gsl_f = {gsl_target, NULL};
+        for (size_t order = 2;; ++order) {
+            gsl_cheb_series *cs = gsl_cheb_alloc(order);
+            gsl_cheb_init(cs, &gsl_f, a, b);
+            rel_errors(gsl_cheb_eval_1d, cs, xs, ref_check, n_check, err);
+            if (err[0] <= tol) {
+                baseline_t *bl = &baselines[n_baselines++];
+                bl->name       = "GSL gsl_cheb";
+                snprintf(bl->size, sizeof bl->size, "degree %zu", order);
+                bl->relmax  = err[0];
+                bl->max_rel = err[1];
+                bl->single  = scalar_rate(gsl_cheb_eval_1d, cs, xs, n_scalar);
+                bl->multi   = scalar_rate(gsl_cheb_eval_1d, cs, xs, n);
+                bl->sorted  = scalar_rate(gsl_cheb_eval_1d, cs, xs_sorted, n);
+                gsl_cheb_free(cs);
+                break;
+            }
+            gsl_cheb_free(cs);
+            if (order == 1000) {
+                fprintf(stderr, "GSL gsl_cheb never met tol %g\n", tol);
+                return EXIT_FAILURE;
+            }
+        }
+
+        /* baobzi: adaptive tree of Chebyshev panels, the library that inspired
+         * treeweave. Its own tol is per leaf, so for every order it supports in
+         * 1-D, take the loosest of 1e-6 ... 1e-15 that meets ours, and keep the
+         * configuration with the fastest batch. The box is widened by 1e-9
+         * relative: baobzi reads out of bounds for a query exactly on the upper
+         * edge (segfault on the zeta target with a linspace grid, 2026-09-01). */
+        const double center = 0.5 * (a + b), half = 0.5 * (b - a) * (1.0 + 1e-9);
+        baseline_t  *best = &baselines[n_baselines];
+        best->multi       = 0.0;
+        for (int order = 6; order <= 16; order += 2) {
+            for (double btol = 1e-6; btol >= 1e-15; btol /= 10) {
+                baobzi_input_t input = baobzi_input_default;
+                input.func           = baobzi_target;
+                input.dim            = 1;
+                input.output_dim     = 1;
+                input.order          = order;
+                input.tol            = btol;
+                baobzi_t bz          = baobzi_init(&input, &center, &half);
+                if (bz == NULL) {
+                    fprintf(stderr, "baobzi_init failed (order %d, tol %g)\n", order, btol);
+                    return EXIT_FAILURE;
+                }
+                rel_errors(baobzi_eval_1d, bz, xs, ref_check, n_check, err);
+                if (err[0] <= tol) {
+                    const double multi = baobzi_multi_rate(bz, xs, out, n);
+                    if (multi > best->multi) {
+                        best->name = "baobzi";
+                        snprintf(best->size, sizeof best->size, "order %d, tol %.0e", order, btol);
+                        best->relmax  = err[0];
+                        best->max_rel = err[1];
+                        best->single  = scalar_rate(baobzi_eval_1d, bz, xs, n_scalar);
+                        best->multi   = multi;
+                        best->sorted  = baobzi_multi_rate(bz, xs_sorted, out, n);
+                    }
+                    baobzi_free(bz);
+                    break;
+                }
+                baobzi_free(bz);
+            }
+        }
+        if (best->multi == 0.0) {
+            fprintf(stderr, "baobzi never met tol %g\n", tol);
+            return EXIT_FAILURE;
+        }
+        ++n_baselines;
+    }
+#endif
+
     const double tw_single = (double)n_scalar / (tw_single_s * 1e6);
     const double tw_multi  = (double)n / (tw_multi_s * 1e6);
     const double tw_sorted = (double)n / (tw_sorted_s * 1e6);
@@ -148,6 +314,11 @@ int main(void) {
            tw_multi / nat_rate);
     printf("  sorted-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_sorted, nat_rate,
            tw_sorted / nat_rate);
+#ifdef TREEWEAVE_BENCH_BASELINES
+    for (size_t i = 0; i < n_baselines; ++i)
+        printf("  %s (%s, max rel err %.3e)  single %.2f  multi %.2f  sorted %.2f Mevals/s\n", baselines[i].name,
+               baselines[i].size, baselines[i].max_rel, baselines[i].single, baselines[i].multi, baselines[i].sorted);
+#endif
 
     const char *yaml_path = getenv("TREEWEAVE_BENCH_YAML");
     if (yaml_path != NULL) {
@@ -157,10 +328,24 @@ int main(void) {
             fprintf(y, "domain: [%.17e, %.17e]\n", a, b);
             fprintf(y, "tol: %.17e\n", tol);
             fprintf(y, "n_pts: %zu\n", n);
+            fprintf(y, "relmax_err: %.17e\n", tw_err[0]);
             fprintf(y, "max_rel_err: %.17e\n", max_rel);
             emit_block(y, "single_eval", tw_single, nat_rate);
             emit_block(y, "multi_eval", tw_multi, nat_rate);
             emit_block(y, "sorted_eval", tw_sorted, nat_rate);
+#ifdef TREEWEAVE_BENCH_BASELINES
+            if (n_baselines > 0)
+                fprintf(y, "interp:\n");
+            for (size_t i = 0; i < n_baselines; ++i) {
+                fprintf(y, "  - name: \"%s\"\n", baselines[i].name);
+                fprintf(y, "    size: \"%s\"\n", baselines[i].size);
+                fprintf(y, "    relmax_err: %.17e\n", baselines[i].relmax);
+                fprintf(y, "    max_rel_err: %.17e\n", baselines[i].max_rel);
+                fprintf(y, "    single_eval: %.17e\n", baselines[i].single);
+                fprintf(y, "    multi_eval: %.17e\n", baselines[i].multi);
+                fprintf(y, "    sorted_eval: %.17e\n", baselines[i].sorted);
+            }
+#endif
             fclose(y);
         }
     }

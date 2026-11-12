@@ -19,6 +19,9 @@
 
 An expensive function becomes a few nanoseconds per call after a one-line fit, works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS.
 
+<!-- bench-summary -->
+<!-- /bench-summary -->
+
 ## Benchmarks
 
 Each chart fits a Riemann-zeta sum on `[2, 10]` to a relative tolerance of `1e-10` with a naive algorithm, then compares against treeweave. Bars are Mevals/s on a log scale; higher is better.
@@ -34,6 +37,15 @@ Each chart fits a Riemann-zeta sum on `[2, 10]` to a relative tolerance of `1e-1
 ### Sorted batch
 
 ![Riemann-zeta sorted-batch throughput](https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/throughput_sorted.svg)
+
+### Native interpolators
+
+Each language's own interpolator fits the same function: numpy `Chebyshev.interpolate` (Python), FastChebInterp.jl (Julia), Boost.Math `chebyshev_transform` (C++), GSL `gsl_cheb` (C), and `spline`/`ppval` (Octave). The C row also has baobzi, the library that inspired treeweave, at the order (6 to 16) and tolerance that give its fastest batch. Every method grows (degree, knots, or its own tolerance) until it meets `max|p - f| <= 1e-10 * max|f|`, treeweave's default criterion. Only then does the benchmark time it. Both error columns use the same 4096 points for every row, treeweave included. The number in parentheses is treeweave's throughput divided by that method's throughput. Fortran and JS have no baseline.
+
+![Riemann-zeta batch throughput against native interpolators](https://raw.githubusercontent.com/DiamonDinoia/treeweave/benchmark-results/interp_multi.svg)
+
+<!-- bench-table -->
+<!-- /bench-table -->
 
 See the [performance guide](https://diamondinoia.github.io/treeweave/guides/performance.html) for throughput and latency details.
 

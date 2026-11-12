@@ -59,6 +59,10 @@ option(TREEWEAVE_BUILD_JS "Build JS/TS binding" OFF)
 # sources are not clang-tidy clean, so a top-level default would drag them into
 # the analysis preset. Turn on via the bench preset.
 option(TREEWEAVE_BUILD_BENCHMARKS "Build benchmarks" OFF)
+# Add the native-interpolator baselines to the zeta benches: Boost.Math
+# chebyshev_transform (C++, needs FFTW), GSL gsl_cheb and baobzi (C). Every
+# dependency is REQUIRED once this is ON, so a missing one fails the configure.
+option(TREEWEAVE_BENCH_BASELINES "Add native interpolators to the zeta benches" OFF)
 # Build the CodSpeed benchmark used by CI. Prefer the codspeed preset.
 option(TREEWEAVE_BUILD_CODSPEED "Build CodSpeed benchmark" OFF)
 # Add documentation targets: doxygen, sphinx, and docs. Requires Doxygen,

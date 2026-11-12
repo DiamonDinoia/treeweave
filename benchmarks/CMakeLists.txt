@@ -26,6 +26,14 @@ if(TREEWEAVE_BUILD_BENCHMARKS)
     add_executable(zeta_bench "${CMAKE_CURRENT_SOURCE_DIR}/zeta_bench.cpp")
     target_link_libraries(zeta_bench PRIVATE treeweave::treeweave)
     treeweave_enable_warnings(zeta_bench)
+    if(TREEWEAVE_BENCH_BASELINES)
+        find_package(Boost REQUIRED)
+        find_path(_tw_fftw3_inc fftw3.h REQUIRED)
+        find_library(_tw_fftw3_lib fftw3 REQUIRED)
+        target_compile_definitions(zeta_bench PRIVATE TREEWEAVE_BENCH_BASELINES)
+        target_include_directories(zeta_bench SYSTEM PRIVATE ${_tw_fftw3_inc})
+        target_link_libraries(zeta_bench PRIVATE Boost::headers ${_tw_fftw3_lib})
+    endif()
 
     if(TREEWEAVE_BUILD_C_API)
         enable_language(C)
@@ -48,6 +56,24 @@ if(TREEWEAVE_BUILD_BENCHMARKS)
             target_link_libraries(
                 treeweave_c_zeta_bench
                 PRIVATE ${_tw_bench_libm}
+            )
+        endif()
+        if(TREEWEAVE_BENCH_BASELINES)
+            find_package(GSL REQUIRED)
+            find_path(_tw_baobzi_inc baobzi.h REQUIRED)
+            find_library(_tw_baobzi_lib baobzi REQUIRED)
+            target_compile_definitions(
+                treeweave_c_zeta_bench
+                PRIVATE TREEWEAVE_BENCH_BASELINES
+            )
+            target_include_directories(
+                treeweave_c_zeta_bench
+                SYSTEM
+                PRIVATE ${_tw_baobzi_inc}
+            )
+            target_link_libraries(
+                treeweave_c_zeta_bench
+                PRIVATE GSL::gsl ${_tw_baobzi_lib}
             )
         endif()
         add_test(NAME bench_c_zeta COMMAND treeweave_c_zeta_bench)

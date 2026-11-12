@@ -34,6 +34,13 @@ batch, sorted). Even a minimal native Riemann-zeta eval is tens-to-hundreds of
 pow()s, so treeweave wins in every mode; the docs guide embeds the fuller latency
 and batch-vs-sorted set.
 
+A third framing compares treeweave with each language's native interpolator
+(numpy Chebyshev, FastChebInterp.jl, Boost.Math, GSL, Octave spline, and
+baobzi in C), read from the optional ``interp`` list in each YAML. Every
+baseline is grown until it meets the same tolerance before it is timed. With
+``--readme`` the script also rewrites the README blocks between the
+``<!-- bench-summary -->`` and ``<!-- bench-table -->`` marker pairs.
+
 Style mirrors poet's scripts/generate_charts.py (Agg backend, hidden top/right
 spines, per-bar value labels, SVG output).
 
@@ -123,8 +130,12 @@ def _present(records: dict[str, dict], *mode_keys: str) -> list[str]:
 
 def _fmt(value: float, unit: str) -> str:
     if unit == "mevals":
+        if value < 0.1:  # interpreted per-point loops; .1f would print 0.0
+            return f"{value:.0e}"
         return f"{value:,.0f}" if value >= 100 else f"{value:.1f}"
     if unit == "speedup":
+        if value < 1:  # .1f would print 0.0× for a 0.04× slowdown
+            return f"{value:.2g}×"
         return f"{value:,.0f}×" if value >= 10 else f"{value:.1f}×"
     return f"{value:.2f}" if value < 10 else f"{value:.1f}"
 
@@ -195,6 +206,170 @@ def grouped_barh(
     fig.savefig(str(out), bbox_inches="tight")  # format inferred from the suffix
     plt.close(fig)
     print(f"  Wrote {out}")
+
+
+# ── Native interpolators ─────────────────────────────────────────────────────
+
+C_BAOBZI = "#8172b3"  # purple
+
+# Languages whose bench carries an interpolator baseline. Fortran and JS have no
+# interpolator in common use, so their YAML has no ``interp`` list.
+INTERP_LANGUAGES = ["c", "c++", "python", "julia", "octave"]
+
+
+def require_all_interp(records) -> None:
+    """The README summary needs every interpolator language; a failed bench job
+    must not rewrite it from a subset."""
+    missing = [lang for lang in INTERP_LANGUAGES if lang not in records]
+    if missing:
+        sys.exit(f"Error: no result for {', '.join(missing)}; README left unchanged")
+
+
+def interp_rows(records) -> list[tuple[str, dict, list[dict]]]:
+    """(language, treeweave record, baselines) for every language with baselines.
+
+    A language in INTERP_LANGUAGES whose YAML is present but has no baseline is a
+    broken bench, not a quiet one: fail loudly.
+    """
+    rows = []
+    for lang in INTERP_LANGUAGES:
+        rec = records.get(lang)
+        if rec is None:
+            continue
+        baselines = rec.get("interp") or []
+        if not baselines:
+            sys.exit(f"Error: {lang} result has no 'interp' baselines")
+        rows.append((lang, rec, baselines))
+    return rows
+
+
+def _speedup(tw: float, other: float) -> str:
+    """treeweave over another method, e.g. '12×' or '0.5×'."""
+    return _fmt(tw / other, "speedup")
+
+
+def chart_interp(records, mode: str, out: Path) -> None:
+    """treeweave vs every native interpolator, one row per (language, method)."""
+    labels, values, colors, texts = [], [], [], []
+    for lang, rec, baselines in interp_rows(records):
+        tw = float(rec[mode]["treeweave_mevals_s"])
+        labels.append(f"{LANGUAGE_LABELS[lang]}: treeweave")
+        values.append(tw)
+        colors.append(C_TREEWEAVE)
+        texts.append(_fmt(tw, "mevals"))
+        for bl in baselines:
+            rate = float(bl[mode])
+            labels.append(f"{LANGUAGE_LABELS[lang]}: {bl['name']}")
+            values.append(rate)
+            colors.append(C_BAOBZI if bl["name"] == "baobzi" else C_NATIVE)
+            texts.append(f"{_fmt(rate, 'mevals')}  (treeweave {_speedup(tw, rate)})")
+    if not labels:
+        return
+    fig, ax = plt.subplots(figsize=(9.0, max(3.0, 0.42 * len(labels) + 1.4)))
+    bars = ax.barh(range(len(labels)), values, color=colors, height=0.7)
+    for bar, value, text in zip(bars, values, texts):
+        ax.text(
+            value * 1.05,
+            bar.get_y() + bar.get_height() / 2,
+            text,
+            va="center",
+            fontsize=8,
+        )
+    ax.set_xscale("log")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    ax.set_xlabel("Throughput (Mevals/s, log scale)")
+    ax.set_title(
+        f"Riemann-zeta {MODES[mode]}\ntreeweave vs native interpolators, higher is better",
+        fontsize=13,
+        fontweight="bold",
+        pad=12,
+    )
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(axis="both", which="both", labelsize=9)
+    ax.margins(x=0.45)  # headroom for the speedup labels
+    fig.tight_layout()
+    fig.savefig(str(out), bbox_inches="tight")
+    plt.close(fig)
+    print(f"  Wrote {out}")
+
+
+def summary_markdown(records) -> tuple[str, str]:
+    """(one-paragraph headline, results table) in GitHub markdown."""
+    rows = interp_rows(records)
+    if not rows:
+        return "", ""
+    native, baobzi = {}, {}  # mode -> [treeweave / baseline]
+    table = [
+        "| Language | Method | Size | Max err / max\\|f\\| | Max rel err | Single (Mevals/s) | Batch (Mevals/s) | Sorted batch (Mevals/s) |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for lang, rec, baselines in rows:
+        tw = {m: float(rec[m]["treeweave_mevals_s"]) for m in MODES}
+        table.append(
+            f"| {LANGUAGE_LABELS[lang]} | treeweave | tol {float(rec['tol']):.0e} | "
+            f"{float(rec['relmax_err']):.1e} | {float(rec['max_rel_err']):.1e} | "
+            + " | ".join(_fmt(tw[m], "mevals") for m in MODES)
+            + " |"
+        )
+        for bl in baselines:
+            cells = []
+            for m in MODES:
+                rate = float(bl[m])
+                (baobzi if bl["name"] == "baobzi" else native).setdefault(m, []).append(
+                    tw[m] / rate
+                )
+                cells.append(f"{_fmt(rate, 'mevals')} ({_speedup(tw[m], rate)})")
+            table.append(
+                f"| {LANGUAGE_LABELS[lang]} | {bl['name']} | {bl['size']} | "
+                f"{float(bl['relmax_err']):.1e} | {float(bl['max_rel_err']):.1e} | "
+                + " | ".join(cells)
+                + " |"
+            )
+
+    def span(ratios: list[float]) -> str:
+        lo, hi = min(ratios), max(ratios)
+        return (
+            _fmt(lo, "speedup")
+            if f"{lo:.1f}" == f"{hi:.1f}"
+            else f"{_fmt(lo, 'speedup')} to {_fmt(hi, 'speedup')}"
+        )
+
+    names = ", ".join(
+        dict.fromkeys(
+            bl["name"] for _, _, bls in rows for bl in bls if bl["name"] != "baobzi"
+        )
+    )
+    lines = [
+        f"Against the native interpolator of each language ({names}), each grown until it "
+        f"meets the same tolerance, treeweave's throughput is {span(native['multi_eval'])} "
+        f"theirs in batch, {span(native['sorted_eval'])} on sorted batches, and "
+        f"{span(native['single_eval'])} one point at a time."
+    ]
+    if baobzi:
+        lines.append(
+            f"Against baobzi, the library that inspired treeweave, from C: {span(baobzi['multi_eval'])} in batch, "
+            f"{span(baobzi['sorted_eval'])} on sorted batches, {span(baobzi['single_eval'])} one point at a time."
+        )
+    lines.append(
+        "The benchmark-showcase CI workflow writes these numbers; see [Benchmarks](#benchmarks)."
+    )
+    return " ".join(lines), "\n".join(table)
+
+
+def update_readme(readme: Path, summary: str, table: str) -> None:
+    """Replace the text between each marker pair; a missing pair is an error."""
+    text = readme.read_text()
+    for tag, body in (("bench-summary", summary), ("bench-table", table)):
+        begin, end = f"<!-- {tag} -->", f"<!-- /{tag} -->"
+        i, j = text.find(begin), text.find(end)
+        if i < 0 or j < i:
+            sys.exit(f"Error: {readme} has no {begin} ... {end} block")
+        text = text[: i + len(begin)] + "\n" + body + "\n" + text[j:]
+    readme.write_text(text)
+    print(f"  Updated {readme}")
 
 
 # ── Chart builders ───────────────────────────────────────────────────────────
@@ -310,6 +485,73 @@ def build_all(records, output_dir: Path) -> None:
     chart_sorted_vs_unsorted(
         records, "latency", output_dir / "sorted_vs_unsorted_latency.svg"
     )
+    # treeweave vs each language's native interpolator.
+    for mode in MODES:
+        chart_interp(
+            records, mode, output_dir / f"interp_{mode.replace('_eval', '')}.svg"
+        )
+
+
+def self_test() -> None:
+    """Positive controls for the README guards, on synthetic results."""
+    import tempfile
+
+    def rec(lang: str) -> dict:
+        modes = {
+            m: {"treeweave_mevals_s": 100.0, "native_mevals_s": 1.0} for m in MODES
+        }
+        bl = {
+            "name": "x",
+            "size": "degree 9",
+            "relmax_err": 1e-11,
+            "max_rel_err": 2e-11,
+        }
+        return {
+            "language": lang,
+            "tol": 1e-10,
+            "relmax_err": 5e-11,
+            "max_rel_err": 9e-11,
+            **modes,
+            "interp": [{**bl, **{m: 10.0 for m in MODES}}],
+        }
+
+    def exits(fn, *args) -> bool:
+        try:
+            fn(*args)
+        except SystemExit as exc:
+            return exc.code not in (None, 0)
+        return False
+
+    full = {lang: rec(lang) for lang in INTERP_LANGUAGES}
+    summary, table = summary_markdown(full)
+    assert "10× to 10×" not in summary and "10×" in summary, summary
+    assert table.count("\n") == 1 + 2 * len(INTERP_LANGUAGES), table
+    print("PASS: summary and table built from complete results")
+    assert _fmt(0.04, "speedup") == "0.04×" and _fmt(3.04, "speedup") == "3.0×"
+    print("PASS: a sub-1 speedup keeps two significant digits")
+
+    no_interp = {**full, "c": {**full["c"], "interp": []}}
+    assert exits(interp_rows, no_interp)
+    print("PASS: a result with no interp baselines fails")
+
+    partial = {k: v for k, v in full.items() if k != "julia"}
+    assert exits(require_all_interp, partial)
+    print("PASS: a missing language blocks the README rewrite")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        readme = Path(tmp) / "README.md"
+        readme.write_text("# x\n")
+        assert exits(update_readme, readme, summary, table)
+        print("PASS: a README without the markers fails")
+        readme.write_text(
+            "a\n<!-- bench-summary -->\nold\n<!-- /bench-summary -->\n"
+            "b\n<!-- bench-table -->\nold\n<!-- /bench-table -->\nc\n"
+        )
+        update_readme(readme, summary, table)
+        once = readme.read_text()
+        update_readme(readme, summary, table)
+        assert readme.read_text() == once and "old" not in once and once.endswith("c\n")
+        print("PASS: the README rewrite replaces both blocks and is idempotent")
 
 
 def main() -> None:
@@ -324,7 +566,17 @@ def main() -> None:
     parser.add_argument(
         "--output-dir", default="charts", help="directory to write the SVG charts into"
     )
+    parser.add_argument(
+        "--self-test", action="store_true", help="run the guard self-test and exit"
+    )
+    parser.add_argument(
+        "--readme",
+        help="README to rewrite between the bench-summary/bench-table markers",
+    )
     args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        return
 
     results_dir = Path(args.results_dir)
     output_dir = Path(args.output_dir)
@@ -340,6 +592,11 @@ def main() -> None:
     print(f"Loaded languages: {', '.join(sorted(records))}")
 
     build_all(records, output_dir)
+    summary, table = summary_markdown(records)
+    (output_dir / "summary.md").write_text(summary + "\n\n" + table + "\n")
+    if args.readme:
+        require_all_interp(records)
+        update_readme(Path(args.readme), summary, table)
     print("Done.")
 
 

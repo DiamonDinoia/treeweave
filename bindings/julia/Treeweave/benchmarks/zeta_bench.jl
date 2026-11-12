@@ -5,6 +5,7 @@
 # TREEWEAVE_BENCH_YAML=path emits YAML.
 using Treeweave
 using Printf
+using FastChebInterp  # baseline only; not a Treeweave dependency (see benchmark-showcase.yml)
 
 # Fair baseline: sum k^-s until a term is below ZETA_EPS relative to the running
 # total, capped at ZETA_MAX_TERMS: a competent zeta stops early.
@@ -18,6 +19,19 @@ function zeta_partial(s)
         term = Float64(k)^(-s)
         acc += term
         term < ZETA_EPS * acc && break
+    end
+    return acc
+end
+
+# Fit target: all ZETA_MAX_TERMS terms. The early stop above makes zeta_partial
+# jump by up to ZETA_EPS relative where the term count changes, and a global
+# Chebyshev series then needs degree 177 instead of 26 on [2, 10]. Every
+# interpolator, treeweave included, fits this smooth sum; the native rate uses
+# zeta_partial.
+function zeta_smooth(s)
+    acc = 0.0
+    for k in 1:ZETA_MAX_TERMS
+        acc += Float64(k)^(-s)
     end
     return acc
 end
@@ -40,7 +54,7 @@ function emit_block(io, name, tw, nat)
 end
 
 const a, b = 2.0, 10.0
-fn = fit(zeta_partial, a, b, 1e-10)  # default tol_kind is RelativeMax
+fn = fit(zeta_smooth, a, b, 1e-10)  # default tol_kind is RelativeMax
 println(fn)
 
 n        = 1_000_000   # batch / sorted points
@@ -50,9 +64,6 @@ xs        = a .+ (b - a) .* rand(n)
 xs_sorted = sort(xs)
 
 xs_native = xs[1:n_native]
-yhat    = fn(xs_native)
-yref    = zeta_partial.(xs_native)
-max_rel = maximum(abs.(yhat .- yref) ./ abs.(yref))
 
 mevals(count, seconds) = count / (seconds * 1e6)
 
@@ -79,6 +90,52 @@ t0 = time_ns(); fn(xs_sorted; sorted=true, out=tw_buf); t1 = time_ns()
 tw_sorted_s = (t1 - t0) / 1e9
 @assert isfinite(sum(tw_buf))
 
+# Accuracy of every method, treeweave included, on one check sample. The
+# criterion is treeweave's default RelativeMax, max|p - f| <= tol * max|f|; the
+# report also prints the pointwise max |p - f| / |f| for every method.
+const tol = 1e-10
+xs_check  = xs[1:4096]
+ref_check = zeta_smooth.(xs_check)
+
+function rel_errors(p)
+    err = abs.(p.(xs_check) .- ref_check)
+    return maximum(err) / maximum(abs.(ref_check)), maximum(err ./ abs.(ref_check))
+end
+
+tw_relmax, max_rel = rel_errors(fn)
+
+# single: the scalar call per point; multi/sorted: one broadcast over the batch.
+function time_scalar_api(p)
+    scalar_sum(p, xs_scalar)                                   # warm-up (compile)
+    t0 = time_ns(); s = scalar_sum(p, xs_scalar); t1 = time_ns()
+    @assert isfinite(s)
+    rates = [mevals(n_scalar, (t1 - t0) / 1e9)]
+    buf = similar(xs)
+    for pts in (xs, xs_sorted)
+        buf .= p.(pts)                                         # warm-up
+        t0 = time_ns(); buf .= p.(pts); t1 = time_ns()
+        @assert isfinite(sum(buf))
+        push!(rates, mevals(n, (t1 - t0) / 1e9))
+    end
+    return rates
+end
+
+baselines = []
+# FastChebInterp: degree-d series from d + 1 Chebyshev points, tol=0 so no
+# coefficient is dropped. Grow d by one until it meets tol: the smallest that does.
+let found = false
+    for deg in 2:1000
+        cheb = chebinterp(zeta_smooth.(chebpoints(deg, a, b)), a, b; tol=0)
+        crit, err = rel_errors(cheb)
+        if crit <= tol
+            push!(baselines, ("FastChebInterp.jl", "degree $deg", crit, err, time_scalar_api(cheb)...))
+            found = true
+            break
+        end
+    end
+    found || error("FastChebInterp never met tol $tol")
+end
+
 tw_single = mevals(n_scalar, tw_single_s)
 tw_multi  = mevals(n, tw_multi_s)
 tw_sorted = mevals(n, tw_sorted_s)
@@ -89,6 +146,9 @@ tw_sorted = mevals(n, tw_sorted_s)
 @printf("  single-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_single, nat_rate, tw_single / nat_rate)
 @printf("  multi-eval   treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_multi, nat_rate, tw_multi / nat_rate)
 @printf("  sorted-eval  treeweave %.1f  native %.4f Mevals/s  speedup %.1fx\n", tw_sorted, nat_rate, tw_sorted / nat_rate)
+for (name, size, relmax, err, single, multi, srt) in baselines
+    @printf("  %s (%s, max rel err %.3e)  single %.2f  multi %.2f  sorted %.2f Mevals/s\n", name, size, err, single, multi, srt)
+end
 
 yaml_path = get(ENV, "TREEWEAVE_BENCH_YAML", "")
 if !isempty(yaml_path)
@@ -97,9 +157,17 @@ if !isempty(yaml_path)
         @printf(io, "domain: [%.17e, %.17e]\n", a, b)
         @printf(io, "tol: %.17e\n", 1e-10)
         @printf(io, "n_pts: %d\n", n)
+        @printf(io, "relmax_err: %.17e\n", tw_relmax)
         @printf(io, "max_rel_err: %.17e\n", max_rel)
         emit_block(io, "single_eval", tw_single, nat_rate)
         emit_block(io, "multi_eval",  tw_multi,  nat_rate)
         emit_block(io, "sorted_eval", tw_sorted, nat_rate)
+        println(io, "interp:")
+        for (name, size, relmax, err, single, multi, srt) in baselines
+            @printf(io, "  - name: \"%s\"\n    size: \"%s\"\n", name, size)
+            @printf(io, "    relmax_err: %.17e\n    max_rel_err: %.17e\n", relmax, err)
+            @printf(io, "    single_eval: %.17e\n", single)
+            @printf(io, "    multi_eval: %.17e\n    sorted_eval: %.17e\n", multi, srt)
+        end
     end
 end
