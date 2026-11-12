@@ -59,10 +59,7 @@ jobs:
           - {os: ubuntu-24.04, toolchain: llvm,    build_type: Release, preset: ci-linux-release}
           - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Release, preset: ci-linux-release}
           - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Release, preset: ci-linux-release}
-          # macOS: apple-clang on both arm64 images (14 + 15); gcc-14 on 14 for
-          # GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
-          - {os: macos-14,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
-          - {os: macos-14,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
+          # macOS: apple-clang on arm64; gcc-14 for GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
           - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
           - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
           # arch_native: this leg is the one that resolves to -mcpu=native
@@ -70,7 +67,7 @@ jobs:
           # treeweave_toolchain.cmake). A cross-run cache is unsafe for native
           # arch: an object built on one runner's microarch could be restored
           # onto another and fault. So it skips the persisted cache below.
-          - {os: macos-14,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
+          - {os: macos-15,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
           # Windows (Ninja, Release only; Debug MSVC builds are very slow)
           - {os: windows-2022, toolchain: msvc, build_type: Release, preset: ci-windows}
           - {os: windows-2022, toolchain: llvm, build_type: Release, preset: ci-windows-clang}

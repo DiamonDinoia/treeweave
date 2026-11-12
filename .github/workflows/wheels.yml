@@ -51,7 +51,7 @@ jobs:
             cibw-arch: aarch64
             cmake-args: "-DTREEWEAVE_C_MULTIARCH=ON -DTREEWEAVE_VERIFY_RUNGS=ON -DTREEWEAVE_ARCH=armv8-a"
           - name: macos-arm64
-            runs-on: macos-14
+            runs-on: macos-15
             cibw-arch: arm64
             cmake-args: "-DTREEWEAVE_ARCH=apple-m1"
           - name: macos-x86_64
