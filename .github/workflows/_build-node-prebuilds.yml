@@ -63,7 +63,7 @@ jobs:
             multiarch: 'ON'
             arch: armv8-a
           - platdir: darwin-arm64
-            runs-on: macos-14
+            runs-on: macos-15
             container: ''
             multiarch: 'OFF'
             arch: apple-m1
