@@ -188,4 +188,4 @@ jobs:
           cmake --build build/bindings-octave -j
 
       - name: Run Octave examples
-        run: ctest --test-dir build/bindings-octave -R '^octave_example_' --output-on-failure --no-tests=error
+        run: ctest --test-dir build/bindings-octave -R '^matlab_example_' --output-on-failure --no-tests=error

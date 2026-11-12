@@ -61,11 +61,11 @@ add_executable(
 )
 target_link_libraries(treeweave_fortran_zeta_bench PRIVATE treeweave_fortran)
 
+# treeweave_fortran_zeta_bench asserts nothing; the showcase runs the binary directly.
 add_test(NAME fortran_treeweave COMMAND treeweave_fortran_test)
 add_test(NAME fortran_example COMMAND treeweave_fortran_example)
-add_test(NAME fortran_zeta_bench COMMAND treeweave_fortran_zeta_bench)
 message(
     STATUS
-    "treeweave[fortran]: tests 'fortran_treeweave', 'fortran_example', 'fortran_zeta_bench' registered "
+    "treeweave[fortran]: tests 'fortran_treeweave' and 'fortran_example' registered "
     "(${CMAKE_Fortran_COMPILER})."
 )

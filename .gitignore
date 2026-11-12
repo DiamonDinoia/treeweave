@@ -6,8 +6,9 @@ __pycache__
 *.o
 *.mexa64
 *.mex
-# The MEX binary and the mwrap-generated sources (treeweave_mex_gen.cpp, bz_*.m)
-# are built entirely in the CMake build tree from treeweave.mw, never committed.
+# The MEX binary is built in the CMake build tree. The mwrap-generated sources
+# (treeweave_mex_gen.cpp, tw_*.m) are committed under bindings/matlab/generated/
+# so a checkout without mwrap still builds; matlab.yml's regen-check guards them.
 # Julia libraries don't commit their resolved Manifest, nor the deps.jl that
 # Pkg.build("Treeweave") writes (deps/build.jl regenerates it).
 bindings/julia/Treeweave/Manifest.toml

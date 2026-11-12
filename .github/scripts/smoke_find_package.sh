@@ -10,7 +10,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 cat >"$work/CMakeLists.txt" <<'CMAKE'
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 project(treeweave_smoke C)
 find_package(treeweave REQUIRED)
 add_executable(smoke smoke.c)

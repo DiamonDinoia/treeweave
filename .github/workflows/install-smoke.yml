@@ -88,7 +88,7 @@ jobs:
         run: |
           mkdir -p consumer
           cat > consumer/CMakeLists.txt <<'EOF'
-          cmake_minimum_required(VERSION 3.20)
+          cmake_minimum_required(VERSION 3.25)
           project(consumer C)
           find_package(treeweave REQUIRED)
           add_executable(app main.c)
@@ -152,7 +152,7 @@ jobs:
           # tree under review; the README documents the GIT_REPOSITORY form.
           mkdir -p consumer
           cat > consumer/CMakeLists.txt <<EOF
-          cmake_minimum_required(VERSION 3.20)
+          cmake_minimum_required(VERSION 3.25)
           project(consumer CXX)
           include(FetchContent)
           FetchContent_Declare(treeweave SOURCE_DIR "${GITHUB_WORKSPACE}")

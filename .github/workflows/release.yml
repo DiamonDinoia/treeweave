@@ -342,7 +342,7 @@ jobs:
         run: |
           mkdir -p fc_consumer
           cat > fc_consumer/CMakeLists.txt <<EOF
-          cmake_minimum_required(VERSION 3.20)
+          cmake_minimum_required(VERSION 3.25)
           project(consumer CXX)
           include(FetchContent)
           FetchContent_Declare(treeweave SOURCE_DIR "${GITHUB_WORKSPACE}")
@@ -374,7 +374,7 @@ jobs:
           # the C ABI, so a consumer just needs find_package(treeweave) and the
           # treeweave::treeweave_c target — no in-tree build required.
           cat > ftn_consumer/CMakeLists.txt <<EOF
-          cmake_minimum_required(VERSION 3.20)
+          cmake_minimum_required(VERSION 3.25)
           project(consumer Fortran)
           find_package(treeweave REQUIRED)
           add_library(treeweave_fortran STATIC "${GITHUB_WORKSPACE}/bindings/fortran/treeweave.f90")
