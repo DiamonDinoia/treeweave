@@ -540,7 +540,7 @@ parallel hardware. Phase 8 therefore locks down <code class="docutils literal no
 so callers can chunk and thread externally.</p>
 </section>
 <section id="tl-dr">
-<h2>TL;DR<a class="headerlink" href="#tl-dr" title="Link to this heading"></a></h2>
+<span id="tldr"></span><h2>TL;DR<a class="headerlink" href="#tl-dr" title="Link to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="n">treeweave</span>  <span class="o">=</span>  <span class="n">k</span><span class="o">-</span><span class="n">d</span> <span class="n">tree</span> <span class="n">of</span> <span class="n">monomial</span> <span class="n">polynomials</span>
               <span class="o">+</span> <span class="n">flat</span><span class="o">-</span><span class="n">array</span> <span class="n">descent</span> <span class="p">(</span><span class="n">load</span><span class="o">-</span><span class="n">use</span> <span class="n">bound</span><span class="p">)</span>
               <span class="o">+</span> <span class="n">counting</span><span class="o">-</span><span class="n">sort</span> <span class="n">batched</span> <span class="n">leaf</span> <span class="n">evaluation</span>
@@ -605,37 +605,29 @@ low dimensions, at the cost of memory, the trade treeweave makes explicit.</p></
 <p>On each panel treeweave fits an order-<code class="docutils literal notranslate"><span class="pre">n</span></code> polynomial (degree <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">−</span> <span class="pre">1</span></code>). Working on
 the standard interval <code class="docutils literal notranslate"><span class="pre">[−1,</span> <span class="pre">1]</span></code>, it samples <code class="docutils literal notranslate"><span class="pre">f</span></code> at the <code class="docutils literal notranslate"><span class="pre">n</span></code> Chebyshev points</p>
 <div class="math notranslate nohighlight">
-\[
-t_j = \cos\!\frac{\pi j}{n - 1}, \qquad j = 0, 1, \dots, n - 1,
-\]</div>
+\[t_j = \cos\!\frac{\pi j}{n - 1}, \qquad j = 0, 1, \dots, n - 1,\]</div>
 <p>which cluster toward the endpoints, and that clustering defeats the Runge
 phenomenon. An affine map, exactly treeweave’s <code class="docutils literal notranslate"><span class="pre">midpoint</span></code> ± <code class="docutils literal notranslate"><span class="pre">half_length</span></code>,
 carries <code class="docutils literal notranslate"><span class="pre">[−1,</span> <span class="pre">1]</span></code> onto a panel <code class="docutils literal notranslate"><span class="pre">[a,</span> <span class="pre">b]</span></code>:</p>
 <div class="math notranslate nohighlight">
-\[
-x = \frac{a + b}{2} + \frac{b - a}{2}\, t, \qquad t \in [-1, 1].
-\]</div>
+\[x = \frac{a + b}{2} + \frac{b - a}{2}\, t, \qquad t \in [-1, 1].\]</div>
 <p>treeweave stores the interpolant in the monomial basis, with coefficients <code class="docutils literal notranslate"><span class="pre">cₖ</span></code>
 that solve the Vandermonde system <code class="docutils literal notranslate"><span class="pre">V</span> <span class="pre">c</span> <span class="pre">=</span> <span class="pre">f</span></code>:</p>
 <div class="math notranslate nohighlight">
-\[
-\tilde f(x) = \sum_{k=0}^{n-1} c_k\, x^k,
+\[\tilde f(x) = \sum_{k=0}^{n-1} c_k\, x^k,
 \qquad
-V_{jk} = x_j^{\,k}, \quad f_j = f(x_j).
-\]</div>
+V_{jk} = x_j^{\,k}, \quad f_j = f(x_j).\]</div>
 <p>Rescaling each panel to <code class="docutils literal notranslate"><span class="pre">[−1,</span> <span class="pre">1]</span></code> keeps that Vandermonde solve well-conditioned.
 At the low degrees treeweave uses, that is why the monomial form stays
 accurate. The approximation error on a panel obeys the classical Chebyshev
 bounds:</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}
-\lVert f - \tilde f \rVert_\infty =
+\[\begin{split}\lVert f - \tilde f \rVert_\infty =
 \begin{cases}
 \mathcal{O}(\rho^{-n}) &amp; f \text{ analytic inside the Bernstein ellipse } E_\rho
                           \text{ (exponential)},\\[4pt]
 \mathcal{O}(n^{-p})    &amp; f \text{ has } p \text{ continuous derivatives (algebraic)}.
-\end{cases}
-\end{split}\]</div>
+\end{cases}\end{split}\]</div>
 <p>The adaptive fit (Phase 1) subdivides any panel until its measured
 <span class="math notranslate nohighlight">\(\lVert f - \tilde f \rVert_\infty \le \varepsilon\)</span> (<code class="docutils literal notranslate"><span class="pre">tol</span></code>), so a near-singularity
 gets many small panels while smooth regions stay coarse. Evaluation (Phase 3) is
