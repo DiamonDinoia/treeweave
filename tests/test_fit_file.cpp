@@ -30,7 +30,15 @@ auto temp_file(const std::string &name) -> std::string {
 
 auto read_text(const std::string &path) -> std::string {
     std::ifstream in(path, std::ios::binary);
-    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    // seek/read instead of istreambuf_iterator: GCC 12-14 -O3 false -Wnull-dereference in <streambuf>.
+    in.seekg(0, std::ios::end);
+    const std::streamoff len = in.tellg();
+    if (len < 0)
+        return {};
+    in.seekg(0, std::ios::beg);
+    std::string text(static_cast<std::size_t>(len), '\0');
+    in.read(text.data(), static_cast<std::streamsize>(len));
+    return text;
 }
 
 auto write_text(const std::string &path, const std::string &text) -> void {

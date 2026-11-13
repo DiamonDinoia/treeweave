@@ -1576,7 +1576,14 @@ class Function {
         std::ifstream in(path, std::ios::binary);
         if (!in)
             return false;
-        const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        // seek/read instead of istreambuf_iterator: GCC 12-14 -O3 false -Wnull-dereference in <streambuf>.
+        in.seekg(0, std::ios::end);
+        const std::streamoff len = in.tellg();
+        if (len < 0)
+            return false;
+        in.seekg(0, std::ios::beg);
+        std::string text(static_cast<std::size_t>(len), '\0');
+        in.read(text.data(), static_cast<std::streamsize>(len));
         const std::string header = fit_file_header(input, box);
         if (!text.starts_with(header))
             return false;
