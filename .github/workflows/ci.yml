@@ -45,9 +45,10 @@ jobs:
           vcvarsall: true
 
       - name: Configure
-        # clang-cl takes -ftime-trace as a driver flag; -Xclang forwarding
-        # fails with "unknown argument" on this toolchain.
-        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=-ftime-trace"
+        # CMAKE_CXX_FLAGS replaces CMake's default MSVC-style set, so keep
+        # /DWIN32 /D_WINDOWS /EHsc and add -ftime-trace (clang-cl driver form;
+        # -Xclang forwarding fails with "unknown argument" on this toolchain).
+        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc -ftime-trace"
 
       - name: Build test_cpp.cpp.obj, 60 min cap
         timeout-minutes: 62
@@ -62,6 +63,7 @@ jobs:
           if ($p.HasExited) {
             Write-Host "OBJ EXIT=$($p.ExitCode) MINUTES=$mins"
             Set-Content -Path obj-timing.txt -Value "variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }} exit=$($p.ExitCode) minutes=$mins"
+            if ($p.ExitCode -ne 0) { Get-Content obj-build.txt | Select-Object -Last 5; exit 1 }
           } else {
             Write-Host "OBJ HUNG at 59 min cap"
             Get-Process | Sort-Object CPU -Descending | Select-Object -First 25 Id, ProcessName, CPU, WS | Format-Table | Out-String | Write-Host
