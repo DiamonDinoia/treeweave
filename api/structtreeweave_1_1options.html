@@ -77,6 +77,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/julia.html#further">Further</a></li>
 </ul>
 </li>
@@ -137,6 +138,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../guides/fortran.html#further">Further</a></li>
 </ul>
 </li>
@@ -228,7 +230,7 @@
 <li class="toctree-l2"><a class="reference internal" href="library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
 <li class="toctree-l4"><a class="reference internal" href="function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
@@ -360,6 +362,12 @@
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7options17min_uniform_depthE">
 <span id="_CPPv3N9treeweave7options17min_uniform_depthE"></span><span id="_CPPv2N9treeweave7options17min_uniform_depthE"></span><span id="treeweave::options::min_uniform_depth__i"></span><span class="target" id="structtreeweave_1_1options_1a0272fec75dbf0271219cf39876e44288"></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">min_uniform_depth</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N9treeweave7options17min_uniform_depthE" title="Link to this definition"></a><br /></dt>
 <dd><p>Force BFS to refine every panel to at least this depth before the per-panel tolerance test exits. Useful for driving the leaf-table fast path (<code class="docutils literal notranslate"><span class="pre">PolyTree::quantize_one</span></code>): a uniformly- refined tree of depth D in input_dim K builds a 2^(K*D)-entry quantize table the eval-time lookup collapses to one SIMD quantize + one u32 load. Table size grows as 2^(K*D) * 4 B and is capped at 64 K entries (256 KiB) per subtree, so values that push past <code class="docutils literal notranslate"><span class="pre">K*D</span> <span class="pre">&gt;</span> <span class="pre">16</span></code> will still build a uniform tree but not the table. Default 0: no forcing, tol-based refinement only. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave7options8filenameE">
+<span id="_CPPv3N9treeweave7options8filenameE"></span><span id="_CPPv2N9treeweave7options8filenameE"></span><span id="treeweave::options::filename__std::optional:ss:"></span><span class="target" id="structtreeweave_1_1options_1aa82fc17a8cef291845f57038ec495ee5"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">optional</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">filename</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7options8filenameE" title="Link to this definition"></a><br /></dt>
+<dd><p>Path of a plain-text fit file. <code class="docutils literal notranslate"><span class="pre">std::nullopt</span></code> (default): no file. Else <code class="docutils literal notranslate"><span class="pre">fit</span></code> loads the fit from the file when the file exists and was written by the same treeweave and polyfit versions for the same value type, dimensions, degree, domain, <code class="docutils literal notranslate"><span class="pre">tol</span></code> and options. Otherwise <code class="docutils literal notranslate"><span class="pre">fit</span></code> runs the fit and writes the file. The file keeps the coefficient digits that <code class="docutils literal notranslate"><span class="pre">tol</span></code> needs: for RelativeMax and the absolute kinds a load moves the fit by at most tol * S / 10 (S = max|f|, or 1); the other kinds keep every digit. The file does not identify the function: a file written for another function with the same arguments loads without an error. </p>
 </dd></dl>
 
 </div>

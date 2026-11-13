@@ -45,6 +45,18 @@ These apply to every language binding:
      - Force BFS to refine every panel to at least this depth, driving the
        leaf-table fast path (see :doc:`performance`). ``0`` = tol-based
        refinement only.
+   * - ``filename``
+     - none
+     - Path of a plain-text fit file. If the file exists and its header
+       matches the treeweave and polyfit versions, the dtype, dimensions,
+       domain, ``tol`` and options, the fit
+       loads the file and does not call ``f``. Otherwise the fit runs and
+       writes the file. The file keeps only the coefficient digits that
+       ``tol`` needs. For ``relative_max`` and the absolute kinds, a load
+       moves the fit by at most ``tol * S / 10``, where S is ``max|f|`` (1 for
+       absolute kinds). The other kinds keep every digit. The file does not
+       identify ``f``: delete it when ``f`` changes. A malformed file or an
+       unwritable path makes the fit fail.
 
 The leaf polynomial degree is not a runtime option. In C++ it is a template
 parameter, ``treeweave::fit<N>``, default 7. The C ABI picks a register-optimal

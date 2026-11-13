@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#further">Further</a></li>
 </ul>
 </li>
@@ -139,6 +140,7 @@
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
@@ -230,7 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
@@ -455,6 +457,19 @@ scalar or a length-<code class="docutils literal notranslate"><span class="pre">
 </tr>
 </tbody>
 </table>
+</section>
+<section id="fit-file">
+<h2>Fit file<a class="headerlink" href="#fit-file" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">filename</span></code> keyword of <code class="docutils literal notranslate"><span class="pre">fit</span></code> names a plain-text fit file. If the file
+exists and its header matches the dimensions, domain, <code class="docutils literal notranslate"><span class="pre">tol</span></code>, options and
+dtype, <code class="docutils literal notranslate"><span class="pre">fit</span></code> loads the file and does not call <code class="docutils literal notranslate"><span class="pre">f</span></code>. Otherwise <code class="docutils literal notranslate"><span class="pre">fit</span></code> runs
+and writes the file. A malformed file with a matching header makes <code class="docutils literal notranslate"><span class="pre">fit</span></code>
+throw. The file does not identify <code class="docutils literal notranslate"><span class="pre">f</span></code>, so delete it when <code class="docutils literal notranslate"><span class="pre">f</span></code> changes. Pass
+<code class="docutils literal notranslate"><span class="pre">out_dim</span></code> explicitly, because the default probe calls <code class="docutils literal notranslate"><span class="pre">f</span></code> once.</p>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="n">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">;</span><span class="w"> </span><span class="n">out_dim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"f.tw"</span><span class="p">)</span><span class="w">  </span><span class="c"># fits and writes</span>
+<span class="n">approx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">;</span><span class="w"> </span><span class="n">out_dim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"f.tw"</span><span class="p">)</span><span class="w">  </span><span class="c"># loads, 0 calls of f</span>
+</pre></div>
+</div>
 <p>See <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> for a full description of each option and the tolerance kinds.</p>
 </section>
 <section id="further">

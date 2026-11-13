@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
@@ -139,6 +140,7 @@
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
@@ -230,7 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
@@ -363,6 +365,11 @@ them explicitly when that probe is not enough.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">dtype</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;f64&quot;</span></code>; use <code class="docutils literal notranslate"><span class="pre">&quot;f32&quot;</span></code> for single precision.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">backend</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>; pass <code class="docutils literal notranslate"><span class="pre">&quot;native&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;wasm&quot;</span></code> to force one
 backend.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">filename</span></code> is the path of a plain-text fit file. If the file exists and its
+header matches the fit, the fit loads it and never calls the callback. Otherwise
+the fit runs and writes the file. Set <code class="docutils literal notranslate"><span class="pre">outDim</span></code> to skip the probe call. The
+option needs Node.js. The WASM backend copies the file through Node.js and
+throws an error in a browser.</p></li>
 </ul>
 </section>
 <section id="source-build">

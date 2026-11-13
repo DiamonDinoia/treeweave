@@ -160,6 +160,11 @@ Available options:
    * - ``'min_uniform_depth'``
      - ``0``
      - Force uniform refinement to this depth before adaptivity.
+   * - ``'filename'``
+     - ``''`` (none)
+     - Path of a plain-text fit file. If the file exists and its header matches the
+       fit, the fit loads it and never calls ``f``. Otherwise the fit runs and
+       writes the file. Set ``'out_dim'`` to skip the probe call of ``f``.
 
 See `the options guide <https://diamondinoia.github.io/treeweave/guides/options.html>`_ for full descriptions.
 

@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
@@ -139,6 +140,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#further">Further</a></li>
 </ul>
 </li>
@@ -230,7 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
@@ -452,10 +454,27 @@ promises ascending order, and treeweave does not verify it.</p>
 <h2>Options<a class="headerlink" href="#options" title="Link to this heading"></a></h2>
 <p>Pass an options struct via the last argument (or <code class="docutils literal notranslate"><span class="pre">c_null_ptr</span></code> for defaults):</p>
 <div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="k">use </span><span class="n">treeweave</span>
-<span class="k">type</span><span class="p">(</span><span class="n">treeweave_opts_t</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">opts</span>
+<span class="k">type</span><span class="p">(</span><span class="n">treeweave_opts</span><span class="p">)</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">opts</span>
 <span class="n">opts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_default_opts</span><span class="p">()</span>
 <span class="n">opts</span><span class="p">%</span><span class="n">tol_kind</span><span class="w">       </span><span class="o">=</span><span class="w"> </span><span class="n">TREEWEAVE_ABSOLUTE_MAX</span>
 <span class="n">opts</span><span class="p">%</span><span class="n">max_memory_mib</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span>
+<span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0e-10_c_double</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
+<span class="w">                  </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_loc</span><span class="p">(</span><span class="n">opts</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-file">
+<h2>Fit file<a class="headerlink" href="#fit-file" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">filename</span></code> component of <code class="docutils literal notranslate"><span class="pre">treeweave_opts</span></code> names a plain-text fit file.
+It is <code class="docutils literal notranslate"><span class="pre">c_null_ptr</span></code> by default, which means no file. <code class="docutils literal notranslate"><span class="pre">treeweave_set_filename</span></code>
+copies a Fortran string into a null-terminated buffer and points <code class="docutils literal notranslate"><span class="pre">filename</span></code>
+at it. The caller keeps the buffer allocated until the fit returns. If the file
+exists and its header matches the dtype, dimensions, domain, <code class="docutils literal notranslate"><span class="pre">tol</span></code> and
+options, the fit loads the file and does not call the kernel. Otherwise the fit
+runs and writes the file. A malformed file with a matching header makes the fit
+return a null handle. The file does not identify the kernel.</p>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="kt">character</span><span class="p">(</span><span class="nb">kind</span><span class="o">=</span><span class="kt">c_char</span><span class="p">),</span><span class="w"> </span><span class="k">allocatable</span><span class="p">,</span><span class="w"> </span><span class="k">target</span><span class="w"> </span><span class="kd">::</span><span class="w"> </span><span class="n">buf</span><span class="p">(:)</span>
+<span class="k">call </span><span class="n">treeweave_set_filename</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span><span class="w"> </span><span class="s2">"kernel.tw"</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">)</span>
 <span class="n">h</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="nb">c_funloc</span><span class="p">(</span><span class="n">kernel</span><span class="p">),</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="mi">1_c_int</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0e-10_c_double</span><span class="p">,</span><span class="w"> </span><span class="p">&amp;</span>
 <span class="w">                  </span><span class="nb">c_null_ptr</span><span class="p">,</span><span class="w"> </span><span class="nb">c_loc</span><span class="p">(</span><span class="n">opts</span><span class="p">))</span>
 </pre></div>

@@ -120,6 +120,12 @@ Pass keyword arguments to ``fit`` to override defaults:
    * - ``min_uniform_depth``
      - ``0``
      - Force uniform refinement to this depth before adaptivity.
+   * - ``filename``
+     - ``None``
+     - Path (``str`` or ``os.PathLike``) of a plain-text fit file. A matching file
+       loads without calling ``f``. Else the fit runs and writes the file. A
+       malformed file or an unwritable path raises ``RuntimeError``. Pass
+       ``out_dim`` too: without it, ``fit`` still probes ``f`` once.
    * - ``dim``
      - inferred
      - Input dimension; inferred from ``len(a)`` (scalar corners → 1).

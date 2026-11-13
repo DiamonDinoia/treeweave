@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="julia.html#evaluation-routes">Evaluation routes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#multi-dimensional-fits">Multi-dimensional fits</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="julia.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="julia.html#further">Further</a></li>
 </ul>
 </li>
@@ -139,6 +140,7 @@
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#minimal-example">Minimal example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#batch-sorted-eval">Batch &amp; sorted eval</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fortran.html#fit-file">Fit file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="fortran.html#further">Further</a></li>
 </ul>
 </li>
@@ -230,7 +232,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#file-hierarchy">File Hierarchy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api/library_root.html#full-api">Full API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../api/library_root.html#functions">Functions</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1a19caefbd448da9f139ffd2b4474acb9b.html">Template Function treeweave::fit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547.html">Template Function treeweave::fit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33.html">Template Function treeweave::guru::counting_sort</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3.html">Template Function treeweave::guru::eval_leaf_aos</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../api/function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f.html">Template Function treeweave::guru::eval_leaf_soa</a></li>
@@ -525,6 +527,15 @@ the call arity / scalar output), they set <code class="docutils literal notransl
 <p><code class="docutils literal notranslate"><span class="pre">treeweave_tol_kind_t</span></code> values: <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_MAX</span></code> (default),
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_MAX</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_L2</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_L2</span></code>,
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_TAIL</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_TAIL</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_POINTWISE</span></code>.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">opts.filename</span></code> to a path to save the fit to a plain-text file. The next
+fit with the same arguments loads the file and does not call the callback.
+<code class="docutils literal notranslate"><span class="pre">treeweave_default_opts</span></code> sets it to <code class="docutils literal notranslate"><span class="pre">NULL</span></code> (no file). A malformed file or an
+unwritable path makes the fit return <code class="docutils literal notranslate"><span class="pre">NULL</span></code>. <code class="docutils literal notranslate"><span class="pre">treeweave_last_error()</span></code> gives
+the reason.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">opts</span><span class="p">.</span><span class="n">filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"kernel.fit"</span><span class="p">;</span>
+<span class="n">treeweave_t</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">opts</span><span class="p">);</span>
+</pre></div>
+</div>
 <p>See <a class="reference internal" href="options.html"><span class="doc">Fit options</span></a> for the full description of each field.</p>
 </section>
 <section id="multi-arch-dispatch">
