@@ -125,7 +125,7 @@ struct options {
     /// the other kinds keep every digit. The file does not
     /// identify the function: a file written for another function with the
     /// same arguments loads without an error.
-    std::optional<std::string> filename;
+    std::optional<std::string> filename = std::nullopt;
 };
 
 /// Any callable that accepts `Domain` and returns a value.

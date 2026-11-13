@@ -46,7 +46,7 @@ struct TreeInput {
     TolKind tol_kind          = TolKind::RelativeMax;
     /// Fit file: load the fit from it when its header matches, else fit and
     /// save to it. `std::nullopt`: no file.
-    std::optional<std::string> filename;
+    std::optional<std::string> filename = std::nullopt;
     /// Running max|f| over every sample of this fit, the `RelativeMax` normaliser. The fit is serial: no atomic.
     mutable double max_abs_f = 0.0;
 };

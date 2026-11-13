@@ -13,7 +13,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <limits>
 #include <locale>
 #include <memory>
@@ -1573,10 +1572,12 @@ class Function {
     /// and overwrites it). Throw when the header matches but the body is
     /// malformed.
     auto load_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box) -> bool {
-        std::ifstream in(path, std::ios::binary);
+        const std::ifstream in(path, std::ios::binary);
         if (!in)
             return false;
-        const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        std::ostringstream buf;
+        buf << in.rdbuf();
+        const std::string text = std::move(buf).str();
         const std::string header = fit_file_header(input, box);
         if (!text.starts_with(header))
             return false;
