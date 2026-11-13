@@ -22,6 +22,10 @@ classdef treeweave < handle
 %     'max_memory_mib'        memory budget in MiB (default: -1 → auto: 4/8/16 MiB by dim)
 %     'allow_max_depth_leaves' int bool (default: 0)
 %     'min_uniform_depth'     (default: 0)
+%     'filename'              path of a plain-text fit file (default: '' = none).
+%                             If the file exists and its header matches the fit, the
+%                             fit loads it and never calls f. Else the fit runs and
+%                             writes it. Pass 'out_dim' to skip the probe call of f.
 %
 % USAGE
 %   y = obj.eval(X)                  X is N×dim, y is N×out_dim
@@ -59,6 +63,7 @@ classdef treeweave < handle
             addParameter(p, 'max_memory_mib',         -1); % -1 = C ABI auto (4/8/16 MiB by dim)
             addParameter(p, 'allow_max_depth_leaves', 0);
             addParameter(p, 'min_uniform_depth',      0);
+            addParameter(p, 'filename',               '');
             parse(p, f, a, b, tol, varargin{:});
             r = p.Results;
 
@@ -81,7 +86,8 @@ classdef treeweave < handle
                 double(r.dim), double(out_dim), ...
                 double(r.tol_kind), ...
                 double(r.max_depth), double(r.max_memory_mib), ...
-                double(r.allow_max_depth_leaves), double(r.min_uniform_depth));
+                double(r.allow_max_depth_leaves), double(r.min_uniform_depth), ...
+                char(r.filename));
 
             obj.input_dim_  = r.dim;
             obj.output_dim_ = out_dim;

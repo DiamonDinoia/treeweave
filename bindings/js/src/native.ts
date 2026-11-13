@@ -19,6 +19,7 @@ interface Addon {
         tol: number,
         opts: Int32Array,
         dtype: string,
+        filename: string,
     ): BackendFunction;
     versionString: string;
     version: number;
@@ -65,6 +66,7 @@ export function makeNativeBackend(): Backend {
                 req.tol,
                 opts,
                 req.dtype,
+                req.filename,
             );
         },
     };

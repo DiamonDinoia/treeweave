@@ -20,6 +20,12 @@ interface WasmModule {
     HEAPF32: Float32Array;
     HEAP32: Int32Array;
     HEAPU8: Uint8Array;
+    FS: {
+        writeFile(path: string, data: Uint8Array): void;
+        readFile(path: string): Uint8Array;
+        unlink(path: string): void;
+        analyzePath(path: string): { exists: boolean };
+    };
     addFunction(fn: (...args: number[]) => number | void, signature: string): number;
     removeFunction(ptr: number): void;
     ccall(name: string, returnType: string | null, argTypes: string[], args: unknown[]): unknown;
@@ -134,7 +140,39 @@ class WasmFunction implements BackendFunction {
     }
 }
 
+// The C code writes the fit file to the in-memory FS of the module. A fit with a
+// filename copies the real file in before the fit and the result out after it.
+const MEMFS_PATH = "/treeweave_fit_file";
+type NodeFs = Pick<typeof import("node:fs"), "existsSync" | "readFileSync" | "writeFileSync">;
+
+function nodeFs(): NodeFs {
+    const getBuiltin = (globalThis as { process?: { getBuiltinModule?: (id: string) => unknown } })
+        .process?.getBuiltinModule;
+    const fs = getBuiltin?.("node:fs") as NodeFs | undefined;
+    if (!fs) throw new Error("the filename option needs Node.js; the WASM backend has no file access here");
+    return fs;
+}
+
 function fit(M: WasmModule, req: FitRequest): BackendFunction {
+    if (!req.filename) return fitCore(M, req, 0);
+    const fs = nodeFs();
+    const before = fs.existsSync(req.filename) ? fs.readFileSync(req.filename) : null;
+    if (before) M.FS.writeFile(MEMFS_PATH, before);
+    const name = new TextEncoder().encode(MEMFS_PATH + "\0");
+    const namePtr = M._malloc(name.length);
+    M.HEAPU8.set(name, namePtr);
+    try {
+        const fn = fitCore(M, req, namePtr);
+        const after = M.FS.readFile(MEMFS_PATH);
+        if (!before || Buffer.compare(before, after) !== 0) fs.writeFileSync(req.filename, after);
+        return fn;
+    } finally {
+        M._free(namePtr);
+        if (M.FS.analyzePath(MEMFS_PATH).exists) M.FS.unlink(MEMFS_PATH);
+    }
+}
+
+function fitCore(M: WasmModule, req: FitRequest, namePtr: number): BackendFunction {
     const f32 = req.dtype === "f32";
     const elt = f32 ? 4 : 8;
     const heap = (): FloatArray => (f32 ? M.HEAPF32 : M.HEAPF64);
@@ -172,7 +210,7 @@ function fit(M: WasmModule, req: FitRequest): BackendFunction {
     const bPtr = M._malloc(bArr.length * elt);
     heap().set(aArr, aPtr / elt);
     heap().set(bArr, bPtr / elt);
-    const optsPtr = M._malloc(20); // 5 * int32
+    const optsPtr = M._malloc(24); // 5 * int32 + wasm32 pointer
     M.HEAP32.set(
         Int32Array.of(
             req.tolKind,
@@ -183,6 +221,7 @@ function fit(M: WasmModule, req: FitRequest): BackendFunction {
         ),
         optsPtr / 4,
     );
+    M.HEAP32[optsPtr / 4 + 5] = namePtr;
 
     const fitFn = (f32 ? M._treeweavef_fit : M._treeweave_fit) as CFn;
     const handle = fitFn(fnPtr, req.inputDim, req.outputDim, aPtr, bPtr, req.tol, 0, optsPtr);

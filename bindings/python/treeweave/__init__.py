@@ -23,6 +23,7 @@ TreeweaveFunction
 from __future__ import annotations
 
 import functools as _functools
+import os as _os
 from typing import Callable
 import numpy as _np
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
@@ -205,6 +206,7 @@ def fit(
     max_memory_mib: int = -1,
     allow_max_depth_leaves: bool = False,
     min_uniform_depth: int = 0,
+    filename: str | _os.PathLike | None = None,
 ) -> TreeweaveFunction:
     """Fit a Python callable and return a callable :class:`TreeweaveFunction`.
 
@@ -253,6 +255,12 @@ def fit(
         Allow leaves at max depth (relaxes convergence).
     min_uniform_depth : int
         Minimum uniform refinement depth before adaptive refinement starts.
+    filename : str or os.PathLike, optional
+        Path of a plain-text fit file. ``None`` (default) means no file. If the
+        file exists and its header matches the dtype, dimensions, domain, *tol*
+        and options, the fit loads from it and never calls *f*. Otherwise the
+        fit runs and writes the file. The file does not identify *f*. A
+        malformed file or an unwritable path raises ``RuntimeError``.
 
     Returns
     -------
@@ -275,6 +283,7 @@ def fit(
             max_memory_mib=max_memory_mib,
             allow_max_depth_leaves=allow_max_depth_leaves,
             min_uniform_depth=min_uniform_depth,
+            filename=filename,
         )
         a, b, tol = f, a, b if tol is None else tol
         if tol is None:
@@ -331,6 +340,7 @@ def fit(
         max_memory_mib=max_memory_mib,
         allow_max_depth_leaves=int(allow_max_depth_leaves),
         min_uniform_depth=min_uniform_depth,
+        filename=None if filename is None else _os.fspath(filename),
     )
 
     fit_fn = _treeweave.fit_f64 if dtype == "f64" else _treeweave.fit_f32

@@ -20,7 +20,8 @@
 ! closure's captures (recover it with `c_f_pointer`); pass `c_null_ptr` when
 ! unused. Pass `c_null_ptr` for `opts` to use the default options, or
 ! initialize a `target` `treeweave_opts` with `treeweave_default_opts()`
-! and pass `c_loc(my_opts)`.
+! and pass `c_loc(my_opts)`. To use a fit file, call
+! `treeweave_set_filename(my_opts, name, buf)` before the fit.
 module treeweave
     use, intrinsic :: iso_c_binding
     use, intrinsic :: iso_fortran_env, only: int64
@@ -52,6 +53,7 @@ module treeweave
         integer(c_int) :: max_memory_mib
         integer(c_int) :: allow_max_depth_leaves
         integer(c_int) :: min_uniform_depth
+        type(c_ptr)    :: filename = c_null_ptr   ! const char *; NULL = no fit file
     end type treeweave_opts
 
     ! ---- eval: rank-dispatched convenience ---------------------------------
@@ -286,6 +288,22 @@ contains
         end interface
         call treeweave_default_opts_c(opts)
     end function treeweave_default_opts
+
+    ! Point `opts%filename` at a null-terminated copy of `name`. `buf` holds the
+    ! copy and must stay allocated, and `opts` must stay in place, until the fit
+    ! returns: C reads the string during the fit only.
+    subroutine treeweave_set_filename(opts, name, buf)
+        type(treeweave_opts),                         intent(inout) :: opts
+        character(len=*),                             intent(in)    :: name
+        character(kind=c_char), allocatable, target,  intent(out)   :: buf(:)
+        integer :: i
+        allocate (buf(len(name) + 1))
+        do i = 1, len(name)
+            buf(i) = name(i:i)
+        end do
+        buf(len(name) + 1) = c_null_char
+        opts%filename = c_loc(buf)
+    end subroutine treeweave_set_filename
 
     ! Return the thread-local treeweave_last_error() text as a Fortran string
     ! (empty when there is no message).

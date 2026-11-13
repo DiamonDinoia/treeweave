@@ -380,3 +380,96 @@ def test_decorator_missing_tol():
         treeweave.fit(0.0, 1.0)
     with pytest.raises(TypeError):
         treeweave.fit(lambda x: x[0], 0.0, 1.0)
+
+
+# ---------------------------------------------------------------------------
+# filename: the first fit writes a fit file, the next fit loads it
+# ---------------------------------------------------------------------------
+
+def _counted(shape_dim):
+    """Return (f, calls); *calls* counts every call to *f*."""
+    calls = [0]
+
+    def f(x):
+        calls[0] += 1
+        y = math.exp(0.3 * x[0])
+        return y + math.sin(2.0 * x[1]) if shape_dim == 2 else y
+
+    return f, calls
+
+
+@pytest.mark.parametrize("dtype", ["f64", "f32"])
+@pytest.mark.parametrize("dim", [1, 2])
+def test_filename_round_trip(tmp_path, dtype, dim):
+    """A matching file loads with 0 calls and agrees within tol * max|f|."""
+    path = tmp_path / "fit.txt"
+    f, calls = _counted(dim)
+    a, b = [0.1] * dim, [1.5] * dim
+    tol = 1e-4 if dtype == "f32" else 1e-9
+
+    first = treeweave.fit(f, a, b, tol, dtype=dtype, out_dim=1, filename=path)
+    assert calls[0] > 0
+    assert path.exists()
+    text = path.read_text()
+
+    calls[0] = 0
+    loaded = treeweave.fit(f, a, b, tol, dtype=dtype, out_dim=1, filename=str(path))
+    assert calls[0] == 0
+    assert path.read_text() == text
+
+    rng = np.random.default_rng(7)
+    x = rng.uniform(0.1, 1.5, size=(500, dim)).astype(
+        np.float32 if dtype == "f32" else np.float64
+    )
+    y1, y2 = first(x), loaded(x)
+    assert np.max(np.abs(y1.astype(np.float64) - y2.astype(np.float64))) <= tol * np.max(
+        np.abs(y1.astype(np.float64))
+    )
+
+    # A changed tol does not match the header: the fit runs again.
+    calls[0] = 0
+    treeweave.fit(f, a, b, tol * 0.5, dtype=dtype, out_dim=1, filename=path)
+    assert calls[0] > 0
+
+
+def test_filename_none_writes_nothing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    treeweave.fit(lambda x: math.exp(x[0]), 0.0, 1.0, 1e-8, filename=None)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_filename_decorator(tmp_path):
+    path = tmp_path / "fit.txt"
+    f, calls = _counted(1)
+    treeweave.fit(0.0, 1.0, 1e-8, out_dim=1, filename=path)(f)
+    calls[0] = 0
+    treeweave.fit(0.0, 1.0, 1e-8, out_dim=1, filename=path)(f)
+    assert calls[0] == 0
+
+
+def test_filename_out_dim_probe(tmp_path):
+    """Without out_dim, fit probes f once. A load makes only that call."""
+    path = tmp_path / "fit.txt"
+    f, calls = _counted(1)
+    treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
+    calls[0] = 0
+    treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
+    assert calls[0] == 1
+
+
+def test_filename_malformed_raises(tmp_path):
+    """A cut file with a matching header fails the fit."""
+    path = tmp_path / "fit.txt"
+    f, _ = _counted(1)
+    treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
+    text = path.read_text()
+    assert "subtrees" in text
+    path.write_text(text[: text.index("subtrees")])
+    with pytest.raises(RuntimeError):
+        treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
+
+
+def test_filename_unwritable_raises(tmp_path):
+    f, _ = _counted(1)
+    with pytest.raises(RuntimeError):
+        treeweave.fit(f, 0.0, 1.0, 1e-8, filename=tmp_path / "no_dir" / "fit.txt")

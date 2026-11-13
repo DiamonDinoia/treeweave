@@ -132,8 +132,10 @@ const TREEWEAVE_F32 = Cint(1)
 """
     TreeweaveOptions(; tol_kind, max_depth, max_memory_mib, allow_max_depth_leaves, min_uniform_depth)
 
-Mirror of the C `treeweave_opts` struct.  All fields are `Cint` so the struct
-is blittable for `ccall`.
+Mirror of the C `treeweave_opts` struct.  The fields are `Cint` and one
+`Ptr{Cchar}`, so the struct is blittable for `ccall`.  The last field,
+`filename`, is always `C_NULL` here.  Set the fit file with the `filename`
+keyword of `fit`, which keeps the string alive during the call.
 
 Defaults match `treeweave_default_opts()` = {RELATIVE_MAX, 50, -1, 0, 0}.
 `max_memory_mib = -1` lets the C layer pick automatically (4/8/16 MiB by dim).
@@ -144,6 +146,7 @@ struct TreeweaveOptions
     max_memory_mib        :: Cint
     allow_max_depth_leaves:: Cint
     min_uniform_depth     :: Cint
+    filename              :: Ptr{Cchar}   # always C_NULL; `fit(; filename)` sets it
 end
 
 function TreeweaveOptions(;
@@ -153,7 +156,7 @@ function TreeweaveOptions(;
         allow_max_depth_leaves = Cint(0),
         min_uniform_depth      = Cint(0))
     TreeweaveOptions(Cint(tol_kind), Cint(max_depth), Cint(max_memory_mib),
-                  Cint(allow_max_depth_leaves), Cint(min_uniform_depth))
+                  Cint(allow_max_depth_leaves), Cint(min_uniform_depth), C_NULL)
 end
 
 # Treeweave handle struct
@@ -225,9 +228,15 @@ end
 
 """
     fit(f, a, b, tol; dim=length(a), out_dim=1, dtype=Float64,
-        options=TreeweaveOptions())  -> TreeweaveFn{dtype}
+        options=TreeweaveOptions(), filename=nothing)  -> TreeweaveFn{dtype}
 
 Approximate `f` over the axis-aligned box `[a,b]` to tolerance `tol`.
+
+`filename` (an `AbstractString`, default `nothing` for no file) names a
+plain-text fit file. If the file exists and its header matches the dtype,
+dimensions, domain, `tol` and `options`, the fit loads from it and does not call
+`f`. Otherwise the fit runs and writes the file. A malformed file with a
+matching header makes `fit` throw. The file does not identify `f`.
 
 `a` and `b` can be scalars (for dim==1) or `AbstractVector`s.
 
@@ -246,7 +255,8 @@ function fit(f, a, b, tol::Real;
              dim     = (a isa AbstractVector ? length(a) : 1),
              out_dim = nothing,
              dtype   = Float64,
-             options :: TreeweaveOptions = TreeweaveOptions())
+             options :: TreeweaveOptions = TreeweaveOptions(),
+             filename :: Union{Nothing, AbstractString} = nothing)
 
     T   = (dtype == Float32 ? Float32 : Float64)
     CT  = (T == Float64 ? Cdouble : Cfloat)
@@ -264,29 +274,35 @@ function fit(f, a, b, tol::Real;
         out_dim = length(probe)
     end
 
+    # The C struct holds a borrowed pointer: `fname` stays rooted across the ccall.
+    fname = filename === nothing ? nothing : String(filename)
+    opts  = TreeweaveOptions(options.tol_kind, options.max_depth, options.max_memory_mib,
+                             options.allow_max_depth_leaves, options.min_uniform_depth,
+                             fname === nothing ? C_NULL : pointer(fname))
+
     # State reaches the trampoline through `context`, not a closure capture, so a
     # non-capturing @cfunction works on ARM64 as well as x86_64 (see _FitCtx).
     ctx = _FitCtx(f, Int(dim), Int(out_dim), nothing)
 
     if T == Float64
         cfun = @cfunction(_trampoline64, Cvoid, (Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cvoid}))
-        ptr = GC.@preserve ctx av bv begin
+        ptr = GC.@preserve ctx av bv fname begin
             # treeweave_fit(f, input_dim, output_dim, a, b, tol, context, opts).
             ccall((:treeweave_fit, LIBTREEWEAVE), Ptr{Cvoid},
                   (Ptr{Cvoid}, Cint, Cint,
                    Ptr{Cdouble}, Ptr{Cdouble}, Cdouble, Ptr{Cvoid}, Ref{TreeweaveOptions}),
                   cfun, Cint(dim), Cint(out_dim),
-                  av, bv, Cdouble(tol), pointer_from_objref(ctx), options)
+                  av, bv, Cdouble(tol), pointer_from_objref(ctx), opts)
         end
     else
         cfun = @cfunction(_trampoline32, Cvoid, (Ptr{Cfloat}, Ptr{Cfloat}, Ptr{Cvoid}))
-        ptr = GC.@preserve ctx av bv begin
+        ptr = GC.@preserve ctx av bv fname begin
             # treeweavef_fit(f, input_dim, output_dim, a, b, tol, context, opts).
             ccall((:treeweavef_fit, LIBTREEWEAVE), Ptr{Cvoid},
                   (Ptr{Cvoid}, Cint, Cint,
                    Ptr{Cfloat}, Ptr{Cfloat}, Cdouble, Ptr{Cvoid}, Ref{TreeweaveOptions}),
                   cfun, Cint(dim), Cint(out_dim),
-                  av, bv, Cdouble(tol), pointer_from_objref(ctx), options)
+                  av, bv, Cdouble(tol), pointer_from_objref(ctx), opts)
         end
     end
 

@@ -124,6 +124,7 @@ if(TREEWEAVE_BUILD_EXAMPLES)
         sorted
         with_options
         with_context
+        fit_file
         float32
     )
         _treeweave_add_c_program(treeweave_c_${_ex} examples/C/${_ex}.c)

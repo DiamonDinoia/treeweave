@@ -159,7 +159,7 @@ Napi::Value transposed_impl(const std::shared_ptr<FnState> &st, const Napi::Call
     return result;
 }
 
-// fit(callback, inputDim, outputDim, a, b, tol, optsInt32[5], dtype) -> object
+// fit(callback, inputDim, outputDim, a, b, tol, optsInt32[5], dtype, filename) -> object
 Napi::Value Fit(const Napi::CallbackInfo &info) {
     Napi::Env        env        = info.Env();
     Napi::Function   cb         = info[0].As<Napi::Function>();
@@ -169,12 +169,15 @@ Napi::Value Fit(const Napi::CallbackInfo &info) {
     Napi::Int32Array o          = info[6].As<Napi::Int32Array>();
     const bool       f32        = info[7].As<Napi::String>().Utf8Value() == "f32";
 
+    const std::string filename = info[8].As<Napi::String>().Utf8Value();
+
     treeweave_opts opts;
     opts.tol_kind               = static_cast<treeweave_tol_kind_t>(o[0]);
     opts.max_depth              = o[1];
     opts.max_memory_mib         = o[2];
     opts.allow_max_depth_leaves = o[3];
     opts.min_uniform_depth      = o[4];
+    opts.filename               = filename.empty() ? nullptr : filename.c_str();
 
     treeweave_t handle = nullptr;
     if (f32) {

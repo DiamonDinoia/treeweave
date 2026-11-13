@@ -4,6 +4,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h> // list/tuple <-> std::vector<double> for fit a/b
 
@@ -11,6 +12,7 @@
 
 #include <cstring> // std::memcpy
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -308,7 +310,7 @@ class TreeweaveFunction {
 template <typename T>
 static nb::object fit_impl(nb::object callable, int input_dim, int output_dim, std::vector<T> a, std::vector<T> b,
                            double tol, int tol_kind_int, int max_depth, int max_memory_mib, int allow_max_depth_leaves,
-                           int min_uniform_depth) {
+                           int min_uniform_depth, std::optional<std::string> filename) {
     TrampolineState<T> st;
     st.callable   = callable;
     st.input_dim  = input_dim;
@@ -321,6 +323,9 @@ static nb::object fit_impl(nb::object callable, int input_dim, int output_dim, s
     opts.max_memory_mib         = max_memory_mib;
     opts.allow_max_depth_leaves = allow_max_depth_leaves;
     opts.min_uniform_depth      = min_uniform_depth;
+    // `filename` outlives the C call below, so c_str() stays valid.
+    if (filename)
+        opts.filename = filename->c_str();
 
     // Python carries state in the trampoline's &st context; opts trails last.
     treeweave_t handle = Traits<T>::fit(&trampoline<T>, input_dim, output_dim, a.data(), b.data(), tol, &st, &opts);
@@ -374,8 +379,8 @@ NB_MODULE(_treeweave, m) {
         .def_prop_ro("dtype", &TreeweaveFunction::dtype_str);
 
     m.def("fit_f64", &fit_impl<double>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a,
-          "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
+          "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a, "filename"_a);
 
     m.def("fit_f32", &fit_impl<float>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a, "tol_kind"_a,
-          "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a);
+          "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a, "filename"_a);
 }

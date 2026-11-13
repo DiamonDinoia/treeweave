@@ -79,6 +79,7 @@ const approx = await Treeweave.fit(f, 0.0, 10.0, 1e-10, {
 | `maxMemoryMib` | `-1` (auto) | Memory budget in MiB. `-1` = auto (4/8/16 MiB for dim 1/2/3); `0` = no cap. |
 | `allowMaxDepthLeaves` | `false` | Keep non-converged panels at max depth instead of throwing. |
 | `minUniformDepth` | `0` | Force uniform refinement to this depth before adaptivity. |
+| `filename` | none | Path of a plain-text fit file. If the file exists and its header matches the fit, the fit loads it and never calls `f`. Otherwise the fit runs and writes the file. Set `outDim` to skip the probe call of `f`. Needs Node.js; the WASM backend throws in a browser. |
 | `backend` | `"auto"` | Force `"native"` or `"wasm"` backend (default: native under Node, WASM in browser). |
 
 See the [guides](https://diamondinoia.github.io/treeweave/) for the full API reference.

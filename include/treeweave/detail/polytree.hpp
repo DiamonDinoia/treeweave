@@ -141,55 +141,14 @@ struct PolyTree {
             half_width = half_width * value_type{0.5};
         }
 
-        // Build a quantize-to-leaf table for shallow subtrees, replacing
-        // per-level descent. `total_bits <= 16` already caps the table at 64 K
-        // uint32 entries (256 KiB), so kTableMaxEntries never rejects one.
-        constexpr std::size_t kTableMaxEntries = std::size_t{1} << 16; // 256 KiB / 4 B
-        if (max_depth_ > 0) {
-            const std::size_t total_bits = input_dim * max_depth_;
-            if (total_bits <= 16) {
-                const std::size_t n = std::size_t{1} << total_bits;
-                if (n <= kTableMaxEntries) {
-                    leaf_table_.assign(n, std::uint32_t{0});
-                    leaf_table_depth_ = max_depth_;
-                    for (std::size_t d = 0; d < input_dim; ++d) {
-                        const value_type span = upper_[d] - lower_[d];
-                        inv_span_bins_[d]     = static_cast<value_type>(std::size_t{1} << max_depth_) / span;
-                    }
-                    const auto bins = static_cast<value_type>(std::size_t{1} << max_depth_);
-                    for (std::size_t i = 0; i < n; ++i) {
-                        // Decode i into per-axis quantize indices q[d].
-                        // NOLINTNEXTLINE(misc-const-correctness) — mutated by `r >>= bits` in the ND branch below.
-                        std::size_t       r    = i;
-                        const std::size_t bits = max_depth_;
-                        const std::size_t mask = (std::size_t{1} << bits) - 1;
-                        // Compute cell-center x and descend the tree. The
-                        // dispatch is on the *shape* of `input_type`, not on
-                        // `input_dim`: a scalar-input 1D fit needs a plain
-                        // `value_type` xc to match `get_node_index`'s
-                        // signature, while `array<T,1>` and ND inputs share
-                        // the indexed path below.
-                        if constexpr (!poly_eval::detail::hasTupleSize_v<input_type>) {
-                            const std::size_t q0   = r & mask;
-                            const value_type  span = upper_[0] - lower_[0];
-                            const value_type  cell = span / bins;
-                            const value_type  xc   = lower_[0] + (static_cast<value_type>(q0) + value_type{0.5}) * cell;
-                            leaf_table_[i]         = nodes_[get_node_index(xc)].poly_eval_id();
-                        } else {
-                            input_type xc;
-                            for (std::size_t d = 0; d < input_dim; ++d) {
-                                const std::size_t qd = r & mask;
-                                r >>= bits;
-                                const value_type span = upper_[d] - lower_[d];
-                                const value_type cell = span / bins;
-                                xc[d] = lower_[d] + (static_cast<value_type>(qd) + value_type{0.5}) * cell;
-                            }
-                            leaf_table_[i] = nodes_[get_node_index(xc)].poly_eval_id();
-                        }
-                    }
-                }
-            }
-        }
+        build_leaf_table();
+    }
+
+    /// Rebuild a subtree from stored state (see Function's fit file). The
+    /// leaf table is derived data and is rebuilt here, as in the fit path.
+    PolyTree(const dim_array_t &lower, const dim_array_t &upper, std::size_t max_depth, std::vector<node_t> nodes)
+        : nodes_(std::move(nodes)), lower_(lower), upper_(upper), max_depth_(max_depth) {
+        build_leaf_table();
     }
 
     [[nodiscard]] auto find_node(const input_type &x) const -> const node_t & { return nodes_[get_node_index(x)]; }
@@ -318,6 +277,58 @@ struct PolyTree {
     }
 
   private:
+    auto build_leaf_table() -> void {
+        // Build a quantize-to-leaf table for shallow subtrees, replacing
+        // per-level descent. `total_bits <= 16` already caps the table at 64 K
+        // uint32 entries (256 KiB), so kTableMaxEntries never rejects one.
+        constexpr std::size_t kTableMaxEntries = std::size_t{1} << 16; // 256 KiB / 4 B
+        if (max_depth_ > 0) {
+            const std::size_t total_bits = input_dim * max_depth_;
+            if (total_bits <= 16) {
+                const std::size_t n = std::size_t{1} << total_bits;
+                if (n <= kTableMaxEntries) {
+                    leaf_table_.assign(n, std::uint32_t{0});
+                    leaf_table_depth_ = max_depth_;
+                    for (std::size_t d = 0; d < input_dim; ++d) {
+                        const value_type span = upper_[d] - lower_[d];
+                        inv_span_bins_[d]     = static_cast<value_type>(std::size_t{1} << max_depth_) / span;
+                    }
+                    const auto bins = static_cast<value_type>(std::size_t{1} << max_depth_);
+                    for (std::size_t i = 0; i < n; ++i) {
+                        // Decode i into per-axis quantize indices q[d].
+                        // NOLINTNEXTLINE(misc-const-correctness) — mutated by `r >>= bits` in the ND branch below.
+                        std::size_t       r    = i;
+                        const std::size_t bits = max_depth_;
+                        const std::size_t mask = (std::size_t{1} << bits) - 1;
+                        // Compute cell-center x and descend the tree. The
+                        // dispatch is on the *shape* of `input_type`, not on
+                        // `input_dim`: a scalar-input 1D fit needs a plain
+                        // `value_type` xc to match `get_node_index`'s
+                        // signature, while `array<T,1>` and ND inputs share
+                        // the indexed path below.
+                        if constexpr (!poly_eval::detail::hasTupleSize_v<input_type>) {
+                            const std::size_t q0   = r & mask;
+                            const value_type  span = upper_[0] - lower_[0];
+                            const value_type  cell = span / bins;
+                            const value_type  xc   = lower_[0] + (static_cast<value_type>(q0) + value_type{0.5}) * cell;
+                            leaf_table_[i]         = nodes_[get_node_index(xc)].poly_eval_id();
+                        } else {
+                            input_type xc;
+                            for (std::size_t d = 0; d < input_dim; ++d) {
+                                const std::size_t qd = r & mask;
+                                r >>= bits;
+                                const value_type span = upper_[d] - lower_[d];
+                                const value_type cell = span / bins;
+                                xc[d] = lower_[d] + (static_cast<value_type>(qd) + value_type{0.5}) * cell;
+                            }
+                            leaf_table_[i] = nodes_[get_node_index(xc)].poly_eval_id();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     std::vector<node_t> nodes_;
     // Subtree bounding box, carried into descent so the Node carries
     // no per-axis `center` field.

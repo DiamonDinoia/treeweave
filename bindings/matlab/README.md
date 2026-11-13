@@ -71,6 +71,14 @@ delete(obj2);
 The `matlab_treeweave` CTest does the `addpath` wiring and runs
 `test_treeweave.m` headless under Octave (preferred) or MATLAB.
 
+The `'filename'` option names a plain-text fit file. If the file exists and its
+header matches the fit, the fit loads it and never calls `f`. Otherwise the fit
+runs and writes the file. Set `'out_dim'` to skip the probe call of `f`.
+
+```matlab
+obj = treeweave(f, 0, 1, 1e-8, 'out_dim', 1, 'filename', 'fit.txt');
+```
+
 ## Performance
 
 Single-point eval (`obj.eval(scalar)`) carries a fixed per-call overhead.

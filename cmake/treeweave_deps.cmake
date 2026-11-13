@@ -24,7 +24,7 @@ FetchContent_Declare(
     polyfit
     GIT_REPOSITORY https://github.com/DiamonDinoia/polyfit.git
     GIT_TAG
-        5aea5fe156bdd0c9f887b4099b7b2c7ea5a1e433 # batch Horner, sse2-safe xsimd
+        7278afa0dbbf4f9f2e83bfa1f95fb00e87ba7c38 # v0.0.6: fromCoeffs, version header
     GIT_SHALLOW TRUE
     SYSTEM
 )

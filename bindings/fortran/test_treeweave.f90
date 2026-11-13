@@ -92,6 +92,39 @@ contains
         y(1) = x(1) * x(2) * x(3)
     end subroutine k_3d1_f32
 
+    ! Counting kernels for the fit-file test: `context` points at an integer(c_int)
+    ! that counts the calls. 1-D: exp(x0); 2-D: [sin(x0) cos(x1), x0 + x1]
+    subroutine k_cnt_1d(x, y, context) bind(C)
+        real(c_double), intent(in)  :: x(*)
+        real(c_double), intent(out) :: y(*)
+        type(c_ptr),    value       :: context
+        integer(c_int), pointer     :: n
+        call c_f_pointer(context, n)
+        n = n + 1_c_int
+        y(1) = exp(x(1))
+    end subroutine k_cnt_1d
+
+    subroutine k_cnt_2d2(x, y, context) bind(C)
+        real(c_double), intent(in)  :: x(*)
+        real(c_double), intent(out) :: y(*)
+        type(c_ptr),    value       :: context
+        integer(c_int), pointer     :: n
+        call c_f_pointer(context, n)
+        n = n + 1_c_int
+        y(1) = sin(x(1)) * cos(x(2))
+        y(2) = x(1) + x(2)
+    end subroutine k_cnt_2d2
+
+    subroutine k_cnt_1d_f32(x, y, context) bind(C)
+        real(c_float), intent(in)  :: x(*)
+        real(c_float), intent(out) :: y(*)
+        type(c_ptr),   value       :: context
+        integer(c_int), pointer    :: n
+        call c_f_pointer(context, n)
+        n = n + 1_c_int
+        y(1) = exp(x(1))
+    end subroutine k_cnt_1d_f32
+
 end module test_kernels
 
 
@@ -116,6 +149,7 @@ program test_treeweave
     call test_print_stats(failures)
     call test_scalar_eval_byvalue(failures)
     call test_generic_eval(failures)
+    call test_fit_file(failures)
 
     if (failures > 0) then
         write (*, '(A,I0,A)') "--- ", failures, " check(s) FAILED ---"
@@ -136,6 +170,129 @@ contains
             failures = failures + 1
         end if
     end subroutine check
+
+    ! Fit file: the first fit calls the kernel and writes the file; the second fit
+    ! loads it with zero kernel calls and evaluates within tol * max|f| of the first; a
+    ! changed tol refits; a malformed file with a matching header fails the fit.
+    subroutine test_fit_file(failures)
+        integer, intent(inout) :: failures
+        character(len=*), parameter :: path = "treeweave_fortran_fit_file.txt"
+        type(treeweave_opts), target :: opts
+        character(kind=c_char), allocatable, target :: buf(:)
+        integer(c_int), target :: calls
+        type(c_ptr)    :: h1, h2
+        real(c_double) :: a1(1), b1(1), a2(2), b2(2), x1(1, 64), x2(2, 64)
+        real(c_double), allocatable :: y1(:, :), y2(:, :)
+        real(c_float)  :: af(1), bf(1), xf(1, 64)
+        real(c_float), allocatable  :: yf1(:, :), yf2(:, :)
+        integer        :: i, u
+
+        do i = 1, 64
+            x1(1, i) = real(i - 1, c_double) / 65.0_c_double
+            x2(:, i) = [real(i - 1, c_double) / 65.0_c_double, real(64 - i, c_double) / 65.0_c_double]
+        end do
+        xf = real(x1, c_float)
+        a1 = 0.0_c_double; b1 = 1.0_c_double
+        a2 = 0.0_c_double; b2 = 1.0_c_double
+        af = 0.0_c_float;  bf = 1.0_c_float
+        opts = treeweave_default_opts()
+        call check(.not. c_associated(opts%filename), "fit file: default filename is NULL", failures)
+        call treeweave_set_filename(opts, path, buf)
+        call check(c_associated(opts%filename), "fit file: set_filename sets the pointer", failures)
+
+        ! ---- 1-D f64 ------------------------------------------------------
+        call remove_file(path)
+        calls = 0_c_int
+        h1 = treeweave_fit(c_funloc(k_cnt_1d), 1_c_int, 1_c_int, a1, b1, 1.0e-9_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h1) .and. calls > 0_c_int, "fit file 1D f64: first fit calls the kernel", failures)
+        call check(file_exists(path), "fit file 1D f64: first fit writes the file", failures)
+        calls = 0_c_int
+        h2 = treeweave_fit(c_funloc(k_cnt_1d), 1_c_int, 1_c_int, a1, b1, 1.0e-9_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h2), "fit file 1D f64: second fit returns a handle", failures)
+        call check(calls == 0_c_int, "fit file 1D f64: second fit makes 0 kernel calls", failures)
+        if (c_associated(h1) .and. c_associated(h2)) then
+            y1 = treeweave_eval(h1, x1)
+            y2 = treeweave_eval(h2, x1)
+            call check(within_tol(y1, y2, 1.0e-9_c_double) .and. .not. any(ieee_is_nan(y2)), &
+                       "fit file 1D f64: loaded fit is within tol * max|f|, NaN-free", failures)
+        end if
+        calls = 0_c_int
+        h1 = treeweave_free(h1)
+        h1 = treeweave_fit(c_funloc(k_cnt_1d), 1_c_int, 1_c_int, a1, b1, 2.0e-9_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h1) .and. calls > 0_c_int, "fit file 1D f64: changed tol refits", failures)
+        h1 = treeweave_free(h1)
+        h2 = treeweave_free(h2)
+
+        ! Malformed: trailing data after a valid body. Header must match, so refit
+        ! at tol 1e-9 first (the changed-tol fit above overwrote the file).
+        calls = 0_c_int
+        h1 = treeweave_fit(c_funloc(k_cnt_1d), 1_c_int, 1_c_int, a1, b1, 1.0e-9_c_double, c_loc(calls), c_loc(opts))
+        h1 = treeweave_free(h1)
+        open (newunit=u, file=path, position="append", action="write")
+        write (u, '(A)') "extra"
+        close (u)
+        h1 = treeweave_fit(c_funloc(k_cnt_1d), 1_c_int, 1_c_int, a1, b1, 1.0e-9_c_double, c_loc(calls), c_loc(opts))
+        call check(.not. c_associated(h1) .and. len(treeweave_error_message()) > 0, &
+                   "fit file 1D f64: malformed file fails the fit with an error", failures)
+        call remove_file(path)
+
+        ! ---- 2-D -> 2 f64 -------------------------------------------------
+        calls = 0_c_int
+        h1 = treeweave_fit(c_funloc(k_cnt_2d2), 2_c_int, 2_c_int, a2, b2, 1.0e-6_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h1) .and. calls > 0_c_int, "fit file 2D->2 f64: first fit calls the kernel", failures)
+        calls = 0_c_int
+        h2 = treeweave_fit(c_funloc(k_cnt_2d2), 2_c_int, 2_c_int, a2, b2, 1.0e-6_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h2) .and. calls == 0_c_int, "fit file 2D->2 f64: second fit makes 0 kernel calls", failures)
+        if (c_associated(h1) .and. c_associated(h2)) then
+            y1 = treeweave_eval(h1, x2)
+            y2 = treeweave_eval(h2, x2)
+            call check(within_tol(y1, y2, 1.0e-6_c_double) .and. .not. any(ieee_is_nan(y2)), &
+                       "fit file 2D->2 f64: loaded fit is within tol * max|f|, NaN-free", failures)
+        end if
+        h1 = treeweave_free(h1)
+        h2 = treeweave_free(h2)
+        call remove_file(path)
+
+        ! ---- 1-D f32 ------------------------------------------------------
+        calls = 0_c_int
+        h1 = treeweavef_fit(c_funloc(k_cnt_1d_f32), 1_c_int, 1_c_int, af, bf, 1.0e-4_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h1) .and. calls > 0_c_int, "fit file 1D f32: first fit calls the kernel", failures)
+        calls = 0_c_int
+        h2 = treeweavef_fit(c_funloc(k_cnt_1d_f32), 1_c_int, 1_c_int, af, bf, 1.0e-4_c_double, c_loc(calls), c_loc(opts))
+        call check(c_associated(h2) .and. calls == 0_c_int, "fit file 1D f32: second fit makes 0 kernel calls", failures)
+        if (c_associated(h1) .and. c_associated(h2)) then
+            yf1 = treeweave_eval(h1, xf)
+            yf2 = treeweave_eval(h2, xf)
+            call check(within_tol(real(yf1, c_double), real(yf2, c_double), 1.0e-4_c_double) &
+                       .and. .not. any(ieee_is_nan(yf2)), &
+                       "fit file 1D f32: loaded fit is within tol * max|f|, NaN-free", failures)
+        end if
+        h1 = treeweave_free(h1)
+        h2 = treeweave_free(h2)
+        call remove_file(path)
+    end subroutine test_fit_file
+
+    ! max|p - q| <= tol * max|p| for every row (output component).
+    function within_tol(p, q, tol) result(ok)
+        real(c_double), intent(in) :: p(:, :), q(:, :), tol
+        logical :: ok
+        ok = all(shape(p) == shape(q))
+        if (ok) ok = all(maxval(abs(p - q), dim=2) <= tol * maxval(abs(p), dim=2))
+    end function within_tol
+
+    function file_exists(path) result(ok)
+        character(len=*), intent(in) :: path
+        logical :: ok
+        inquire (file=path, exist=ok)
+    end function file_exists
+
+    subroutine remove_file(path)
+        character(len=*), intent(in) :: path
+        integer :: u
+        if (.not. file_exists(path)) return
+        open (newunit=u, file=path, status="old")
+        close (u, status="delete")
+    end subroutine remove_file
 
     subroutine test_1d_scalar(failures)
         integer, intent(inout) :: failures

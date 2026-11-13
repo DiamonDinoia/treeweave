@@ -46,6 +46,10 @@ Fits callable `f` and returns a callable `TreeweaveFunction`.
 - `out_dim`: number of output components; inferred by probing `f` once at the
   box midpoint (`np.asarray(f(mid)).size`, scalar ⇒ 1) when omitted.
 - `dtype`: `"f64"` (default) or `"f32"`.
+- `filename`: path (`str` or `os.PathLike`) of a plain-text fit file, `None` (default) for
+  no file. A matching file loads without calling `f`. Otherwise the fit runs and writes the
+  file. A malformed file or an unwritable path raises `RuntimeError`. Pass `out_dim` too,
+  because `fit` probes `f` once when `out_dim` is omitted.
 
 ### `treeweave.fit(a, b, tol, ...)` as a decorator
 

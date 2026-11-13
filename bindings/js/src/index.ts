@@ -33,6 +33,12 @@ export interface FitOptions {
     maxMemoryMib?: number;
     allowMaxDepthLeaves?: boolean;
     minUniformDepth?: number;
+    /**
+     * Path of a plain-text fit file. When it exists and its header matches the fit,
+     * the fit loads it and never calls `f`. Else the fit runs and writes it.
+     * Needs Node (either backend); the WASM backend throws in a browser.
+     */
+    filename?: string;
     /** Force a backend; defaults to "auto" (native under Node, else WASM). */
     backend?: BackendChoice;
 }
@@ -116,6 +122,7 @@ export class Treeweave {
             maxMemoryMib: opts.maxMemoryMib ?? -1,
             allowMaxDepthLeaves: opts.allowMaxDepthLeaves ? 1 : 0,
             minUniformDepth: opts.minUniformDepth ?? 0,
+            filename: opts.filename ?? "",
             dtype,
         });
         return new Treeweave(fn, backend.versionString);

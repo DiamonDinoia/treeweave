@@ -168,6 +168,17 @@ Pass a ``treeweave_opts*`` as the last argument (or ``NULL`` for defaults):
 ``TREEWEAVE_ABSOLUTE_MAX``, ``TREEWEAVE_RELATIVE_L2``, ``TREEWEAVE_ABSOLUTE_L2``,
 ``TREEWEAVE_RELATIVE_TAIL``, ``TREEWEAVE_ABSOLUTE_TAIL``, ``TREEWEAVE_RELATIVE_POINTWISE``.
 
+Set ``opts.filename`` to a path to save the fit to a plain-text file. The next
+fit with the same arguments loads the file and does not call the callback.
+``treeweave_default_opts`` sets it to ``NULL`` (no file). A malformed file or an
+unwritable path makes the fit return ``NULL``. ``treeweave_last_error()`` gives
+the reason.
+
+.. code-block:: c
+
+   opts.filename = "kernel.fit";
+   treeweave_t fn = treeweave_fit(kernel, 1, 1, &a, &b, 1e-10, NULL, &opts);
+
 See :doc:`options` for the full description of each field.
 
 Multi-arch dispatch

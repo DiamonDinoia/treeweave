@@ -6,9 +6,11 @@
 // without emsdk).
 
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, test } from "node:test";
+import { after, describe, test } from "node:test";
 
 import { Treeweave } from "../dist/index.js";
 
@@ -156,6 +158,99 @@ for (const backend of backends) {
                 ),
                 /boom/,
             );
+        });
+
+        describe("filename option", () => {
+            const dir = mkdtempSync(join(tmpdir(), "treeweave-js-"));
+            after(() => rmSync(dir, { recursive: true, force: true }));
+
+            // Fit twice with the same file. The second fit must not call f and must
+            // match the first fit within tol * max|f| per component at `pts` (flat, dim values per point).
+            async function roundTrip(name, f, a, b, dim, outDim, extra = {}) {
+                const file = join(dir, `${backend}-${name}.txt`);
+                const opts = { backend, outDim, filename: file, ...extra };
+                const first = await Treeweave.fit(f, a, b, 1e-8, opts);
+                assert.ok(existsSync(file), "the first fit writes the file");
+                let calls = 0;
+                const second = await Treeweave.fit(
+                    (x) => {
+                        ++calls;
+                        return f(x);
+                    },
+                    a,
+                    b,
+                    1e-8,
+                    opts,
+                );
+                assert.equal(calls, 0, "the second fit loads the file and never calls f");
+                const lo = [].concat(a);
+                const hi = [].concat(b);
+                const n = 257;
+                const pts = new Float64Array(n * dim);
+                for (let i = 0; i < n; ++i)
+                    for (let d = 0; d < dim; ++d)
+                        pts[i * dim + d] = lo[d] + ((hi[d] - lo[d]) * (i * (d + 3) + 0.5)) / (n * (d + 3));
+                const y1 = first.batch(pts);
+                const y2 = second.batch(pts);
+                assert.equal(y1.length, n * outDim);
+                for (let c = 0; c < outDim; ++c) {
+                    let diff = 0;
+                    let peak = 0;
+                    for (let i = c; i < y1.length; i += outDim) {
+                        diff = Math.max(diff, Math.abs(y1[i] - y2[i]));
+                        peak = Math.max(peak, Math.abs(y1[i]));
+                    }
+                    assert.ok(diff <= 1e-8 * peak, `component ${c}: max|loaded - fitted| ${diff} > tol * ${peak}`);
+                }
+                first.free();
+                second.free();
+                return file;
+            }
+
+            test("1D round trip stays within tol and skips the callback", async () => {
+                await roundTrip("1d", (x) => Math.exp(x[0]), 0, 1, 1, 1);
+            });
+
+            test("ND round trip stays within tol and skips the callback", async () => {
+                await roundTrip(
+                    "nd",
+                    (x) => [Math.sin(x[0]) * Math.cos(x[1]), Math.exp(-x[0] * x[1])],
+                    [0, 0],
+                    [1, 1],
+                    2,
+                    2,
+                );
+            });
+
+            test("a changed tol refits", async () => {
+                const f = (x) => Math.exp(x[0]);
+                const file = join(dir, `${backend}-tol.txt`);
+                const opts = { backend, outDim: 1, filename: file };
+                (await Treeweave.fit(f, 0, 1, 1e-8, opts)).free();
+                let calls = 0;
+                const tw = await Treeweave.fit(
+                    (x) => {
+                        ++calls;
+                        return f(x);
+                    },
+                    0,
+                    1,
+                    1e-10,
+                    opts,
+                );
+                assert.ok(calls > 0, "a header mismatch refits");
+                tw.free();
+            });
+
+            test("a malformed file throws", async () => {
+                const f = (x) => Math.exp(x[0]);
+                const file = await roundTrip("bad", f, 0, 1, 1, 1);
+                const good = readFileSync(file, "utf8");
+                writeFileSync(file, good.slice(0, good.indexOf("subtrees")));
+                await assert.rejects(
+                    Treeweave.fit(f, 0, 1, 1e-8, { backend, outDim: 1, filename: file }),
+                );
+            });
         });
     });
 }

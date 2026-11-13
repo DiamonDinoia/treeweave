@@ -2,6 +2,8 @@
 #define TREEWEAVE_DETAIL_TOL_KIND_HPP
 
 #include <cstdint>
+#include <optional>
+#include <string>
 
 namespace treeweave {
 
@@ -42,6 +44,9 @@ struct TreeInput {
     /// Default 0: no forcing, tol-based refinement only.
     int     min_uniform_depth = 0;
     TolKind tol_kind          = TolKind::RelativeMax;
+    /// Fit file: load the fit from it when its header matches, else fit and
+    /// save to it. `std::nullopt`: no file.
+    std::optional<std::string> filename;
     /// Running max|f| over every sample of this fit, the `RelativeMax` normaliser. The fit is serial: no atomic.
     mutable double max_abs_f = 0.0;
 };

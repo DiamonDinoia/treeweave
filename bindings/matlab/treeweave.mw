@@ -115,7 +115,8 @@ static treeweave_function *tw_fit_w(const mxArray *fh,
                                  const double *a, const double *b, double tol,
                                  int input_dim, int output_dim, int tol_kind,
                                  int max_depth, int max_memory_mib,
-                                 int allow_max_depth_leaves, int min_uniform_depth)
+                                 int allow_max_depth_leaves, int min_uniform_depth,
+                                 const char *filename)
 {
     if (!mxIsClass(fh, "function_handle"))
         mexErrMsgIdAndTxt("treeweave:badarg",
@@ -128,6 +129,7 @@ static treeweave_function *tw_fit_w(const mxArray *fh,
     opts.max_memory_mib         = max_memory_mib;
     opts.allow_max_depth_leaves = allow_max_depth_leaves;
     opts.min_uniform_depth      = min_uniform_depth;
+    opts.filename               = filename[0] ? filename : NULL; /* "" = no file */
 
     struct TrampState state;
     state.fhandle    = fh;
@@ -197,8 +199,8 @@ $]
 
 % -----------------------------------------------------------------------
 % fit: hand the function_handle to C as an mxArray; return an object pointer.
-@function [h] = tw_fit(fh, a, b, tol, input_dim, output_dim, tol_kind, max_depth, max_memory_mib, allow_max_depth_leaves, min_uniform_depth)
-# treeweave_function* h = tw_fit_w(mxArray fh, double[] a, double[] b, double tol, int input_dim, int output_dim, int tol_kind, int max_depth, int max_memory_mib, int allow_max_depth_leaves, int min_uniform_depth);
+@function [h] = tw_fit(fh, a, b, tol, input_dim, output_dim, tol_kind, max_depth, max_memory_mib, allow_max_depth_leaves, min_uniform_depth, filename)
+# treeweave_function* h = tw_fit_w(mxArray fh, double[] a, double[] b, double tol, int input_dim, int output_dim, int tol_kind, int max_depth, int max_memory_mib, int allow_max_depth_leaves, int min_uniform_depth, cstring filename);
 
 % -----------------------------------------------------------------------
 % Single-point eval. `self` is a treeweave (its mwptr holds the handle).

@@ -14,9 +14,10 @@
  * (arch, dtype, input_dim) cells (see arch_degree_table.hpp). It is not a
  * user parameter.
  *
- * Eval-only: a fitted function can be evaluated (single, AoS batch,
- * sorted-1D, SoA/transposed) but not serialized. There is one opaque handle
- * type carrying a runtime dtype tag (f64 or f32).
+ * A fitted function can be evaluated (single, AoS batch, sorted-1D,
+ * SoA/transposed). `treeweave_opts.filename` saves the fit to a plain-text
+ * file and loads it on the next fit with the same arguments. There is one
+ * opaque handle type carrying a runtime dtype tag (f64 or f32).
  *
  * Thread safety: once `treeweave_fit`/`treeweavef_fit` returns a handle, its eval
  * functions are safe to call concurrently from multiple threads provided
@@ -91,6 +92,11 @@ typedef struct {
     int max_memory_mib;
     int allow_max_depth_leaves;
     int min_uniform_depth;
+    /* Path of a plain-text fit file, or NULL (the default) for no file. When
+     * the file exists and was written for the same dtype, dimensions, domain,
+     * tol and options, the fit loads from it and does not call `f`. Else the
+     * fit runs and writes the file. The file does not identify `f`. */
+    const char *filename;
 } treeweave_opts;
 
 /* Write defaults matching treeweave::options{} into `opts`. NULL is a no-op. */

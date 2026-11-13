@@ -31,7 +31,9 @@
 #include <concepts>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -113,6 +115,17 @@ struct options {
     /// a uniform tree but not the table. Default 0: no forcing,
     /// tol-based refinement only.
     int min_uniform_depth = 0;
+    /// Path of a plain-text fit file. `std::nullopt` (default): no file. Else `fit`
+    /// loads the fit from the file when the file exists and was written by
+    /// the same treeweave and polyfit versions for the same value type,
+    /// dimensions, degree, domain, `tol` and options.
+    /// Otherwise `fit` runs the fit and writes the file. The file keeps the
+    /// coefficient digits that `tol` needs: for RelativeMax and the absolute
+    /// kinds a load moves the fit by at most tol * S / 10 (S = max|f|, or 1);
+    /// the other kinds keep every digit. The file does not
+    /// identify the function: a file written for another function with the
+    /// same arguments loads without an error.
+    std::optional<std::string> filename;
 };
 
 /// Any callable that accepts `Domain` and returns a value.
@@ -143,6 +156,7 @@ inline auto make_input(int input_dim, int output_dim, int degree, double tol, co
     in.max_memory_mib         = opts.max_memory_mib < 0 ? auto_memory_budget_mib(input_dim) : opts.max_memory_mib;
     in.allow_max_depth_leaves = opts.allow_max_depth_leaves;
     in.min_uniform_depth      = opts.min_uniform_depth;
+    in.filename               = opts.filename;
     return in;
 }
 
@@ -204,17 +218,22 @@ template <class R>
 using complex_elem_t = complex_elem<R>::type;
 
 // What the core Function fits: scalar domain -> 1-element array;
-// complex result -> 2-element real array (re, im); everything else unchanged.
+// complex result -> 2-element real array (re, im); scalar result on an array
+// domain -> 1-element array; everything else unchanged.
 template <class D>
 using canonical_input_t = std::conditional_t<std::is_arithmetic_v<D>, std::array<D, 1>, D>;
-template <class R>
-using canonical_output_t = std::conditional_t<is_complex_v<R>, std::array<complex_elem_t<R>, 2>, R>;
+template <class D, class R>
+using canonical_output_t =
+    std::conditional_t<is_complex_v<R>, std::array<complex_elem_t<R>, 2>,
+                       std::conditional_t<!std::is_arithmetic_v<D> && std::is_arithmetic_v<R>, std::array<R, 1>, R>>;
 
-// fit() must interpose an adaptor when the result is complex, or a scalar
-// domain has a vector output (the case the core static_assert rejects).
+// fit() must interpose an adaptor when the result is complex, a scalar
+// domain has a vector output (the case the core static_assert rejects), or an
+// array domain has a scalar output (polyfit's ND evaluator needs an array).
 template <class Domain, class Result>
 inline constexpr bool needs_adaptor_v =
-    is_complex_v<Result> || (std::is_arithmetic_v<Domain> && domain_dim<canonical_output_t<Result>>() > 1);
+    is_complex_v<Result> || (std::is_arithmetic_v<Domain> && domain_dim<canonical_output_t<Domain, Result>>() > 1) ||
+    (!std::is_arithmetic_v<Domain> && std::is_arithmetic_v<Result>);
 
 // Wraps the user callable into canonical array-in / array-out so the core
 // fitter (polyfit's FuncEvalND) only ever sees real vector math.
@@ -223,7 +242,7 @@ struct CanonicalFn {
     Func f;
     using result_t  = std::invoke_result_t<Func &, Domain>;
     using canon_in  = canonical_input_t<Domain>;
-    using canon_out = canonical_output_t<result_t>;
+    using canon_out = canonical_output_t<Domain, result_t>;
 
     auto operator()(const canon_in &xi) const -> canon_out {
         if constexpr (is_complex_v<result_t>) {
@@ -235,6 +254,8 @@ struct CanonicalFn {
             return {r.real(), r.imag()};
         } else if constexpr (std::is_arithmetic_v<Domain>) {
             return f(xi[0]);
+        } else if constexpr (std::is_arithmetic_v<result_t>) {
+            return canon_out{f(xi)};
         } else {
             return f(xi);
         }
@@ -268,6 +289,8 @@ class AdaptedFunction {
         const auto r = fn_(xi);
         if constexpr (is_complex_v<Result>)
             return Result{r[0], r[1]};
+        else if constexpr (std::is_arithmetic_v<Result> && !std::is_arithmetic_v<std::remove_cvref_t<decltype(r)>>)
+            return r[0];
         else
             return r;
     }
@@ -293,8 +316,7 @@ class AdaptedFunction {
 template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalPolicy::Balanced, class Func,
           class Domain>
     requires Fittable<std::remove_cvref_t<Func>, Domain>
-// cppcheck-suppress passedByValue  ; options is 20 B and trivially copyable, and `= {}` needs a value
-[[nodiscard]] auto fit(Func &&f, Domain a, Domain b, double tol, options opts = {}) {
+[[nodiscard]] auto fit(Func &&f, Domain a, Domain b, double tol, const options &opts = {}) {
     if (!(tol > 0.0))
         throw std::invalid_argument("treeweave::fit: tolerance must be > 0");
 

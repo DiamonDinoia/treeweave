@@ -12,6 +12,7 @@ ctest, and each self-checks by returning a non-zero exit code on failure.
 | `simple2d.cpp` | 2-D scalar fit |
 | `simple3d.cpp` | 3-D scalar fit |
 | `with_options.cpp` | custom tolerance / options |
+| `fit_file.cpp` | save a fit to a file, load it on the next fit |
 | `vector_output.cpp` | multi-output (vector-valued) fit |
 
 ## C examples (`C/`)

@@ -60,6 +60,7 @@ target_link_libraries(test_threadsafe PRIVATE Threads::Threads)
 # instantiations need atomic coverage counters (the rest of the suite doesn't).
 treeweave_coverage_atomic_counters(test_threadsafe)
 _treeweave_add_cpp_test(test_allocator test_allocator.cpp)
+_treeweave_add_cpp_test(test_fit_file test_fit_file.cpp)
 
 if(TREEWEAVE_BUILD_C_API)
     _treeweave_add_cpp_test(test_c test_c.cpp)

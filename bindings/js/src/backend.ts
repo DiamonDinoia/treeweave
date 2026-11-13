@@ -35,6 +35,8 @@ export interface FitRequest {
     maxMemoryMib: number;
     allowMaxDepthLeaves: number;
     minUniformDepth: number;
+    /** Path of a fit file, or "" for none. */
+    filename: string;
     dtype: DType;
 }
 

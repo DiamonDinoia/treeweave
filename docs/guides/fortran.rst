@@ -77,10 +77,29 @@ Pass an options struct via the last argument (or ``c_null_ptr`` for defaults):
 .. code-block:: fortran
 
    use treeweave
-   type(treeweave_opts_t) :: opts
+   type(treeweave_opts) :: opts
    opts = treeweave_default_opts()
    opts%tol_kind       = TREEWEAVE_ABSOLUTE_MAX
    opts%max_memory_mib = 64
+   h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
+                     c_null_ptr, c_loc(opts))
+
+Fit file
+--------
+
+The ``filename`` component of ``treeweave_opts`` names a plain-text fit file.
+It is ``c_null_ptr`` by default, which means no file. ``treeweave_set_filename``
+copies a Fortran string into a null-terminated buffer and points ``filename``
+at it. The caller keeps the buffer allocated until the fit returns. If the file
+exists and its header matches the dtype, dimensions, domain, ``tol`` and
+options, the fit loads the file and does not call the kernel. Otherwise the fit
+runs and writes the file. A malformed file with a matching header makes the fit
+return a null handle. The file does not identify the kernel.
+
+.. code-block:: fortran
+
+   character(kind=c_char), allocatable, target :: buf(:)
+   call treeweave_set_filename(opts, "kernel.tw", buf)
    h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, 1.0e-10_c_double, &
                      c_null_ptr, c_loc(opts))
 

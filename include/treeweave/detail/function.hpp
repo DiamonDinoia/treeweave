@@ -9,17 +9,26 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <limits>
+#include <locale>
 #include <memory>
 #include <numeric>
 #include <queue>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <poet/poet.hpp>
 #include <polyfit/polyfit.hpp>
+#include <treeweave_version.h>
 
 #include <treeweave/detail/compiler_macros.hpp>
 #include <treeweave/detail/errors.hpp>
@@ -327,7 +336,9 @@ class Function {
     Function(const detail::TreeInput &input, const input_type center, const input_type half_width_in,
              const Func &func) {
         const box_t box_{dim_array_t{center}, dim_array_t{half_width_in}};
-        const auto  t_start = std::chrono::steady_clock::now();
+        if (input.filename && load_fit_file(*input.filename, input, box_))
+            return;
+        const auto t_start = std::chrono::steady_clock::now();
 
         // Surface a coarse memory-cost guard when the user opts into a
         // deep uniform grid. `2^(K*D) * sizeof(uint32_t)` is the per-
@@ -422,13 +433,7 @@ class Function {
             }
         }
 
-        dim_array_t bin_size;
-        for (std::size_t j = 0; j < input_dim; ++j) {
-            bin_size[j]      = value_type{2} * box_.half_length[j] / static_cast<value_type>(n_subtrees_[j]);
-            inv_bin_size_[j] = value_type{0.5} * static_cast<value_type>(n_subtrees_[j]) / box_.half_length[j];
-        }
-        lower_left_  = box_.center - box_.half_length;
-        upper_right_ = box_.center + box_.half_length;
+        const dim_array_t bin_size = set_bins(box_);
 
         subtrees_.reserve(n_subtrees_.prod());
 
@@ -461,12 +466,10 @@ class Function {
                 }
             }
             for (std::size_t d = 0; d < input_dim; ++d) {
-                const value_type span = upper_right_[d] - lower_left_[d];
                 const value_type tol  = std::max<value_type>(1, std::abs(lower_left_[d]) + std::abs(upper_right_[d])) *
                                         std::numeric_limits<value_type>::epsilon() * 16;
                 assert(std::abs(lo_min[d] - lower_left_[d]) <= tol);
                 assert(std::abs(hi_max[d] - upper_right_[d]) <= tol);
-                (void)span;
             }
         }
 #endif
@@ -486,6 +489,8 @@ class Function {
         const auto t_end = std::chrono::steady_clock::now();
         stats_.t_elapsed =
             static_cast<std::uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count());
+        if (input.filename)
+            save_fit_file(*input.filename, input, box_);
     }
 
     /// Convert linear bin index to [dim] bin vector.
@@ -1396,6 +1401,301 @@ class Function {
     }
 
   private:
+    /// Set the subtree grid from `n_subtrees_` and the domain box; return the
+    /// subtree width per axis.
+    auto set_bins(const box_t &box) -> dim_array_t {
+        dim_array_t bin_size;
+        for (std::size_t j = 0; j < input_dim; ++j) {
+            bin_size[j]      = value_type{2} * box.half_length[j] / static_cast<value_type>(n_subtrees_[j]);
+            inv_bin_size_[j] = value_type{0.5} * static_cast<value_type>(n_subtrees_[j]) / box.half_length[j];
+        }
+        lower_left_  = box.center - box.half_length;
+        upper_right_ = box.center + box.half_length;
+        return bin_size;
+    }
+
+    // ---- Fit file (`options::filename`) ---------------------------------
+    // Plain text, one record per line. Leaf coefficients keep the digits
+    // that coeff_step allows; every other value is written at max_digits10.
+    // Layout:
+    //   header (fit_file_header): format, treeweave and polyfit versions, dtype, shape, tol, options, domain
+    //   base_depth <n>
+    //   n_subtrees <per axis>
+    //   leaves <L>, then L lines: leaf <inv_span[dim]> <sum_endpoints[dim]> <coefficients>
+    //   subtrees <S>, then per subtree: subtree <lower[dim]> <upper[dim]> <max_depth> <n_nodes>
+    //     and n_nodes lines: "leaf <leaf index>" or "split <index of first child>"
+    //   panels <P>, then P lines: panel <depth> <a[dim]> <b[dim]>
+    // Leaf coefficients are polyfit's stored coefficients in its order
+    // (Horner order, highest degree first; ND: row-major over axes then output).
+
+    // Rounding step for the stored coefficients. A leaf maps its panel to
+    // [-1, 1]^dim, where every monomial is at most 1 in magnitude. So M
+    // coefficients per output, each off by at most step / 2, move p by at
+    // most M * step / 2. step = tol * S / (10 M) keeps the rounding below
+    // tol * S / 10, with S the scale of the tol kind. Kinds with no
+    // pointwise bound keep every digit (step 0).
+    [[nodiscard]] static auto coeff_step(const detail::TreeInput &input) -> double {
+        double scale = 0.0;
+        switch (input.tol_kind) {
+        case TolKind::AbsoluteMax:
+        case TolKind::AbsoluteL2:
+        case TolKind::AbsoluteTail:
+            scale = 1.0;
+            break;
+        case TolKind::RelativeMax:
+            scale = input.max_abs_f;
+            break;
+        default:
+            return 0.0;
+        }
+        const double m = std::pow(static_cast<double>(Degree), static_cast<double>(input_dim));
+        return input.tol * scale / (10.0 * m);
+    }
+
+    // Write ` c` with the significant digits that keep its rounding error
+    // at most step / 2, or with every digit when step is 0.
+    static auto write_coeff(std::ostream &os, value_type c, double step) -> void {
+        constexpr int full = std::numeric_limits<value_type>::max_digits10;
+        const double  mag  = std::abs(static_cast<double>(c));
+        if (!(step > 0.0) || !std::isfinite(step) || !std::isfinite(mag)) {
+            os << ' ' << c;
+            return;
+        }
+        if (mag < step / 2) {
+            os << " 0";
+            return;
+        }
+        const auto digits = static_cast<int>(std::floor(std::log10(mag)) - std::floor(std::log10(step))) + 1;
+        os << ' ' << std::setprecision(std::clamp(digits, 1, full)) << c << std::setprecision(full);
+    }
+
+    static auto fit_file_stream(std::ios_base &s) -> void {
+        s.imbue(std::locale::classic());
+        s.precision(std::numeric_limits<value_type>::max_digits10);
+    }
+
+    [[nodiscard]] static auto fit_file_header(const detail::TreeInput &input, const box_t &box) -> std::string {
+        std::ostringstream os;
+        fit_file_stream(os);
+        const dim_array_t lower = box.center - box.half_length;
+        const dim_array_t upper = box.center + box.half_length;
+        os << "treeweave-fit 1\n"
+           << "treeweave_version " << TREEWEAVE_VERSION_FULL << '\n'
+           << "polyfit_version " << POLYFIT_VERSION_STRING << '\n'
+           << "dtype " << (std::is_same_v<value_type, float> ? "f32" : "f64") << '\n'
+           << "input_dim " << input_dim << '\n'
+           << "output_dim " << output_dim << '\n'
+           << "degree " << Degree << '\n'
+           << "tol " << std::setprecision(std::numeric_limits<double>::max_digits10) << input.tol
+           << std::setprecision(std::numeric_limits<value_type>::max_digits10) << '\n'
+           << "tol_kind " << static_cast<int>(input.tol_kind) << '\n'
+           << "max_depth " << input.max_depth << '\n'
+           << "max_memory_mib " << input.max_memory_mib << '\n'
+           << "allow_max_depth_leaves " << int{input.allow_max_depth_leaves} << '\n'
+           << "min_uniform_depth " << input.min_uniform_depth << '\n'
+           << "lower";
+        for (std::size_t d = 0; d < input_dim; ++d)
+            os << ' ' << lower[d];
+        os << "\nupper";
+        for (std::size_t d = 0; d < input_dim; ++d)
+            os << ' ' << upper[d];
+        os << '\n';
+        return os.str();
+    }
+
+    /// Write the fit to `path`: write a temporary file, then
+    /// rename it, so a reader never sees a partial file.
+    auto save_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box) const -> void {
+        std::ostringstream os;
+        fit_file_stream(os);
+        os << fit_file_header(input, box) << "base_depth " << stats_.base_depth << "\nn_subtrees";
+        for (std::size_t d = 0; d < input_dim; ++d)
+            os << ' ' << n_subtrees_[d];
+        os << "\nleaves " << polyfits_.size() << '\n';
+        const double step = coeff_step(input);
+        for (const auto &fe : polyfits_) {
+            os << "leaf";
+            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
+                const auto dom = fe.domainView();
+                for (std::size_t d = 0; d < input_dim; ++d)
+                    os << ' ' << dom.inv_span[d];
+                for (std::size_t d = 0; d < input_dim; ++d)
+                    os << ' ' << dom.sum_endpoints[d];
+                const auto c = fe.coeffsMdspan();
+                for (std::size_t i = 0; i < c.size(); ++i)
+                    write_coeff(os, c.data_handle()[i], step);
+            } else {
+                os << ' ' << fe.domainInvSpan() << ' ' << fe.domainSumEndpoints();
+                for (const auto c : fe.coeffs())
+                    write_coeff(os, c, step);
+            }
+            os << '\n';
+        }
+        os << "subtrees " << subtrees_.size() << '\n';
+        for (const auto &st : subtrees_) {
+            os << "subtree";
+            for (std::size_t d = 0; d < input_dim; ++d)
+                os << ' ' << st.lower()[d];
+            for (std::size_t d = 0; d < input_dim; ++d)
+                os << ' ' << st.upper()[d];
+            os << ' ' << st.max_depth() << ' ' << st.size() << '\n';
+            for (const auto &node : st.get_nodes()) {
+                if (node.is_leaf())
+                    os << "leaf " << node.poly_eval_id() << '\n';
+                else
+                    os << "split " << node.first_child_idx() << '\n';
+            }
+        }
+        os << "panels " << non_converged_panels_.size() << '\n';
+        for (const auto &p : non_converged_panels_) {
+            // Panel bounds are double for every value_type.
+            os << "panel " << p.depth << std::setprecision(std::numeric_limits<double>::max_digits10);
+            for (const double v : p.a)
+                os << ' ' << v;
+            for (const double v : p.b)
+                os << ' ' << v;
+            os << std::setprecision(std::numeric_limits<value_type>::max_digits10) << '\n';
+        }
+
+        const std::string tmp = path + ".tmp";
+        {
+            std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
+            out << os.str();
+            out.close();
+            if (!out)
+                throw std::runtime_error("treeweave: cannot write fit file '" + tmp + "'");
+        }
+        std::filesystem::rename(tmp, path);
+    }
+
+    /// Load the fit from `path`. Return false when the file is
+    /// missing or its header does not match this fit (the caller then fits
+    /// and overwrites it). Throw when the header matches but the body is
+    /// malformed.
+    auto load_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box) -> bool {
+        std::ifstream in(path, std::ios::binary);
+        if (!in)
+            return false;
+        const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        const std::string header = fit_file_header(input, box);
+        if (!text.starts_with(header))
+            return false;
+
+        std::istringstream is(text.substr(header.size()));
+        fit_file_stream(is);
+        auto fail = [&](const std::string &what) -> void {
+            throw std::runtime_error("treeweave: malformed fit file '" + path + "': " + what);
+        };
+        auto expect = [&](const char *key) -> void {
+            std::string k;
+            if (!(is >> k) || k != key)
+                fail(std::string("expected '") + key + "'");
+        };
+        auto get = [&](auto &v) -> void {
+            if (!(is >> v))
+                fail("bad number");
+        };
+
+        expect("base_depth");
+        get(stats_.base_depth);
+        expect("n_subtrees");
+        for (std::size_t d = 0; d < input_dim; ++d) {
+            get(n_subtrees_[d]);
+            if (n_subtrees_[d] == 0)
+                fail("n_subtrees must be > 0");
+        }
+        set_bins(box);
+
+        std::size_t n_leaves = 0;
+        expect("leaves");
+        get(n_leaves);
+        polyfits_.reserve(n_leaves);
+        for (std::size_t i = 0; i < n_leaves; ++i) {
+            expect("leaf");
+            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>) {
+                poly_eval::domain_nd_view<value_type, input_dim> dom{};
+                for (std::size_t d = 0; d < input_dim; ++d)
+                    get(dom.inv_span[d]);
+                for (std::size_t d = 0; d < input_dim; ++d)
+                    get(dom.sum_endpoints[d]);
+                // Same test as polyfit's identity-map check. With
+                // FusionMode::Never this is the only way the flag is set.
+                dom.identity = true;
+                for (std::size_t d = 0; d < input_dim; ++d)
+                    dom.identity = dom.identity && dom.inv_span[d] == value_type{0.5} && dom.sum_endpoints[d] == 0;
+                using cmdspan_t = poly_eval_type::ConstMdspan;
+                std::vector<value_type> c(typename cmdspan_t::mapping_type{}.required_span_size());
+                for (auto &v : c)
+                    get(v);
+                polyfits_.emplace_back(poly_eval::fromCoeffs, cmdspan_t(c.data()), dom);
+            } else {
+                value_type inv_span{};
+                value_type sum_endpoints{};
+                get(inv_span);
+                get(sum_endpoints);
+                typename poly_eval_type::OutputBuffer c{};
+                for (auto &v : c)
+                    get(v);
+                polyfits_.emplace_back(poly_eval::fromCoeffs, c, inv_span, sum_endpoints);
+            }
+        }
+
+        std::size_t n_st = 0;
+        expect("subtrees");
+        get(n_st);
+        if (n_st != n_subtrees_.prod())
+            fail("subtree count does not match n_subtrees");
+        subtrees_.reserve(n_st);
+        for (std::size_t s = 0; s < n_st; ++s) {
+            expect("subtree");
+            dim_array_t lo;
+            dim_array_t hi;
+            for (std::size_t d = 0; d < input_dim; ++d)
+                get(lo[d]);
+            for (std::size_t d = 0; d < input_dim; ++d)
+                get(hi[d]);
+            std::size_t depth   = 0;
+            std::size_t n_nodes = 0;
+            get(depth);
+            get(n_nodes);
+            if (n_nodes == 0)
+                fail("empty subtree");
+            std::vector<node_t> nodes(n_nodes);
+            for (auto &node : nodes) {
+                std::string   kind;
+                std::uint32_t idx = 0;
+                if (!(is >> kind))
+                    fail("missing node");
+                get(idx);
+                if (kind == "leaf" && idx < n_leaves)
+                    node.set_poly_eval_id(idx);
+                else if (kind == "split" && idx > 0 && std::size_t{idx} + n_child <= n_nodes)
+                    node.set_first_child_idx(idx);
+                else
+                    fail("bad node '" + kind + " " + std::to_string(idx) + "'");
+            }
+            subtrees_.emplace_back(lo, hi, depth, std::move(nodes));
+        }
+
+        std::size_t n_panels = 0;
+        expect("panels");
+        get(n_panels);
+        for (std::size_t i = 0; i < n_panels; ++i) {
+            expect("panel");
+            NonConvergedPanel p{.a = std::vector<double>(input_dim), .b = std::vector<double>(input_dim), .depth = 0};
+            get(p.depth);
+            for (auto &v : p.a)
+                get(v);
+            for (auto &v : p.b)
+                get(v);
+            non_converged_panels_.push_back(std::move(p));
+        }
+        std::string extra;
+        if (is >> extra)
+            fail("trailing data '" + extra + "'");
+        return true;
+    }
+
     dim_array_t lower_left_{};
     dim_array_t upper_right_{};
 

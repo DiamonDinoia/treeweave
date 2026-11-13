@@ -52,6 +52,11 @@ JavaScript-specific fields:
 - ``dtype`` defaults to ``"f64"``; use ``"f32"`` for single precision.
 - ``backend`` defaults to ``"auto"``; pass ``"native"`` or ``"wasm"`` to force one
   backend.
+- ``filename`` is the path of a plain-text fit file. If the file exists and its
+  header matches the fit, the fit loads it and never calls the callback. Otherwise
+  the fit runs and writes the file. Set ``outDim`` to skip the probe call. The
+  option needs Node.js. The WASM backend copies the file through Node.js and
+  throws an error in a browser.
 
 Source build
 ------------

@@ -457,6 +457,7 @@ static void test_introspection_and_defaults(void) {
     CHECK(defaults.max_memory_mib < 0);
     CHECK(defaults.allow_max_depth_leaves == 0);
     CHECK(defaults.min_uniform_depth == 0);
+    CHECK(defaults.filename == NULL);
 
     /* NULL opts path must succeed (it selects the defaults). */
     const double a = 0.0, b = 1.0;
@@ -1110,6 +1111,137 @@ static void test_f32_sorted_fast_path(void) {
     treeweave_free(h);
 }
 
+/* ---- fit file: opts.filename saves a fit and loads it on the next one -- */
+
+typedef struct {
+    int calls;
+    int input_dim;
+    int output_dim;
+} fit_file_ctx;
+
+static void k_fit_file(const double *x, double *y, void *d) {
+    fit_file_ctx *c = (fit_file_ctx *)d;
+    ++c->calls;
+    for (int k = 0; k < c->output_dim; ++k)
+        y[k] = exp(0.3 * x[0]) + (c->input_dim > 1 ? sin(2.0 * x[1]) : 0.0) + k;
+}
+
+static void k_fit_filef(const float *x, float *y, void *d) {
+    fit_file_ctx *c = (fit_file_ctx *)d;
+    ++c->calls;
+    for (int k = 0; k < c->output_dim; ++k)
+        y[k] = expf(0.3F * x[0]) + (c->input_dim > 1 ? sinf(2.0F * x[1]) : 0.0F) + (float)k;
+}
+
+/* Cut `path` at the first `marker`, keeping the bytes before it. */
+static void truncate_file(const char *path, const char *marker) {
+    static char buf[1 << 20];
+    FILE       *in = fopen(path, "rb");
+    CHECK(in != NULL);
+    if (in == NULL)
+        return;
+    const size_t n = fread(buf, 1, sizeof buf - 1, in);
+    fclose(in);
+    buf[n]           = '\0';
+    const char *cut  = strstr(buf, marker);
+    CHECK(cut != NULL);
+    FILE *out = fopen(path, "wb");
+    CHECK(out != NULL);
+    if (cut == NULL || out == NULL)
+        return;
+    fwrite(buf, 1, (size_t)(cut - buf), out);
+    fclose(out);
+}
+
+/* One dtype/shape. `is_f32` picks treeweavef_fit. Checks: the first fit writes the
+ * file, the second makes 0 calls and agrees within tol * max|f| per component at many
+ * points (the default tol_kind rounds the stored coefficients), a changed
+ * tol refits, a truncated file with a matching header fails with an error. */
+static void check_fit_file(int is_f32, int input_dim, int output_dim, const char *path) {
+    const double a[2] = {0.1, 0.2}, b[2] = {1.5, 2.5};
+    const float  af[2] = {0.1F, 0.2F}, bf[2] = {1.5F, 2.5F};
+    const double tol = is_f32 ? 1e-4 : 1e-9;
+
+    treeweave_opts opts;
+    treeweave_default_opts(&opts);
+    opts.filename = path;
+    remove(path);
+
+    fit_file_ctx c = {0, input_dim, output_dim};
+#define FIT(t)                                                                                                   \
+    (is_f32 ? treeweavef_fit(k_fit_filef, input_dim, output_dim, af, bf, (t), &c, &opts)                           \
+            : treeweave_fit(k_fit_file, input_dim, output_dim, a, b, (t), &c, &opts))
+    treeweave_t first = FIT(tol);
+    CHECK(first != NULL);
+    CHECK(c.calls > 0);
+    FILE *fp = fopen(path, "rb");
+    CHECK(fp != NULL);
+    if (fp != NULL)
+        fclose(fp);
+
+    c.calls = 0;
+    treeweave_t loaded = FIT(tol);
+    CHECK(loaded != NULL);
+    CHECK(c.calls == 0);
+
+    if (first != NULL && loaded != NULL) {
+        double       maxdiff[3] = {0.0, 0.0, 0.0}, maxabs[3] = {0.0, 0.0, 0.0};
+        unsigned int seed       = 4242U;
+        for (int i = 0; i < 500; ++i) {
+            double x[2];
+            float  xf[2];
+            double y1[3], y2[3];
+            float  yf1[3], yf2[3];
+            for (int d = 0; d < input_dim; ++d) {
+                x[d]  = a[d] + next_unit(&seed) * (b[d] - a[d]);
+                xf[d] = (float)x[d];
+            }
+            if (is_f32) {
+                treeweavef_eval(first, xf, yf1);
+                treeweavef_eval(loaded, xf, yf2);
+                for (int c2 = 0; c2 < output_dim; ++c2) {
+                    y1[c2] = (double)yf1[c2];
+                    y2[c2] = (double)yf2[c2];
+                }
+            } else {
+                treeweave_eval(first, x, y1);
+                treeweave_eval(loaded, x, y2);
+            }
+            for (int c2 = 0; c2 < output_dim; ++c2) {
+                maxdiff[c2] = fmax(maxdiff[c2], fabs(y1[c2] - y2[c2]));
+                maxabs[c2]  = fmax(maxabs[c2], fabs(y1[c2]));
+            }
+        }
+        for (int c2 = 0; c2 < output_dim; ++c2)
+            CHECK(maxdiff[c2] <= tol * maxabs[c2]);
+    }
+    treeweave_free(first);
+    treeweave_free(loaded);
+
+    /* A changed tol does not match the header: refit. */
+    c.calls         = 0;
+    treeweave_t tight = FIT(tol * 0.5);
+    CHECK(tight != NULL);
+    CHECK(c.calls > 0);
+    treeweave_free(tight);
+
+    /* The refit rewrote the file for the new tol. Cut its body: same header, bad content. */
+    truncate_file(path, "subtrees");
+    treeweave_t bad = FIT(tol * 0.5);
+    CHECK(bad == NULL);
+    CHECK(strlen(treeweave_last_error()) > 0);
+    treeweave_free(bad);
+#undef FIT
+    remove(path);
+}
+
+static void test_fit_file(void) {
+    check_fit_file(0, 1, 1, "treeweave_c_abi_fit_file_f64_1d.txt");
+    check_fit_file(0, 2, 2, "treeweave_c_abi_fit_file_f64_2d.txt");
+    check_fit_file(1, 1, 1, "treeweave_c_abi_fit_file_f32_1d.txt");
+    check_fit_file(1, 2, 3, "treeweave_c_abi_fit_file_f32_2d.txt");
+}
+
 /* The rung actually selected must be the rung asked for. `active_arch` reads
  * the name out of the selected rung's own object, so a mismatch on a host that
  * supports the requested rung means the linker resolved that rung's kernels to
@@ -1165,6 +1297,7 @@ int main(void) {
     test_zero_batch_noop();
     test_f32_sorted_fast_path();
     test_active_arch_matches_forced();
+    test_fit_file();
 
     printf("%d failures\n", g_failures);
     return g_failures;

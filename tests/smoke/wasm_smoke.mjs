@@ -30,10 +30,10 @@ const aPtr = M._malloc(ELT);
 const bPtr = M._malloc(ELT);
 M.HEAPF64[aPtr / ELT] = 0.0;
 M.HEAPF64[bPtr / ELT] = 2.0;
-// opts: [tolKind, maxDepth, maxMemoryMib, allowMaxDepthLeaves, minUniformDepth]
+// opts: [tolKind, maxDepth, maxMemoryMib, allowMaxDepthLeaves, minUniformDepth, filename]
 // Same as the native smoke (relative_max tol, depth 50, no memory cap).
-const optsPtr = M._malloc(20);
-M.HEAP32.set(Int32Array.of(2, 50, -1, 0, 0), optsPtr / 4);
+const optsPtr = M._malloc(24);
+M.HEAP32.set(Int32Array.of(2, 50, -1, 0, 0, 0), optsPtr / 4);
 
 const handle = M._treeweave_fit(fnPtr, 1, 1, aPtr, bPtr, 1e-8, 0, optsPtr);
 M._free(aPtr);

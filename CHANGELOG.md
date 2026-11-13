@@ -16,8 +16,26 @@ section verbatim into that release's GitHub Release notes.
   converges iff its error is 0, so the kind fails near zeros of `f`.
   Available in the C API and every binding as
   `TREEWEAVE_RELATIVE_POINTWISE` / `"relative_pointwise"`.
+- `options::filename` (C: `treeweave_opts.filename`, `filename` in every
+  binding) names a plain-text fit file. When the file exists and its header
+  matches the treeweave and polyfit versions, the value type, dimensions,
+  degree, domain, `tol` and options, the fit loads from the file and does not
+  call `f`. Otherwise the fit runs and writes the file. The file keeps only
+  the coefficient digits that `tol` needs: for `relative_max` and the
+  absolute kinds a load moves the fit by at most `tol * S / 10` (S is
+  `max|f|`, or 1 for absolute kinds). The other kinds keep every digit and
+  load bit for bit. The file does not identify `f`.
+- `fit` accepts an array domain with a scalar result, for example
+  `fit([](std::array<double, 2> x) { return x[0] * x[1]; }, a, b, tol)`.
+  Before, the result had to be a one-element array.
 
 ### Changed
+- `treeweave_opts` has a new last field, `filename`. Code that fills the
+  struct with `treeweave_default_opts` or designated initializers needs no
+  change. The struct size changes, so a rebuild against the new header is
+  necessary.
+- `fit` takes `const options &` instead of `options` by value.
+- polyfit is pinned to v0.0.6, which adds `poly_eval::fromCoeffs`.
 - The nanobind build requirement now excludes only 3.0.0
   (`nanobind>=2.0,!=3.0.0`) instead of the full 3.0 line. nanobind 3.0.1 has
   the clang-cl fix (wjakob/nanobind#1421), so 3.0.1 and later are allowed.

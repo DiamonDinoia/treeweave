@@ -133,6 +133,23 @@ h = treeweave_fit(c_funloc(kernel_ctx), 1_c_int, 1_c_int, a, b, tol, &
                c_loc(params), c_null_ptr)
 ```
 
+### Fit file
+
+The `filename` component of `treeweave_opts` names a plain-text fit file. It is
+`c_null_ptr` by default, which means no file. `treeweave_set_filename(opts, name, buf)`
+copies a Fortran string into the null-terminated buffer `buf` and points
+`filename` at it. The caller keeps `buf` allocated until the fit returns. If the
+file exists and its header matches the dtype, dimensions, domain, `tol` and
+options, the fit loads the file and does not call the kernel. Otherwise the fit
+runs and writes the file. A malformed file with a matching header makes the fit
+return a null handle. The file does not identify the kernel.
+
+```fortran
+character(kind=c_char), allocatable, target :: buf(:)
+call treeweave_set_filename(opts, "kernel.tw", buf)
+h = treeweave_fit(c_funloc(kernel), 1_c_int, 1_c_int, a, b, tol, c_null_ptr, c_loc(opts))
+```
+
 ## iso_c_binding mapping
 
 | C (`treeweave.h`)                                   | Fortran (`module treeweave`)                                  |
@@ -144,7 +161,7 @@ h = treeweave_fit(c_funloc(kernel_ctx), 1_c_int, 1_c_int, a, b, tol, &
 | `double tol`                                     | `real(c_double), value`                                   |
 | `void *context`                                  | `type(c_ptr), value`                                      |
 | `const treeweave_opts *opts`                        | `type(c_ptr), value` (`c_null_ptr` ⇒ defaults, or `c_loc(opts)`) |
-| `treeweave_opts` struct                             | `type, bind(C) :: treeweave_opts` (five `integer(c_int)`)    |
+| `treeweave_opts` struct                             | `type, bind(C) :: treeweave_opts` (five `integer(c_int)` and a `type(c_ptr) :: filename`)    |
 | `size_t n`                                       | `integer(c_size_t), value`                                |
 | `double *const *soa`                             | `type(c_ptr), intent(in) :: soa(*)`                       |
 | `treeweave_dtype_t` / `treeweave_tol_kind_t`           | `integer(c_int)` parameters (`TREEWEAVE_F64`, `TREEWEAVE_RELATIVE_MAX`, …) |

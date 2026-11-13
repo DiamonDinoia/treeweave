@@ -174,6 +174,62 @@ check(isempty(y0), 'empty sorted batch returns empty');
 
 delete(o1); delete(o2);
 
+% ---- filename option: the second fit loads the file and never calls f ----
+tmpdir = tempname();
+mkdir(tmpdir);
+fit_file = fullfile(tmpdir, 'fit.txt');
+ncalls   = 0;
+    function y = counted(x)
+        ncalls = ncalls + 1;
+        y = [sin(x(1) + x(2)); exp(-x(1) * x(2))];
+    end
+    function y = counted1(x)
+        ncalls = ncalls + 1;
+        y = exp(x(1));
+    end
+
+% ND (2D -> 2D). Pass out_dim so the probe call of f does not count.
+fa = treeweave(@counted, [0 0], [1 1], 1e-8, 'out_dim', 2, 'filename', fit_file);
+check(exist(fit_file, 'file') == 2 && ncalls > 0, 'filename: first fit calls f and writes the file');
+ncalls = 0;
+fb = treeweave(@counted, [0 0], [1 1], 1e-8, 'out_dim', 2, 'filename', fit_file);
+check(ncalls == 0, 'filename: second fit makes zero calls to f');
+[gx, gy] = meshgrid(linspace(0.01, 0.99, 31), linspace(0.02, 0.98, 29));
+Xf = [gx(:), gy(:)];
+ya = fa.eval(Xf); yb = fb.eval(Xf);
+check(all(max(abs(ya - yb), [], 1) <= 1e-8 * max(abs(ya), [], 1)), 'filename: ND outputs agree within tol * max|f| after loading');
+delete(fa); delete(fb);
+
+% 1D.
+fit_file1 = fullfile(tmpdir, 'fit1.txt');
+fa = treeweave(@counted1, 0, 1, 1e-8, 'out_dim', 1, 'filename', fit_file1);
+ncalls = 0;
+fb = treeweave(@counted1, 0, 1, 1e-8, 'out_dim', 1, 'filename', fit_file1);
+x1 = linspace(0.001, 0.999, 513)';
+ya = fa.eval(x1); yb = fb.eval(x1);
+check(ncalls == 0 && max(abs(ya - yb)) <= 1e-8 * max(abs(ya)), 'filename: 1D loads with zero calls, outputs agree within tol * max|f|');
+delete(fa); delete(fb);
+
+% A changed tol refits.
+ncalls = 0;
+fb = treeweave(@counted1, 0, 1, 1e-10, 'out_dim', 1, 'filename', fit_file1);
+check(ncalls > 0, 'filename: a changed tol refits');
+delete(fb);
+
+% A malformed file with a matching header makes the fit fail.
+txt = fileread(fit_file1);
+fid = fopen(fit_file1, 'w');
+fwrite(fid, txt(1:strfind(txt, 'subtrees') - 1));
+fclose(fid);
+ok = false;
+try
+    treeweave(@counted1, 0, 1, 1e-10, 'out_dim', 1, 'filename', fit_file1);
+catch
+    ok = true;
+end
+check(ok, 'filename: a malformed file errors');
+[~] = rmdir(tmpdir, 's');
+
 fprintf('\n--- Results: %d passed, %d failed ---\n', passed, failed);
 if failed > 0
     error('test_treeweave:failures', '%d test(s) failed.', failed);

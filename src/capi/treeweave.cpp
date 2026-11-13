@@ -76,6 +76,7 @@ void treeweave_default_opts(treeweave_opts *opts) {
         .max_memory_mib         = -1, // auto: dimension-scaled (4/8/16 MiB)
         .allow_max_depth_leaves = 0,
         .min_uniform_depth      = 0,
+        .filename               = nullptr,
     };
 }
 

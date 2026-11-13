@@ -12,8 +12,7 @@ int main() {
 
     try {
         // Fit f(x) on [0.01, 5] syntax is fit(callback, lower_bound, upper_bound, tolerance, options).
-        auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8, treeweave::options{.max_depth = 4});
-        (void)fn;
+        [[maybe_unused]] auto fn = treeweave::fit(f, 0.01, 5.0, /*tol=*/1e-8, treeweave::options{.max_depth = 4});
         std::cerr << "expected MaxDepthExceeded but fit succeeded\n";
         return 1;
     } catch (const treeweave::MaxDepthExceeded &e) {

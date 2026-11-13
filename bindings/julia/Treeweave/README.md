@@ -79,6 +79,20 @@ TreeweaveOptions(;
     min_uniform_depth      = 0)                      # force uniform refinement up to this depth
 ```
 
+### Fit file
+
+The `filename` keyword of `fit` (an `AbstractString`, default `nothing`) names a
+plain-text fit file. If the file exists and its header matches the dimensions,
+domain, `tol`, options and dtype, `fit` loads the file and does not call `f`.
+Otherwise `fit` runs and writes the file. A malformed file with a matching header
+makes `fit` throw. The file does not identify `f`. Pass `out_dim` explicitly,
+because the default probe calls `f` once.
+
+```julia
+b = fit(f, 0.0, 1.0, 1e-9; out_dim=1, filename="f.tw")   # fits and writes f.tw
+b = fit(f, 0.0, 1.0, 1e-9; out_dim=1, filename="f.tw")   # loads f.tw, 0 calls of f
+```
+
 ### Evaluation: call the handle directly
 
 | call                         | description                                          |

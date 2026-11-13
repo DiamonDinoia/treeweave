@@ -153,4 +153,45 @@ end
     @test_throws ErrorException bv(xs; transposed=true, out=zeros(2, length(xs)))
 end
 
+# 13. fit file: the first fit writes it, the second loads it with zero callback calls
+@testset "fit file" begin
+    mktempdir() do dir
+        cases = [
+            ("1D f64", (x -> exp(0.5x) + sin(3x)), 0.0, 1.0, Float64, 1e-9, collect(LinRange(0.0, 0.999, 257)), 1),
+            ("1D f32", (x -> Float32(exp(x))), Float32(0), Float32(1), Float32, 1e-4, Float32.(LinRange(0, 0.999, 257)), 1),
+            ("2D f64", ((x, y) -> sin(x + y)), [0.0, 0.0], [1.0, 1.0], Float64, 1e-7, rand(200, 2), 1),
+            ("2D->3D f64", ((x, y) -> (sin(x)*cos(y), x + y, x*y)), [0.0, 0.0], [1.0, 1.0], Float64, 1e-6, rand(200, 2), 3),
+        ]
+        # out_dim is explicit: the out_dim probe in fit would call g once.
+        for (name, f, a, b, T, tol, X, od) in cases
+            path  = joinpath(dir, replace(name, r"\W" => "_") * ".txt")
+            calls = Ref(0)
+            g = (args...) -> (calls[] += 1; f(args...))
+            b1 = fit(g, a, b, tol; dtype=T, out_dim=od, filename=path)
+            @test calls[] > 0
+            @test isfile(path)
+
+            calls[] = 0
+            b2 = fit(g, a, b, tol; dtype=T, out_dim=od, filename=SubString(path, 1))   # AbstractString
+            @test calls[] == 0
+            r1, r2 = b1(X), b2(X)
+            @test !any(isnan, r2)
+            d1, d2 = Float64.(reshape(r1, :, od)), Float64.(reshape(r2, :, od))
+            @test all(maximum(abs.(d1 .- d2); dims=1) .<= tol .* maximum(abs.(d1); dims=1))
+
+            # A changed tol does not match the header: refit.
+            calls[] = 0
+            fit(g, a, b, tol * 2; dtype=T, out_dim=od, filename=path)
+            @test calls[] > 0
+        end
+
+        # A malformed file with a matching header makes the fit throw.
+        path = joinpath(dir, "bad.txt")
+        f = x -> exp(x)
+        fit(f, 0.0, 1.0, 1e-10; filename=path)
+        write(path, read(path, String) * "extra\n")
+        @test_throws ErrorException fit(f, 0.0, 1.0, 1e-10; filename=path)
+    end
+end
+
 println("All Treeweave tests passed.")

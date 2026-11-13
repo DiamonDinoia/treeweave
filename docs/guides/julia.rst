@@ -117,6 +117,21 @@ Available fields (all keyword-only, all have defaults):
      - ``0``
      - Force uniform refinement to this depth before adaptivity.
 
+Fit file
+--------
+
+The ``filename`` keyword of ``fit`` names a plain-text fit file. If the file
+exists and its header matches the dimensions, domain, ``tol``, options and
+dtype, ``fit`` loads the file and does not call ``f``. Otherwise ``fit`` runs
+and writes the file. A malformed file with a matching header makes ``fit``
+throw. The file does not identify ``f``, so delete it when ``f`` changes. Pass
+``out_dim`` explicitly, because the default probe calls ``f`` once.
+
+.. code-block:: julia
+
+   approx = fit(f, 2.0, 10.0, 1e-10; out_dim = 1, filename = "f.tw")  # fits and writes
+   approx = fit(f, 2.0, 10.0, 1e-10; out_dim = 1, filename = "f.tw")  # loads, 0 calls of f
+
 See :doc:`options` for a full description of each option and the tolerance kinds.
 
 Further

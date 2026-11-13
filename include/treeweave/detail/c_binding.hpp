@@ -68,6 +68,8 @@ inline auto to_options(const treeweave_opts *opts) -> treeweave::options {
     out.max_memory_mib         = opts->max_memory_mib;
     out.allow_max_depth_leaves = opts->allow_max_depth_leaves != 0;
     out.min_uniform_depth      = opts->min_uniform_depth;
+    if (opts->filename != nullptr)
+        out.filename = opts->filename;
     return out;
 }
 

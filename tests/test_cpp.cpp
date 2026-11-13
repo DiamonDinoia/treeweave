@@ -823,7 +823,8 @@ TEST_CASE("allow_max_depth_leaves accepts unconverged panels", "[treeweave][maxd
     // Default path (allow_max_depth_leaves=false) must throw and the
     // exception must carry every unconverged panel, not just the first.
     try {
-        (void)fit<8>(f, 0.0, 1.0, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4});
+        [[maybe_unused]] const auto fn =
+            fit<8>(f, 0.0, 1.0, /*tol=*/1e-10, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4});
         FAIL("expected MaxDepthExceeded");
     } catch (const treeweave::MaxDepthExceeded &e) {
         REQUIRE_FALSE(e.panels().empty());
@@ -1719,3 +1720,24 @@ TEST_CASE("an isolated non-finite error is rejected at every grid position", "[t
     }
 }
 // NOLINTEND(cert-msc51-cpp,cert-msc32-c)
+
+TEST_CASE("array domain with scalar output fits without a 1-element array", "[treeweave][adaptor]") {
+    using A       = std::array<double, 2>;
+    auto       f  = [](const A &x) { return std::exp(x[0]) * std::cos(2 * x[1]); };
+    const auto fn = fit(f, A{-1, 0}, A{1, 3}, 1e-10);
+    static_assert(std::is_same_v<decltype(fn(A{})), double>);
+
+    std::vector<double> xs;
+    std::vector<double> ref;
+    for (int i = 0; i <= 32; ++i)
+        for (int j = 0; j <= 32; ++j) {
+            const A x{-1 + 2.0 * i / 32, 3.0 * j / 32};
+            xs.insert(xs.end(), x.begin(), x.end());
+            ref.push_back(f(x));
+            CHECK(std::abs(fn(x) - f(x)) <= 1e-8);
+        }
+    std::vector<double> ys(ref.size());
+    fn(xs.data(), ys.data(), ys.size());
+    for (std::size_t i = 0; i < ys.size(); ++i)
+        CHECK(std::abs(ys[i] - ref[i]) <= 1e-8);
+}
