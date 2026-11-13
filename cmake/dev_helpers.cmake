@@ -104,6 +104,13 @@ function(treeweave_enable_warnings target)
 
     list(APPEND _warnings_clang_like ${_tw_additional_warnings_supported})
 
+    # clang-cl reads -Wall as MSVC /Wall, which is -Weverything; /W4 is
+    # -Wall -Wextra. The -Weverything output of test_cpp.cpp (8e3 warnings,
+    # 8 MB) stalled sccache on the windows-2022 llvm leg until the job timed out.
+    if(_tw_clang_cl)
+        list(TRANSFORM _warnings_clang_like REPLACE "^-Wall$" "/W4")
+    endif()
+
     # clang 23 moved -Wunused-template into -Wunused. The kernels are `static`
     # templates in a header so that each TU gets its own internal-linkage copy
     # (ISA isolation), and a TU that uses one shape instantiates none of the
