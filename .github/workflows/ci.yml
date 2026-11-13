@@ -1,515 +1,82 @@
-name: CI
+# Throwaway measurement workflow (branch ci-debug/win-hang). Builds only the
+# test_cpp.cpp.obj edge of the windows-2022 llvm Release leg with -ftime-trace,
+# under a 60 min cap, and uploads the trace and the timing. `code_ref` selects
+# the code under test, so runs A and B can dispatch from this one branch at the
+# same time.
+name: diag-test-cpp
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-  # Branch runs: the six gate workflows fire on push to main only, so a change
-  # to a leg that main does not have yet has no other way to run.
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      variant:
+        description: "A = base code, B = base code plus the candidate fix"
+        type: choice
+        options:
+          - A
+          - B
+        default: A
+      code_ref:
+        description: "git ref (sha) of the code to build"
+        type: string
+        required: true
 
 permissions:
   contents: read
 
-# sccache stores objects individually in the Actions cache service instead of a
-# per-job tarball. ccache + actions/cache rewrote every leg's full cache under a
-# new ${{ github.sha }} key each run, ~5 GB per run against the 10 GB per-repo
-# LRU quota, so a cache survived about two runs before eviction.
-env:
-  SCCACHE_GHA_ENABLED: "true"
-  # The daemon exits after SCCACHE_IDLE_TIMEOUT seconds without a client
-  # request (default 600). Linking issues no compile requests, so a long link
-  # phase killed the daemon mid-build and the next compile got
-  # "os error 10054". 0 keeps the daemon up for the whole job.
-  SCCACHE_IDLE_TIMEOUT: "0"
-
 jobs:
   build:
-    name: ${{ matrix.os }} (${{ matrix.toolchain }} ${{ matrix.build_type }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Ubuntu Debug: gcc-11/12 on 22.04 (native there; noble drops them),
-          # newer toolchains on 24.04. C++20 needs gcc >= 11 / clang >= 16.
-          - {os: ubuntu-22.04, toolchain: gcc-11,  build_type: Debug, preset: ci-linux-debug}
-          - {os: ubuntu-24.04, toolchain: gcc-12,  build_type: Debug, preset: ci-linux-debug}
-          - {os: ubuntu-24.04, toolchain: gcc,     build_type: Debug, preset: ci-linux-debug}
-          - {os: ubuntu-24.04, toolchain: gcc-13,  build_type: Debug, preset: ci-linux-debug}
-          - {os: ubuntu-24.04, toolchain: gcc-14,  build_type: Debug, preset: ci-linux-debug}
-          - {os: ubuntu-24.04, toolchain: llvm-16, build_type: Debug, preset: ci-linux-debug-asan}
-          - {os: ubuntu-24.04, toolchain: llvm-17, build_type: Debug, preset: ci-linux-debug-asan}
-          - {os: ubuntu-24.04, toolchain: llvm,    build_type: Debug, preset: ci-linux-debug-asan}
-          - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Debug, preset: ci-linux-debug-asan}
-          - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Debug, preset: ci-linux-debug-asan}
-          # Ubuntu Release
-          - {os: ubuntu-22.04, toolchain: gcc-11,  build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: gcc-12,  build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: gcc,     build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: gcc-13,  build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: gcc-14,  build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: llvm-16, build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: llvm-17, build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: llvm,    build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: llvm-18, build_type: Release, preset: ci-linux-release}
-          - {os: ubuntu-24.04, toolchain: llvm-21, build_type: Release, preset: ci-linux-release}
-          # macOS: apple-clang on arm64; gcc-14 for GNU-on-Apple coverage (uses -mcpu=native, see treeweave_toolchain.cmake).
-          - {os: macos-15,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
-          - {os: macos-15,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
-          - {os: macos-26,     toolchain: apple-clang, build_type: Debug,   preset: ci-macos-debug}
-          - {os: macos-26,     toolchain: apple-clang, build_type: Release, preset: ci-macos-release}
-          # arch_native: this leg is the one that resolves to -mcpu=native
-          # (Homebrew gcc on Apple Silicon doesn't know apple-m1, see
-          # treeweave_toolchain.cmake). A cross-run cache is unsafe for native
-          # arch: an object built on one runner's microarch could be restored
-          # onto another and fault. So it skips the persisted cache below.
-          - {os: macos-15,     toolchain: gcc-14,      build_type: Release, preset: ci-macos-release, arch_native: true}
-          # Windows (Ninja, Release only; Debug MSVC builds are very slow)
-          - {os: windows-2022, toolchain: msvc, build_type: Release, preset: ci-windows}
-          - {os: windows-2022, toolchain: llvm, build_type: Release, preset: ci-windows-clang}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.1
-        with:
-          compiler: ${{ matrix.toolchain }}
-          cmake: true
-          ninja: true
-          cache-tools: true
-          vcvarsall: ${{ runner.os == 'Windows' }}
-
-      # sccache reads and writes the Actions cache service directly, so no
-      # save/restore step is needed. The action's post step prints hit rates.
-      # The -mcpu=native leg opts out of the shared backend: -mcpu=native hashes
-      # to the same key on every runner but expands to that runner's microarch,
-      # so a restored object could carry instructions the restoring host cannot
-      # execute. That leg keeps a local disk cache, which is single-CPU and safe.
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-      - name: Opt the -mcpu=native leg out of the shared cache
-        if: ${{ matrix.arch_native }}
-        shell: bash
-        run: echo "SCCACHE_GHA_ENABLED=false" >> "$GITHUB_ENV"
-
-      # All build settings (portable -march baseline, sanitizers on the Linux
-      # Debug rows, -Og for the Debug test matrix) live in CMakePresets.json.
-      # Every platform builds single-config via Ninja (Windows uses the MSVC
-      # environment set up by setup-cpp's vcvarsall above). sccache is wired via
-      # COMPILER_LAUNCHER here (not in the presets) so local builds are untouched.
-      - name: Configure
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset ${{ matrix.preset }}
-
-      - name: Build
-        run: cmake --build build/${{ matrix.preset }}
-
-      - name: Test
-        run: ctest --output-on-failure --test-dir build/${{ matrix.preset }}
-
-      - name: Upload logs
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.os }}-${{ matrix.toolchain }}-${{ matrix.build_type }}-logs
-          path: |
-            build/**/Testing/**/*.log
-            build/**/Testing/**/*.xml
-          if-no-files-found: ignore
-
-  analysis:
-    name: Static Analysis
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    env:
-      CPPCHECK_VERSION: '2.21.0'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      # clang-tidy comes from pip (pinned 22.*), not apt: the apt clang-tidy
-      # 18 misattributes libstdc++'s own `namespace std` to user code under
-      # CI's forced PCH and fires a false cert-dcl58-cpp. The analysis preset
-      # also disables the PCH, so clang-tidy sees every header per-TU. clang is
-      # the compiler.
-      - name: Install tooling
-        run: |
-          pip install 'clang-tidy==22.*'
-          sudo apt-get update
-          sudo apt-get install -y clang ninja-build cmake
-
-      # cppcheck comes from conda-forge, not apt: noble's 2.13 and the newest
-      # PyPI wheel (2.17) both segfault on a generated dispatch TU, which
-      # combines explicit instantiations with an anonymous-namespace include.
-      # 2.21 parses it. micromamba is fetched directly rather than through an
-      # action, so the version below is the only pin involved.
-      - name: Install cppcheck
-        run: |
-          curl -sL https://micro.mamba.pm/api/micromamba/linux-64/latest \
-            | tar -xj -C /tmp bin/micromamba
-          /tmp/bin/micromamba create -y -q -p "$HOME/cppcheck" \
-            -c conda-forge "cppcheck=$CPPCHECK_VERSION"
-
-      # Asserts the version string, not just a zero exit, so the analysis can
-      # never run vacuously against some other cppcheck.
-      - name: Check cppcheck
-        run: |
-          got=$($HOME/cppcheck/bin/cppcheck --version)
-          echo "$got"
-          test "$got" = "Cppcheck $CPPCHECK_VERSION"
-
-      # Pin the clang-tidy CMake finds to the pip shim explicitly: find_program
-      # otherwise prefers a clang-tidy sitting next to the chosen clang++.
-      - name: Configure analysis
-        env:
-          CC: clang
-          CXX: clang++
-        run: |
-          cmake --preset analysis \
-            -DTREEWEAVE_CLANG_TIDY_EXE="$(command -v clang-tidy)" \
-            -DTREEWEAVE_CPPCHECK_EXE="$HOME/cppcheck/bin/cppcheck"
-
-      - name: Build (analysis)
-        env:
-          CC: clang
-          CXX: clang++
-        run: cmake --build build/analysis
-
-      - name: Test (analysis)
-        run: ctest --output-on-failure --test-dir build/analysis
-
-      - name: Upload analysis logs
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: analysis-logs
-          path: |
-            build/analysis/**/Testing/**/*.log
-            build/analysis/**/*.txt
-          if-no-files-found: ignore
-
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-24.04
-    # The instrumented -O0 --coverage build of the whole test suite + the
-    # force-inlined (TREEWEAVE_FLATTEN) dispatch TUs sits right at ~30 min on a
-    # 4-core runner; 30 was tipping over into a timeout (job -> cancelled).
-    timeout-minutes: 50
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.1
-        with:
-          compiler: gcc-13
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      - name: Install coverage tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lcov
-
-      - name: Configure (coverage)
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset coverage
-
-      # -j: the coverage target was the one build missing parallelism; with
-      # sccache + all cores it lands well under the 50-min timeout.
-      - name: Build coverage target
-        run: cmake --build build/coverage --parallel --target coverage
-
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          files: build/coverage/coverage.filtered.info
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage
-          path: |
-            build/coverage/coverage.info
-            build/coverage/coverage.filtered.info
-            build/coverage/coverage/**
-            build/coverage/coverage-report.html
-          if-no-files-found: warn
-
-  lint:
-    name: Lint & format
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      # Inspection only: YAML validity, spelling, merge-conflict and filename
-      # hygiene, pyproject schema, version-header staleness. SKIP covers every
-      # hook that rewrites a file, so no formatter gates CI. Formatting is a
-      # hunk-level standard owned by the commit hooks: whole-file and hunk-level
-      # formatting disagree, and `--all-files` here would demand reformatting
-      # lines a commit never touched.
-      - uses: pre-commit/action@v3.0.1
-        env:
-          SKIP: >-
-            clang-format-staged,gersemi-staged,prettier-staged,darker,shfmt,
-            end-of-file-fixer,trailing-whitespace,mixed-line-ending
-
-  valgrind:
-    name: Valgrind (C ABI)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      # Use setup-cpp to get a consistent gcc + sccache environment (matching the
-      # build matrix pattern), so the objects persist across runs.
-      # Valgrind's Build step was 7m38s with no cache (run 32208936358).
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      # valgrind must be present at configure time so the test_c_abi_valgrind
-      # CTest entry is registered (cmake/treeweave_c_api.cmake gates on finding it).
-      - name: Install valgrind
-        run: sudo apt-get update && sudo apt-get install -y valgrind
-
-      # Single-arch AVX2 baseline (no multiarch): valgrind handles AVX2 but not
-      # the AVX-512 variant the dispatcher would otherwise build + run.
-      - name: Configure
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset valgrind
-
-      - name: Build
-        run: cmake --build build/valgrind
-
-      - name: Run leak check under valgrind
-        run: ctest --test-dir build/valgrind -R valgrind --output-on-failure --no-tests=error
-
-  multiarch:
-    name: Multiarch dispatch smoke
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      # Build every x86 ISA variant (SSE4.2 / AVX2 / AVX-512) and let the C ABI
-      # pick one at runtime; the rest of CI pins a single -march, leaving the
-      # dispatcher and its AVX-512 variant otherwise unbuilt/untested.
-      - name: Configure (multiarch dispatch)
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset multiarch
-
-      - name: Build
-        run: cmake --build build/multiarch
-
-      # Diagnostic + fallback coverage: dump the runner's actual ISA (incl. the
-      # avx512 subfeatures the dispatcher does NOT individually probe, e.g. VL),
-      # then exercise each fallback variant via TREEWEAVE_FORCE_ARCH. force_dispatch
-      # only honours a level the host CPU reports as available, so this surfaces
-      # any "reported-available but actually faults" gap without masking the
-      # real native run below.
-      - name: Diagnose ISA dispatch (cpu flags + per-arch forced run)
-        continue-on-error: true
-        # set +e: the forced runs may exit non-zero (parity diffs) or crash
-        # (SIGILL). Keep going so every arch's result is reported.
-        run: |
-          set +e
-          echo "== CPU model =="; lscpu | grep -i "model name"
-          echo "== ISA features =="
-          grep -o -m1 -E 'avx512[a-z]+|avx2|fma|sse4_2' /proc/cpuinfo | sort -u | tr '\n' ' '; echo
-          bin=build/multiarch/test_c_abi
-          echo "-- default dispatch --"
-          "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          for arch in sse2 sse4.2 fma3+avx2 avx512bw; do
-            TREEWEAVE_FORCE_ARCH="$arch" "$bin" >/tmp/fa.out 2>&1; ec=$?
-            echo "FORCE_ARCH=$arch exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          done
-
-      # Exact match: the dispatched binary runs natively here. (Avoid the
-      # valgrind variant, which can't execute an AVX-512 dispatch target.)
-      - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-
-  multiarch-arm:
-    name: Multiarch dispatch smoke (aarch64)
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Setup C++ toolchain
-        uses: aminya/setup-cpp@v1.10.1
-        with:
-          compiler: gcc
-          cmake: true
-          ninja: true
-          cache-tools: true
-
-      - name: sccache
-        uses: mozilla/sccache-action@v0.0.11
-
-      # aarch64 counterpart of the x86 multiarch job: build the C ABI at the
-      # armv8-a baseline with the runtime dispatcher, which selects the single
-      # mandatory neon64 variant (SVE excluded by design, see dispatch_arch.hpp).
-      - name: Configure (multiarch dispatch)
-        env:
-          CMAKE_C_COMPILER_LAUNCHER: sccache
-          CMAKE_CXX_COMPILER_LAUNCHER: sccache
-        run: cmake --preset multiarch-arm
-
-      - name: Build
-        run: cmake --build build/multiarch-arm
-
-      # neon64 is mandatory on ARMv8-A, so forcing it must always select and run.
-      - name: Diagnose ISA dispatch (forced neon64 run)
-        continue-on-error: true
-        run: |
-          set +e
-          echo "== CPU model =="; lscpu | grep -i "model name"
-          bin=build/multiarch-arm/test_c_abi
-          echo "-- default dispatch --"
-          "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "default exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-          TREEWEAVE_FORCE_ARCH=arm64+neon "$bin" >/tmp/fa.out 2>&1; ec=$?
-          echo "FORCE_ARCH=arm64+neon exit=$ec$([ "$ec" -gt 128 ] && echo " SIGNAL=$((ec - 128))") | $(tail -1 /tmp/fa.out)"
-
-      - name: Run C-ABI test (exercises runtime ISA dispatch)
-        run: ctest --test-dir build/multiarch-arm -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-
-  multiarch-windows:
-    name: Multiarch dispatch smoke (${{ matrix.compiler }})
+    name: windows-2022 (llvm Release) test_cpp obj ${{ inputs.variant }}
     runs-on: windows-2022
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [cl, clang-cl]
+    timeout-minutes: 80
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.code_ref }}
           persist-credentials: false
 
       - name: Setup C++ toolchain
         uses: aminya/setup-cpp@v1.10.1
         with:
-          compiler: msvc
+          compiler: llvm
           cmake: true
           ninja: true
-          vcvarsall: true
           cache-tools: true
+          vcvarsall: true
 
-      # COFF has no hidden visibility, so a multi-arch Windows build renames each
-      # rung's shared symbols (cmake/treeweave_c_dispatch.cmake). That needs
-      # llvm-nm and llvm-objcopy, and the gate needs llvm-objdump.
-      - name: Put the LLVM binutils on PATH
+      - name: Configure
+        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=-Xclang -ftime-trace"
+
+      - name: Build test_cpp.cpp.obj, 60 min cap
+        timeout-minutes: 62
         shell: pwsh
         run: |
-          $llvm = "C:\Program Files\LLVM\bin"
-          if (Test-Path $llvm) { Add-Content $env:GITHUB_PATH $llvm }
-          $env:PATH = "$llvm;$env:PATH"
-          foreach ($t in @("llvm-nm", "llvm-objcopy", "llvm-objdump", "clang-cl")) {
-            if (-not (Get-Command $t -ErrorAction SilentlyContinue)) { throw "$t not found on PATH" }
+          $ErrorActionPreference = "Continue"
+          Write-Host "BUILD START $(Get-Date -Format o) variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }}"
+          $p = Start-Process -FilePath cmd.exe -ArgumentList "/c ninja -C build\ci-windows-clang -v tests/CMakeFiles/test_cpp.dir/test_cpp.cpp.obj > obj-build.txt 2>&1" -NoNewWindow -PassThru
+          $m = Measure-Command { try { Wait-Process -Id $p.Id -Timeout 3540 -ErrorAction Stop } catch { } }
+          $mins = [math]::Round($m.TotalMinutes, 2)
+          Write-Host "BUILD END $(Get-Date -Format o)"
+          if ($p.HasExited) {
+            Write-Host "OBJ EXIT=$($p.ExitCode) MINUTES=$mins"
+            Set-Content -Path obj-timing.txt -Value "variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }} exit=$($p.ExitCode) minutes=$mins"
+          } else {
+            Write-Host "OBJ HUNG at 59 min cap"
+            Get-Process | Sort-Object CPU -Descending | Select-Object -First 25 Id, ProcessName, CPU, WS | Format-Table | Out-String | Write-Host
+            $last = Get-Content obj-build.txt -Tail 1
+            Write-Host "LAST LOG LINE: $last"
+            Set-Content -Path obj-timing.txt -Value "variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }} HUNG minutes=$mins last=$last"
+            taskkill /T /F /PID $p.Id
           }
+          Get-Content obj-build.txt | Select-Object -Last 5
 
-      # Both toolsets need the rename, so both are gated. cl.exe defines its
-      # whole external surface once per rung; clang-cl defines less of it but not
-      # none, and which of those diverge is not a property to leave ungated.
-      - name: Configure (multiarch dispatch)
-        shell: pwsh
-        run: >
-          cmake -S . -B build/multiarch-win -G Ninja
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=${{ matrix.compiler }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-          -DTREEWEAVE_ARCH=x86-64
-          -DTREEWEAVE_C_MULTIARCH=ON
-          -DTREEWEAVE_VERIFY_RUNGS=ON
-          -DTREEWEAVE_BUILD_TESTS=ON
-          -DTREEWEAVE_BUILD_EXAMPLES=OFF
-
-      - name: Build
-        run: cmake --build build/multiarch-win
-
-      # The gate proves the rungs share no symbol; running the suite once per
-      # rung proves the renamed code still executes, including the throwing
-      # paths whose RTTI records the rename duplicates. test_c_abi compares
-      # treeweave_active_arch() against TREEWEAVE_FORCE_ARCH and fails on a
-      # mismatch whenever the host reports the rung available, so a rung the
-      # runner can run is asserted, not merely attempted.
-      - name: Run the C ABI suite once per rung
-        shell: pwsh
-        run: |
-          $fail = 0
-          foreach ($arch in @("", "sse2", "avx", "fma3+avx2", "avx512bw")) {
-            if ($arch) { $env:TREEWEAVE_FORCE_ARCH = $arch } else { Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue }
-            ctest --test-dir build/multiarch-win -R '^(test_c_abi|check_rung_symbols|check_rung_symbols_selftest)$' -V --no-tests=error
-            if ($LASTEXITCODE -ne 0) { "RUNG_FAIL $arch"; $fail = 1 } else { "RUNG_OK $(if ($arch) { $arch } else { 'default' })" }
-          }
-          Remove-Item Env:\TREEWEAVE_FORCE_ARCH -ErrorAction SilentlyContinue
-          if ($fail -ne 0) { throw "at least one rung failed its tests" }
+      - name: Upload trace and timing
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-cpp-obj-${{ inputs.variant }}
+          path: |
+            obj-build.txt
+            obj-timing.txt
+            build/ci-windows-clang/tests/CMakeFiles/test_cpp.dir/*.json
+          if-no-files-found: ignore
