@@ -26,6 +26,7 @@
 /// `4 * (L + 1)` bytes (with `tile_K = max(65536, 32 * L)`) and frees it
 /// on return.
 
+#include <algorithm>
 #include <array>
 #include <complex>
 #include <concepts>
@@ -141,7 +142,7 @@ namespace detail {
 // Auto memory budget (MiB): 4/32/256 for 1D/2D/3D, 8x per dim. Smooth test
 // functions at tol 1e-13 need up to 1.4/14.2/176 MiB at the default degrees.
 constexpr auto auto_memory_budget_mib(int input_dim) -> int {
-    const unsigned d = input_dim < 1 ? 1U : (input_dim > 4 ? 4U : static_cast<unsigned>(input_dim));
+    const auto d = static_cast<unsigned>(std::clamp(input_dim, 1, 4));
     return static_cast<int>(4U << (3U * (d - 1U)));
 }
 
