@@ -1454,7 +1454,10 @@ class Function {
 
     // Write ` c` with the significant digits that keep its rounding error
     // at most step / 2, or with every digit when step is 0.
-    static auto write_coeff(std::ostream &os, value_type c, double step) -> void {
+    // The five fit-file members below are cold file-I/O code, one copy per
+    // fitted callable; [[clang::optnone]] keeps the optimizer out of each
+    // copy.
+    [[clang::optnone]] static auto write_coeff(std::ostream &os, value_type c, double step) -> void {
         constexpr int full = std::numeric_limits<value_type>::max_digits10;
         const double  mag  = std::abs(static_cast<double>(c));
         if (!(step > 0.0) || !std::isfinite(step) || !std::isfinite(mag)) {
@@ -1469,12 +1472,13 @@ class Function {
         os << ' ' << std::setprecision(std::clamp(digits, 1, full)) << c << std::setprecision(full);
     }
 
-    static auto fit_file_stream(std::ios_base &s) -> void {
+    [[clang::optnone]] static auto fit_file_stream(std::ios_base &s) -> void {
         s.imbue(std::locale::classic());
         s.precision(std::numeric_limits<value_type>::max_digits10);
     }
 
-    [[nodiscard]] static auto fit_file_header(const detail::TreeInput &input, const box_t &box) -> std::string {
+    [[nodiscard]] [[clang::optnone]] static auto fit_file_header(const detail::TreeInput &input, const box_t &box)
+        -> std::string {
         std::ostringstream os;
         fit_file_stream(os);
         const dim_array_t lower = box.center - box.half_length;
@@ -1505,7 +1509,8 @@ class Function {
 
     /// Write the fit to `path`: write a temporary file, then
     /// rename it, so a reader never sees a partial file.
-    auto save_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box) const -> void {
+    [[clang::optnone]] auto save_fit_file(const std::string &path, const detail::TreeInput &input,
+                                          const box_t &box) const -> void {
         std::ostringstream os;
         fit_file_stream(os);
         os << fit_file_header(input, box) << "base_depth " << stats_.base_depth << "\nn_subtrees";
@@ -1572,7 +1577,8 @@ class Function {
     /// missing or its header does not match this fit (the caller then fits
     /// and overwrites it). Throw when the header matches but the body is
     /// malformed.
-    auto load_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box) -> bool {
+    [[clang::optnone]] auto load_fit_file(const std::string &path, const detail::TreeInput &input, const box_t &box)
+        -> bool {
         std::ifstream in(path, std::ios::binary);
         if (!in)
             return false;
