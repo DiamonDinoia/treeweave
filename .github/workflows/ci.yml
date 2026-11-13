@@ -45,7 +45,9 @@ jobs:
           vcvarsall: true
 
       - name: Configure
-        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=-Xclang -ftime-trace"
+        # clang-cl takes -ftime-trace as a driver flag; -Xclang forwarding
+        # fails with "unknown argument" on this toolchain.
+        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=-ftime-trace"
 
       - name: Build test_cpp.cpp.obj, 60 min cap
         timeout-minutes: 62
