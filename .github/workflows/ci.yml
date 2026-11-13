@@ -1,6 +1,6 @@
 # Throwaway measurement workflow (branch ci-debug/win-hang). Builds only the
 # test_cpp.cpp.obj edge of the windows-2022 llvm Release leg with -ftime-trace,
-# under a 60 min cap, and uploads the trace and the timing. `code_ref` selects
+# under a 30 min cap, and uploads the trace and the timing. `code_ref` selects
 # the code under test, so runs A and B can dispatch from this one branch at the
 # same time.
 name: diag-test-cpp
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       variant:
-        description: "A = base code, B = base code plus the candidate fix"
+        description: "A = sccache launcher, B = no launcher; both default flags"
         type: choice
         options:
           - A
@@ -22,6 +22,11 @@ on:
 
 permissions:
   contents: read
+
+# Same sccache settings as the real CI job (used by variant A only).
+env:
+  SCCACHE_GHA_ENABLED: "true"
+  SCCACHE_IDLE_TIMEOUT: "0"
 
 jobs:
   build:
@@ -44,20 +49,29 @@ jobs:
           cache-tools: true
           vcvarsall: true
 
-      - name: Configure
-        # CMAKE_CXX_FLAGS replaces CMake's default MSVC-style set, so keep
-        # /DWIN32 /D_WINDOWS /EHsc and add -ftime-trace (clang-cl driver form;
-        # -Xclang forwarding fails with "unknown argument" on this toolchain).
-        run: cmake --preset ci-windows-clang "-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc -ftime-trace"
+      - name: sccache
+        if: inputs.variant == 'A'
+        uses: mozilla/sccache-action@v0.0.11
 
-      - name: Build test_cpp.cpp.obj, 60 min cap
-        timeout-minutes: 62
+      - name: Configure, A = sccache launcher as in CI
+        if: inputs.variant == 'A'
+        env:
+          CMAKE_C_COMPILER_LAUNCHER: sccache
+          CMAKE_CXX_COMPILER_LAUNCHER: sccache
+        run: cmake --preset ci-windows-clang
+
+      - name: Configure, B = no launcher, default flags
+        if: inputs.variant == 'B'
+        run: cmake --preset ci-windows-clang
+
+      - name: Build test_cpp.cpp.obj, 30 min cap
+        timeout-minutes: 33
         shell: pwsh
         run: |
           $ErrorActionPreference = "Continue"
           Write-Host "BUILD START $(Get-Date -Format o) variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }}"
           $p = Start-Process -FilePath cmd.exe -ArgumentList "/c ninja -C build\ci-windows-clang -v tests/CMakeFiles/test_cpp.dir/test_cpp.cpp.obj > obj-build.txt 2>&1" -NoNewWindow -PassThru
-          $m = Measure-Command { try { Wait-Process -Id $p.Id -Timeout 3540 -ErrorAction Stop } catch { } }
+          $m = Measure-Command { try { Wait-Process -Id $p.Id -Timeout 1800 -ErrorAction Stop } catch { } }
           $mins = [math]::Round($m.TotalMinutes, 2)
           Write-Host "BUILD END $(Get-Date -Format o)"
           if ($p.HasExited) {
@@ -65,7 +79,7 @@ jobs:
             Set-Content -Path obj-timing.txt -Value "variant=${{ inputs.variant }} code_ref=${{ inputs.code_ref }} exit=$($p.ExitCode) minutes=$mins"
             if ($p.ExitCode -ne 0) { Get-Content obj-build.txt | Select-Object -Last 5; exit 1 }
           } else {
-            Write-Host "OBJ HUNG at 59 min cap"
+            Write-Host "OBJ HUNG at 30 min cap"
             Get-Process | Sort-Object CPU -Descending | Select-Object -First 25 Id, ProcessName, CPU, WS | Format-Table | Out-String | Write-Host
             $last = Get-Content obj-build.txt -Tail 1
             Write-Host "LAST LOG LINE: $last"
