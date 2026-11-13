@@ -81,7 +81,7 @@ static double next_unit(unsigned int *state) {
 /* ---- 1D scalar: auto-degree fit, eval parity, multi parity, tol check -- */
 
 static void test_1d_scalar_auto_degree(void) {
-    /* The C ABI auto-selects a register-optimal leaf degree per detected CPU.
+    /* The C ABI uses one baked leaf degree on every CPU.
      * The test checks the result against the requested tol, and checks that
      * scalar eval and multi eval agree. */
     const double tol = 1e-9;
@@ -446,15 +446,15 @@ static void test_out_of_domain_nan(void) {
 /* ---- introspection / defaults --------------------------------------- */
 
 static void test_introspection_and_defaults(void) {
-    /* treeweave_default_opts() must match treeweave::options{} (verified in the
-     * C++ surface; mirrored here as concrete values). */
+    /* treeweave_default_opts() writes the all-zero struct: every field at 0 is
+     * its default (RELATIVE_MAX, auto depth, auto memory budget). */
     treeweave_opts defaults;
+    memset(&defaults, 0xff, sizeof defaults);
     treeweave_default_opts(&defaults);
     treeweave_default_opts(NULL);
     CHECK(defaults.tol_kind == TREEWEAVE_RELATIVE_MAX);
-    CHECK(defaults.max_depth == 50);
-    /* <0 = auto: a dimension-scaled budget resolved at fit time. */
-    CHECK(defaults.max_memory_mib < 0);
+    CHECK(defaults.max_depth == 0);
+    CHECK(defaults.max_memory_mib == 0);
     CHECK(defaults.allow_max_depth_leaves == 0);
     CHECK(defaults.min_uniform_depth == 0);
     CHECK(defaults.filename == NULL);
@@ -467,6 +467,33 @@ static void test_introspection_and_defaults(void) {
         return;
     CHECK(treeweave_memory_usage(h) > 0);
     treeweave_print_stats(h); /* must run without crashing */
+
+    /* A memset-0 struct fits the same as NULL opts: same tree, same values. */
+    treeweave_opts zeroed;
+    memset(&zeroed, 0, sizeof zeroed);
+    treeweave_t hz = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, &zeroed);
+    CHECK(hz != NULL);
+    if (hz != NULL) {
+        CHECK(treeweave_memory_usage(hz) == treeweave_memory_usage(h));
+        for (int i = 0; i < 16; ++i) {
+            double x = (i + 0.5) / 16.0, y0 = 0.0, y1 = 0.0;
+            treeweave_eval(h, &x, &y0);
+            treeweave_eval(hz, &x, &y1);
+            CHECK(y0 == y1);
+        }
+        treeweave_free(hz);
+    }
+    /* Control: max_depth 0 is auto, not the root panel. The root-only fit
+     * (max_depth < 0) is smaller. */
+    treeweave_opts root = zeroed;
+    root.max_depth              = -1;
+    root.allow_max_depth_leaves = 1;
+    treeweave_t hr = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, &root);
+    CHECK(hr != NULL);
+    if (hr != NULL) {
+        CHECK(treeweave_memory_usage(hr) < treeweave_memory_usage(h));
+        treeweave_free(hr);
+    }
     treeweave_free(h);
 }
 
@@ -915,15 +942,15 @@ static void test_allow_max_depth_leaves(void) {
     }
 }
 
-/* ---- G7: max_memory_mib = 0 disables the memory cap ------------------- *
- * Per the treeweave_opts doc and the C source: <0 = auto (4/8/16 MiB),
- * 0 = no cap, >0 = explicit cap. With 0 the fit must not fail with a
+/* ---- G7: max_memory_mib < 0 disables the memory cap ------------------- *
+ * Per the treeweave_opts doc and the C source: 0 = auto (4/32/256 MiB),
+ * <0 = no cap, >0 = explicit cap. With -1 the fit must not fail with a
  * MemoryBudgetExceeded error on a simple function. */
 
-static void test_max_memory_mib_zero(void) {
+static void test_max_memory_mib_negative(void) {
     treeweave_opts opts;
     treeweave_default_opts(&opts);
-    opts.max_memory_mib = 0; /* no cap */
+    opts.max_memory_mib = -1; /* no cap */
 
     const double a = 0.0, b = 1.0;
     treeweave_t  h = treeweave_fit(k_1d_1, 1, 1, &a, &b, 1e-9, NULL, &opts);
@@ -1290,7 +1317,7 @@ int main(void) {
     test_absolute_max_tol();
     test_relative_pointwise_tol();
     test_allow_max_depth_leaves();
-    test_max_memory_mib_zero();
+    test_max_memory_mib_negative();
     test_max_depth_exceeded_error();
     test_memory_budget_exceeded_error();
     test_1d_3out_shape();

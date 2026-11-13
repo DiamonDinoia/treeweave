@@ -17,9 +17,11 @@ classdef treeweave < handle
 %     'dim'                   input dimension (default: numel(a))
 %     'out_dim'               output dimension (default: inferred by probing f
 %                             once at the box midpoint)
-%     'tol_kind'              0=REL_TAIL..6=REL_POINTWISE (default: 2=REL_MAX)
-%     'max_depth'             max tree depth (default: 50)
-%     'max_memory_mib'        memory budget in MiB (default: -1 → auto: 4/8/16 MiB by dim)
+%     'tol_kind'              name ('relative_max' (default), 'absolute_max',
+%                             'relative_l2', 'absolute_l2', 'relative_pointwise',
+%                             'relative_tail', 'absolute_tail') or its C value 0..6
+%     'max_depth'             max tree depth (default: 0 → auto: 50; -1 → root panel only)
+%     'max_memory_mib'        memory budget in MiB (default: 0 → auto: 4/32/256 MiB by dim; -1 → no cap)
 %     'allow_max_depth_leaves' int bool (default: 0)
 %     'min_uniform_depth'     (default: 0)
 %     'filename'              path of a plain-text fit file (default: '' = none).
@@ -58,9 +60,9 @@ classdef treeweave < handle
             addRequired(p, 'tol');
             addParameter(p, 'dim',                    numel(a));
             addParameter(p, 'out_dim',                1);
-            addParameter(p, 'tol_kind',               2);
-            addParameter(p, 'max_depth',              50);
-            addParameter(p, 'max_memory_mib',         -1); % -1 = C ABI auto (4/8/16 MiB by dim)
+            addParameter(p, 'tol_kind',               'relative_max');
+            addParameter(p, 'max_depth',              0);
+            addParameter(p, 'max_memory_mib',         0); % 0 = C ABI auto (4/32/256 MiB by dim)
             addParameter(p, 'allow_max_depth_leaves', 0);
             addParameter(p, 'min_uniform_depth',      0);
             addParameter(p, 'filename',               '');
@@ -80,11 +82,22 @@ classdef treeweave < handle
                 out_dim = numel(probe);
             end
 
+            tol_kind = r.tol_kind;
+            if ischar(tol_kind) || isstring(tol_kind)
+                % Same order as treeweave_tol_kind_t in treeweave.h.
+                names    = {'relative_max', 'absolute_max', 'relative_l2', 'absolute_l2', ...
+                            'relative_pointwise', 'relative_tail', 'absolute_tail'};
+                tol_kind = find(strcmpi(char(tol_kind), names)) - 1;
+                if isempty(tol_kind)
+                    error('treeweave:tol_kind', 'unknown tol_kind ''%s''', char(r.tol_kind));
+                end
+            end
+
             % The generated gateway reads scalars as mxDOUBLE_CLASS, so pass
             % every numeric option as a plain double (no int32 casts).
             obj.mwptr = tw_fit(r.f, a, b, double(r.tol), ...
                 double(r.dim), double(out_dim), ...
-                double(r.tol_kind), ...
+                double(tol_kind), ...
                 double(r.max_depth), double(r.max_memory_mib), ...
                 double(r.allow_max_depth_leaves), double(r.min_uniform_depth), ...
                 char(r.filename));

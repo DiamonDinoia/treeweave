@@ -1,5 +1,5 @@
 # treeweave_c_dispatch.cmake: C-ABI TU generation and per-arch fan-out.
-# Generated factory TUs — fit, tree build, pipeline glue; degree baked to 7 —
+# Generated factory TUs — fit, tree build, pipeline glue; degree baked per input_dim —
 # compile once at the family baseline (6 combined TUs in multi-arch, 18
 # one-pipeline TUs in single-arch; see the granularity comment below).
 # Multi-arch fans out only the hot loops: kernels_arch.cpp compiles once per

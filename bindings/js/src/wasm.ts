@@ -166,6 +166,9 @@ function fit(M: WasmModule, req: FitRequest): BackendFunction {
         const after = M.FS.readFile(MEMFS_PATH);
         if (!before || Buffer.compare(before, after) !== 0) fs.writeFileSync(req.filename, after);
         return fn;
+    } catch (e) {
+        if (e instanceof Error) e.message = e.message.replace(MEMFS_PATH, req.filename);
+        throw e;
     } finally {
         M._free(namePtr);
         if (M.FS.analyzePath(MEMFS_PATH).exists) M.FS.unlink(MEMFS_PATH);
@@ -190,12 +193,10 @@ function fitCore(M: WasmModule, req: FitRequest, namePtr: number): BackendFuncti
             const xv = heap().subarray(xi, xi + req.inputDim);
             const r = req.callback(xv);
             const h = heap(); // re-read: the callback may have grown the heap
-            if (req.outputDim === 1) {
-                h[yi] = typeof r === "number" ? r : (r as ArrayLike<number>)[0];
-            } else {
-                const rr = r as ArrayLike<number>;
-                for (let i = 0; i < req.outputDim; ++i) h[yi + i] = rr[i];
-            }
+            const rr: ArrayLike<number> = typeof r === "number" ? [r] : (r as ArrayLike<number>);
+            const n = rr?.length ?? 0;
+            if (n !== req.outputDim) throw new Error(`callback returned ${n} values, expected ${req.outputDim}`);
+            for (let i = 0; i < req.outputDim; ++i) h[yi + i] = rr[i];
         } catch (e) {
             cbError = e;
             const h = heap();

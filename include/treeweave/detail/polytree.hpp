@@ -127,12 +127,13 @@ struct PolyTree {
 
             if (!q.empty())
                 ++max_depth_;
-            if (input.max_memory_mib > 0 && !q.empty()) {
+            // Also check after the last level: it can add the most leaves.
+            if (input.max_memory_mib > 0) {
                 const std::size_t budget =
                     static_cast<std::size_t>(input.max_memory_mib) * std::size_t{1024} * std::size_t{1024};
                 const std::size_t used = polyfits.size() * sizeof(poly_eval_type) + nodes_.size() * sizeof(node_t);
                 if (used > budget) {
-                    const auto &offender = q.front();
+                    const auto &offender = q.empty() ? root_box : q.front();
                     throw MemoryBudgetExceeded(used, budget, offender.center.as_array(),
                                                offender.half_length.as_array());
                 }

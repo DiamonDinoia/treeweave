@@ -230,6 +230,36 @@ end
 check(ok, 'filename: a malformed file errors');
 [~] = rmdir(tmpdir, 's');
 
+% Callback return classes and shapes: each converts to double, values match.
+rets = {1, @(x) single(sin(x)); 1, @(x) int32(3); ...
+        2, @(x) [sin(x); cos(x)]; 2, @(x) single([sin(x), cos(x)])};
+for i = 1:size(rets, 1)
+    tr = treeweave(rets{i, 2}, 0, 1, 1e-4);
+    ref = double(rets{i, 2}(0.3));
+    check(tr.output_dim == rets{i, 1} && max(abs(double(tr.eval(0.3)) - ref(:)')) < 1e-3, ...
+          sprintf('callback return %d (%s) fits as double', i, class(rets{i, 2}(0.3))));
+end
+msg = '';
+try
+    treeweave(@(x) [1, 2, 3], 0, 1, 1e-4, 'out_dim', 2);
+catch e
+    msg = e.message;
+end
+check(~isempty(strfind(msg, 'returned 3 values, expected 2')), 'callback wrong size errors');
+
+% tol_kind by name or by C value: 'absolute_max' is 1 in treeweave_tol_kind_t.
+xs     = linspace(0, 0.99, 100)';
+by_nam = treeweave(@(x) exp(x), 0, 1, 1e-8, 'tol_kind', 'absolute_max');
+by_num = treeweave(@(x) exp(x), 0, 1, 1e-8, 'tol_kind', 1);
+check(isequal(by_nam.eval(xs), by_num.eval(xs)), 'tol_kind name matches its C value');
+msg = '';
+try
+    treeweave(@(x) exp(x), 0, 1, 1e-8, 'tol_kind', 'no_such_kind');
+catch e
+    msg = e.message;
+end
+check(~isempty(strfind(msg, 'unknown tol_kind')), 'unknown tol_kind name errors');
+
 fprintf('\n--- Results: %d passed, %d failed ---\n', passed, failed);
 if failed > 0
     error('test_treeweave:failures', '%d test(s) failed.', failed);

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,11 @@ void read_outputs(Napi::Value v, T *y, int od) {
         y[0] = static_cast<T>(v.As<Napi::Number>().DoubleValue());
         return;
     }
-    Napi::Object o = v.As<Napi::Object>();
+    Napi::Object   o   = v.ToObject();
+    const uint32_t len = o.Get("length").ToNumber().Uint32Value();
+    if (len != static_cast<uint32_t>(od))
+        throw std::runtime_error("callback returned " + std::to_string(len) + " values, expected " +
+                                 std::to_string(od));
     for (int i = 0; i < od; ++i)
         y[i] = static_cast<T>(o.Get(static_cast<uint32_t>(i)).As<Napi::Number>().DoubleValue());
 }

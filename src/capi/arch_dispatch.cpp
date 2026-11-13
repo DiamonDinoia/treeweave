@@ -78,8 +78,8 @@ auto select_kernels() -> detail::KernelSet<T, IN, NC, OUT> {
 // kernels_arch.cpp's TREEWEAVE_KERNELS_FOR list in sync with them.
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) — explicit-instantiation list.
 #define TREEWEAVE_SELECT_KERNELS(T, IN, OUT)                                                                       \
-    template auto select_kernels<T, IN, static_cast<std::size_t>(chosen_degree), OUT>()                           \
-        -> detail::KernelSet<T, IN, static_cast<std::size_t>(chosen_degree), OUT>;
+    template auto select_kernels<T, IN, detail::default_degree(IN), OUT>()                           \
+        -> detail::KernelSet<T, IN, detail::default_degree(IN), OUT>;
 
 TREEWEAVE_SELECT_KERNELS(double, 1, 1)
 TREEWEAVE_SELECT_KERNELS(double, 1, 2)
@@ -131,7 +131,7 @@ auto make_eval_f32_dim3(int output_dim, treeweavef_func_t f, void *data, const f
 // caller did not select means the linker resolved a rung's kernels to another
 // rung's code — the COFF duplicate-COMDAT failure, caught at runtime.
 auto active_arch() -> const char * {
-    return select_kernels<double, 1, static_cast<std::size_t>(chosen_degree), 1>().arch;
+    return select_kernels<double, 1, detail::default_degree(1), 1>().arch;
 }
 
 auto arch_available(const char *name) -> int {

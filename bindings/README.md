@@ -94,7 +94,7 @@ obj(linspace(2, 10, 100)')         % subsref syntax; or obj.eval(...)
 obj(linspace(2, 10, 100)', 'sorted', true)  % 1-D ascending fast path
 
 g = treeweave(@(x) [exp(0.3*x(1))+sin(2*x(2)), cos(x(1)*x(2))+2, x(1)^2+x(2)+1], ...
-           [0.2 0.2], [1.5 1.5], 1e-7);     % out_dim inferred (=3); degree auto per CPU
+           [0.2 0.2], [1.5 1.5], 1e-7);     % out_dim inferred (=3)
 g(rand(100,2)*1.3 + 0.2)                    % -> 100x3
 g(rand(100,2)*1.3 + 0.2, 'transposed', true) % -> 3x100
 ```

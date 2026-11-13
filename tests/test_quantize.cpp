@@ -18,7 +18,7 @@ template <class T>
 void check_1d() {
     constexpr int      depth = 8; // -> 256 uniform leaves, leaf table live
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = depth;
     auto fn = treeweave::fit<3>([](T x) { return T{1} / (T{1} + T{25} * x * x); }, T{-1}, T{1}, /*tol=*/1e-4, opts);
     REQUIRE(fn.has_fast_quantize());
@@ -71,7 +71,7 @@ template <class T>
 void check_2d() {
     using P = std::array<T, 2>;
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = 4; // 2D depth 4 -> 8 bits -> 256-entry table
     auto fn                = treeweave::fit<3>(
         [](P x) -> std::array<T, 1> {
@@ -112,7 +112,7 @@ template <class T>
 void check_large_leaves() {
     constexpr int      depth = 13; // 2^13 = 8192 leaves
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = depth;
     auto fn = treeweave::fit<3>([](T x) { return T{1} / (T{1} + T{25} * x * x); }, T{-1}, T{1}, /*tol=*/1e-4, opts);
     REQUIRE(fn.has_fast_quantize());
@@ -163,7 +163,7 @@ template <class T>
 void check_large_leaves_soa() {
     constexpr int      depth = 13; // 2^13 = 8192 leaves
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = depth;
     auto fn                = treeweave::fit<3>(
         [](std::array<T, 1> x) -> std::array<T, 2> { return {std::sin(T{3} * x[0]), T{1} / (T{1} + x[0] * x[0])}; },
@@ -215,7 +215,7 @@ void check_large_leaves_soa() {
 template <class T>
 void check_scalar_nan() {
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = 8;
     auto fn = treeweave::fit<3>([](T x) { return T{1} / (T{1} + T{25} * x * x); }, T{-1}, T{1}, /*tol=*/1e-4, opts);
     REQUIRE(std::isnan(fn(std::numeric_limits<T>::quiet_NaN())));

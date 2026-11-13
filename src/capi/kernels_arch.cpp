@@ -30,8 +30,6 @@ namespace {
 /// TU-local linkage anchor for the polyfit ND-batch instantiations.
 struct ArchTag {};
 
-constexpr auto kDeg = static_cast<std::size_t>(treeweave::capi::chosen_degree);
-
 // New vectorized kernel (step 4 of the guide in kernels.hpp): add its
 // `k_<name>` wrapper below — anonymous namespace, POD-view parameters,
 // forwarding to the free kernel with `ArchTag` where the kernel takes a
@@ -45,29 +43,29 @@ auto k_partition(const QuantizeView<T, 1> &v, const T *xp, std::size_t n, std::u
 }
 
 template <class T>
-auto k_run(const Leaf1D<T, kDeg> &lv, const T *xp, T *out, std::size_t n) noexcept -> void {
+auto k_run(const Leaf1D<T, default_degree(1)> &lv, const T *xp, T *out, std::size_t n) noexcept -> void {
     leaf_run(lv, xp, out, n);
 }
 
 template <class T>
-auto k_eval_one(const Leaf1D<T, kDeg> &lv, const T x) noexcept -> T {
+auto k_eval_one(const Leaf1D<T, default_degree(1)> &lv, const T x) noexcept -> T {
     return leaf_eval_one(lv, x);
 }
 
 template <class T, std::size_t IN, std::size_t OUT>
-auto k_run_aos(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> *xp, std::array<T, OUT> *out,
+auto k_run_aos(const LeafND<T, IN, default_degree(IN)> &lv, const std::array<T, IN> *xp, std::array<T, OUT> *out,
                std::size_t n) noexcept -> void {
-    leaf_run_aos<T, IN, kDeg, OUT, ArchTag>(lv, xp, out, n);
+    leaf_run_aos<T, IN, default_degree(IN), OUT, ArchTag>(lv, xp, out, n);
 }
 
 template <class T, std::size_t IN, std::size_t OUT>
-auto k_run_soa(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> *xp, const std::array<T *, OUT> &out,
+auto k_run_soa(const LeafND<T, IN, default_degree(IN)> &lv, const std::array<T, IN> *xp, const std::array<T *, OUT> &out,
                std::size_t n) noexcept -> void {
-    leaf_run_soa<T, IN, kDeg, OUT, ArchTag>(lv, xp, out, n);
+    leaf_run_soa<T, IN, default_degree(IN), OUT, ArchTag>(lv, xp, out, n);
 }
 
 template <class T, std::size_t IN, std::size_t OUT>
-auto k_eval_one_nd(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> &x, std::array<T, OUT> &out) noexcept
+auto k_eval_one_nd(const LeafND<T, IN, default_degree(IN)> &lv, const std::array<T, IN> &x, std::array<T, OUT> &out) noexcept
     -> void {
     leaf_eval_one(lv, x, out);
 }
@@ -78,7 +76,7 @@ auto k_eval_one_nd(const LeafND<T, IN, kDeg> &lv, const std::array<T, IN> &x, st
 // address per member, in member order (see kernels.hpp).
 template <class Arch, class T, std::size_t IN, std::size_t NC, std::size_t OUT>
 auto make_kernels_for() noexcept -> KernelSet<T, IN, NC, OUT> {
-    static_assert(NC == kDeg, "kernel TUs instantiate the baked degree only (arch_degree_table.hpp)");
+    static_assert(NC == default_degree(IN), "kernel TUs instantiate the baked degree only (arch_degree_table.hpp)");
     // Arch::name() comes from this TU, compiled at this rung's ISA level, so the
     // name travels with the table and identifies which rung the caller reached.
     if constexpr (IN == 1 && OUT == 1) {
@@ -95,7 +93,8 @@ auto make_kernels_for() noexcept -> KernelSet<T, IN, NC, OUT> {
 // list and arch_dispatch.cpp's TREEWEAVE_SELECT_KERNELS list in sync with it.
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage) — explicit-instantiation list.
 #define TREEWEAVE_KERNELS_FOR(T, IN, OUT)                                                                          \
-    template auto make_kernels_for<xsimd::best_arch, T, IN, kDeg, OUT>() noexcept -> KernelSet<T, IN, kDeg, OUT>;
+    template auto make_kernels_for<xsimd::best_arch, T, IN, default_degree(IN), OUT>() noexcept                          \
+        -> KernelSet<T, IN, default_degree(IN), OUT>;
 
 TREEWEAVE_KERNELS_FOR(double, 1, 1)
 TREEWEAVE_KERNELS_FOR(double, 1, 2)

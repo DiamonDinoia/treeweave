@@ -75,8 +75,8 @@ const approx = await Treeweave.fit(f, 0.0, 10.0, 1e-10, {
 | `outDim` | inferred | Output dimension; inferred by probing `f` at the box midpoint. |
 | `dtype` | `"f64"` | Floating-point precision: `"f64"` or `"f32"`. |
 | `tolKind` | `"relative_max"` | Tolerance interpretation. One of `"relative_max"`, `"absolute_max"`, `"relative_l2"`, `"absolute_l2"`, `"relative_tail"`, `"absolute_tail"`, `"relative_pointwise"`. |
-| `maxDepth` | `50` | Tree-depth ceiling. |
-| `maxMemoryMib` | `-1` (auto) | Memory budget in MiB. `-1` = auto (4/8/16 MiB for dim 1/2/3); `0` = no cap. |
+| `maxDepth` | `0` (auto) | Tree-depth ceiling. `0` = auto, 50; `-1` = the root panel only. |
+| `maxMemoryMib` | `0` (auto) | Memory budget in MiB. `0` = auto (4/32/256 MiB for dim 1/2/3); `-1` = no cap. |
 | `allowMaxDepthLeaves` | `false` | Keep non-converged panels at max depth instead of throwing. |
 | `minUniformDepth` | `0` | Force uniform refinement to this depth before adaptivity. |
 | `filename` | none | Path of a plain-text fit file. If the file exists and its header matches the fit, the fit loads it and never calls `f`. Otherwise the fit runs and writes the file. Set `outDim` to skip the probe call of `f`. Needs Node.js; the WASM backend throws in a browser. |

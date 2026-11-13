@@ -8,16 +8,17 @@
 namespace treeweave {
 
 /// Tolerance interpretation for the tree's adaptive refinement.
+/// The default, RelativeMax, is 0, so a zeroed options struct selects it.
 enum class TolKind : std::uint8_t {
-    RelativeTail = 0, ///< tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only).
+    RelativeMax  = 0, ///< sample-based, max|p - f| <= tol * max|f| sampled over the domain; all-zero f needs p == f
+    AbsoluteMax  = 1, ///< sample-based, max-abs absolute error
+    RelativeL2   = 2, ///< sample-based, L2 relative error
+    AbsoluteL2   = 3, ///< sample-based, L2 absolute error
+    RelativePointwise = 4, ///< sample-based, |p - f| <= tol * |f| at every sample; a zero sample needs p == f
+    RelativeTail = 5, ///< tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only).
                       ///< Exception: with a fit of 1 or 2 coefficients the tail is the whole polynomial, so this
                       ///< falls back to sampled RelativeMax scaled by the running domain-wide max|f|.
-    AbsoluteTail = 1, ///< absolute tail-coefficient estimate (1D only)
-    RelativeMax  = 2, ///< sample-based, max|p - f| <= tol * max|f| sampled over the domain; all-zero f needs p == f
-    AbsoluteMax  = 3, ///< sample-based, max-abs absolute error
-    RelativeL2   = 4, ///< sample-based, L2 relative error
-    AbsoluteL2   = 5, ///< sample-based, L2 absolute error
-    RelativePointwise = 6, ///< sample-based, |p - f| <= tol * |f| at every sample; a zero sample needs p == f
+    AbsoluteTail = 6, ///< absolute tail-coefficient estimate (1D only)
 };
 
 namespace detail {
@@ -29,10 +30,8 @@ struct TreeInput {
     int    degree     = 7;
     double tol        = 0.0;
     int    max_depth  = 50;
-    // Already-resolved concrete budget: >0 caps leaf storage at that many
-    // MiB, 0 disables. The public `options` auto sentinel (<0) is resolved to
-    // a dimension-scaled value at the API boundary (see make_input), so a
-    // negative value never reaches the paneler.
+    // Resolved budget: >0 caps leaf storage at that many MiB, <0 disables.
+    // `init_defaults` resolves the public auto value (0) at the API boundary.
     int  max_memory_mib         = 4;
     bool allow_max_depth_leaves = false;
     /// Force BFS to refine every panel to at least this depth before

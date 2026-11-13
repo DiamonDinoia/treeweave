@@ -6,7 +6,7 @@
 /// dtype-checked eval / introspection / lifetime shims. No C++ exception is
 /// allowed to escape any function here.
 ///
-/// Degree is baked to chosen_degree (= 7, arch_degree_table.hpp); these entry
+/// Degree is baked to detail::default_degree (arch_degree_table.hpp); these entry
 /// points carry no degree argument and the opaque handle does not store one.
 
 #include <cstddef>
@@ -70,14 +70,7 @@ extern "C" {
 void treeweave_default_opts(treeweave_opts *opts) {
     if (opts == nullptr)
         return;
-    *opts = {
-        .tol_kind               = TREEWEAVE_RELATIVE_MAX,
-        .max_depth              = 50,
-        .max_memory_mib         = -1, // auto: dimension-scaled (4/8/16 MiB)
-        .allow_max_depth_leaves = 0,
-        .min_uniform_depth      = 0,
-        .filename               = nullptr,
-    };
+    *opts = treeweave_opts{}; // all zero: every field at its default
 }
 
 auto treeweave_fit(treeweave_func_t f, int input_dim, int output_dim, const double *a, const double *b, double tol,

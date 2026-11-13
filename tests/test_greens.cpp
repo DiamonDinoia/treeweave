@@ -16,11 +16,11 @@
 using treeweave::fit;
 using treeweave::options;
 
-// fit(lambda, a, b, tol) must select the default Degree=7 specialisation.
+// fit(f, a, b, tol) must select the default degree for the input dimension.
 TEST_CASE("fit canonical overload type", "[treeweave][api][type]") {
     auto f         = [](double x) { return x; };
     using actual_t = decltype(treeweave::fit(f, 0.0, 1.0, 1e-8));
-    STATIC_REQUIRE(actual_t::degree == 7);
+    STATIC_REQUIRE(actual_t::degree == 6);
     STATIC_REQUIRE(actual_t::input_dim == 1);
     STATIC_REQUIRE(actual_t::output_dim == 1);
 }
@@ -182,7 +182,7 @@ TEST_CASE("3D Yukawa on shifted box, k=1 and k=10", "[treeweave][greens][yukawa]
         };
         std::array<double, 3> const a{0.2, 0.2, 0.2};
         std::array<double, 3> const b{1.5, 1.5, 1.5};
-        // Fits within the auto dimension-scaled default (16 MiB in 3D).
+        // Fits within the auto dimension-scaled default (256 MiB in 3D).
         auto fn = fit(f, a, b, kTol);
         auto ap = [&](std::array<double, 3> x) { return fn(x)[0]; };
         REQUIRE(max_norm_err_nd<3>(ex, ap, {0.21, 0.21, 0.21}, {1.49, 1.49, 1.49}, 1000, 6) <= 10 * kTol);

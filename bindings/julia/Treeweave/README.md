@@ -73,8 +73,8 @@ an `NTuple`, so a 2D function reads `(x, y) -> ...`.
 ```julia
 TreeweaveOptions(;
     tol_kind               = TREEWEAVE_RELATIVE_MAX,   # tolerance interpretation
-    max_depth              = 50,                     # max tree depth
-    max_memory_mib         = 4,                      # memory budget in MiB
+    max_depth              = 0,                      # 0 = auto (50), -1 = root panel only
+    max_memory_mib         = 0,                      # MiB; 0 = auto, -1 = no cap
     allow_max_depth_leaves = 0,                      # bool: allow leaves at max depth
     min_uniform_depth      = 0)                      # force uniform refinement up to this depth
 ```

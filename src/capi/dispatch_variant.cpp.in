@@ -8,7 +8,7 @@
 // the family baseline -march in the multi-arch build (TREEWEAVE_C_KERNELSET;
 // the hot loops reach the per-ISA kernel TUs through `KernelSet` function
 // pointers) or at TREEWEAVE_ARCH in the single-arch build (`InlineKernels`,
-// fully inlined). Degree baked (= 7, see arch_degree_table.hpp). The
+// fully inlined). Degree baked (see arch_degree_table.hpp). The
 // anonymous-namespace include keeps every fit/pipeline instantiation internal
 // to this TU.
 

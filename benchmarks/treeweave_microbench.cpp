@@ -88,7 +88,7 @@ template <std::size_t Deg, class Fmaker>
 void sweep_1d(ankerl::nanobench::Bench &b, const char *label, Fmaker make_f, double a, double b_) {
     auto               f = make_f();
     treeweave::options opts;
-    opts.max_memory_mib = 0; // disable fit-time leaf-storage budget for bench
+    opts.max_memory_mib = -1; // disable fit-time leaf-storage budget for bench
     auto         fn     = treeweave::fit<Deg, TREEWEAVE_BENCH_POLICY>(f, a, b_, /*tol=*/1e-10, opts);
     std::mt19937 gen(7);
     std::uniform_real_distribution<double> d(a + 1e-3, b_ - 1e-3);
@@ -128,7 +128,7 @@ void sweep_nd(ankerl::nanobench::Bench &b, const char *label, Fmaker make_f, std
               std::array<double, Dim> b_) {
     auto               f = make_f();
     treeweave::options opts;
-    opts.max_memory_mib = 0; // disable fit-time leaf-storage budget for bench
+    opts.max_memory_mib = -1; // disable fit-time leaf-storage budget for bench
     auto         fn     = treeweave::fit<Deg, TREEWEAVE_BENCH_POLICY>(f, a, b_, /*tol=*/1e-10, opts);
     std::mt19937 gen(7);
     std::uniform_real_distribution<double> ud(0.0, 1.0);

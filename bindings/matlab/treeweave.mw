@@ -31,6 +31,7 @@ $[
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 /* ------------------------------------------------------------------ */
 /* Fit trampoline state (file-static, safe because MEX is              */
@@ -42,6 +43,7 @@ struct TrampState {
     int      output_dim;
     int      errored;         /* set after the first MATLAB error          */
     mxArray *exception;       /* stashed mxArray* from mexCallMATLABWithTrap */
+    char     message[128];    /* binding-side error when exception is NULL */
 };
 
 /*
@@ -93,18 +95,43 @@ static void matlab_trampoline(const double *x, double *y, void *data)
         return;
     }
 
+    /* The data pointer is read as double, so convert single, integer and
+     * logical returns with MATLAB's double() first. */
+    mxArray *res = lhs[0];
+    if (!mxIsDouble(res)) {
+        mxArray *conv = NULL;
+        ex = mexCallMATLABWithTrap(1, &conv, 1, &res, "double");
+        mxDestroyArray(res);
+        if (ex || !conv) {
+            s->errored   = 1;
+            s->exception = ex;
+            for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+            return;
+        }
+        res = conv;
+    }
+    mwSize numel = mxGetNumberOfElements(res);
+    if (mxIsComplex(res) || numel != (mwSize)s->output_dim) {
+        if (mxIsComplex(res))
+            snprintf(s->message, sizeof(s->message), "callback returned a complex value");
+        else
+            snprintf(s->message, sizeof(s->message), "callback returned %d values, expected %d",
+                     (int)numel, s->output_dim);
+        s->errored = 1;
+        mxDestroyArray(res);
+        for (int i = 0; i < s->output_dim; ++i) y[i] = (double)NAN;
+        return;
+    }
+
     /* mxGetPr deprecated since R2018a; use mxGetDoubles under interleaved-complex. */
 #if MX_HAS_INTERLEAVED_COMPLEX
-    double *yptr  = mxGetDoubles(lhs[0]);
+    double *yptr = mxGetDoubles(res);
 #else
-    double *yptr  = mxGetPr(lhs[0]);
+    double *yptr = mxGetPr(res);
 #endif
-    mwSize  numel = mxGetNumberOfElements(lhs[0]);
-    mwSize  ncopy = (numel < (mwSize)s->output_dim) ? numel : (mwSize)s->output_dim;
-    for (mwSize i = 0; i < ncopy; ++i)                     y[i] = yptr[i];
-    for (mwSize i = ncopy; i < (mwSize)s->output_dim; ++i) y[i] = (double)NAN;
+    for (int i = 0; i < s->output_dim; ++i) y[i] = yptr[i];
 
-    mxDestroyArray(lhs[0]);
+    mxDestroyArray(res);
 }
 
 /* ------------------------------------------------------------------ */
@@ -137,6 +164,7 @@ static treeweave_function *tw_fit_w(const mxArray *fh,
     state.output_dim = output_dim;
     state.errored    = 0;
     state.exception  = NULL;
+    state.message[0] = '\0';
 
     /* treeweave_fit(f, input_dim, output_dim, a, b, tol, context, opts); the
        MATLAB callback recovers its function_handle from the &state context. */
@@ -147,7 +175,7 @@ static treeweave_function *tw_fit_w(const mxArray *fh,
 
     /* Surface a MATLAB callback error in preference to a fit error. */
     if (state.errored) {
-        const char *msg = "MATLAB callback raised an error";
+        const char *msg = state.message[0] ? state.message : "MATLAB callback raised an error";
         char errbuf[1024] = {0};
         if (state.exception) {
             mxArray *mf = mxGetProperty(state.exception, 0, "message");

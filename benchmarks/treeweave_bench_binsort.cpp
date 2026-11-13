@@ -56,7 +56,7 @@ auto runge() {
 template <class T>
 auto build(int depth) {
     treeweave::options opts;
-    opts.max_memory_mib    = 0;     // deep uniform trees blow the 4 MiB guard
+    opts.max_memory_mib    = -1;     // deep uniform trees blow the 4 MiB guard
     opts.min_uniform_depth = depth; // force exactly 2^depth leaves (1D)
     // Loose tol: the uniform refinement already satisfies a smooth kernel, so
     // the tree stays exactly uniform at `depth` (no extra adaptive splits).
@@ -129,7 +129,7 @@ void run_descent(const char *tag) {
     std::printf("# %-7s %-9s %-9s | full MEvals/s (N=%zu)\n", "depth", "n_leaves", "fastq", kFullN);
     for (int depth : {17, 18}) {
         treeweave::options opts;
-        opts.max_memory_mib     = 0;
+        opts.max_memory_mib     = -1;
         opts.min_uniform_depth  = depth; // > 16 -> no leaf table -> descent path
         auto              fn    = treeweave::fit<kDeg>(runge<T>(), T{-1}, T{1}, /*tol=*/1e-4, opts);
         const std::size_t nl    = fn.num_leaves();

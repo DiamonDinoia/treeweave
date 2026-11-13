@@ -160,6 +160,34 @@ for (const backend of backends) {
             );
         });
 
+        test("accepts a number, an Array or a TypedArray return", async () => {
+            const s = (x) => Math.sin(x[0]);
+            const c = (x) => Math.cos(x[0]);
+            for (const [od, f] of [
+                [1, (x) => s(x)],
+                [1, (x) => [s(x)]],
+                [1, (x) => Float64Array.of(s(x))],
+                [2, (x) => [s(x), c(x)]],
+                [2, (x) => Float32Array.of(s(x), c(x))],
+            ]) {
+                const tw = await Treeweave.fit(f, 0, 1, 1e-4, { backend });
+                assert.equal(tw.outDim, od);
+                const r = tw.eval(0.3);
+                const y = typeof r === "number" ? [r] : Array.from(r);
+                const want = [Math.sin(0.3), Math.cos(0.3)].slice(0, od);
+                y.forEach((v, i) => assert.ok(Math.abs(v - want[i]) < 1e-3, `${v} vs ${want[i]}`));
+                tw.free();
+            }
+        });
+
+        test("a return whose length changes after the probe throws", async () => {
+            let n = 0;
+            await assert.rejects(
+                Treeweave.fit(() => (++n === 1 ? [1, 2] : [1, 2, 3]), 0, 1, 1e-4, { backend }),
+                /returned 3 values, expected 2/,
+            );
+        });
+
         describe("filename option", () => {
             const dir = mkdtempSync(join(tmpdir(), "treeweave-js-"));
             after(() => rmSync(dir, { recursive: true, force: true }));
@@ -249,6 +277,7 @@ for (const backend of backends) {
                 writeFileSync(file, good.slice(0, good.indexOf("subtrees")));
                 await assert.rejects(
                     Treeweave.fit(f, 0, 1, 1e-8, { backend, outDim: 1, filename: file }),
+                    (e) => e.message.includes(`malformed fit file '${file}'`),
                 );
             });
         });

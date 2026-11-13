@@ -28,6 +28,8 @@ using Catch::Approx;
 
 namespace {
 
+// The C ABI fits at this degree; the C++ references must match it.
+
 // --- Kernels, shared between the C callbacks and the C++ reference fits ---
 // Smooth and comfortably nonzero on the unit-ish boxes used below.
 
@@ -88,7 +90,7 @@ constexpr std::size_t kNPts = 2000;
 
 TEST_CASE("C API: 1D scalar parity + multi + sorted + OOD", "[c][1d]") {
     const double a = 0.0, b = 1.0;
-    auto         ref = treeweave::fit<7>([](double x) { return k_1d_1<double>(x); }, a, b, 1e-10);
+    auto         ref = treeweave::fit([](double x) { return k_1d_1<double>(x); }, a, b, 1e-10);
     treeweave_t  h   = treeweave_fit(c_1d_1, 1, 1, &a, &b, 1e-10, nullptr, nullptr);
     REQUIRE(h != nullptr);
     REQUIRE(treeweave_dtype(h) == TREEWEAVE_F64);
@@ -146,7 +148,7 @@ TEST_CASE("C API: 1D scalar parity + multi + sorted + OOD", "[c][1d]") {
 
 TEST_CASE("C API: 1D vector output (SoA == AoS) + sorted", "[c][1d][vector]") {
     const double a = 0.0, b = 1.0;
-    auto ref = treeweave::fit<7>([](std::array<double, 1> x) { return k_1d_2<double>(x); }, std::array<double, 1>{a},
+    auto ref = treeweave::fit([](std::array<double, 1> x) { return k_1d_2<double>(x); }, std::array<double, 1>{a},
                                  std::array<double, 1>{b}, 1e-9);
     treeweave_t h = treeweave_fit(c_1d_2, 1, 2, &a, &b, 1e-9, nullptr, nullptr);
     REQUIRE(h != nullptr);
@@ -190,7 +192,7 @@ TEST_CASE("C API: 1D vector output (SoA == AoS) + sorted", "[c][1d][vector]") {
 TEST_CASE("C API: 2D scalar + 2D vector(SoA) + 3D scalar", "[c][2d][3d]") {
     SECTION("2D -> 1D parity") {
         const double a[2] = {0.0, 0.0}, b[2] = {1.0, 1.0};
-        auto        ref = treeweave::fit<7>([](std::array<double, 2> x) { return k_2d_1<double>(x); },
+        auto        ref = treeweave::fit([](std::array<double, 2> x) { return k_2d_1<double>(x); },
                                             std::array<double, 2>{a[0], a[1]}, std::array<double, 2>{b[0], b[1]}, 1e-8);
         treeweave_t h   = treeweave_fit(c_2d_1, 2, 1, a, b, 1e-8, nullptr, nullptr);
         REQUIRE(h != nullptr);
@@ -214,7 +216,7 @@ TEST_CASE("C API: 2D scalar + 2D vector(SoA) + 3D scalar", "[c][2d][3d]") {
     }
     SECTION("2D -> 3D SoA parity") {
         const double a[2] = {0.0, 0.0}, b[2] = {1.0, 1.0};
-        auto        ref = treeweave::fit<7>([](std::array<double, 2> x) { return k_2d_3<double>(x); },
+        auto        ref = treeweave::fit([](std::array<double, 2> x) { return k_2d_3<double>(x); },
                                             std::array<double, 2>{a[0], a[1]}, std::array<double, 2>{b[0], b[1]}, 1e-8);
         treeweave_t h   = treeweave_fit(c_2d_3, 2, 3, a, b, 1e-8, nullptr, nullptr);
         REQUIRE(h != nullptr);
@@ -242,7 +244,7 @@ TEST_CASE("C API: 2D scalar + 2D vector(SoA) + 3D scalar", "[c][2d][3d]") {
     SECTION("3D -> 1D parity") {
         const double a[3] = {0.0, 0.0, 0.0}, b[3] = {1.0, 1.0, 1.0};
         auto         ref =
-            treeweave::fit<7>([](std::array<double, 3> x) { return k_3d_1<double>(x); },
+            treeweave::fit([](std::array<double, 3> x) { return k_3d_1<double>(x); },
                               std::array<double, 3>{a[0], a[1], a[2]}, std::array<double, 3>{b[0], b[1], b[2]}, 1e-7);
         treeweave_t h = treeweave_fit(c_3d_1, 3, 1, a, b, 1e-7, nullptr, nullptr);
         REQUIRE(h != nullptr);
@@ -265,7 +267,7 @@ TEST_CASE("C API: 2D scalar + 2D vector(SoA) + 3D scalar", "[c][2d][3d]") {
 TEST_CASE("C API: float (f32) parity", "[c][f32]") {
     SECTION("1D scalar") {
         const float a = 0.0F, b = 1.0F;
-        auto        ref = treeweave::fit<7>([](float x) { return k_1d_1<float>(x); }, a, b, 1e-5);
+        auto        ref = treeweave::fit([](float x) { return k_1d_1<float>(x); }, a, b, 1e-5);
         treeweave_t h   = treeweavef_fit(c_1d_1f, 1, 1, &a, &b, 1e-5, nullptr, nullptr);
         REQUIRE(h != nullptr);
         REQUIRE(treeweave_dtype(h) == TREEWEAVE_F32);
@@ -330,7 +332,7 @@ TEST_CASE("C API: error handling", "[c][errors]") {
     SECTION("default options struct is sane") {
         treeweave_opts opts;
         treeweave_default_opts(&opts);
-        REQUIRE(opts.max_depth == 50);
+        REQUIRE(opts.max_depth == 0);
         REQUIRE(opts.tol_kind == TREEWEAVE_RELATIVE_MAX);
     }
     SECTION("free(NULL) and eval(NULL) are safe") {

@@ -131,7 +131,7 @@ MemoryBudgetExceeded::MemoryBudgetExceeded(std::size_t used_bytes, std::size_t b
        << (static_cast<double>(used_bytes_) / (1024.0 * 1024.0)) << " MiB used vs "
        << (static_cast<double>(budget_bytes_) / (1024.0 * 1024.0)) << " MiB budget) on panel ";
     detail::format_domain(os, a_, b_);
-    os << " — raise options.max_memory_mib (or set to 0 to disable), "
+    os << " — raise options.max_memory_mib (or set it to -1 to disable), "
           "or restrict the fit domain to skip this region.";
     msg_ = os.str();
 }

@@ -14,6 +14,7 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -107,17 +108,23 @@ static void trampoline(const T *x, T *y, void *data) {
                                                                                            {(size_t)st->input_dim});
         nb::object                                                                    result = st->callable(xarr);
 
-        if (st->output_dim == 1) {
-            y[0] = nb::cast<T>(result);
-        } else {
-            nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu> rarr =
-                nb::cast<nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu>>(result);
-            if ((int)rarr.shape(0) != st->output_dim)
-                throw std::runtime_error("callback returned wrong number of outputs");
-            const T *rp = rarr.data();
-            for (int i = 0; i < st->output_dim; ++i)
-                y[i] = rp[i];
+        // Fast paths: a scalar for one output, a flat contiguous array otherwise.
+        // Anything else that `fit` probed as `out_dim` values (a list, a tuple,
+        // a (1,) or (k, 1) array) goes through numpy.asarray(...).ravel().
+        if (st->output_dim == 1 && nb::try_cast<T>(result, y[0]))
+            return;
+        using Vec = nb::ndarray<const T, nb::numpy, nb::shape<-1>, nb::c_contig, nb::device::cpu>;
+        Vec rarr;
+        if (!nb::try_cast<Vec>(result, rarr)) {
+            auto np = nb::module_::import_("numpy");
+            rarr    = nb::cast<Vec>(np.attr("asarray")(result, np.attr(Traits<T>::numpy_dtype)).attr("ravel")());
         }
+        if ((int)rarr.shape(0) != st->output_dim)
+            throw std::runtime_error("callback returned " + std::to_string(rarr.shape(0)) + " values, expected " +
+                                     std::to_string(st->output_dim));
+        const T *rp = rarr.data();
+        for (int i = 0; i < st->output_dim; ++i)
+            y[i] = rp[i];
     } catch (nb::python_error &e) {
         st->errored = true;
         e.restore(); // put exception back into interpreter state

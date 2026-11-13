@@ -24,16 +24,17 @@ These apply to every language binding:
      - ``RelativeMax``
      - How treeweave interprets ``tol`` (see :ref:`tolkind`).
    * - ``max_depth``
-     - ``50``
-     - Tree-depth ceiling. Hitting it without converging throws
-       ``MaxDepthExceeded`` (unless ``allow_max_depth_leaves``). Far above what
-       any non-singular function needs; lower it to fail fast near a suspected
-       singularity.
+     - ``0`` (auto)
+     - Tree-depth ceiling. ``0`` = auto, 50; ``< 0`` = the root panel only;
+       ``> 0`` = explicit ceiling. Hitting it without converging throws
+       ``MaxDepthExceeded`` (unless ``allow_max_depth_leaves``). 50 is far above
+       what any non-singular function needs; lower it to fail fast near a
+       suspected singularity.
    * - ``max_memory_mib``
      - auto
-     - Cap on accumulated leaf storage (MiB). Tri-state: ``< 0`` (default) =
-       auto, a dimension-scaled budget (4 / 8 / 16 MiB for 1D / 2D / 3D);
-       ``0`` = no cap; ``> 0`` = explicit cap. Crossing it throws
+     - Cap on accumulated leaf storage (MiB). Tri-state: ``0`` (default) =
+       auto, a dimension-scaled budget (4 / 32 / 256 MiB for 1D / 2D / 3D);
+       ``< 0`` = no cap; ``> 0`` = explicit cap. Crossing it throws
        ``MemoryBudgetExceeded`` carrying used/budget bytes and the offending
        panel.
    * - ``allow_max_depth_leaves``
@@ -59,8 +60,9 @@ These apply to every language binding:
        unwritable path makes the fit fail.
 
 The leaf polynomial degree is not a runtime option. In C++ it is a template
-parameter, ``treeweave::fit<N>``, default 7. The C ABI picks a register-optimal
-degree for the detected CPU.
+parameter, ``treeweave::fit<N>``. The default is 6 coefficients per axis in 1D
+and 7 in 2D and 3D. The C ABI and the bindings use the same degrees on every
+CPU.
 
 Language-specific options
 -------------------------

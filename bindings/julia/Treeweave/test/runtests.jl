@@ -194,4 +194,22 @@ end
     end
 end
 
+# Every return the out_dim probe sizes with `length` also fits.
+@testset "callback return shapes" begin
+    for T in (Float64, Float32)
+        for (od, g) in ((1, x -> sin(x)), (1, x -> [sin(x)]), (1, x -> Float32(sin(x))),
+                        (2, x -> (sin(x), cos(x))), (2, x -> [sin(x), cos(x)]),
+                        (2, x -> [sin(x) cos(x)]), (2, x -> reshape([sin(x), cos(x)], 2, 1)),
+                        (2, x -> Float32[sin(x), cos(x)]))
+            b = fit(g, 0.0, 1.0, 1e-4; dtype=T)
+            @test b.out_dim == od
+            @test [b(0.3)...] ≈ [sin(0.3), cos(0.3)][1:od] atol=1e-3
+        end
+    end
+    calls = Ref(0)
+    grow  = x -> (calls[] += 1; calls[] == 1 ? [1.0, 2.0] : [1.0, 2.0, 3.0])
+    err   = try fit(grow, 0.0, 1.0, 1e-4); nothing catch e; e end
+    @test err isa ErrorException && occursin("returned 3 values, expected 2", err.msg)
+end
+
 println("All Treeweave tests passed.")

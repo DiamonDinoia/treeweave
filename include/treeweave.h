@@ -10,9 +10,9 @@
  * introspection and lifetime functions are dtype-independent and operate on
  * the opaque handle, so they stay single (`treeweave_` prefix, no `treeweavef_`).
  *
- * Degree is baked: the leaf polynomial degree is fixed to 7 for all
- * (arch, dtype, input_dim) cells (see arch_degree_table.hpp). It is not a
- * user parameter.
+ * Degree is baked: the leaf polynomial has 6 coefficients per axis in 1D and
+ * 7 in 2D and 3D, on every arch and dtype (see arch_degree_table.hpp). It is
+ * not a user parameter.
  *
  * A fitted function can be evaluated (single, AoS batch, sorted-1D,
  * SoA/transposed). `treeweave_opts.filename` saves the fit to a plain-text
@@ -68,25 +68,28 @@ extern "C" {
 
 /* Tolerance interpretation; numeric values match treeweave::TolKind. */
 typedef enum {
-    TREEWEAVE_RELATIVE_TAIL      = 0, /* relative tail-coefficient estimate (1D) */
-    TREEWEAVE_ABSOLUTE_TAIL      = 1, /* absolute tail-coefficient estimate (1D) */
-    TREEWEAVE_RELATIVE_MAX       = 2, /* sample-based, max-abs err / global max|f| */
-    TREEWEAVE_ABSOLUTE_MAX       = 3, /* sample-based, max-abs absolute error    */
-    TREEWEAVE_RELATIVE_L2        = 4, /* sample-based, L2 relative error         */
-    TREEWEAVE_ABSOLUTE_L2        = 5, /* sample-based, L2 absolute error         */
-    TREEWEAVE_RELATIVE_POINTWISE = 6  /* sample-based, |err| <= tol*|f| per sample */
+    TREEWEAVE_RELATIVE_MAX       = 0, /* sample-based, max-abs err / global max|f| */
+    TREEWEAVE_ABSOLUTE_MAX       = 1, /* sample-based, max-abs absolute error    */
+    TREEWEAVE_RELATIVE_L2        = 2, /* sample-based, L2 relative error         */
+    TREEWEAVE_ABSOLUTE_L2        = 3, /* sample-based, L2 absolute error         */
+    TREEWEAVE_RELATIVE_POINTWISE = 4, /* sample-based, |err| <= tol*|f| per sample */
+    TREEWEAVE_RELATIVE_TAIL      = 5, /* relative tail-coefficient estimate (1D) */
+    TREEWEAVE_ABSOLUTE_TAIL      = 6  /* absolute tail-coefficient estimate (1D) */
 } treeweave_tol_kind_t;
 
 typedef enum { TREEWEAVE_F64 = 0, TREEWEAVE_F32 = 1 } treeweave_dtype_t;
 
-/* Fit knobs, mirroring treeweave::options. The bool field is an `int` so the
+/* Fit knobs, mirroring treeweave::options. A zero-filled struct (memset 0, or
+ * `treeweave_opts opts = {0};`) is the default; treeweave_default_opts writes it.
+ * The bool field is an `int` so the
  * struct stays plain C. */
 typedef struct {
     treeweave_tol_kind_t tol_kind;
+    /* Tree-depth ceiling: 0 (the default) = auto, 50; <0 = the root panel
+     * only; >0 = explicit ceiling. */
     int                  max_depth;
-    /* Leaf-storage cap during the fit, in MiB. Tri-state: <0 (the default in
-     * treeweave_default_opts(&opts)) auto-selects a small, dimension-scaled budget
-     * (4/8/16 MiB for input_dim 1/2/3); 0 disables the cap; >0 is an explicit
+    /* Leaf-storage cap during the fit, in MiB. Tri-state: 0 (the default) auto-selects a small, dimension-scaled budget
+     * (4/32/256 MiB for input_dim 1/2/3); <0 disables the cap; >0 is an explicit
      * cap. Crossing it makes the fit return NULL with treeweave_last_error()
      * naming the offending panel. */
     int max_memory_mib;
@@ -125,7 +128,7 @@ typedef void (*treeweavef_func_t)(const float *x, float *y, void *context);
  * @return A handle on success, or NULL with treeweave_last_error() set when the
  *         (dtype, input_dim, output_dim) tuple is unsupported, the arguments
  *         are invalid, or the fit throws (MaxDepthExceeded / MemoryBudgetExceeded).
- * @note The leaf polynomial degree is fixed at 7 and is not a parameter.
+ * @note The leaf degree is fixed per input_dim (6 in 1D, 7 in 2D and 3D) and is not a parameter.
  */
 TREEWEAVE_EXPORT treeweave_t treeweave_fit(treeweave_func_t f, int input_dim, int output_dim, const double *a,
                                            const double *b, double tol, void *context, const treeweave_opts *opts);

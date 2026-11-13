@@ -51,10 +51,13 @@ Memory and degree
 
 - Tightening ``tol``, raising ``max_depth`` / ``max_memory_mib``, or enabling
   ``allow_max_depth_leaves`` all increase the leaf count and therefore memory.
-- A SIMD tuning campaign picked the default leaf degree (7) as the best across
-  architectures and dimensions, and the only spill-free degree in the
-  register-pressured wide cells. Override it (C++ ``fit<N>``) only with
-  measurements in hand.
+- The default leaf degree is 6 coefficients per axis in 1D and 7 in 2D and
+  3D. A 1D single-point evaluation is then 6 FMAs: 5 Horner steps and 1 for
+  the domain map. A sweep of degrees 4 to 16 on x86-64-v3, x86-64-v4 and
+  Apple M2 found the same fastest degree on each ISA: 5 in 1D, 5 in 2D and 6
+  in 3D. Those degrees use more memory, and in 2D and 3D more than the auto
+  budget at tight ``tol``. The defaults trade some speed for memory.
+  Override it (C++ ``fit<N>``) only with measurements in hand.
 - Oscillatory or rapidly-varying functions can use a *lot* of memory. Fit one
   period of a periodic function.
 

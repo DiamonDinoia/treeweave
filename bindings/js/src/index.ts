@@ -28,8 +28,9 @@ export interface FitOptions {
     outDim?: number;
     dtype?: DType;
     tolKind?: TolKind;
+    /** 0 auto-selects 50, -1 fits the root panel only. */
     maxDepth?: number;
-    /** MiB; -1 auto-selects a dimension-scaled budget, 0 disables the cap. */
+    /** MiB; 0 auto-selects a dimension-scaled budget, -1 disables the cap. */
     maxMemoryMib?: number;
     allowMaxDepthLeaves?: boolean;
     minUniformDepth?: number;
@@ -118,8 +119,8 @@ export class Treeweave {
             b: bArr,
             tol,
             tolKind,
-            maxDepth: opts.maxDepth ?? 50,
-            maxMemoryMib: opts.maxMemoryMib ?? -1,
+            maxDepth: opts.maxDepth ?? 0,
+            maxMemoryMib: opts.maxMemoryMib ?? 0,
             allowMaxDepthLeaves: opts.allowMaxDepthLeaves ? 1 : 0,
             minUniformDepth: opts.minUniformDepth ?? 0,
             filename: opts.filename ?? "",

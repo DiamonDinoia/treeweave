@@ -90,8 +90,8 @@ Fit
                               void *context, const treeweave_opts *opts);
 
 ``context`` carries optional callback state; ``opts`` is ``NULL`` for defaults.
-Options take no degree argument; the library auto-selects a register-optimal
-leaf degree for the detected CPU. On failure, fit returns ``NULL`` and sets the
+Options take no degree argument. The leaf has 6 coefficients per axis in 1D
+and 7 in 2D and 3D, on every CPU. On failure, fit returns ``NULL`` and sets the
 thread-local ``treeweave_last_error()``.
 
 Evaluate
@@ -163,6 +163,11 @@ Pass a ``treeweave_opts*`` as the last argument (or ``NULL`` for defaults):
    opts.tol_kind       = TREEWEAVE_ABSOLUTE_MAX;
    opts.max_memory_mib = 64;
    treeweave_t fn = treeweave_fit(kernel, 1, 1, &a, &b, 1e-10, NULL, &opts);
+
+A zero-filled struct (``treeweave_opts opts = {0};`` or ``memset`` to 0) is
+the same as ``treeweave_default_opts``: a zero field is its default.
+``max_depth = 0`` is auto (50) and ``max_memory_mib = 0`` is auto
+(4/32/256 MiB in 1D/2D/3D).
 
 ``treeweave_tol_kind_t`` values: ``TREEWEAVE_RELATIVE_MAX`` (default),
 ``TREEWEAVE_ABSOLUTE_MAX``, ``TREEWEAVE_RELATIVE_L2``, ``TREEWEAVE_ABSOLUTE_L2``,

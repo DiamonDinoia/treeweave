@@ -41,6 +41,7 @@
 
 #include <treeweave_version.h> // generated; single source of truth (the VERSION file)
 
+#include <treeweave/detail/arch_degree_table.hpp>
 #include <treeweave/detail/eval_policy.hpp>
 #include <treeweave/detail/tol_kind.hpp>
 
@@ -68,7 +69,9 @@ inline constexpr const char *version_string = TREEWEAVE_VERSION_STRING;
 /// Compile-time guard: true iff the headers are at least `maj.min.pat`.
 constexpr auto version_at_least(int maj, int min, int pat) -> bool { return version >= maj * 10000 + min * 100 + pat; }
 
-/// Runtime fit knobs. Every field here only affects fit-time
+/// Runtime fit knobs. A value-initialised `options{}` is the default: a zero
+/// numeric field means auto, and `detail::init_defaults` sets its value.
+/// Every field here only affects fit-time
 /// construction; there is no eval-time benefit to promoting any of them
 /// to a template parameter, so they stay plain data.
 struct options {
@@ -80,17 +83,18 @@ struct options {
     /// Tree-depth ceiling for the adaptive paneler. Hitting it without
     /// converging throws `MaxDepthExceeded` (or, with
     /// `allow_max_depth_leaves`, accepts the panel as best-effort).
-    /// 50 is far above what any non-singular function needs; lower it
-    /// to fail fast when a near-singularity is suspected.
-    int max_depth = 50;
+    ///   * `0` (default): auto, 50. That is far above what any non-singular
+    ///     function needs; lower it to fail fast near a suspected singularity.
+    ///   * `< 0`: no subdivision, the root panel only.
+    ///   * `> 0`: explicit ceiling.
+    int max_depth = 0;
     /// Hard cap on accumulated leaf storage during the fit, in MiB.
     /// Tri-state:
-    ///   * `< 0` (default): auto, a small, dimension-scaled budget,
-    ///     `4 << (input_dim-1)` MiB (4 / 8 / 16 for 1D / 2D / 3D). Leaf
-    ///     storage grows ~geometrically with `input_dim`, so a single flat
-    ///     cap is either too loose in 1D or too tight in 3D; scaling keeps
-    ///     the default a genuine guardrail in every dimension.
-    ///   * `0`: disabled (no cap).
+    ///   * `0` (default): auto. `detail::init_defaults` sets a
+    ///     dimension-scaled budget, `4 << 3*(input_dim-1)` MiB (4 / 32 / 256
+    ///     for 1D / 2D / 3D). Leaf storage grows ~geometrically with
+    ///     `input_dim`, so one flat cap is too loose in 1D or too tight in 3D.
+    ///   * `< 0`: disabled (no cap).
     ///   * `> 0`: explicit cap in MiB.
     /// The default is deliberately small so an adaptive paneler can't
     /// quietly grow into hundreds of MiB; ambitious 3D+ or oscillatory
@@ -98,7 +102,7 @@ struct options {
     /// cap throws `MemoryBudgetExceeded`, which carries the used/budget
     /// bytes and the offending panel so the caller can raise the budget or
     /// excise the singular region.
-    int max_memory_mib = -1;
+    int max_memory_mib = 0;
     /// When true, panels that fail tolerance at `max_depth` are kept
     /// as best-effort leaves. Inspect them via
     /// `Function::non_converged_panels()`. Default false (throw, with
@@ -134,26 +138,34 @@ concept Fittable = requires(F f, Domain x) { f(x); };
 
 namespace detail {
 
-// Auto memory budget (MiB): 4/8/16 for 1D/2D/3D (doubles per dim; a flat cap
-// is too tight in 3D).
+// Auto memory budget (MiB): 4/32/256 for 1D/2D/3D, 8x per dim. Smooth test
+// functions at tol 1e-13 need up to 1.4/14.2/176 MiB at the default degrees.
 constexpr auto auto_memory_budget_mib(int input_dim) -> int {
-    const unsigned d = input_dim < 1 ? 1U : static_cast<unsigned>(input_dim);
-    return static_cast<int>(4U << (d - 1U));
+    const unsigned d = input_dim < 1 ? 1U : (input_dim > 4 ? 4U : static_cast<unsigned>(input_dim));
+    return static_cast<int>(4U << (3U * (d - 1U)));
 }
 
-// Default leaf degree: 7 wins or ties every (arch, dtype, dim) cell, and is
-// spill-free in the wide SIMD cells.
-inline constexpr std::size_t kDefaultDegree = 7;
+/// Replace each auto (0) field of `opts` with its heuristic value for `input_dim`.
+constexpr auto init_defaults(options opts, int input_dim) -> options {
+    if (opts.max_depth == 0)
+        opts.max_depth = 50;
+    else if (opts.max_depth < 0)
+        opts.max_depth = 0; // the paneler's depth 0 is the root panel
+    if (opts.max_memory_mib == 0)
+        opts.max_memory_mib = auto_memory_budget_mib(input_dim);
+    return opts;
+}
 
-inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &opts) -> TreeInput {
-    TreeInput in{};
+inline auto make_input(int input_dim, int output_dim, int degree, double tol, const options &user_opts) -> TreeInput {
+    const options opts = init_defaults(user_opts, input_dim);
+    TreeInput     in{};
     in.input_dim              = input_dim;
     in.output_dim             = output_dim;
     in.degree                 = degree;
     in.tol                    = tol;
     in.tol_kind               = opts.tol_kind;
     in.max_depth              = opts.max_depth;
-    in.max_memory_mib         = opts.max_memory_mib < 0 ? auto_memory_budget_mib(input_dim) : opts.max_memory_mib;
+    in.max_memory_mib         = opts.max_memory_mib;
     in.allow_max_depth_leaves = opts.allow_max_depth_leaves;
     in.min_uniform_depth      = opts.min_uniform_depth;
     in.filename               = opts.filename;
@@ -313,7 +325,7 @@ class AdaptedFunction {
 /// of the adaptive tree; the leaf degree is a hyperparameter with a
 /// reasonable default. `tol` is positional (no default) so every call site
 /// makes its target accuracy explicit.
-template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalPolicy::Balanced, class Func,
+template <std::size_t Degree = 0, EvalPolicy Policy = EvalPolicy::Balanced, class Func,
           class Domain>
     requires Fittable<std::remove_cvref_t<Func>, Domain>
 [[nodiscard]] auto fit(Func &&f, Domain a, Domain b, double tol, const options &opts = {}) {
@@ -342,8 +354,9 @@ template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalP
             else
                 return v;
         };
-        auto input    = detail::make_input(in_dim, out_dim, static_cast<int>(Degree), tol, opts);
-        using inner_t = Function<Degree, canon_fn_t, Policy>;
+        constexpr std::size_t deg = Degree != 0 ? Degree : detail::default_degree(in_dim);
+        auto                  input = detail::make_input(in_dim, out_dim, static_cast<int>(deg), tol, opts);
+        using inner_t               = Function<deg, canon_fn_t, Policy>;
         inner_t inner(input, detail::midpoint(to_canon(a), to_canon(b)), detail::half_length(to_canon(a), to_canon(b)),
                       canon_fn_t{std::forward<Func>(f)});
         return detail::AdaptedFunction<inner_t, Domain, result_t>(std::move(inner));
@@ -351,8 +364,9 @@ template <std::size_t Degree = detail::kDefaultDegree, EvalPolicy Policy = EvalP
         constexpr int in_dim  = detail::domain_dim<Domain>();
         constexpr int out_dim = detail::domain_dim<result_t>();
 
-        auto input = detail::make_input(in_dim, out_dim, static_cast<int>(Degree), tol, opts);
-        return Function<Degree, func_t, Policy>(input, detail::midpoint(a, b), detail::half_length(a, b),
+        constexpr std::size_t deg   = Degree != 0 ? Degree : detail::default_degree(in_dim);
+        auto                  input = detail::make_input(in_dim, out_dim, static_cast<int>(deg), tol, opts);
+        return Function<deg, func_t, Policy>(input, detail::midpoint(a, b), detail::half_length(a, b),
                                                 std::forward<Func>(f));
     }
 }

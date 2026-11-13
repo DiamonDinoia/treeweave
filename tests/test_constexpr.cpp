@@ -29,8 +29,8 @@ static_assert(treeweave::detail::value_dim_v<std::array<double, 4>> == 4);
 
 // ---- auto_memory_budget_mib -------------------------------------------------
 static_assert(treeweave::detail::auto_memory_budget_mib(1) == 4);
-static_assert(treeweave::detail::auto_memory_budget_mib(2) == 8);
-static_assert(treeweave::detail::auto_memory_budget_mib(3) == 16);
+static_assert(treeweave::detail::auto_memory_budget_mib(2) == 32);
+static_assert(treeweave::detail::auto_memory_budget_mib(3) == 256);
 
 // ---- version_at_least -------------------------------------------------------
 static_assert(treeweave::version_at_least(0, 0, 0));

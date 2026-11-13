@@ -147,7 +147,7 @@ TEST_CASE("fit file: a load stays within tol / 10 and calls f zero times", "[tre
         using A  = std::array<double, 3>;
         max_diff = check_round_trip<A>(
             "3d_3", [](const A &x) { return A{std::sin(x[0]), std::cos(x[1] * x[2]), x[0] + x[1] + x[2]}; }, A{0, 0, 0},
-            A{1, 1, 2}, 1e-7, 1e-8, treeweave::options{.tol_kind = TolKind::AbsoluteMax, .max_memory_mib = 0});
+            A{1, 1, 2}, 1e-7, 1e-8, treeweave::options{.tol_kind = TolKind::AbsoluteMax, .max_memory_mib = -1});
     }
     SECTION("leaf table path (min_uniform_depth)") {
         max_diff = check_round_trip<double>(

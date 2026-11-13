@@ -5,7 +5,8 @@
 // as `node node_native_smoke.mjs <path-to-addon.node>`.
 //
 // This pokes the raw addon ABI (the same call native.ts makes): the opts array
-// is [tolKind, maxDepth, maxMemoryMib, allowMaxDepthLeaves, minUniformDepth].
+// is [tolKind, maxDepth, maxMemoryMib, allowMaxDepthLeaves, minUniformDepth],
+// and the last argument is the fit-file path.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
@@ -14,7 +15,7 @@ const addonPath = process.argv[2];
 assert.ok(addonPath, "usage: node node_native_smoke.mjs <path-to-addon.node>");
 
 const addon = require(addonPath);
-const opts = Int32Array.of(/*relative_max*/ 2, /*maxDepth*/ 50, /*maxMemoryMib*/ -1, 0, 0);
+const opts = Int32Array.of(/*relative_max*/ 2, /*maxDepth*/ 50, /*maxMemoryMib*/ 0, 0, 0);
 const fn = addon.fit(
     (x) => x[0] * x[0],
     1,
@@ -24,6 +25,7 @@ const fn = addon.fit(
     1e-8,
     opts,
     "f64",
+    "", // filename: "" = no fit file
 );
 const y = fn.evalOne(Float64Array.of(1.5));
 fn.free();

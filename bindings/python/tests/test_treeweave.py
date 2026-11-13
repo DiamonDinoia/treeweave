@@ -203,6 +203,42 @@ def test_vector_output_1d():
     np.testing.assert_allclose(result[:, 1], np.cos(xs), atol=1e-5)
 
 
+# Every return shape the out_dim probe accepts: np.asarray(f(x)).size values.
+_RETURNS = {
+    "scalar": (1, lambda x: math.sin(x[0])),
+    "(1,) array": (1, lambda x: np.sin(x)),
+    "array": (2, lambda x: np.array([math.sin(x[0]), math.cos(x[0])])),
+    "list": (2, lambda x: [math.sin(x[0]), math.cos(x[0])]),
+    "tuple": (2, lambda x: (math.sin(x[0]), math.cos(x[0]))),
+    "(2, 1) array": (2, lambda x: np.array([np.sin(x), np.cos(x)])),
+    "float32 array": (2, lambda x: np.array([math.sin(x[0]), math.cos(x[0])], dtype=np.float32)),
+    "float64 array": (2, lambda x: np.array([math.sin(x[0]), math.cos(x[0])], dtype=np.float64)),
+}
+
+
+@pytest.mark.parametrize("dtype", ["f64", "f32"])
+@pytest.mark.parametrize("kind", list(_RETURNS))
+def test_callback_return_shapes(kind, dtype):
+    """Each array-like return the probe sizes as out_dim also fits."""
+    out_dim, func = _RETURNS[kind]
+    approx = treeweave.fit(func, 0.0, 1.0, tol=1e-4, dtype=dtype)
+    assert approx.out_dim == out_dim
+    expect = [math.sin(0.3), math.cos(0.3)][:out_dim]
+    np.testing.assert_allclose(np.atleast_1d(approx(0.3)), expect, atol=1e-3)
+
+
+def test_callback_wrong_size_raises():
+    """A return whose size changes after the probe raises, not crashes."""
+    calls = []
+
+    def func(x):
+        calls.append(1)
+        return [1.0, 2.0] if len(calls) == 1 else [1.0, 2.0, 3.0]
+
+    with pytest.raises(RuntimeError, match="returned 3 values, expected 2"):
+        treeweave.fit(func, 0.0, 1.0, tol=1e-4)
+
+
 # ---------------------------------------------------------------------------
 # 10. Single (dim,) point for dim>1 returns an (out_dim,) vector
 # ---------------------------------------------------------------------------

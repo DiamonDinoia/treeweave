@@ -56,7 +56,7 @@ X = linspace(0, 1, 1000)';
 Y  = obj.eval(X);                  % or Y = obj(X)
 Ys = obj(X, 'sorted', true);       % 1-D ascending fast path
 
-% 2-D → 3-D vector fit (out_dim inferred by probing g; degree auto per CPU)
+% 2-D → 3-D vector fit (out_dim inferred by probing g)
 g    = @(x) [sin(x(1)+x(2)); cos(x(1)-x(2)); x(1)*x(2)];
 obj2 = treeweave(g, [-1,-1], [1,1], 1e-6, 'max_memory_mib', 64);
 

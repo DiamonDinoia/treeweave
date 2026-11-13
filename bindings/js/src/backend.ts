@@ -12,13 +12,13 @@ export type FloatArray = Float64Array | Float32Array;
 
 /** Numeric `tol_kind` values: mirror treeweave_tol_kind_t in treeweave.h. */
 export const TOL_KIND = {
-    relative_tail: 0,
-    absolute_tail: 1,
-    relative_max: 2,
-    absolute_max: 3,
-    relative_l2: 4,
-    absolute_l2: 5,
-    relative_pointwise: 6,
+    relative_max: 0,
+    absolute_max: 1,
+    relative_l2: 2,
+    absolute_l2: 3,
+    relative_pointwise: 4,
+    relative_tail: 5,
+    absolute_tail: 6,
 } as const;
 export type TolKind = keyof typeof TOL_KIND;
 

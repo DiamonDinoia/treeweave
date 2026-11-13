@@ -115,13 +115,13 @@ end
 # Enumerations (mirrored as Cint constants)
 
 # treeweave_tol_kind_t
-const TREEWEAVE_RELATIVE_TAIL  = Cint(0)
-const TREEWEAVE_ABSOLUTE_TAIL  = Cint(1)
-const TREEWEAVE_RELATIVE_MAX   = Cint(2)
-const TREEWEAVE_ABSOLUTE_MAX   = Cint(3)
-const TREEWEAVE_RELATIVE_L2    = Cint(4)
-const TREEWEAVE_ABSOLUTE_L2    = Cint(5)
-const TREEWEAVE_RELATIVE_POINTWISE = Cint(6)
+const TREEWEAVE_RELATIVE_TAIL  = Cint(5)
+const TREEWEAVE_ABSOLUTE_TAIL  = Cint(6)
+const TREEWEAVE_RELATIVE_MAX   = Cint(0)
+const TREEWEAVE_ABSOLUTE_MAX   = Cint(1)
+const TREEWEAVE_RELATIVE_L2    = Cint(2)
+const TREEWEAVE_ABSOLUTE_L2    = Cint(3)
+const TREEWEAVE_RELATIVE_POINTWISE = Cint(4)
 
 # treeweave_dtype_t
 const TREEWEAVE_F64 = Cint(0)
@@ -137,8 +137,8 @@ Mirror of the C `treeweave_opts` struct.  The fields are `Cint` and one
 `filename`, is always `C_NULL` here.  Set the fit file with the `filename`
 keyword of `fit`, which keeps the string alive during the call.
 
-Defaults match `treeweave_default_opts()` = {RELATIVE_MAX, 50, -1, 0, 0}.
-`max_memory_mib = -1` lets the C layer pick automatically (4/8/16 MiB by dim).
+Defaults match `treeweave_default_opts()`, all zero: RELATIVE_MAX, `max_depth = 0` (auto, 50).
+`max_memory_mib = 0` lets the C layer pick automatically (4/32/256 MiB by dim); `-1` disables the cap.
 """
 struct TreeweaveOptions
     tol_kind              :: Cint   # treeweave_tol_kind_t
@@ -151,8 +151,8 @@ end
 
 function TreeweaveOptions(;
         tol_kind               = TREEWEAVE_RELATIVE_MAX,
-        max_depth              = Cint(50),
-        max_memory_mib         = Cint(-1),
+        max_depth              = Cint(0),
+        max_memory_mib         = Cint(0),
         allow_max_depth_leaves = Cint(0),
         min_uniform_depth      = Cint(0))
     TreeweaveOptions(Cint(tol_kind), Cint(max_depth), Cint(max_memory_mib),
@@ -204,11 +204,11 @@ end
         f = ctx.f
         result = ctx.dim == 1 ? f(unsafe_load(xptr, 1)) :
                                 f(ntuple(i -> unsafe_load(xptr, i), ctx.dim)...)
-        if ctx.out_dim == 1
-            unsafe_store!(yptr, CT(result), 1)
-        else
-            for j in 1:ctx.out_dim; unsafe_store!(yptr, CT(result[j]), j); end
-        end
+        # The probe sized out_dim with `length`, so accept any return of that
+        # length: a scalar, a 1-element vector, a tuple, an (out_dim, 1) matrix.
+        length(result) == ctx.out_dim ||
+            error("callback returned $(length(result)) values, expected $(ctx.out_dim)")
+        for j in 1:ctx.out_dim; unsafe_store!(yptr, CT(result[j]), j); end
     catch e
         ctx.err = e
         for j in 1:ctx.out_dim; unsafe_store!(yptr, nan, j); end

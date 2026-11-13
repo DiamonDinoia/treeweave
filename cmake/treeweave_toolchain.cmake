@@ -88,8 +88,11 @@ set(TREEWEAVE_TUNE
 # Emscripten's clang rejects -march=/-mtune= entirely; the only knob that
 # matters for WASM is SIMD128 (xsimd then auto-selects its `xsimd::wasm`
 # backend). No -mtune. -ffp-contract=fast (below) is fine, since emcc is clang.
+# Emscripten disables exception catching by default, so a throw inside the C
+# ABI aborts the module. -fwasm-exceptions lets the C ABI catch it and set
+# treeweave_last_error, the same as on a native target.
 if(EMSCRIPTEN)
-    set(_treeweave_arch_flags -msimd128)
+    set(_treeweave_arch_flags -msimd128 -fwasm-exceptions)
 elseif(MSVC)
     # MSVC and clang-cl use /arch, and have no exact spelling for x86-64-v2 or
     # native. Keep those at the compiler baseline; map the useful x86 tiers.

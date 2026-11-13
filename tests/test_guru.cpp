@@ -66,7 +66,7 @@ struct segv_guard {
 // inside the single subtree -> live leaf table, the fast quantize path is live.
 auto make_table_f64() {
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = 6; // 64 uniform leaves, live table, single subtree
     return treeweave::fit<7>([](double x) { return std::exp(x); }, 0.0, 1.0, 1e-12, opts);
 }
@@ -84,7 +84,7 @@ auto make_descent_f64() {
 // 1D in, 4-out: exercises the SoA/LeafND route.
 auto make_out4_f64() {
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = 4; // 16 uniform leaves, live table, single subtree
     return treeweave::fit<7>(
         [](std::array<double, 1> x) -> std::array<double, 4> {
@@ -728,7 +728,7 @@ TEST_CASE("guru blocks at tile-crossing sizes, f32 classify batch", "[guru][scal
 
     // f32: classify batch parity + a runnable eval_leaf_aos parity.
     treeweave::options opts;
-    opts.max_memory_mib    = 0;
+    opts.max_memory_mib    = -1;
     opts.min_uniform_depth = 6;
     auto f32 = treeweave::fit<7>([](float x) { return std::exp(x); }, 0.0f, 1.0f, /*tol=*/1e-5, opts);
     REQUIRE(f32.has_fast_quantize());
@@ -910,7 +910,7 @@ TEST_CASE("guru LaneQuantizer lanes match leaf_id (f64 scalar, f64 1D->4D, f32)"
     }
     {
         treeweave::options opts;
-        opts.max_memory_mib    = 0;
+        opts.max_memory_mib    = -1;
         opts.min_uniform_depth = 5;
         auto f                 = treeweave::fit<6>([](float x) { return std::exp(x); }, -1.0f, 1.0f, 1e-5, opts);
         check_lane_parity(f, lane_probe_points<float>(gen, -1.0f, 1.0f));

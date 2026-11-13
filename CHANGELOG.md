@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The Release workflow (`.github/workflows/release.yml`) copies the `## [X.Y.Z]`
 section verbatim into that release's GitHub Release notes.
 
-## [Unreleased]
+## [0.0.7] - 2026-11-13
 
 ### Added
 - `TolKind::RelativePointwise`, an opt-in tolerance kind that accepts a panel
@@ -28,14 +28,82 @@ section verbatim into that release's GitHub Release notes.
 - `fit` accepts an array domain with a scalar result, for example
   `fit([](std::array<double, 2> x) { return x[0] * x[1]; }, a, b, tol)`.
   Before, the result had to be a one-element array.
+- The Fortran binding gains a generic `treeweave_eval` over six specifics that
+  dispatch on the rank and kind of `x`: a scalar or a rank-1 `x` returns the
+  point or batch result directly; a rank-2 `x(input_dim, n)` returns
+  `y(output_dim, n)`. The old single-point subroutine is renamed to
+  `treeweave_eval_c`; the f32 twin keeps the name `treeweavef_eval` (see
+  `### Changed`).
+- `guru::LaneQuantizer<T, Arch>`: the SIMD lane-level twin of
+  `Function::leaf_id` for a single-subtree fit with a live leaf table.
+  `in_domain(x)` and `ids(x)` classify one `xsimd::batch` into the lane mask
+  and the lane-matched integer ids, identical lane for lane to `leaf_id`, so
+  a multi-regime caller folds its combined key with `xsimd::select` in
+  registers. Pure xsimd, no ISA gate; `tests/test_guru.cpp` pins the parity on
+  f64, f64 1D->4D and f32 fits including the OOD, endpoint and non-finite
+  lanes.
+- `<treeweave/guru.hpp>` (`treeweave::guru`): the guru interface (after
+  FFTW's) — the batch pipeline as public stages with caller-owned scratch and
+  no per-call allocation. `counting_sort`/`histogram`/`exclusive_scan`/
+  `scatter` (counting sort over caller-produced u32 keys, span-based),
+  `gather` (the `rank`-driven writeback, prefetch owned), `for_each_run`
+  (`fn(id, begin, count)`, the same callback shape as `for_each_sorted_run`),
+  `eval_leaf_aos`/`eval_leaf_soa` (per-leaf SIMD eval through the polyfit
+  kernels), `fill_out_of_domain` (the out-of-domain bucket's NaN writeback),
+  and `for_each_sorted_run` (the sorted-run walk). `Function` gains
+  `out_of_domain_id()`, the sentinel id for points the fit cannot evaluate.
+  `Function::sorted`'s kernel dispatch runs on the canonical
+  `for_each_sorted_run_1d` walk and the same `fill_out_of_domain` definition
+  the guru entry points forward to — one implementation for library and
+  callers.
+- `check_rung_symbols_selftest`, a positive control for the gate above,
+  registered wherever the gate itself is. It builds fixture objects with the
+  project's own C compiler and asserts the gate exits 1 on differing bodies
+  and on the local-reference stub, 0 on identical bodies and on disjoint
+  symbol sets, and 2 on misuse. A gate that has only ever passed cannot be
+  distinguished from a gate that cannot fail; this one had never been proven
+  to fail, and the control found the defect above on its first run.
 
 ### Changed
+- The default leaf degree in 1D is 6 coefficients, down from 7. 2D and 3D
+  keep 7. This applies to C++ `fit` without `<N>` (the default is now
+  `fit<0>`), the C ABI and every binding. A 1D single-point evaluation is 6
+  FMAs: 5 Horner steps and 1 for the domain map. A sweep of degrees 4 to 16
+  over 6 functions at `tol = 1e-10` measured, for degree 7 over degree 6,
+  1.05x to 1.07x single-point latency on x86-64-v3, x86-64-v4 and Apple M2.
+  Batch time is equal on x86-64-v4 and M2, and 4% lower with degree 7 on
+  x86-64-v3. Degree 5 is faster still, but needs more than 3x the memory of
+  degree 6 on `cos` over `[1, 1001)` at `tol = 1e-13`. A 1D fit file
+  written with degree 7 refits once.
+- A zero-filled `treeweave_opts` (memset 0, or `= {0}`) and a value-initialised
+  `treeweave::options{}` are the defaults. A zero numeric field means auto, and
+  `detail::init_defaults` sets its value. This applies to C++, the C ABI and
+  every binding. Code that sets these fields to a number must change:
+  - `tol_kind` values are renumbered: `RELATIVE_MAX` 0, `ABSOLUTE_MAX` 1,
+    `RELATIVE_L2` 2, `ABSOLUTE_L2` 3, `RELATIVE_POINTWISE` 4, `RELATIVE_TAIL` 5,
+    `ABSOLUTE_TAIL` 6. Code that uses the enum names needs no change.
+  - `max_depth = 0` is auto (50). A negative value fits the root panel only,
+    which was `0` before.
+  - `max_memory_mib = 0` is auto (the dimension-scaled budget). A negative
+    value disables the cap, which was `0` before; `-1` was auto.
+- The MATLAB/Octave `'tol_kind'` option takes the names in the docs
+  (`'absolute_max'`, ...). Before, it took only the number, and a name failed.
+- The auto memory budget is 4 / 32 / 256 MiB for
+  1D / 2D / 3D, up from 4 / 8 / 16. With the budget check fixed (see
+  `### Fixed`), 16 smooth test functions at the default degrees need up to
+  1.4 / 14.2 / 176 MiB at `tol = 1e-13`.
+- The docs no longer say that the C ABI picks the degree per CPU. It never
+  did: the degree is baked in.
 - `treeweave_opts` has a new last field, `filename`. Code that fills the
   struct with `treeweave_default_opts` or designated initializers needs no
   change. The struct size changes, so a rebuild against the new header is
   necessary.
 - `fit` takes `const options &` instead of `options` by value.
-- polyfit is pinned to v0.0.6, which adds `poly_eval::fromCoeffs`.
+- polyfit is pinned to v0.0.6. It adds `poly_eval::fromCoeffs`, and
+  `poly_eval::horner` takes an `xsimd::batch` argument. xsimd comes from the
+  `DiamonDinoia/xsimd` fork at `6351cd2`, which adds the vector double -> int64
+  `fast_cast` and the u32 -> i64 widening `gather` that `LaneQuantizer::ids`
+  relies on.
 - The nanobind build requirement now excludes only 3.0.0
   (`nanobind>=2.0,!=3.0.0`) instead of the full 3.0 line. nanobind 3.0.1 has
   the clang-cl fix (wjakob/nanobind#1421), so 3.0.1 and later are allowed.
@@ -45,6 +113,22 @@ section verbatim into that release's GitHub Release notes.
   relative. Functions with zeros now fit; leaf counts change.
 
 ### Fixed
+- The fit checks the memory budget after the last tree level too. Before, the
+  leaves of that level were never counted, so a fit could end with up to 8x
+  `max_memory_mib` in 3D. `exp(-|x|^2)` on `[-1, 1]^3` at `tol = 1e-12`
+  finished with 88 MiB under the 16 MiB auto budget.
+- A fit callback can return any shape that the output-dimension probe
+  accepts. Python 0.0.6 raised `std::bad_cast` on a shape-(1,) array for a
+  scalar output, on a list or tuple for a vector output, and on a (k, 1)
+  array. Julia failed on a 1-element vector for a scalar output. MATLAB and
+  Octave read an `int32`, `logical` or `single` return as raw `double` bits;
+  they now convert it to `double`. A return with the wrong number of values
+  now raises "callback returned N values, expected M" in Python, Julia,
+  MATLAB, Octave and JavaScript. Before, MATLAB, Octave and JavaScript
+  silently used the first values.
+- The WASM build has C++ exceptions on (`-fwasm-exceptions`). Before, an
+  error in the fit, for example a memory budget or a malformed fit file,
+  aborted the module instead of throwing the error message in JavaScript.
 - `TolKind::RelativeMax`, `AbsoluteMax`, `RelativeL2`, `AbsoluteL2`, and
   `RelativePointwise` convergence checks now gate on the open 8-point
   midpoint grid and, independently, on the closed 9-point grid per axis
@@ -83,47 +167,6 @@ section verbatim into that release's GitHub Release notes.
 - The options guide now explains why `RelativeMax` can throw
   `MaxDepthExceeded` when the largest `|f|` shows up late, and gives the
   workarounds.
-
-### Added
-- The Fortran binding gains a generic `treeweave_eval` over six specifics that
-  dispatch on the rank and kind of `x`: a scalar or a rank-1 `x` returns the
-  point or batch result directly; a rank-2 `x(input_dim, n)` returns
-  `y(output_dim, n)`. The old single-point subroutine is renamed to
-  `treeweave_eval_c`; the f32 twin keeps the name `treeweavef_eval` (see
-  `### Changed`).
-- `guru::LaneQuantizer<T, Arch>`: the SIMD lane-level twin of
-  `Function::leaf_id` for a single-subtree fit with a live leaf table.
-  `in_domain(x)` and `ids(x)` classify one `xsimd::batch` into the lane mask
-  and the lane-matched integer ids, identical lane for lane to `leaf_id`, so
-  a multi-regime caller folds its combined key with `xsimd::select` in
-  registers. Pure xsimd, no ISA gate; `tests/test_guru.cpp` pins the parity on
-  f64, f64 1D->4D and f32 fits including the OOD, endpoint and non-finite
-  lanes.
-- The polyfit pin moves to `5aea5fe`: `poly_eval::horner` takes an `xsimd::batch`
-  argument, and xsimd comes from the `DiamonDinoia/xsimd` fork at `6351cd2`, which
-  adds the vector double -> int64 `fast_cast` and the u32 -> i64 widening `gather`
-  that `LaneQuantizer::ids` relies on.
-- `<treeweave/guru.hpp>` (`treeweave::guru`): the guru interface (after
-  FFTW's) — the batch pipeline as public stages with caller-owned scratch and
-  no per-call allocation. `counting_sort`/`histogram`/`exclusive_scan`/
-  `scatter` (counting sort over caller-produced u32 keys, span-based),
-  `gather` (the `rank`-driven writeback, prefetch owned), `for_each_run`
-  (`fn(id, begin, count)`, the same callback shape as `for_each_sorted_run`),
-  `eval_leaf_aos`/`eval_leaf_soa` (per-leaf SIMD eval through the polyfit
-  kernels), `fill_out_of_domain` (the out-of-domain bucket's NaN writeback),
-  and `for_each_sorted_run` (the sorted-run walk). `Function` gains
-  `out_of_domain_id()`, the sentinel id for points the fit cannot evaluate.
-  `Function::sorted`'s kernel dispatch runs on the canonical
-  `for_each_sorted_run_1d` walk and the same `fill_out_of_domain` definition
-  the guru entry points forward to — one implementation for library and
-  callers.
-- `check_rung_symbols_selftest`, a positive control for the gate above,
-  registered wherever the gate itself is. It builds fixture objects with the
-  project's own C compiler and asserts the gate exits 1 on differing bodies
-  and on the local-reference stub, 0 on identical bodies and on disjoint
-  symbol sets, and 2 on misuse. A gate that has only ever passed cannot be
-  distinguished from a gate that cannot fail; this one had never been proven
-  to fail, and the control found the defect above on its first run.
 
 ## [0.0.6] - 2026-08-28
 

@@ -185,7 +185,7 @@ TEST_CASE("RelativeMax is scale invariant, AbsoluteMax is not", "[treeweave][rel
 
 TEST_CASE("RelativeMax still rejects an unconverged panel", "[treeweave][relmax]") {
     auto f      = [](double x) { return std::exp(10.0 * x); };
-    auto forced = fit(f, -1.0, 1.0, 1e-13, options{.max_depth = 0, .allow_max_depth_leaves = true});
+    auto forced = fit(f, -1.0, 1.0, 1e-13, options{.max_depth = -1, .allow_max_depth_leaves = true});
     REQUIRE(forced.non_converged_panels().size() == 1);
     auto fn = fit(f, -1.0, 1.0, 1e-13);
     INFO("leaves " << fn.num_leaves());
@@ -238,13 +238,13 @@ TEST_CASE("RelativePointwise is per-sample, RelativeMax is not", "[treeweave][re
     auto fn_g_max = fit<8>(g, 0.0, 1.0, 1e-12, options{.tol_kind = TolKind::RelativeMax});
     INFO("pointwise leaves " << fn_g_point.num_leaves() << " vs RelativeMax " << fn_g_max.num_leaves());
     REQUIRE(fn_g_point.num_leaves() > fn_g_max.num_leaves());
-    // With the root panel forced (max_depth 0), the zero sits on its sample
+    // With the root panel forced (max_depth -1), the zero sits on its sample
     // grid, so RelativePointwise never converges while RelativeMax does.
     auto root_point =
         fit<8>(g, 0.0, 1.0, 1e-12,
-               options{.tol_kind = TolKind::RelativePointwise, .max_depth = 0, .allow_max_depth_leaves = true});
+               options{.tol_kind = TolKind::RelativePointwise, .max_depth = -1, .allow_max_depth_leaves = true});
     auto root_max = fit<8>(g, 0.0, 1.0, 1e-12,
-                           options{.tol_kind = TolKind::RelativeMax, .max_depth = 0, .allow_max_depth_leaves = true});
+                           options{.tol_kind = TolKind::RelativeMax, .max_depth = -1, .allow_max_depth_leaves = true});
     REQUIRE(root_point.non_converged_panels().size() == 1);
     REQUIRE(root_max.non_converged_panels().empty());
 }
@@ -271,7 +271,7 @@ TEST_CASE("RelativeMax normalises by the domain-wide max|f|, not per panel", "[t
     // so the pointwise relative error there exceeds tol. A per-panel normaliser needs 64 leaves and gets 6e-9 at x = 1.
     constexpr double tol = 1e-8;
     auto             f   = [](double x) { return std::exp(-50.0 * x); };
-    auto             fn  = fit(f, 0.0, 1.0, tol);
+    auto             fn  = fit<7>(f, 0.0, 1.0, tol); // the leaf counts above are for degree 7
     const double     err = max_norm_err_1d(f, fn, 0.0, 1.0, 20000);
     const double     rel = std::abs(fn(1.0) - f(1.0)) / f(1.0);
     INFO("leaves " << fn.num_leaves() << ", max|p-f|/max|f| = " << err << ", relative error at 1 = " << rel);
@@ -346,7 +346,8 @@ TEST_CASE("Rejects non-positive tolerance", "[treeweave][errors]") {
 TEST_CASE("Tolerance-driven overload converges", "[treeweave][tol-driven]") {
     auto f  = [](double x) { return std::sin(5.0 * x); };
     auto fn = fit(f, 0.0, 1.0, /*tol=*/1e-8);
-    REQUIRE(max_rel_err_1d(f, fn, 1e-6, 1.0 - 1e-6, N_SAMPLE) < 1e-5);
+    // RelativeMax bounds |p - f| / max|f|, not the pointwise relative error near a zero of f.
+    REQUIRE(max_norm_err_1d(f, fn, 0.0, 1.0, N_SAMPLE) <= 10 * 1e-8);
 }
 
 TEST_CASE("3D scalar exp(-r^2)", "[treeweave][smooth][3d]") {
@@ -795,6 +796,21 @@ TEST_CASE("Batch vs single evaluation agree across L4 tile boundary", "[treeweav
     }
 }
 
+TEST_CASE("Memory budget counts the leaves of the last level", "[treeweave][memory-budget]") {
+    // exp(-r^2) on [-1, 1]^3 at tol 1e-10 converges with 11.04 MiB of leaves. The
+    // budget check ran only while the queue was not empty, so a fit whose last
+    // level crossed the budget passed with up to 8x the budget in 3D.
+    auto f = [](std::array<double, 3> x) -> std::array<double, 1> {
+        return {std::exp(-x[0] * x[0] - x[1] * x[1] - x[2] * x[2])};
+    };
+    const std::array<double, 3> a{-1.0, -1.0, -1.0};
+    const std::array<double, 3> b{1.0, 1.0, 1.0};
+    const auto                  fn = fit<7>(f, a, b, 1e-10, options{.max_memory_mib = -1});
+    INFO("memory_usage " << fn.memory_usage());
+    REQUIRE(fn.memory_usage() > std::size_t{8} * 1024 * 1024);
+    REQUIRE_THROWS_AS(fit<7>(f, a, b, 1e-10, options{.max_memory_mib = 8}), treeweave::MemoryBudgetExceeded);
+}
+
 TEST_CASE("Memory budget aborts a runaway near-singular fit", "[treeweave][memory-budget]") {
     // 3D Yukawa with a *very* tight tolerance over a domain straddling the
     // origin singularity refines aggressively. Each leaf is ~6 KiB
@@ -813,7 +829,7 @@ TEST_CASE("Memory budget aborts a runaway near-singular fit", "[treeweave][memor
     // runaway via the existing MaxDepthExceeded path.
     auto g = [](double x) { return std::sqrt(std::abs(x - 0.5)); };
     REQUIRE_THROWS_AS(fit<8>(g, 0.0, 1.0, /*tol=*/1e-12,
-                             options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4, .max_memory_mib = 0}),
+                             options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_depth = 4, .max_memory_mib = -1}),
                       treeweave::MaxDepthExceeded);
 }
 
@@ -891,8 +907,21 @@ TEST_CASE("2D smooth fit on large asymmetric domain", "[treeweave][large-domain]
 TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][memory-budget]") {
     // Budget guard split into two checks to avoid the ~33 MiB/157 s old fit.
     REQUIRE(treeweave::detail::auto_memory_budget_mib(1) == 4);  // 1D
-    REQUIRE(treeweave::detail::auto_memory_budget_mib(2) == 8);  // 2D
-    REQUIRE(treeweave::detail::auto_memory_budget_mib(3) == 16); // 3D
+    REQUIRE(treeweave::detail::auto_memory_budget_mib(2) == 32); // 2D
+    REQUIRE(treeweave::detail::auto_memory_budget_mib(3) == 256); // 3D
+    // init_defaults resolves only the auto value 0; a cap or "no cap" passes through.
+    using treeweave::detail::init_defaults;
+    REQUIRE(options{}.max_memory_mib == 0);
+    REQUIRE(init_defaults(options{}, 1).max_memory_mib == 4);
+    REQUIRE(init_defaults(options{}, 2).max_memory_mib == 32);
+    REQUIRE(init_defaults(options{}, 3).max_memory_mib == 256);
+    REQUIRE(init_defaults(options{.max_memory_mib = 7}, 3).max_memory_mib == 7);
+    REQUIRE(init_defaults(options{.max_memory_mib = -1}, 3).max_memory_mib == -1);
+    REQUIRE(init_defaults(options{.max_depth = 9}, 2).max_depth == 9);
+    REQUIRE(options{}.max_depth == 0);
+    REQUIRE(init_defaults(options{}, 1).max_depth == 50);
+    REQUIRE(init_defaults(options{.max_depth = -1}, 1).max_depth == 0); // root panel only
+    REQUIRE(options{}.tol_kind == treeweave::TolKind{});                 // zero is RelativeMax
 
     // Then exercise the cap mechanism on a near-singular Yukawa-like 3D fit at
     // a looser tol (~2 MiB tree, ~13 s at -O0, fast even on the slowest Debug
@@ -1368,7 +1397,7 @@ TEST_CASE("RelativeTail on degree-1/2 uses the sampled check", "[treeweave][tail
     CHECK(lin(0.37) == Catch::Approx(1.0 + 2.0 * 0.37).epsilon(1e-8));
 
     auto quad = fit<1>([](double x) { return x * x; }, 0.0, 1.0, 1e-10,
-                       options{.tol_kind = TolKind::RelativeTail, .max_depth = 0, .allow_max_depth_leaves = true});
+                       options{.tol_kind = TolKind::RelativeTail, .max_depth = -1, .allow_max_depth_leaves = true});
     REQUIRE(quad.non_converged_panels().size() == 1);
 }
 

@@ -38,13 +38,13 @@ except PackageNotFoundError:  # running from a source tree, not installed
 __all__ = ["fit", "TreeweaveFunction", "__version__"]
 
 _TOL_KIND = {
-    "relative_tail": 0,
-    "absolute_tail": 1,
-    "relative_max":  2,
-    "absolute_max":  3,
-    "relative_l2":   4,
-    "absolute_l2":   5,
-    "relative_pointwise": 6,
+    "relative_max": 0,
+    "absolute_max": 1,
+    "relative_l2": 2,
+    "absolute_l2": 3,
+    "relative_pointwise": 4,
+    "relative_tail": 5,
+    "absolute_tail": 6,
 }
 
 
@@ -202,8 +202,8 @@ def fit(
     out_dim: int | None = None,
     dtype: str = "f64",
     tol_kind: str = "relative_max",
-    max_depth: int = 50,
-    max_memory_mib: int = -1,
+    max_depth: int = 0,
+    max_memory_mib: int = 0,
     allow_max_depth_leaves: bool = False,
     min_uniform_depth: int = 0,
     filename: str | _os.PathLike | None = None,
@@ -246,10 +246,11 @@ def fit(
         ``'absolute_max'``, ``'relative_l2'``, ``'absolute_l2'``,
         ``'relative_tail'``, ``'absolute_tail'``, ``'relative_pointwise'``.
     max_depth : int
-        Maximum adaptive tree depth.
+        Maximum adaptive tree depth. ``0`` (default) = auto, 50; ``-1`` = the
+        root panel only.
     max_memory_mib : int
-        Memory budget in MiB. ``-1`` (default) auto-selects a
-        dimension-scaled budget (4/8/16 MiB for dim 1/2/3); ``0`` disables
+        Memory budget in MiB. ``0`` (default) auto-selects a
+        dimension-scaled budget (4/32/256 MiB for dim 1/2/3); ``-1`` disables
         the cap; a positive value is an explicit cap.
     allow_max_depth_leaves : bool
         Allow leaves at max depth (relaxes convergence).

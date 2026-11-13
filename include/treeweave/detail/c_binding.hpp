@@ -25,8 +25,8 @@
 /// `make_eval_impl` falls back to the header-only `InlineKernels` policy
 /// (`TREEWEAVE_C_KERNELSET` undefined).
 ///
-/// Degree is baked to `chosen_degree` (= 7; see
-/// include/treeweave/detail/arch_degree_table.hpp).
+/// Degree is baked to `detail::default_degree(input_dim)` (6 in 1D, 7 in 2D and
+/// 3D; see include/treeweave/detail/arch_degree_table.hpp).
 
 #include <array>
 #include <cstddef>
@@ -46,7 +46,7 @@
 namespace treeweave::capi {
 
 // Supported shape set (mirrored in treeweave.h and the fit error messages):
-//   degree     = 7 (baked; chosen_degree)
+//   degree     = 6 in 1D, 7 in 2D and 3D (baked; detail::default_degree)
 //   input_dim  in {1, 2, 3}
 //   output_dim in {1, 2, 3}
 // The CMake-driven factory-TU fan-out (dtype, input_dim, output_dim; see
@@ -98,7 +98,7 @@ struct IEval {
 };
 
 /// One external factory symbol per (value_type, input_dim, output_dim) shape:
-/// fit, tree build and one eval pipeline, degree baked to `chosen_degree`.
+/// fit, tree build and one eval pipeline, degree baked to `detail::default_degree`.
 /// Declared here (no body); defined in c_binding_dispatch.hpp and explicitly
 /// instantiated, once and at baseline, by exactly one CMake-generated factory
 /// TU (see cmake/treeweave_c_dispatch.cmake).
