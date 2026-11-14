@@ -70,6 +70,9 @@ if(TREEWEAVE_BUILD_C_API)
     # Those threads drive the C ABI concurrently; its own TU needs atomic
     # counters (the C-ABI objects it calls get them in treeweave_c_dispatch).
     treeweave_coverage_atomic_counters(test_c)
+    # Degenerate-input tests drive both the C++ and the C surface.
+    _treeweave_add_cpp_test(test_dumbinputs test_dumbinputs.cpp)
+    target_link_libraries(test_dumbinputs PRIVATE treeweave_c)
 endif()
 
 # Make the coverage target build every test executable before it runs CTest.
