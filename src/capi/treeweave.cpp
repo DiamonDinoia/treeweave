@@ -181,42 +181,116 @@ auto checked_impl(treeweave_t f, treeweave_dtype_t want) -> treeweave::capi::IEv
 }
 } // namespace
 
+/// Exception fence for the eval shims: no C++ exception may cross extern "C".
+namespace {
+template <class Fn>
+auto no_throw(const char *what, Fn &&fn) -> void {
+    try {
+        fn();
+    } catch (const std::exception &e) {
+        treeweave::capi::set_last_error(e.what());
+    } catch (...) {
+        treeweave::capi::set_last_error(what);
+    }
+}
+} // namespace
+
 extern "C" {
 
 void treeweave_eval(treeweave_t f, const double *x, double *y) {
-    if (const auto *impl = checked_impl<double>(f, TREEWEAVE_F64))
-        impl->eval(x, y);
+    const auto *impl = checked_impl<double>(f, TREEWEAVE_F64);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || y == nullptr) {
+        treeweave::capi::set_last_error("treeweave_eval: null x or y");
+        return;
+    }
+    no_throw("treeweave_eval: unknown exception during eval", [&] { impl->eval(x, y); });
 }
 void treeweavef_eval(treeweave_t f, const float *x, float *y) {
-    if (const auto *impl = checked_impl<float>(f, TREEWEAVE_F32))
-        impl->eval(x, y);
+    const auto *impl = checked_impl<float>(f, TREEWEAVE_F32);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || y == nullptr) {
+        treeweave::capi::set_last_error("treeweavef_eval: null x or y");
+        return;
+    }
+    no_throw("treeweavef_eval: unknown exception during eval", [&] { impl->eval(x, y); });
 }
 
 void treeweave_batch(treeweave_t f, const double *x, double *res, size_t n) {
-    if (const auto *impl = checked_impl<double>(f, TREEWEAVE_F64))
-        impl->eval_multi(x, res, n);
+    const auto *impl = checked_impl<double>(f, TREEWEAVE_F64);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || res == nullptr) {
+        treeweave::capi::set_last_error("treeweave_batch: null x or res");
+        return;
+    }
+    no_throw("treeweave_batch: unknown exception during eval", [&] { impl->eval_multi(x, res, n); });
 }
 void treeweavef_batch(treeweave_t f, const float *x, float *res, size_t n) {
-    if (const auto *impl = checked_impl<float>(f, TREEWEAVE_F32))
-        impl->eval_multi(x, res, n);
+    const auto *impl = checked_impl<float>(f, TREEWEAVE_F32);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || res == nullptr) {
+        treeweave::capi::set_last_error("treeweavef_batch: null x or res");
+        return;
+    }
+    no_throw("treeweavef_batch: unknown exception during eval", [&] { impl->eval_multi(x, res, n); });
 }
 
 void treeweave_sorted(treeweave_t f, const double *x, double *res, size_t n) {
-    if (const auto *impl = checked_impl<double>(f, TREEWEAVE_F64))
-        impl->eval_sorted(x, res, n);
+    const auto *impl = checked_impl<double>(f, TREEWEAVE_F64);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || res == nullptr) {
+        treeweave::capi::set_last_error("treeweave_sorted: null x or res");
+        return;
+    }
+    no_throw("treeweave_sorted: unknown exception during eval", [&] { impl->eval_sorted(x, res, n); });
 }
 void treeweavef_sorted(treeweave_t f, const float *x, float *res, size_t n) {
-    if (const auto *impl = checked_impl<float>(f, TREEWEAVE_F32))
-        impl->eval_sorted(x, res, n);
+    const auto *impl = checked_impl<float>(f, TREEWEAVE_F32);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || res == nullptr) {
+        treeweave::capi::set_last_error("treeweavef_sorted: null x or res");
+        return;
+    }
+    no_throw("treeweavef_sorted: unknown exception during eval", [&] { impl->eval_sorted(x, res, n); });
 }
 
 void treeweave_transposed(treeweave_t f, const double *x, double *const *soa, size_t n) {
-    if (const auto *impl = checked_impl<double>(f, TREEWEAVE_F64))
-        impl->eval_multi_soa(x, soa, n);
+    const auto *impl = checked_impl<double>(f, TREEWEAVE_F64);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || soa == nullptr) {
+        treeweave::capi::set_last_error("treeweave_transposed: null x or soa");
+        return;
+    }
+    for (int j = 0; j < f->output_dim; ++j) {
+        if (soa[j] == nullptr) {
+            treeweave::capi::set_last_error("treeweave_transposed: null soa buffer");
+            return;
+        }
+    }
+    no_throw("treeweave_transposed: unknown exception during eval", [&] { impl->eval_multi_soa(x, soa, n); });
 }
 void treeweavef_transposed(treeweave_t f, const float *x, float *const *soa, size_t n) {
-    if (const auto *impl = checked_impl<float>(f, TREEWEAVE_F32))
-        impl->eval_multi_soa(x, soa, n);
+    const auto *impl = checked_impl<float>(f, TREEWEAVE_F32);
+    if (impl == nullptr)
+        return;
+    if (x == nullptr || soa == nullptr) {
+        treeweave::capi::set_last_error("treeweavef_transposed: null x or soa");
+        return;
+    }
+    for (int j = 0; j < f->output_dim; ++j) {
+        if (soa[j] == nullptr) {
+            treeweave::capi::set_last_error("treeweavef_transposed: null soa buffer");
+            return;
+        }
+    }
+    no_throw("treeweavef_transposed: unknown exception during eval", [&] { impl->eval_multi_soa(x, soa, n); });
 }
 
 /// By-value scalar eval shims. Arity guard before delegating (treeweave_eval

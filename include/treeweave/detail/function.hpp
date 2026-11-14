@@ -335,6 +335,17 @@ class Function {
     Function(const detail::TreeInput &input, const input_type center, const input_type half_width_in,
              const Func &func) {
         const box_t box_{dim_array_t{center}, dim_array_t{half_width_in}};
+        // Domain check on the shared construction path: every fit, C ABI
+        // fit and fit-file load uses it. set_bins divides by `half_length`
+        // and casts bins to `std::size_t`; a degenerate axis breaks both.
+        for (std::size_t d = 0; d < input_dim; ++d) {
+            if (!std::isfinite(box_.center[d]) || !std::isfinite(box_.half_length[d]) ||
+                !(box_.half_length[d] > value_type{0}))
+                throw std::invalid_argument("treeweave: domain must be finite with a < b; got a = " +
+                                            std::to_string(static_cast<double>(box_.center[d] - box_.half_length[d])) +
+                                            ", b = " + std::to_string(static_cast<double>(box_.center[d] + box_.half_length[d])) +
+                                            " on axis " + std::to_string(d));
+        }
         if (input.filename && load_fit_file(*input.filename, input, box_))
             return;
         const auto t_start = std::chrono::steady_clock::now();

@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <complex>
 #include <concepts>
 #include <cstddef>
@@ -330,8 +331,8 @@ template <std::size_t Degree = 0, EvalPolicy Policy = EvalPolicy::Balanced, clas
           class Domain>
     requires Fittable<std::remove_cvref_t<Func>, Domain>
 [[nodiscard]] auto fit(Func &&f, Domain a, Domain b, double tol, const options &opts = {}) {
-    if (!(tol > 0.0))
-        throw std::invalid_argument("treeweave::fit: tolerance must be > 0");
+    if (!(tol > 0.0) || !std::isfinite(tol))
+        throw std::invalid_argument("treeweave::fit: tolerance must be finite and > 0");
 
     // decay (not remove_cvref): a plain function passed by reference decays to a
     // function *pointer*, so the stored Func is never a bare function type. A bare
