@@ -386,8 +386,10 @@ NB_MODULE(_treeweave, m) {
         .def_prop_ro("dtype", &TreeweaveFunction::dtype_str);
 
     m.def("fit_f64", &fit_impl<double>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a,
-          "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a, "filename"_a);
+          "tol_kind"_a, "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a,
+          nb::arg("filename").none());
 
     m.def("fit_f32", &fit_impl<float>, "callable"_a, "input_dim"_a, "output_dim"_a, "a"_a, "b"_a, "tol"_a, "tol_kind"_a,
-          "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a, "filename"_a);
+          "max_depth"_a, "max_memory_mib"_a, "allow_max_depth_leaves"_a, "min_uniform_depth"_a,
+          nb::arg("filename").none());
 }
