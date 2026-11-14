@@ -167,6 +167,16 @@ section verbatim into that release's GitHub Release notes.
 - The options guide now explains why `RelativeMax` can throw
   `MaxDepthExceeded` when the largest `|f|` shows up late, and gives the
   workarounds.
+- `check_rung_symbols.sh` used `mapfile`, which bash 3.2 on macOS does not
+  have. On macOS the script stopped before the check ran, so the gate
+  reported success with no test. The script now reads the object list with a
+  while-read loop, and it exits 2 when a rung lists no object files.
+- The fit rejects degenerate input instead of dividing by zero in
+  `set_bins`: a domain with `a == b`, `a > b`, a NaN or infinite bound, or a
+  span that overflows; a `tol` that is not finite and positive; null
+  buffers and bad dimensions on the C ABI. The C ABI eval shims catch
+  `exception` values, so no C++ exception crosses `extern "C"`.
+  `tests/test_dumbinputs.cpp` covers the rejected inputs.
 
 ## [0.0.6] - 2026-08-28
 
