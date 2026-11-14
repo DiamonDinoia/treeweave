@@ -71,7 +71,14 @@ fi
 # Per rung: one normalized-disassembly stream per shared symbol, first
 # occurrence only (later TUs of the same rung repeat the identical copy).
 for rung in "${rungs[@]}"; do
-    mapfile -t objs <"$work/$rung.objs"
+    objs=()
+    while IFS= read -r obj; do
+        [[ -n "$obj" ]] && objs+=("$obj")
+    done <"$work/$rung.objs"
+    (( ${#objs[@]} > 0 )) || {
+        echo "check_rung_symbols: FAIL: rung '$rung' has no object files to check"
+        exit 2
+    }
     "$objdump" -d -r --no-show-raw-insn "${objs[@]}" 2>/dev/null |
         awk -v shared="$work/shared" -v refs="$work/$rung.refs" '
             BEGIN { while ((getline s < shared) > 0) keep[s] = 1 }
