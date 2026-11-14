@@ -346,7 +346,10 @@ class Function {
                                             ", b = " + std::to_string(static_cast<double>(box_.center[d] + box_.half_length[d])) +
                                             " on axis " + std::to_string(d));
         }
-        if (input.filename && load_fit_file(*input.filename, input, box_))
+        // An empty filename means no file: no load, no save and no error.
+        // The C ABI and the C++ options can carry an empty string here.
+        const bool have_fit_file = input.filename && !input.filename->empty();
+        if (have_fit_file && load_fit_file(*input.filename, input, box_))
             return;
         const auto t_start = std::chrono::steady_clock::now();
 
@@ -499,7 +502,7 @@ class Function {
         const auto t_end = std::chrono::steady_clock::now();
         stats_.t_elapsed =
             static_cast<std::uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count());
-        if (input.filename)
+        if (have_fit_file)
             save_fit_file(*input.filename, input, box_);
     }
 

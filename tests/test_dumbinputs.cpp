@@ -24,9 +24,11 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <random>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -69,6 +71,35 @@ auto read_text(const std::string &path) -> std::string {
 auto write_text(const std::string &path, const std::string &text) -> void {
     std::ofstream(path, std::ios::binary | std::ios::trunc) << text;
 }
+
+// Fresh empty working directory for one case: the fit file must write
+// nothing there. The name comes from std::random_device because ctest runs
+// the cases in parallel. The guard restores the old path and removes the
+// directory at the end.
+class TempCwdGuard {
+  public:
+    TempCwdGuard() : old_(fs::current_path()) {
+        std::random_device rd;
+        dir_ = fs::temp_directory_path() / ("treeweave_dumbinputs_" + std::to_string(rd()) + "_" + std::to_string(rd()));
+        fs::create_directory(dir_);
+        fs::current_path(dir_);
+    }
+    ~TempCwdGuard() {
+        std::error_code ec;
+        fs::current_path(old_, ec);
+        fs::remove_all(dir_, ec);
+    }
+    TempCwdGuard(const TempCwdGuard &)            = delete;
+    auto operator=(const TempCwdGuard &) -> TempCwdGuard & = delete;
+
+    [[nodiscard]] auto entry_count() const -> std::size_t {
+        return static_cast<std::size_t>(std::distance(fs::directory_iterator(dir_), fs::directory_iterator{}));
+    }
+
+  private:
+    fs::path old_;
+    fs::path dir_;
+};
 
 } // namespace
 
@@ -389,4 +420,25 @@ TEST_CASE("fit file: dumb inputs to save and load", "[dumbinputs][fit_file]") {
         REQUIRE(read_text(*opts.filename).find("upper 1") != std::string::npos);
         fs::remove(*opts.filename);
     }
+}
+
+TEST_CASE("fit file: an empty filename means no file (C++)", "[dumbinputs][fit_file]") {
+    const TempCwdGuard cwd;
+    auto               f = [](double x) { return std::exp(x); };
+    treeweave::options opts{};
+    opts.filename = std::string("");
+    REQUIRE_NOTHROW((void)fit(f, 0.0, 1.0, 1e-10, opts));
+    REQUIRE(cwd.entry_count() == 0);
+}
+
+TEST_CASE("C ABI: an empty filename means no file", "[dumbinputs][fit_file][c]") {
+    const TempCwdGuard cwd;
+    const double       a = 0.0, b = 1.0;
+    treeweave_opts     co{};
+    treeweave_default_opts(&co);
+    co.filename = "";
+    treeweave_t h = treeweave_fit(c_sq, 1, 1, &a, &b, 1e-3, nullptr, &co);
+    REQUIRE(h != nullptr);
+    h = treeweave_free(h);
+    REQUIRE(cwd.entry_count() == 0);
 }
