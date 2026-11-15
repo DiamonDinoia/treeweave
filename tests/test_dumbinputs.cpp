@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 namespace {
 
 constexpr double kNaN = std::numeric_limits<double>::quiet_NaN();
-constexpr double kInf = std::numeric_limits<double>::infinity();
+constexpr double kInfinity = std::numeric_limits<double>::infinity();
 
 auto f1(double x) -> double { return std::sin(x); }
 auto f2(std::array<double, 2> x) -> double { return x[0] + x[1]; }
@@ -108,15 +108,15 @@ class TempCwdGuard {
 } // namespace
 
 TEST_CASE("fit: degenerate 1D domain bounds throw std::invalid_argument", "[dumbinputs][domain]") {
-    REQUIRE_THROWS_AS(fit(f1, 1.0, 1.0, 1e-3), std::invalid_argument);      // a == b
-    REQUIRE_THROWS_AS(fit(f1, 1.0, 0.0, 1e-3), std::invalid_argument);      // a > b
-    REQUIRE_THROWS_AS(fit(f1, kNaN, 1.0, 1e-3), std::invalid_argument);     // NaN a
-    REQUIRE_THROWS_AS(fit(f1, 0.0, kNaN, 1e-3), std::invalid_argument);     // NaN b
-    REQUIRE_THROWS_AS(fit(f1, kNaN, kNaN, 1e-3), std::invalid_argument);    // NaN both
-    REQUIRE_THROWS_AS(fit(f1, 0.0, kInf, 1e-3), std::invalid_argument);     // +inf b
-    REQUIRE_THROWS_AS(fit(f1, -kInf, 0.0, 1e-3), std::invalid_argument);    // -inf a
-    REQUIRE_THROWS_AS(fit(f1, -kInf, kInf, 1e-3), std::invalid_argument);   // infinite span
-    REQUIRE_THROWS_AS(fit(f1, kInf, kInf, 1e-3), std::invalid_argument);    // inf == inf
+    REQUIRE_THROWS_AS(fit(f1, 1.0, 1.0, 1e-3), std::invalid_argument);              // a == b
+    REQUIRE_THROWS_AS(fit(f1, 1.0, 0.0, 1e-3), std::invalid_argument);              // a > b
+    REQUIRE_THROWS_AS(fit(f1, kNaN, 1.0, 1e-3), std::invalid_argument);             // NaN a
+    REQUIRE_THROWS_AS(fit(f1, 0.0, kNaN, 1e-3), std::invalid_argument);             // NaN b
+    REQUIRE_THROWS_AS(fit(f1, kNaN, kNaN, 1e-3), std::invalid_argument);            // NaN both
+    REQUIRE_THROWS_AS(fit(f1, 0.0, kInfinity, 1e-3), std::invalid_argument);        // +inf b
+    REQUIRE_THROWS_AS(fit(f1, -kInfinity, 0.0, 1e-3), std::invalid_argument);       // -inf a
+    REQUIRE_THROWS_AS(fit(f1, -kInfinity, kInfinity, 1e-3), std::invalid_argument); // infinite span
+    REQUIRE_THROWS_AS(fit(f1, kInfinity, kInfinity, 1e-3), std::invalid_argument);  // inf == inf
     // b - a overflows to +inf.
     REQUIRE_THROWS_AS(fit(f1, -1.7e308, 1.7e308, 1e-3), std::invalid_argument);
     // a + b overflows the midpoint to +inf while b - a stays finite.
@@ -134,7 +134,7 @@ TEST_CASE("fit: one bad axis in a multi-dim domain throws", "[dumbinputs][domain
     REQUIRE_THROWS_AS(fit(f2, std::array{0.0, kNaN}, std::array{1.0, 1.0}, 1e-3), std::invalid_argument);
     using f3_t = double (*)(std::array<double, 3>);
     const f3_t f3 = +[](std::array<double, 3> x) { return x[0] + x[1] + x[2]; };
-    REQUIRE_THROWS_AS(fit(f3, std::array{0.0, 0.0, 0.0}, std::array{1.0, 1.0, kInf}, 1e-3),
+    REQUIRE_THROWS_AS(fit(f3, std::array{0.0, 0.0, 0.0}, std::array{1.0, 1.0, kInfinity}, 1e-3),
                       std::invalid_argument);
 }
 
@@ -142,8 +142,8 @@ TEST_CASE("fit: tolerance must be finite and positive", "[dumbinputs][tol]") {
     REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, 0.0), std::invalid_argument);
     REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, -1.0), std::invalid_argument);
     REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, kNaN), std::invalid_argument);
-    REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, kInf), std::invalid_argument);
-    REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, -kInf), std::invalid_argument);
+    REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, kInfinity), std::invalid_argument);
+    REQUIRE_THROWS_AS(fit(f1, 0.0, 1.0, -kInfinity), std::invalid_argument);
 }
 
 TEST_CASE("eval: documented values at and around the closed domain [a, b]", "[dumbinputs][eval]") {
@@ -154,8 +154,8 @@ TEST_CASE("eval: documented values at and around the closed domain [a, b]", "[du
     REQUIRE(std::isnan(fn(-1e-9)));                        // just below a
     REQUIRE(std::isnan(fn(1.0 + 1e-9)));                   // just above b
     REQUIRE(std::isnan(fn(kNaN)));
-    REQUIRE(std::isnan(fn(kInf)));
-    REQUIRE(std::isnan(fn(-kInf)));
+    REQUIRE(std::isnan(fn(kInfinity)));
+    REQUIRE(std::isnan(fn(-kInfinity)));
 
     const std::array<double, 3> xs{0.0, 0.5, 1.0};
     std::array<double, 3>       ys{};
@@ -226,7 +226,7 @@ TEST_CASE("C ABI: fit rejects null, bad dims, degenerate domains and bad tol", "
     REQUIRE(treeweave_fit(c_sq, 1, 4, &a, &b, 1e-3, nullptr, nullptr) == nullptr);
     REQUIRE(err_nonempty());
 
-    const double cases[4][2] = {{1.0, 1.0}, {1.0, 0.0}, {kNaN, 1.0}, {0.0, kInf}};
+    const double cases[4][2] = {{1.0, 1.0}, {1.0, 0.0}, {kNaN, 1.0}, {0.0, kInfinity}};
     for (const auto &ab : cases) {
         REQUIRE(treeweave_fit(c_sq, 1, 1, &ab[0], &ab[1], 1e-3, nullptr, nullptr) == nullptr);
         REQUIRE(err_nonempty());
@@ -236,7 +236,7 @@ TEST_CASE("C ABI: fit rejects null, bad dims, degenerate domains and bad tol", "
     REQUIRE(err_nonempty());
     REQUIRE(treeweave_fit(c_sq, 1, 1, &a, &b, kNaN, nullptr, nullptr) == nullptr);
     REQUIRE(err_nonempty());
-    REQUIRE(treeweave_fit(c_sq, 1, 1, &a, &b, kInf, nullptr, nullptr) == nullptr);
+    REQUIRE(treeweave_fit(c_sq, 1, 1, &a, &b, kInfinity, nullptr, nullptr) == nullptr);
     REQUIRE(err_nonempty());
 
     // An unnamed tol_kind value (7 is in the enum range): the fit cannot
@@ -338,8 +338,8 @@ TEST_CASE("C ABI: eval values at domain edges", "[dumbinputs][c]") {
     REQUIRE(std::isnan(treeweave_eval_1d(h, -1e-9)));
     REQUIRE(std::isnan(treeweave_eval_1d(h, 1.0 + 1e-9)));
     REQUIRE(std::isnan(treeweave_eval_1d(h, kNaN)));
-    REQUIRE(std::isnan(treeweave_eval_1d(h, kInf)));
-    REQUIRE(std::isnan(treeweave_eval_1d(h, -kInf)));
+    REQUIRE(std::isnan(treeweave_eval_1d(h, kInfinity)));
+    REQUIRE(std::isnan(treeweave_eval_1d(h, -kInfinity)));
 
     h = treeweave_free(h);
 }
