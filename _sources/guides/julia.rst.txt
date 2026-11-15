@@ -105,11 +105,11 @@ Available fields (all keyword-only, all have defaults):
        ``"relative_l2"``, ``"absolute_l2"``, ``"relative_tail"``, ``"absolute_tail"``,
        ``"relative_pointwise"``.
    * - ``max_depth``
-     - ``50``
-     - Tree-depth ceiling.
+     - ``0`` (auto)
+     - Tree-depth ceiling. ``0`` = auto, 50; ``-1`` = the root panel only.
    * - ``max_memory_mib``
-     - ``-1`` (auto)
-     - Memory budget in MiB. ``-1`` = auto (4/8/16 MiB for dim 1/2/3); ``0`` = no cap.
+     - ``0`` (auto)
+     - Memory budget in MiB. ``0`` = auto (4/32/256 MiB for dim 1/2/3); ``-1`` = no cap.
    * - ``allow_max_depth_leaves``
      - ``false``
      - Keep non-converged panels at max depth instead of throwing.

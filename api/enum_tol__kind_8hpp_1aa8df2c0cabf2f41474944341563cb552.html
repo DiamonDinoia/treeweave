@@ -326,20 +326,8 @@
 <dl class="cpp enum-class">
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKindE">
 <span id="_CPPv3N9treeweave7TolKindE"></span><span id="_CPPv2N9treeweave7TolKindE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">treeweave</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">TolKind</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">uint8_t</span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKindE" title="Link to this definition"></a><br /></dt>
-<dd><p>Tolerance interpretation for the tree’s adaptive refinement. </p>
+<dd><p>Tolerance interpretation for the tree’s adaptive refinement. The default, RelativeMax, is 0, so a zeroed options struct selects it. </p>
 <p><em>Values:</em></p>
-<dl class="cpp enumerator">
-<dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind12RelativeTailE">
-<span id="_CPPv3N9treeweave7TolKind12RelativeTailE"></span><span id="_CPPv2N9treeweave7TolKind12RelativeTailE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552aad155dafaacf716636fdcb150ea5bde7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RelativeTail</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind12RelativeTailE" title="Link to this definition"></a><br /></dt>
-<dd><p>tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only). Exception: with a fit of 1 or 2 coefficients the tail is the whole polynomial, so this falls back to sampled RelativeMax scaled by the running domain-wide max|f|. </p>
-</dd></dl>
-
-<dl class="cpp enumerator">
-<dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind12AbsoluteTailE">
-<span id="_CPPv3N9treeweave7TolKind12AbsoluteTailE"></span><span id="_CPPv2N9treeweave7TolKind12AbsoluteTailE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552a1f7206f5536e36c784fae20211db6c12"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">AbsoluteTail</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind12AbsoluteTailE" title="Link to this definition"></a><br /></dt>
-<dd><p>absolute tail-coefficient estimate (1D only) </p>
-</dd></dl>
-
 <dl class="cpp enumerator">
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind11RelativeMaxE">
 <span id="_CPPv3N9treeweave7TolKind11RelativeMaxE"></span><span id="_CPPv2N9treeweave7TolKind11RelativeMaxE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552a5d645d4523d08bf952a23aeadf75e89a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RelativeMax</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind11RelativeMaxE" title="Link to this definition"></a><br /></dt>
@@ -368,6 +356,18 @@
 <dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind17RelativePointwiseE">
 <span id="_CPPv3N9treeweave7TolKind17RelativePointwiseE"></span><span id="_CPPv2N9treeweave7TolKind17RelativePointwiseE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552ab2e151065ebff1194c3a153162195686"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RelativePointwise</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind17RelativePointwiseE" title="Link to this definition"></a><br /></dt>
 <dd><p>sample-based, |p - f| &lt;= tol * |f| at every sample; a zero sample needs p == f </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind12RelativeTailE">
+<span id="_CPPv3N9treeweave7TolKind12RelativeTailE"></span><span id="_CPPv2N9treeweave7TolKind12RelativeTailE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552aad155dafaacf716636fdcb150ea5bde7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RelativeTail</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind12RelativeTailE" title="Link to this definition"></a><br /></dt>
+<dd><p>tail-coefficient estimate over max_k |c_k| of the panel; all-zero panel converges (1D only). Exception: with a fit of 1 or 2 coefficients the tail is the whole polynomial, so this falls back to sampled RelativeMax scaled by the running domain-wide max|f|. </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N9treeweave7TolKind12AbsoluteTailE">
+<span id="_CPPv3N9treeweave7TolKind12AbsoluteTailE"></span><span id="_CPPv2N9treeweave7TolKind12AbsoluteTailE"></span><span class="target" id="tol__kind_8hpp_1aa8df2c0cabf2f41474944341563cb552a1f7206f5536e36c784fae20211db6c12"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">AbsoluteTail</span></span></span><a class="headerlink" href="#_CPPv4N9treeweave7TolKind12AbsoluteTailE" title="Link to this definition"></a><br /></dt>
+<dd><p>absolute tail-coefficient estimate (1D only) </p>
 </dd></dl>
 
 </dd></dl>

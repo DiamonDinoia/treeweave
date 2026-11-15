@@ -38,7 +38,11 @@ Includes
 --------
 
 
+- ``algorithm``
+
 - ``array``
+
+- ``cmath``
 
 - ``complex``
 
@@ -55,6 +59,8 @@ Includes
 - ``stdexcept``
 
 - ``string``
+
+- ``treeweave/detail/arch_degree_table.hpp``
 
 - ``treeweave/detail/eval_policy.hpp``
 

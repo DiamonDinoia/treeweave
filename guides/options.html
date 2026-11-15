@@ -346,17 +346,18 @@ ABI fields.</p>
 <td><p>How treeweave interprets <code class="docutils literal notranslate"><span class="pre">tol</span></code> (see <a class="reference internal" href="#tolkind"><span class="std std-ref">TolKind</span></a>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max_depth</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">50</span></code></p></td>
-<td><p>Tree-depth ceiling. Hitting it without converging throws
-<code class="docutils literal notranslate"><span class="pre">MaxDepthExceeded</span></code> (unless <code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code>). Far above what
-any non-singular function needs; lower it to fail fast near a suspected
-singularity.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code> (auto)</p></td>
+<td><p>Tree-depth ceiling. <code class="docutils literal notranslate"><span class="pre">0</span></code> = auto, 50; <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> = the root panel only;
+<code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> = explicit ceiling. Hitting it without converging throws
+<code class="docutils literal notranslate"><span class="pre">MaxDepthExceeded</span></code> (unless <code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code>). 50 is far above
+what any non-singular function needs; lower it to fail fast near a
+suspected singularity.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max_memory_mib</span></code></p></td>
 <td><p>auto</p></td>
-<td><p>Cap on accumulated leaf storage (MiB). Tri-state: <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> (default) =
-auto, a dimension-scaled budget (4 / 8 / 16 MiB for 1D / 2D / 3D);
-<code class="docutils literal notranslate"><span class="pre">0</span></code> = no cap; <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> = explicit cap. Crossing it throws
+<td><p>Cap on accumulated leaf storage (MiB). Tri-state: <code class="docutils literal notranslate"><span class="pre">0</span></code> (default) =
+auto, a dimension-scaled budget (4 / 32 / 256 MiB for 1D / 2D / 3D);
+<code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> = no cap; <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> = explicit cap. Crossing it throws
 <code class="docutils literal notranslate"><span class="pre">MemoryBudgetExceeded</span></code> carrying used/budget bytes and the offending
 panel.</p></td>
 </tr>
@@ -387,8 +388,9 @@ unwritable path makes the fit fail.</p></td>
 </tbody>
 </table>
 <p>The leaf polynomial degree is not a runtime option. In C++ it is a template
-parameter, <code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code>, default 7. The C ABI picks a register-optimal
-degree for the detected CPU.</p>
+parameter, <code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;N&gt;</span></code>. The default is 6 coefficients per axis in 1D
+and 7 in 2D and 3D. The C ABI and the bindings use the same degrees on every
+CPU.</p>
 </section>
 <section id="language-specific-options">
 <h2>Language-specific options<a class="headerlink" href="#language-specific-options" title="Link to this heading"></a></h2>

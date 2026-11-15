@@ -433,7 +433,8 @@ callable.</p>
 <span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="n">opts</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>The leaf polynomial degree is a template parameter (default 7):</p>
+<p>The leaf polynomial degree is a template parameter. The default, <code class="docutils literal notranslate"><span class="pre">fit&lt;0&gt;</span></code>,
+is 6 coefficients per axis in 1D and 7 in 2D and 3D:</p>
 <div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave</span><span class="o">::</span><span class="n">fit</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span><span class="w"> </span><span class="mf">2.0</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-8</span><span class="p">);</span><span class="w">  </span><span class="c1">// degree-5 leaves</span>
 </pre></div>
 </div>

@@ -3,7 +3,7 @@
 treeweave turns an expensive function `f(x)` into a cheap lookup. It
 precomputes a piecewise polynomial approximation on an adaptive tree. The fit
 runs once and costs memory. Every later call is a tree descent followed by a
-degree-7 polynomial evaluation.
+polynomial evaluation with 6 coefficients per axis in 1D, 7 in 2D and 3D.
 
 ```
    user calls fn(x), fn(x), fn(x)... a million times.
@@ -39,7 +39,7 @@ Three standard choices from numerical analysis make this work (see
   converges *exponentially* in the degree for an analytic `f`.
 - **Monomial basis at low degree.** treeweave keeps the polynomial in the plain
   monomial basis `Σ cₖ xᵏ`. That is a bad idea at high degree, but it is
-  "easy, fast, accurate" at the low degrees treeweave uses (degree ≈ 7, well
+  "easy, fast, accurate" at the low degrees treeweave uses (6 or 7 coefficients, well
   under the `n ≲ 30` regime where the monomial Vandermonde solve stays
   well-behaved). Horner evaluation of a monomial is a tight FMA chain that maps
   directly onto a SIMD register lane (Phase 3).
@@ -168,22 +168,23 @@ In ND, the child index takes one bit per axis: one comparison per axis,
 
 The leaf carries monomial coefficients `c[k_0, k_1, ..., k_{n-1}]`.
 Evaluation collapses one axis at a time with Horner's rule, at a cost of
-`K^n − 1` FMAs, where `K = degree + 1`.
+`K^n − 1` FMAs, where `K` is the template `Degree`, the coefficient count per
+axis. The defaults are `K = 6` in 1D and `K = 7` in 2D and 3D.
 
 ```
-   1D Horner (K = 8):              2D Horner (K = 8):
+   1D Horner (K = 6):              2D Horner (K = 7):
 
-   y = c[7]                        for j in 0..7:
-   for k in 6..0:                      y_j = (1D Horner over axis 1)
+   y = c[5]                        for j in 0..6:
+   for k in 4..0:                      y_j = (1D Horner over axis 1)
        y = y * x + c[k]
-                                   y = y_7
-   7 FMAs total, single chain.     for j in 6..0:
+                                   y = y_6
+   5 FMAs total, single chain.     for j in 5..0:
                                        y = y * x_0 + y_j
 
-                                   63 FMAs total, two nested chains.
+                                   48 FMAs total, two nested chains.
 ```
 
-For 3D the cost is `8^3 − 1 = 511` FMAs per evaluation. The shipped kernel
+For 3D the cost is `7^3 − 1 = 342` FMAs per evaluation. The shipped kernel
 batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
 when the leaf is hot in L1.
 
@@ -261,21 +262,20 @@ Fit once, then evaluate from the immutable `Function` as often as needed.
 
 The C++ header API (`treeweave::fit<Degree>(...)`) requires the leaf degree
 as a compile-time template parameter, so each call site can tune or override
-it. Supported values are any positive integer; 7 is the default
-(matches one AVX2 / AVX-512 register lane).
+it. Supported values are any positive integer. The default, `fit<0>`, is 6 in
+1D and 7 in 2D and 3D, from a sweep of degrees 4 to 16 on x86-64-v3,
+x86-64-v4 and Apple M2.
 
 The C ABI (`treeweave_fit` for double, `treeweavef_fit` for float, in
 `treeweave.h`, where the precision lives in the prefix, FINUFFT/FFTW style)
-takes no degree argument. Instead it picks a register-optimal, spill-free degree at
-runtime based on the detected CPU vector width. The multi-arch dispatch path,
-enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON`, selects among
-compiled-in ISA variants, so the dispatcher picks the best leaf size for the
-host CPU: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
-mandatory NEON64 variant, and on RISC-V an `rvv` variant (best-effort,
+takes no degree argument. It uses the C++ default degree on every CPU. The multi-arch
+dispatch path, enabled at build time with `-DTREEWEAVE_C_MULTIARCH=ON`, selects
+among compiled-in ISA variants of the evaluation kernels: on x86 a
+compiler-appropriate SIMD ladder, on aarch64 the single mandatory NEON64 variant, and on RISC-V an `rvv` variant (best-effort,
 untested). See the [Runtime ISA dispatch](guides/dispatch.rst) guide for the
 full family selection and the `TREEWEAVE_FORCE_ARCH` override. Accuracy comes
-from `tol` alone. Whichever degree the dispatcher picks, the adaptive tree
-refines until every leaf meets the tolerance.
+from `tol` alone: the adaptive tree refines until every leaf meets the
+tolerance.
 
 ## Background and further reading
 

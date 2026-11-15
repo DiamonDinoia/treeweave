@@ -325,7 +325,7 @@
 <p>treeweave turns an expensive function <code class="docutils literal notranslate"><span class="pre">f(x)</span></code> into a cheap lookup. It
 precomputes a piecewise polynomial approximation on an adaptive tree. The fit
 runs once and costs memory. Every later call is a tree descent followed by a
-degree-7 polynomial evaluation.</p>
+polynomial evaluation with 6 coefficients per axis in 1D, 7 in 2D and 3D.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   user calls fn(x), fn(x), fn(x)... a million times.
               │
               ▼
@@ -358,7 +358,7 @@ a high-degree fit on equispaced nodes diverge. On each panel the error then
 converges <em>exponentially</em> in the degree for an analytic <code class="docutils literal notranslate"><span class="pre">f</span></code>.</p></li>
 <li><p><strong>Monomial basis at low degree.</strong> treeweave keeps the polynomial in the plain
 monomial basis <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">cₖ</span> <span class="pre">xᵏ</span></code>. That is a bad idea at high degree, but it is
-“easy, fast, accurate” at the low degrees treeweave uses (degree ≈ 7, well
+“easy, fast, accurate” at the low degrees treeweave uses (6 or 7 coefficients, well
 under the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≲</span> <span class="pre">30</span></code> regime where the monomial Vandermonde solve stays
 well-behaved). Horner evaluation of a monomial is a tight FMA chain that maps
 directly onto a SIMD register lane (Phase 3).</p></li>
@@ -478,20 +478,21 @@ chain.</p>
 <h2>Phase 3, leaf evaluation: tensor-product Horner<a class="headerlink" href="#phase-3-leaf-evaluation-tensor-product-horner" title="Link to this heading"></a></h2>
 <p>The leaf carries monomial coefficients <code class="docutils literal notranslate"><span class="pre">c[k_0,</span> <span class="pre">k_1,</span> <span class="pre">...,</span> <span class="pre">k_{n-1}]</span></code>.
 Evaluation collapses one axis at a time with Horner’s rule, at a cost of
-<code class="docutils literal notranslate"><span class="pre">K^n</span> <span class="pre">−</span> <span class="pre">1</span></code> FMAs, where <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">degree</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>              <span class="mi">2</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">8</span><span class="p">):</span>
+<code class="docutils literal notranslate"><span class="pre">K^n</span> <span class="pre">−</span> <span class="pre">1</span></code> FMAs, where <code class="docutils literal notranslate"><span class="pre">K</span></code> is the template <code class="docutils literal notranslate"><span class="pre">Degree</span></code>, the coefficient count per
+axis. The defaults are <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">6</span></code> in 1D and <code class="docutils literal notranslate"><span class="pre">K</span> <span class="pre">=</span> <span class="pre">7</span></code> in 2D and 3D.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">6</span><span class="p">):</span>              <span class="mi">2</span><span class="n">D</span> <span class="n">Horner</span> <span class="p">(</span><span class="n">K</span> <span class="o">=</span> <span class="mi">7</span><span class="p">):</span>
 
-   <span class="n">y</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">0..7</span><span class="p">:</span>
-   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="mf">6..0</span><span class="p">:</span>                      <span class="n">y_j</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="n">over</span> <span class="n">axis</span> <span class="mi">1</span><span class="p">)</span>
+   <span class="n">y</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">0..6</span><span class="p">:</span>
+   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="mf">4..0</span><span class="p">:</span>                      <span class="n">y_j</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="n">D</span> <span class="n">Horner</span> <span class="n">over</span> <span class="n">axis</span> <span class="mi">1</span><span class="p">)</span>
        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-                                   <span class="n">y</span> <span class="o">=</span> <span class="n">y_7</span>
-   <span class="mi">7</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">single</span> <span class="n">chain</span><span class="o">.</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">6..0</span><span class="p">:</span>
+                                   <span class="n">y</span> <span class="o">=</span> <span class="n">y_6</span>
+   <span class="mi">5</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">single</span> <span class="n">chain</span><span class="o">.</span>     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="mf">5..0</span><span class="p">:</span>
                                        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">*</span> <span class="n">x_0</span> <span class="o">+</span> <span class="n">y_j</span>
 
-                                   <span class="mi">63</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">two</span> <span class="n">nested</span> <span class="n">chains</span><span class="o">.</span>
+                                   <span class="mi">48</span> <span class="n">FMAs</span> <span class="n">total</span><span class="p">,</span> <span class="n">two</span> <span class="n">nested</span> <span class="n">chains</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>For 3D the cost is <code class="docutils literal notranslate"><span class="pre">8^3</span> <span class="pre">−</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">511</span></code> FMAs per evaluation. The shipped kernel
+<p>For 3D the cost is <code class="docutils literal notranslate"><span class="pre">7^3</span> <span class="pre">−</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">342</span></code> FMAs per evaluation. The shipped kernel
 batches W = 4 targets per call (AVX2 ymm) so the FMA-port pair runs at peak
 when the leaf is hot in L1.</p>
 </section>
@@ -564,20 +565,19 @@ so callers can chunk and thread externally.</p>
 <h2>Degree selection: C ABI vs C++ header API<a class="headerlink" href="#degree-selection-c-abi-vs-c-header-api" title="Link to this heading"></a></h2>
 <p>The C++ header API (<code class="docutils literal notranslate"><span class="pre">treeweave::fit&lt;Degree&gt;(...)</span></code>) requires the leaf degree
 as a compile-time template parameter, so each call site can tune or override
-it. Supported values are any positive integer; 7 is the default
-(matches one AVX2 / AVX-512 register lane).</p>
+it. Supported values are any positive integer. The default, <code class="docutils literal notranslate"><span class="pre">fit&lt;0&gt;</span></code>, is 6 in
+1D and 7 in 2D and 3D, from a sweep of degrees 4 to 16 on x86-64-v3,
+x86-64-v4 and Apple M2.</p>
 <p>The C ABI (<code class="docutils literal notranslate"><span class="pre">treeweave_fit</span></code> for double, <code class="docutils literal notranslate"><span class="pre">treeweavef_fit</span></code> for float, in
 <code class="docutils literal notranslate"><span class="pre">treeweave.h</span></code>, where the precision lives in the prefix, FINUFFT/FFTW style)
-takes no degree argument. Instead it picks a register-optimal, spill-free degree at
-runtime based on the detected CPU vector width. The multi-arch dispatch path,
-enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code>, selects among
-compiled-in ISA variants, so the dispatcher picks the best leaf size for the
-host CPU: on x86 a compiler-appropriate SIMD ladder, on aarch64 the single
-mandatory NEON64 variant, and on RISC-V an <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (best-effort,
+takes no degree argument. It uses the C++ default degree on every CPU. The multi-arch
+dispatch path, enabled at build time with <code class="docutils literal notranslate"><span class="pre">-DTREEWEAVE_C_MULTIARCH=ON</span></code>, selects
+among compiled-in ISA variants of the evaluation kernels: on x86 a
+compiler-appropriate SIMD ladder, on aarch64 the single mandatory NEON64 variant, and on RISC-V an <code class="docutils literal notranslate"><span class="pre">rvv</span></code> variant (best-effort,
 untested). See the <a class="reference internal" href="guides/dispatch.html"><span class="std std-doc">Runtime ISA dispatch</span></a> guide for the
 full family selection and the <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_FORCE_ARCH</span></code> override. Accuracy comes
-from <code class="docutils literal notranslate"><span class="pre">tol</span></code> alone. Whichever degree the dispatcher picks, the adaptive tree
-refines until every leaf meets the tolerance.</p>
+from <code class="docutils literal notranslate"><span class="pre">tol</span></code> alone: the adaptive tree refines until every leaf meets the
+tolerance.</p>
 </section>
 <section id="background-and-further-reading">
 <h2>Background and further reading<a class="headerlink" href="#background-and-further-reading" title="Link to this heading"></a></h2>

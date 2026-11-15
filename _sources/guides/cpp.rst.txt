@@ -77,7 +77,8 @@ Pass a :doc:`treeweave::options <options>` as the trailing argument:
    opts.max_memory_mib = 64;
    auto fn = treeweave::fit(zeta, 2.0, 10.0, 1e-10, opts);
 
-The leaf polynomial degree is a template parameter (default 7):
+The leaf polynomial degree is a template parameter. The default, ``fit<0>``,
+is 6 coefficients per axis in 1D and 7 in 2D and 3D:
 
 .. code-block:: cpp
 

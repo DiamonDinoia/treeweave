@@ -458,8 +458,8 @@ single-prefix.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">context</span></code> carries optional callback state; <code class="docutils literal notranslate"><span class="pre">opts</span></code> is <code class="docutils literal notranslate"><span class="pre">NULL</span></code> for defaults.
-Options take no degree argument; the library auto-selects a register-optimal
-leaf degree for the detected CPU. On failure, fit returns <code class="docutils literal notranslate"><span class="pre">NULL</span></code> and sets the
+Options take no degree argument. The leaf has 6 coefficients per axis in 1D
+and 7 in 2D and 3D, on every CPU. On failure, fit returns <code class="docutils literal notranslate"><span class="pre">NULL</span></code> and sets the
 thread-local <code class="docutils literal notranslate"><span class="pre">treeweave_last_error()</span></code>.</p>
 </section>
 <section id="evaluate">
@@ -524,6 +524,10 @@ the call arity / scalar output), they set <code class="docutils literal notransl
 <span class="n">treeweave_t</span><span class="w"> </span><span class="n">fn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">treeweave_fit</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="p">,</span><span class="w"> </span><span class="mf">1e-10</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">opts</span><span class="p">);</span>
 </pre></div>
 </div>
+<p>A zero-filled struct (<code class="docutils literal notranslate"><span class="pre">treeweave_opts</span> <span class="pre">opts</span> <span class="pre">=</span> <span class="pre">{0};</span></code> or <code class="docutils literal notranslate"><span class="pre">memset</span></code> to 0) is
+the same as <code class="docutils literal notranslate"><span class="pre">treeweave_default_opts</span></code>: a zero field is its default.
+<code class="docutils literal notranslate"><span class="pre">max_depth</span> <span class="pre">=</span> <span class="pre">0</span></code> is auto (50) and <code class="docutils literal notranslate"><span class="pre">max_memory_mib</span> <span class="pre">=</span> <span class="pre">0</span></code> is auto
+(4/32/256 MiB in 1D/2D/3D).</p>
 <p><code class="docutils literal notranslate"><span class="pre">treeweave_tol_kind_t</span></code> values: <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_MAX</span></code> (default),
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_MAX</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_L2</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_L2</span></code>,
 <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_TAIL</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_ABSOLUTE_TAIL</span></code>, <code class="docutils literal notranslate"><span class="pre">TREEWEAVE_RELATIVE_POINTWISE</span></code>.</p>

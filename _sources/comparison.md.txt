@@ -72,8 +72,9 @@ of the latest run.
 
 A global Chebyshev series needs degree 26 or 27 to reach `1e-10` on this interval.
 Each evaluation is a Clenshaw recurrence of 26 dependent steps. treeweave
-splits the interval into leaves and fits a degree-7 polynomial on each leaf.
-Each evaluation is a leaf lookup and 7 fused multiply-adds in Horner form.
+splits the interval into leaves and fits a polynomial with 6 coefficients on
+each leaf. Each evaluation is a leaf lookup and 6 fused multiply-adds: 5 in
+Horner form and 1 for the domain map.
 
 Splines and lookup tables reach `1e-10` only with 512 to 524,288 knots. Each
 evaluation first finds the interval of the point. GSL, `numpy.interp` and

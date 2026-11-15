@@ -466,12 +466,12 @@ scalar or a length-<code class="docutils literal notranslate"><span class="pre">
 <code class="docutils literal notranslate"><span class="pre">'relative_pointwise'</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max_depth</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">50</span></code></p></td>
-<td><p>Tree-depth ceiling; raises <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> with <code class="docutils literal notranslate"><span class="pre">MaxDepthExceeded</span></code> if hit.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code> (auto)</p></td>
+<td><p>Tree-depth ceiling. <code class="docutils literal notranslate"><span class="pre">0</span></code> = auto, 50; <code class="docutils literal notranslate"><span class="pre">-1</span></code> = the root panel only. Raises <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> with <code class="docutils literal notranslate"><span class="pre">MaxDepthExceeded</span></code> if hit.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max_memory_mib</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">-1</span></code> (auto)</p></td>
-<td><p>Memory budget in MiB. <code class="docutils literal notranslate"><span class="pre">-1</span></code> = auto (4/8/16 MiB for dim 1/2/3); <code class="docutils literal notranslate"><span class="pre">0</span></code> = no cap.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code> (auto)</p></td>
+<td><p>Memory budget in MiB. <code class="docutils literal notranslate"><span class="pre">0</span></code> = auto (4/32/256 MiB for dim 1/2/3); <code class="docutils literal notranslate"><span class="pre">-1</span></code> = no cap.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">allow_max_depth_leaves</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
