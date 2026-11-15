@@ -180,7 +180,9 @@ auto for_each_sorted_run_1d(const F &f, const typename F::value_type *xs, std::s
                     ++j;
             }
         }
-        fn(id, i, j - i);
+        // The min keeps the run bound visible to the compiler: it then drops
+        // the SIMD loops for short runs.
+        fn(id, i, std::min(j - i, n - i));
         i = j;
     }
 }
