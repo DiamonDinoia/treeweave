@@ -219,7 +219,8 @@ delete(fb);
 % A malformed file with a matching header makes the fit fail.
 txt = fileread(fit_file1);
 fid = fopen(fit_file1, 'w');
-fwrite(fid, txt(1:strfind(txt, 'subtrees') - 1));
+k = strfind(txt, sprintf('\nsubtrees '));
+fwrite(fid, txt(1:k(1) - 1));
 fclose(fid);
 ok = false;
 try
