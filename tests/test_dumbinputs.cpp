@@ -26,9 +26,11 @@
 #include <limits>
 #include <random>
 #include <span>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <utility>
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -64,8 +66,10 @@ auto temp_file(const std::string &name) -> std::string {
 }
 
 auto read_text(const std::string &path) -> std::string {
-    std::ifstream in(path, std::ios::binary);
-    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    std::ifstream      in(path, std::ios::binary);
+    std::ostringstream buf;
+    buf << in.rdbuf();
+    return std::move(buf).str();
 }
 
 auto write_text(const std::string &path, const std::string &text) -> void {
