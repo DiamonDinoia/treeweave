@@ -442,3 +442,17 @@ TEST_CASE("C ABI: an empty filename means no file", "[dumbinputs][fit_file][c]")
     h = treeweave_free(h);
     REQUIRE(cwd.entry_count() == 0);
 }
+
+TEST_CASE("fit file: a failed save leaves no temporary file", "[dumbinputs][fit_file]") {
+    const TempCwdGuard cwd;
+    auto               f = [](double x) { return std::exp(x); };
+    treeweave::options opts{};
+    // The target names an existing directory: the save writes the temporary
+    // file first, then the rename to the target fails.
+    const fs::path target = fs::current_path() / "target_dir";
+    fs::create_directory(target);
+    opts.filename = target.string();
+    REQUIRE_THROWS_AS(fit(f, 0.0, 1.0, 1e-10, opts), std::filesystem::filesystem_error);
+    REQUIRE(cwd.entry_count() == 1); // the target directory only
+    REQUIRE_FALSE(fs::exists(target.string() + ".tmp"));
+}

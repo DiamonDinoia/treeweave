@@ -21,6 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -1571,14 +1572,23 @@ class Function {
         }
 
         const std::string tmp = path + ".tmp";
-        {
-            std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
-            out << os.str();
-            out.close();
-            if (!out)
-                throw std::runtime_error("treeweave: cannot write fit file '" + tmp + "'");
+        try {
+            {
+                std::ofstream out(tmp, std::ios::binary | std::ios::trunc);
+                out << os.str();
+                out.close();
+                if (!out)
+                    throw std::runtime_error("treeweave: cannot write fit file '" + tmp + "'");
+            }
+            std::filesystem::rename(tmp, path);
+        } catch (...) {
+            // A failed save must not leave the temporary file behind. The
+            // remove uses the `std::error_code` overload, so the cleanup
+            // never throws; the original error still reaches the caller.
+            std::error_code ec;
+            std::filesystem::remove(tmp, ec);
+            throw;
         }
-        std::filesystem::rename(tmp, path);
     }
 
     /// Load the fit from `path`. Return false when the file is
