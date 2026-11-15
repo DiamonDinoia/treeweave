@@ -113,6 +113,9 @@ section verbatim into that release's GitHub Release notes.
   relative. Functions with zeros now fit; leaf counts change.
 
 ### Fixed
+- No filename, `None`, `NULL` and an empty string all mean no file: no
+  load, no save and no error. When a fit-file save stops with an error, no
+  temporary file stays behind.
 - The fit checks the memory budget after the last tree level too. Before, the
   leaves of that level were never counted, so a fit could end with up to 8x
   `max_memory_mib` in 3D. `exp(-|x|^2)` on `[-1, 1]^3` at `tol = 1e-12`
