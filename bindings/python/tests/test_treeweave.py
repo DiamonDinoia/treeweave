@@ -498,9 +498,9 @@ def test_filename_malformed_raises(tmp_path):
     path = tmp_path / "fit.txt"
     f, _ = _counted(1)
     treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
-    text = path.read_text()
-    assert "subtrees" in text
-    path.write_text(text[: text.index("subtrees")])
+    data = path.read_bytes()
+    assert b"subtrees" in data
+    path.write_bytes(data[: data.index(b"subtrees")])
     with pytest.raises(RuntimeError):
         treeweave.fit(f, 0.0, 1.0, 1e-8, filename=path)
 
