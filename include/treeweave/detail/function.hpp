@@ -1622,6 +1622,21 @@ class Function {
             if (!(is >> v))
                 fail("bad number");
         };
+        const std::size_t body_size = text.size() - header.size();
+        // Bytes that are left in the body. tellg is -1 at the end of the
+        // stream; then no byte is left.
+        auto remaining = [&]() -> std::size_t {
+            const std::streamoff pos = is.tellg();
+            return pos < 0 ? 0 : body_size - static_cast<std::size_t>(pos);
+        };
+        // Every token takes at least 1 byte, so a record with k tokens
+        // needs at least k bytes. Check each count that the file declares
+        // against the bytes that are left, before the count sizes an
+        // allocation.
+        auto check_count = [&](std::size_t n, std::size_t min_record, const char *what) -> void {
+            if (min_record == 0 || n > remaining() / min_record)
+                fail(std::string(what) + " count exceeds the fit file");
+        };
 
         expect("base_depth");
         get(stats_.base_depth);
@@ -1636,6 +1651,18 @@ class Function {
         std::size_t n_leaves = 0;
         expect("leaves");
         get(n_leaves);
+        // One leaf record holds 1 kind token, 2 * input_dim domain values
+        // and the coefficients of the polyfit type. The coefficient count
+        // is fixed by the type; check it with the leaf count against the
+        // bytes that are left before the reserve allocates.
+        const std::size_t n_coeffs = [&]() -> std::size_t {
+            if constexpr (poly_eval::detail::hasTupleSize_v<input_type>)
+                return static_cast<std::size_t>(
+                    typename poly_eval_type::ConstMdspan::mapping_type{}.required_span_size());
+            else
+                return std::size(typename poly_eval_type::OutputBuffer{});
+        }();
+        check_count(n_leaves, 1 + 2 * input_dim + n_coeffs, "leaf");
         polyfits_.reserve(n_leaves);
         for (std::size_t i = 0; i < n_leaves; ++i) {
             expect("leaf");
@@ -1670,8 +1697,19 @@ class Function {
         std::size_t n_st = 0;
         expect("subtrees");
         get(n_st);
-        if (n_st != n_subtrees_.prod())
+        // n_subtrees_ is declared by the file too. The product must not
+        // wrap, so the count check below cannot pass on a wrapped value.
+        std::size_t prod = 1;
+        for (std::size_t d = 0; d < input_dim; ++d) {
+            if (n_subtrees_[d] > std::numeric_limits<std::size_t>::max() / prod)
+                fail("n_subtrees product overflows");
+            prod *= n_subtrees_[d];
+        }
+        if (n_st != prod)
             fail("subtree count does not match n_subtrees");
+        // One subtree record holds 1 kind token, 2 * input_dim bounds, the
+        // depth, the node count and at least one node of 2 tokens.
+        check_count(n_st, 5 + 2 * input_dim, "subtree");
         subtrees_.reserve(n_st);
         for (std::size_t s = 0; s < n_st; ++s) {
             expect("subtree");
@@ -1687,6 +1725,9 @@ class Function {
             get(n_nodes);
             if (n_nodes == 0)
                 fail("empty subtree");
+            // One node record is 2 tokens at least; check before the vector
+            // allocates for n_nodes.
+            check_count(n_nodes, 2, "node");
             std::vector<node_t> nodes(n_nodes);
             for (auto &node : nodes) {
                 std::string   kind;
@@ -1701,6 +1742,44 @@ class Function {
                 else
                     fail("bad node '" + kind + " " + std::to_string(idx) + "'");
             }
+            // A split names its first child; its n_child children follow in
+            // the node vector. Validate the tree once here: a cycle, a
+            // shared child or an unreachable node makes the leaf-table walk
+            // loop without a bound.
+            std::vector<std::uint32_t> parents(n_nodes, 0);
+            for (std::size_t i = 0; i < n_nodes; ++i) {
+                if (nodes[i].is_leaf())
+                    continue;
+                const std::size_t first = nodes[i].first_child_idx();
+                for (std::size_t c = first; c < first + n_child; ++c)
+                    ++parents[c];
+            }
+            if (parents[0] != 0)
+                fail("the root node has a parent");
+            for (std::size_t i = 1; i < n_nodes; ++i)
+                if (parents[i] != 1)
+                    fail("node " + std::to_string(i) + " has " + std::to_string(parents[i]) + " parents");
+            // Walk from the root with an explicit stack, so the walk cannot
+            // loop without a bound. Every node must be reachable.
+            std::vector<bool>        seen(n_nodes, false);
+            std::vector<std::size_t> stack{0};
+            seen[0]        = true;
+            std::size_t n_seen = 1;
+            while (!stack.empty()) {
+                const std::size_t i = stack.back();
+                stack.pop_back();
+                if (nodes[i].is_leaf())
+                    continue;
+                const std::size_t first = nodes[i].first_child_idx();
+                for (std::size_t c = first; c < first + n_child; ++c)
+                    if (!seen[c]) {
+                        seen[c] = true;
+                        ++n_seen;
+                        stack.push_back(c);
+                    }
+            }
+            if (n_seen != n_nodes)
+                fail("unreachable node in the subtree");
             subtrees_.emplace_back(lo, hi, depth, std::move(nodes));
         }
 
