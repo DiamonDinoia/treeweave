@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a31de0dc9fb6a7eab66d24853654a4539:
+
+Template Function treeweave::guru::leaf_data
+============================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::leaf_data(const F&)
+   :project: treeweave

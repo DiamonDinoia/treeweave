@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a9c98fbbc030bbdb0e35ecf6b3d06e929:
+
+Template Function treeweave::guru::eval_sorted
+==============================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::eval_sorted(const F&, const T *, std::size_t, T *)
+   :project: treeweave

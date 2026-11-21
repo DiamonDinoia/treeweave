@@ -38,6 +38,8 @@ Functions
 ---------
 
 
+- :ref:`exhale_function_treeweave_8hpp_1a7dc8a033f7fe450a38c2a40a3464857a`
+
 - :ref:`exhale_function_treeweave_8hpp_1af4d389b3204db4db22aa8581a3a00547`
 
 - :ref:`exhale_function_treeweave_8hpp_1a9bb0daaf3e51cd75d1efc976cb5f4382`

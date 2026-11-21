@@ -1,0 +1,14 @@
+.. _exhale_variable_guru_8hpp_1aebde02ac55578db91807bcf9bac8b882:
+
+Variable treeweave::guru::kSortTile
+===================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Variable Documentation
+----------------------
+
+
+.. doxygenvariable:: treeweave::guru::kSortTile
+   :project: treeweave

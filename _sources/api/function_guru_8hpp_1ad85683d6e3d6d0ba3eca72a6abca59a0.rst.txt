@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1ad85683d6e3d6d0ba3eca72a6abca59a0:
+
+Template Function treeweave::guru::gdetail::sort_scratch
+========================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::gdetail::sort_scratch(std::uint32_t, std::size_t)
+   :project: treeweave

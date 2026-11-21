@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a7b85a82403fb3eacd6c27074e0222601:
+
+Template Function treeweave::guru::eval_leaf_batch
+==================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::eval_leaf_batch(const F&, std::uint32_t, xsimd::batch<double, A>)
+   :project: treeweave

@@ -1,0 +1,17 @@
+.. _exhale_struct_structtreeweave_1_1guru_1_1gdetail_1_1_sort_scratch:
+
+Template Struct SortScratch
+===========================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Struct Documentation
+--------------------
+
+
+.. doxygenstruct:: treeweave::guru::gdetail::SortScratch
+   :project: treeweave
+   :members:
+   :protected-members:
+   :undoc-members:

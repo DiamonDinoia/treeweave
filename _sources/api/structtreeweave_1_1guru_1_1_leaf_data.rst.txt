@@ -1,0 +1,17 @@
+.. _exhale_struct_structtreeweave_1_1guru_1_1_leaf_data:
+
+Template Struct LeafData
+========================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Struct Documentation
+--------------------
+
+
+.. doxygenstruct:: treeweave::guru::LeafData
+   :project: treeweave
+   :members:
+   :protected-members:
+   :undoc-members:

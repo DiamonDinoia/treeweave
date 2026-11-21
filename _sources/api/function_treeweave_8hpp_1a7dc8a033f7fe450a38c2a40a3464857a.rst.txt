@@ -1,0 +1,14 @@
+.. _exhale_function_treeweave_8hpp_1a7dc8a033f7fe450a38c2a40a3464857a:
+
+Function treeweave::checked_options
+===================================
+
+- Defined in :ref:`file_include_treeweave_treeweave.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::checked_options(double, double, double, options)
+   :project: treeweave

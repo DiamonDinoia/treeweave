@@ -24,6 +24,8 @@ Classes
 -------
 
 
+- :ref:`exhale_struct_structtreeweave_1_1guru_1_1_leaf_data`
+
 - :ref:`exhale_class_classtreeweave_1_1guru_1_1_lane_quantizer`
 
 
@@ -33,15 +35,23 @@ Functions
 
 - :ref:`exhale_function_guru_8hpp_1a073816a220c3ae7251c25f21fb185a33`
 
+- :ref:`exhale_function_guru_8hpp_1aeade120ad53b3812fe297930f541ecd8`
+
 - :ref:`exhale_function_guru_8hpp_1a947758b0f930c6cc2dc6696e8756eeb3`
+
+- :ref:`exhale_function_guru_8hpp_1a7b85a82403fb3eacd6c27074e0222601`
 
 - :ref:`exhale_function_guru_8hpp_1a5b90020b2af5fca89a8119fb0ab2d12f`
 
+- :ref:`exhale_function_guru_8hpp_1a9c98fbbc030bbdb0e35ecf6b3d06e929`
+
+- :ref:`exhale_function_guru_8hpp_1a5304602f63aad90a6a5cea9e14891b77`
+
 - :ref:`exhale_function_guru_8hpp_1a28a60bef30f989ac20aefd8adf9d57ae`
 
-- :ref:`exhale_function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d`
-
 - :ref:`exhale_function_guru_8hpp_1af57de6c2d748da1f944f142482cb8f8b`
+
+- :ref:`exhale_function_guru_8hpp_1ab144870b71463a63ce22c79c2126682d`
 
 - :ref:`exhale_function_guru_8hpp_1a8fba07c290de1d41fb0acaa76805275f`
 
@@ -51,4 +61,15 @@ Functions
 
 - :ref:`exhale_function_guru_8hpp_1a00a3073fcafdcbf83f1ecafe08438a2a`
 
+- :ref:`exhale_function_guru_8hpp_1a31de0dc9fb6a7eab66d24853654a4539`
+
+- :ref:`exhale_function_guru_8hpp_1a7858356ec023645a824f7496a4894468`
+
 - :ref:`exhale_function_guru_8hpp_1a3017ce785ce1f78a60386c42224a2ff4`
+
+
+Variables
+---------
+
+
+- :ref:`exhale_variable_guru_8hpp_1aebde02ac55578db91807bcf9bac8b882`

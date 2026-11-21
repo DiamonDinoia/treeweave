@@ -30,6 +30,16 @@ Classes and Structs
 .. toctree::
    :maxdepth: 5
 
+   structtreeweave_1_1guru_1_1gdetail_1_1_sort_scratch.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structtreeweave_1_1guru_1_1_leaf_data.rst
+
+.. toctree::
+   :maxdepth: 5
+
    structtreeweave_1_1options.rst
 
 .. toctree::
@@ -64,6 +74,11 @@ Enums
 Variables
 *********
 
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_guru_8hpp_1aebde02ac55578db91807bcf9bac8b882.rst
 
 .. toctree::
    :maxdepth: 5

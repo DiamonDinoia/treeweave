@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a5304602f63aad90a6a5cea9e14891b77:
+
+Template Function treeweave::guru::eval_sorted_keyed
+====================================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::eval_sorted_keyed(const T *, std::size_t, std::uint32_t, Classify&&, Run&&, std::array<T *, NCH>)
+   :project: treeweave

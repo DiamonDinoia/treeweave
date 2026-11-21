@@ -11,3 +11,17 @@ Namespace treeweave::guru::gdetail
 
 
 
+
+
+Classes
+-------
+
+
+- :ref:`exhale_struct_structtreeweave_1_1guru_1_1gdetail_1_1_sort_scratch`
+
+
+Functions
+---------
+
+
+- :ref:`exhale_function_guru_8hpp_1ad85683d6e3d6d0ba3eca72a6abca59a0`

@@ -1,0 +1,14 @@
+.. _exhale_function_guru_8hpp_1a7858356ec023645a824f7496a4894468:
+
+Template Function treeweave::guru::leaf_ids
+===========================================
+
+- Defined in :ref:`file_include_treeweave_guru.hpp`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: treeweave::guru::leaf_ids(const F&, xsimd::batch<double, A>, std::uint32_t *)
+   :project: treeweave
