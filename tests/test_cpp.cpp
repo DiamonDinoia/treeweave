@@ -343,6 +343,27 @@ TEST_CASE("Rejects non-positive tolerance", "[treeweave][errors]") {
     REQUIRE_THROWS_AS(fit(f, 0.0, 1.0, /*tol=*/-1.0), std::invalid_argument);
 }
 
+TEST_CASE("checked_options enforces the tol floor and clamps the double budget", "[treeweave][errors]") {
+    using treeweave::checked_options;
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+    REQUIRE_THROWS_AS(checked_options(nan, 4e-16), std::invalid_argument);
+    REQUIRE_THROWS_AS(checked_options(1e-17, 4e-16), std::invalid_argument);
+    // An infinite tolerance is accepted (coarse first panel), matching fit().
+    REQUIRE(checked_options(std::numeric_limits<double>::infinity(), 4e-16).max_memory_mib == 0);
+    // The budget is clamped into the int field before the cast.
+    REQUIRE(checked_options(1e-15, 4e-16, 0.5).max_memory_mib == 1);
+    REQUIRE(checked_options(1e-15, 4e-16, 256.0).max_memory_mib == 256);
+    REQUIRE(checked_options(1e-15, 4e-16, 1e18).max_memory_mib == std::numeric_limits<int>::max());
+    // A non-positive budget keeps the tri-state (auto / off).
+    REQUIRE(checked_options(1e-15, 4e-16, 0.0).max_memory_mib == 0);
+    REQUIRE(checked_options(1e-15, 4e-16, -3.0, {.max_memory_mib = -3}).max_memory_mib == -3);
+    // Caller options pass through untouched.
+    const auto opts = checked_options(1e-15, 4e-16, 64.0, {.max_depth = 25, .allow_max_depth_leaves = true});
+    REQUIRE(opts.max_depth == 25);
+    REQUIRE(opts.allow_max_depth_leaves);
+    REQUIRE(checked_options(1e-15, 4e-16, 64.0, {.filename = "fit.txt"}).filename == "fit.txt");
+}
+
 TEST_CASE("Tolerance-driven overload converges", "[treeweave][tol-driven]") {
     auto f  = [](double x) { return std::sin(5.0 * x); };
     auto fn = fit(f, 0.0, 1.0, /*tol=*/1e-8);
@@ -878,8 +899,8 @@ TEST_CASE("1D smooth fit on large symmetric domain [-1e6, 1e6]", "[treeweave][la
 }
 
 TEST_CASE("1D smooth fit on far-shifted domain centred at 1e6", "[treeweave][large-domain][shifted]") {
-    // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, leaf-table quantize at large x); ~6 digits
-    // lost so tols reflect that floor.
+    // Unit interval shifted by 1e6 catches precision bugs (b-a cancellation, large-x quantize).
+    // About 6 digits are lost, so tols reflect that floor.
     const double centre = 1.0e6;
     const double a      = centre;
     const double b      = centre + 1.0;
@@ -931,11 +952,11 @@ TEST_CASE("Memory budget caps runaway fits -- opt-in to raise", "[treeweave][mem
         const double r = std::sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
         return {std::exp(-r) / r};
     };
-    REQUIRE_THROWS_AS(fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
-                             /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 1}),
+    REQUIRE_THROWS_AS(fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5}, /*tol=*/1e-9,
+                             options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 1}),
                       treeweave::MemoryBudgetExceeded);
-    auto fn = fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5},
-                     /*tol=*/1e-9, options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 8});
+    auto fn = fit<8>(f, std::array{0.05, 0.05, 0.05}, std::array{1.5, 1.5, 1.5}, /*tol=*/1e-9,
+                     options{.tol_kind = treeweave::TolKind::AbsoluteMax, .max_memory_mib = 8});
     REQUIRE(std::isfinite(fn(std::array{1.0, 1.0, 1.0})[0]));
 }
 
@@ -1109,7 +1130,7 @@ TEST_CASE("Leaf-table built at widened depth threshold", "[treeweave][leaf-table
     REQUIRE(shallow.has_fast_quantize());
 }
 
-// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2 and skips it.
+// min_uniform_depth forces leaf-table live on smooth fns; tol-based stops at depth 1-2.
 TEST_CASE("min_uniform_depth forces uniform refinement and builds leaf table",
           "[treeweave][min_uniform_depth][leaf-table]") {
     auto f  = [](double x) { return std::cos(x); };
@@ -1200,7 +1221,7 @@ TEST_CASE("f32 parity: scalar, batch, and sorted agree with reference fit", "[tr
     for (std::size_t i = 0; i < N; ++i)
         REQUIRE(std::abs(fn(xs[i]) - batch[i]) <= 8.0F * ulp_f * std::max(1.0F, std::abs(fn(xs[i]))));
 
-    // Sorted path (COV-G3): OOD-low (NaN), in-domain, above-b (leaf-table may extrapolate finite, matching batch).
+    // Sorted path (COV-G3): OOD-low (NaN), in-domain, above-b (leaf-table may extrapolate finite).
     constexpr std::size_t N_OOD_LO = 3, N_OOD_HI = 4;
     std::vector<float>    sxs;
     sxs.reserve(N + N_OOD_LO + N_OOD_HI);

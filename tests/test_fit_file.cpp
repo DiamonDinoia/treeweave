@@ -39,6 +39,66 @@ auto write_text(const std::string &path, const std::string &text) -> void {
     std::ofstream(path, std::ios::binary | std::ios::trunc) << text;
 }
 
+// The options that write the tree cases below. The header of the file
+// must match on the load, so every load repeats these options.
+auto tree_opts() -> treeweave::options {
+    return treeweave::options{.tol_kind = treeweave::TolKind::AbsoluteMax, .min_uniform_depth = 4};
+}
+
+// Fit `exp` on [0, 1] to a file, then replace the node lines of the
+// largest subtree with the lines that `body` builds from the node count.
+// The header, the leaf lines and the counts stay valid.
+template <class Body>
+auto write_tree_case(const std::string &name, Body body) -> std::string {
+    const std::string path = temp_file(name);
+    auto              opts = tree_opts();
+    opts.filename          = path;
+    [[maybe_unused]] const auto f0 = fit([](double x) { return std::exp(x); }, 0.0, 1.0, 1e-10, opts);
+    std::vector<std::string> lines;
+    {
+        std::istringstream is(read_text(path));
+        std::string        line;
+        while (std::getline(is, line))
+            lines.push_back(line);
+    }
+    // The line after each "subtree ..." header ends in its node count.
+    std::size_t best   = 0;
+    std::size_t best_n = 0;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        if (!lines[i].starts_with("subtree "))
+            continue;
+        std::istringstream ls(lines[i]);
+        std::string        tok;
+        std::string        last;
+        while (ls >> tok)
+            last = tok;
+        const std::size_t n = std::stoull(last);
+        if (n > best_n) {
+            best_n = n;
+            best   = i;
+        }
+    }
+    REQUIRE(best_n >= 5);
+    const std::vector<std::string> nodes = body(best_n);
+    REQUIRE(nodes.size() == best_n);
+    for (std::size_t k = 0; k < best_n; ++k)
+        lines[best + 1 + k] = nodes[k];
+    std::string out;
+    for (const auto &l : lines)
+        out += l + "\n";
+    write_text(path, out);
+    return path;
+}
+
+// Load a bad tree case and require the load to throw like the other
+// malformed-body cases. A hang here is a failure of the loader.
+auto expect_bad_tree(const std::string &path) -> void {
+    auto opts = tree_opts();
+    opts.filename = path;
+    CHECK_THROWS_AS(fit([](double x) { return std::exp(x); }, 0.0, 1.0, 1e-10, opts), std::runtime_error);
+    fs::remove(path);
+}
+
 // Bitwise equality, so -0.0 vs 0.0 and NaN payloads also count.
 template <class T>
 auto same_bits(T a, T b) -> bool {
@@ -329,4 +389,55 @@ TEST_CASE("fit file: an unwritable path throws", "[treeweave][fit_file]") {
 
 TEST_CASE("fit file: off by default", "[treeweave][fit_file]") {
     CHECK_FALSE(treeweave::options{}.filename.has_value());
+}
+
+TEST_CASE("fit file: a node that is its own child throws", "[treeweave][fit_file]") {
+    const std::string path = write_tree_case("tree_self_loop", [](std::size_t n) {
+        std::vector<std::string> v(n, "leaf 0");
+        v[0] = "split 1";
+        v[1] = "split 1"; // the children of node 1 are 1 and 2
+        return v;
+    });
+    expect_bad_tree(path);
+}
+
+TEST_CASE("fit file: a two-node cycle throws", "[treeweave][fit_file]") {
+    const std::string path = write_tree_case("tree_two_cycle", [](std::size_t n) {
+        std::vector<std::string> v(n, "leaf 0");
+        v[0] = "split 1";
+        v[1] = "split 1"; // nodes 1 and 2 point to children 1 and 2
+        v[2] = "split 1";
+        return v;
+    });
+    expect_bad_tree(path);
+}
+
+TEST_CASE("fit file: a node with two parents throws", "[treeweave][fit_file]") {
+    const std::string path = write_tree_case("tree_two_parents", [](std::size_t n) {
+        std::vector<std::string> v(n, "leaf 0");
+        v[0] = "split 1";
+        v[1] = "split 3";
+        v[2] = "split 3"; // nodes 3 and 4 each have two parents
+        return v;
+    });
+    expect_bad_tree(path);
+}
+
+TEST_CASE("fit file: an unreachable node throws", "[treeweave][fit_file]") {
+    const std::string path = write_tree_case("tree_unreachable", [](std::size_t n) {
+        std::vector<std::string> v(n, "leaf 0");
+        v[0] = "split 1"; // nodes 3 .. n-1 are no child of any node
+        return v;
+    });
+    expect_bad_tree(path);
+}
+
+TEST_CASE("fit file: the root used as a child throws", "[treeweave][fit_file]") {
+    const std::string path = write_tree_case("tree_root_child", [](std::size_t n) {
+        std::vector<std::string> v(n, "leaf 0");
+        v[0] = "split 1";
+        v[1] = "split 0"; // the children of node 1 are 0 and 1
+        return v;
+    });
+    expect_bad_tree(path);
 }

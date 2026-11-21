@@ -255,10 +255,121 @@ class LaneQuantizer {
         return id_batch_type::gather(table_, qi);
     }
 
+    /// Per-lane ids written to `out` (one uint32 per lane). In-domain lanes
+    /// only. Scalar table loads, not the `ids` gather: vpgatherqq is slower.
+    auto store_ids(batch_type x, std::uint32_t *out) const noexcept -> void {
+        const batch_type q = xsimd::min(xsimd::floor((x - lo_) * inv_), last_);
+        constexpr std::size_t lanes = batch_type::size;
+        alignas(batch_type::arch_type::alignment()) T qd[lanes];
+        q.store_aligned(qd);
+        for (std::size_t j = 0; j < lanes; ++j) out[j] = table_[static_cast<std::int64_t>(qd[j])];
+    }
+
   private:
     const std::uint32_t *table_;
     batch_type           lo_, hi_, inv_, last_;
 };
+
+// ---------------------------------------------------------------------------
+// Leaf data view (1D scalar fits)
+// ---------------------------------------------------------------------------
+
+/// The leaf data view of a 1D fit: the flat leaf rows behind
+/// `Function::leaf_view_of`. One row is
+/// [inv_span, sum_endpoints, identity_map, coeff 0, ..., coeff width-1];
+/// `map` points at the row head of leaf 0, so one 4-double load covers both
+/// map fields and coefficient 0.
+template <class T>
+struct LeafData {
+    const T         *map;    // row head of leaf 0 ([0] = inv_span, [1] = sum_endpoints)
+    const T         *coeffs; // coefficient 0 of leaf 0
+    std::ptrdiff_t   stride; // doubles from one row head to the next
+    std::size_t      width;  // coefficients per row
+
+    [[nodiscard]] T inv_span() const noexcept { return map[0]; }
+    [[nodiscard]] T sum_endpoints() const noexcept { return map[1]; }
+    // Row head behind any coefficient pointer of the same row (the map
+    // fields sit 3 doubles before the coefficients, Leaf1D::map_window).
+    [[nodiscard]] const T *map_head(const T *row_coeffs) const noexcept { return row_coeffs - 3; }
+};
+
+/// The leaf data view of `f`. Precondition: a 1D scalar fit with 2+ leaves
+/// (stride is the row distance from leaf 0 to leaf 1).
+template <class F>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto leaf_data(const F &f) noexcept -> LeafData<typename F::value_type> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1, "leaf_data: 1D scalar fits only");
+    const auto l0 = f.leaf_view_of(0);
+    const auto l1 = f.leaf_view_of(1);
+    return LeafData<typename F::value_type>{l0.map_window(), l0.coeffs, l1.coeffs - l0.coeffs, F::degree};
+}
+
+// ---------------------------------------------------------------------------
+// Batch leaf ids and batch leaf evaluation (1D scalar double fits)
+// ---------------------------------------------------------------------------
+
+/// Batch form of the leaf-id lookup: one id per lane of `x`, the same
+/// classification as `Function::leaf_ids` and `LaneQuantizer::ids`.
+/// Precondition: every lane is in `f`'s domain and `f` is a multi-leaf 1D
+/// scalar double fit with one live leaf-table subtree.
+template <class F, class A>
+auto leaf_ids(const F &f, xsimd::batch<double, A> x, std::uint32_t *ids) -> void {
+    LaneQuantizer<double, A> q(f);
+    q.store_ids(x, ids);
+}
+
+/// Evaluate leaf `id`'s polynomial at one batch: the affine map, then the
+/// highest-first Horner chain (polyfit's storage order). The identity-leaf
+/// map (inv_span 0.5, sum_endpoints 0) makes the one map expression
+/// bit-exact; polyfit's scalar order maps first, so results differ in the
+/// last bits. Precondition: every lane is in `f`'s domain.
+template <class F, class A>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto eval_leaf_batch(const F &f, std::uint32_t id,
+                                                           xsimd::batch<double, A> x) noexcept
+    -> xsimd::batch<double, A> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1 && std::is_same_v<typename F::value_type, double>,
+                  "eval_leaf_batch: 1D scalar double fits only");
+    using batch_t = xsimd::batch<double, A>;
+    const auto    lv = f.leaf_view_of(id);
+    const auto xm = xsimd::fma(batch_t(2.0), x, -batch_t(lv.sum_endpoints)) * batch_t(lv.inv_span);
+    // Horner, highest coefficient first (polyfit's storage order).
+    auto acc = batch_t(lv.coeffs[0]);
+    for (std::size_t k = 1; k < F::degree; ++k) acc = xsimd::fma(acc, xm, batch_t(lv.coeffs[k]));
+    return acc;
+}
+
+/// Evaluate one fit at one batch: a one-leaf fit takes the broadcast
+/// shortcut (no id lookup), otherwise one id lookup plus one Horner chain
+/// per distinct leaf, lanes selected by their scalar ids. Precondition:
+/// every lane is in `f`'s domain (the batch entries sanitize and clamp
+/// before the call).
+template <class F, class A>
+[[nodiscard]] TREEWEAVE_ALWAYS_INLINE auto eval_batch(const F &f, xsimd::batch<double, A> x) noexcept
+    -> xsimd::batch<double, A> {
+    static_assert(F::input_dim == 1 && F::output_dim == 1 && std::is_same_v<typename F::value_type, double>,
+                  "eval_batch: 1D scalar double fits only");
+    using batch_t = xsimd::batch<double, A>;
+
+    if (f.num_leaves() == 1) {
+        return eval_leaf_batch(f, 0, x);
+    }
+    constexpr std::size_t lanes = batch_t::size;
+    std::uint32_t         ids[lanes];
+    leaf_ids(f, x, ids);
+
+    batch_t y(0.0);
+    for (std::size_t j = 0; j < lanes; ++j) {
+        const std::uint32_t id = ids[j];
+        std::size_t         t  = 0;
+        while (t < j && ids[t] != id) ++t;
+        if (t < j) continue;
+        const auto acc = eval_leaf_batch(f, id, x);
+        // lane mask from the scalar ids: portable, avoids emulated int64 compares
+        alignas(A::alignment()) bool mbool[lanes];
+        for (std::size_t l = 0; l < lanes; ++l) mbool[l] = (ids[l] == id);
+        y = xsimd::select(xsimd::batch_bool<double, A>::load_aligned(mbool), acc, y);
+    }
+    return y;
+}
 
 // ---------------------------------------------------------------------------
 // Packed-run leaf evaluation
@@ -344,6 +455,90 @@ auto for_each_sorted_run(const F &f, const typename F::value_type *xs, std::size
 {
     static_assert(std::is_arithmetic_v<typename F::value_type>, "guru::for_each_sorted_run: real value types only");
     for_each_sorted_run_1d(f, xs, n, fn);
+}
+
+// ---------------------------------------------------------------------------
+// Sorted-batch tile evaluation (unsorted input, counting sort inside)
+// ---------------------------------------------------------------------------
+
+/// The sorted-batch tile: ~24 B of scratch per point keeps one tile
+/// L2-resident.
+inline constexpr std::size_t kSortTile = 16384;
+
+namespace gdetail {
+
+template <class T, std::size_t NCH>
+struct SortScratch {
+    std::vector<std::uint32_t>      keys, rank, counts;
+    std::vector<T>                  x;
+    std::array<std::vector<T>, NCH> y;
+};
+
+template <class T, std::size_t NCH>
+auto sort_scratch(std::uint32_t nbins, std::size_t tile) -> SortScratch<T, NCH> & {
+    static thread_local SortScratch<T, NCH> s;
+    if (s.counts.size() < nbins) s.counts.resize(nbins);
+    if (s.keys.size() < tile) {
+        s.keys.resize(tile);
+        s.rank.resize(tile);
+        s.x.resize(tile);
+        for (auto &v : s.y) v.resize(tile);
+    }
+    return s;
+}
+
+} // namespace gdetail
+
+/// Unsorted-batch evaluation through the counting sort. Per tile of
+/// `kSortTile` points: `classify(xt, ot, tile, keys, counts)` fills the key
+/// histogram and returns true when it already wrote `ot` (a tile-level fast
+/// path skips the sort). Otherwise one `on_run(key, x_run, run_out, count)`
+/// per sorted run writes the packed tile and `gather` restores input order.
+/// Scratch is thread-local and reused.
+template <class T, std::size_t NCH, class Classify, class Run>
+auto eval_sorted_keyed(const T *xs, std::size_t n, std::uint32_t nbins, Classify &&classify, Run &&on_run,
+                       std::array<T *, NCH> out) -> void {
+    for (std::size_t off = 0; off < n; off += kSortTile) {
+        const std::size_t tile = std::min(kSortTile, n - off);
+        const T          *xt   = xs + off;
+        std::array<T *, NCH> ot{};
+        for (std::size_t d = 0; d < NCH; ++d) ot[d] = out[d] + off;
+        auto             &s = gdetail::sort_scratch<T, NCH>(nbins, tile);
+        std::span keys{s.keys.data(), tile}, rank{s.rank.data(), tile}, counts{s.counts.data(), nbins};
+        if (classify(xt, ot, tile, keys.data(), counts.data())) continue;
+        exclusive_scan(counts);
+        scatter(keys, std::span<const T>{xt, tile}, s.x, counts, rank);
+        for_each_run(counts, [&](std::uint32_t b, std::size_t begin, std::size_t count) {
+            std::array<T *, NCH> run{};
+            for (std::size_t d = 0; d < NCH; ++d) run[d] = s.y[d].data() + begin;
+            on_run(b, s.x.data() + begin, run, count);
+        });
+        // One rank load per channel and point; `gather` owns the prefetch.
+        for (std::size_t d = 0; d < NCH; ++d)
+            gather(rank, std::span{s.y[d].data(), tile}, std::span{ot[d], tile});
+    }
+}
+
+/// `eval_sorted_keyed` with the leaf ids as keys and leaf evaluation as the
+/// run: out-of-domain lanes get NaN. Precondition: a 1D scalar fit.
+template <class F, class T = typename F::value_type>
+auto eval_sorted(const F &f, const T *xs, std::size_t n, T *out) -> void {
+    static_assert(F::input_dim == 1 && F::output_dim == 1, "guru::eval_sorted: 1D scalar fits only");
+    const std::uint32_t ood = f.out_of_domain_id(), nbins = ood + 1;
+    eval_sorted_keyed<T, 1>(
+        xs, n, nbins,
+        [&](const T *xt, std::array<T *, 1>, std::size_t tile, std::uint32_t *keys, std::uint32_t *counts) {
+            f.leaf_ids(xt, keys, tile);
+            histogram(std::span<const std::uint32_t>{keys, tile}, std::span{counts, nbins});
+            return false;
+        },
+        [&](std::uint32_t key, const T *x, std::array<T *, 1> run, std::size_t count) {
+            if (key == ood)
+                fill_out_of_domain(f, run[0], count);
+            else
+                eval_leaf_aos(f, key, x, run[0], count);
+        },
+        std::array<T *, 1>{out});
 }
 
 } // namespace treeweave::guru

@@ -918,3 +918,103 @@ TEST_CASE("guru LaneQuantizer lanes match leaf_id (f64 scalar, f64 1D->4D, f32)"
     // The descent-mode fit has no leaf table: the precondition must say so.
     REQUIRE(!treeweave::guru::LaneQuantizer<double>::supports(make_descent_f64()));
 }
+
+TEST_CASE("guru batch ids and batch leaf eval match the scalar paths", "[guru][batch]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    REQUIRE(f.num_leaves() == 64);
+    using B = xsimd::batch<double>;
+    constexpr std::size_t W = B::size;
+
+    // Interior points plus ULP triples around every leaf boundary k/64.
+    std::mt19937                   gen(7);
+    std::uniform_real_distribution u(0.0, 1.0);
+    std::vector<double>            xs;
+    for (int i = 0; i < 200; ++i) xs.push_back(u(gen));
+    for (std::size_t k = 1; k < 64; ++k) {
+        const double b = static_cast<double>(k) / 64.0;
+        xs.push_back(b);
+        xs.push_back(std::nextafter(b, 0.0));
+        xs.push_back(std::nextafter(b, 1.0));
+    }
+    while (xs.size() % W) xs.push_back(0.37);
+
+    const double                eps8 = 8.0 * std::numeric_limits<double>::epsilon();
+    std::vector<double>         ref(xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) ref[i] = f(xs[i]);
+
+    for (std::size_t i = 0; i < xs.size(); i += W) {
+        const B          x = B::load_unaligned(xs.data() + i);
+        std::uint32_t    ids[W];
+        treeweave::guru::leaf_ids(f, x, ids);
+        double yv[W];
+        for (std::size_t l = 0; l < W; ++l) {
+            REQUIRE(ids[l] == f.leaf_id(xs[i + l]));
+            treeweave::guru::eval_leaf_batch(f, ids[l], B(xs[i + l])).store_unaligned(yv);
+            REQUIRE(std::abs(yv[0] - ref[i + l]) <= eps8 * std::max(1.0, std::abs(ref[i + l])));
+        }
+        treeweave::guru::eval_batch(f, x).store_unaligned(yv);
+        for (std::size_t l = 0; l < W; ++l)
+            REQUIRE(std::abs(yv[l] - ref[i + l]) <= eps8 * std::max(1.0, std::abs(ref[i + l])));
+    }
+
+    // One-leaf fit takes the broadcast shortcut: no id lookup, same values.
+    treeweave::options o;
+    o.max_memory_mib = 0;
+    auto f1 = treeweave::fit<7>([](double x) { return std::exp(x); }, 0.0, 1.0, 1e-3, o);
+    REQUIRE(f1.num_leaves() == 1);
+    for (std::size_t i = 0; i < xs.size(); i += W) {
+        double yv[W];
+        treeweave::guru::eval_batch(f1, B::load_unaligned(xs.data() + i)).store_unaligned(yv);
+        for (std::size_t l = 0; l < W; ++l) {
+            const double one = f1(xs[i + l]);
+            REQUIRE(std::abs(yv[l] - one) <= eps8 * std::max(1.0, std::abs(one)));
+        }
+    }
+}
+
+TEST_CASE("guru leaf_data view matches the leaf views and the row layout", "[guru][leafdata]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    using F = decltype(f);
+    const auto ld = treeweave::guru::leaf_data(f);
+    REQUIRE(ld.width == F::degree);
+    REQUIRE(ld.coeffs == f.leaf_view_of(0).coeffs);
+    REQUIRE(ld.inv_span() == f.leaf_view_of(0).inv_span);
+    REQUIRE(ld.sum_endpoints() == f.leaf_view_of(0).sum_endpoints);
+
+    // Rows step by stride; the map fields sit at the row head, 3 doubles
+    // before the coefficients (polyfit's FuncEval layout).
+    for (std::uint32_t k : {0u, 1u, 5u, 63u}) {
+        const double* head = ld.map + static_cast<std::ptrdiff_t>(k) * ld.stride;
+        const auto     lv  = f.leaf_view_of(k);
+        REQUIRE(head + 3 == lv.coeffs);
+        REQUIRE(head[0] == lv.inv_span);
+        REQUIRE(head[1] == lv.sum_endpoints);
+    }
+}
+
+TEST_CASE("guru eval_sorted matches the scalar evaluation on unsorted input", "[guru][sorted-batch]") {
+    auto f = make_table_f64(); // 64-leaf live-table fit on exp, [0, 1]
+    const std::size_t ood = f.out_of_domain_id();
+    std::mt19937      gen(11);
+    std::uniform_real_distribution u(-0.5, 1.5); // past both ends on purpose
+    // Over one tile so the loop spans tiles; boundaries and OOD inside.
+    std::vector<double> xs;
+    for (int i = 0; i < 40000; ++i) xs.push_back(u(gen));
+    for (std::size_t k = 0; k < 64; ++k) {
+        xs.push_back(static_cast<double>(k) / 64.0);
+        xs.push_back(std::nextafter(static_cast<double>(k) / 64.0, 0.0));
+    }
+    xs.push_back(std::numeric_limits<double>::quiet_NaN());
+    xs.push_back(std::numeric_limits<double>::infinity());
+    std::vector<double> out(xs.size()), ref(xs.size());
+    for (std::size_t i = 0; i < xs.size(); ++i) ref[i] = f(xs[i]);
+    treeweave::guru::eval_sorted(f, xs.data(), xs.size(), out.data());
+    const double eps8 = 8.0 * std::numeric_limits<double>::epsilon();
+    for (std::size_t i = 0; i < xs.size(); ++i) {
+        if (f.leaf_id(xs[i]) == ood) {
+            REQUIRE(std::isnan(out[i]));
+        } else {
+            REQUIRE(std::abs(out[i] - ref[i]) <= eps8 * std::max(1.0, std::abs(ref[i])));
+        }
+    }
+}
