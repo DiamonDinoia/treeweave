@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794842025608,
+  "lastUpdate": 1795455701219,
   "repoUrl": "https://github.com/DiamonDinoia/treeweave",
   "entries": {
     "canopy batch eval": [
@@ -4252,6 +4252,94 @@ window.BENCHMARK_DATA = {
             "value": 0.000277138555555556,
             "unit": "s/batch",
             "extra": "MdAPE=0.00765929402487762; batch=65536 pts/call"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "committer": {
+            "name": "Marco Barbone",
+            "username": "DiamonDinoia",
+            "email": "mbarbone@flatironinstitute.org"
+          },
+          "id": "8a065b4aaa7b5a1b4552c4cb8face97c33504abe",
+          "message": "feat: add checked_options, guru leaf access and a fit-file tree check\n\nThis squash adds `checked_options` with the tol-floor throw and the double-MiB `clamp`. It adds guru `batch leaf ids` and `batch leaf evaluation`. It adds the `leaf_data` view and `eval_sorted_keyed`, the sorted-batch tile loop. The fit-file loader rejects a bad tree structure.\n\n- e4e84b4 `style: shorten the six comments past the 100-column hook limit`\n- d930f73 `feat: checked_options owns the tol-floor throw and the double-MiB clamp`\n- 59d7664 `feat: guru batch leaf ids and batch leaf evaluation`\n- b003b24 `feat: guru leaf_data view names the polyfit leaf row layout`\n- 847ee07 `feat: guru eval_sorted_keyed, the sorted-batch tile loop`\n- ca165a3 `test: fix checked_options expectations for the v0.0.7 default`\n- 92750cc `fix: reject a bad tree structure in the fit-file loader`",
+          "timestamp": "2026-11-21T03:09:49Z",
+          "url": "https://github.com/DiamonDinoia/treeweave/commit/8a065b4aaa7b5a1b4552c4cb8face97c33504abe"
+        },
+        "date": 1795455699644,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "eval/1d/runge/f64",
+            "value": 0.000426784125,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00145487119333518; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f64",
+            "value": 0.0007586491,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00226217337100362; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/1d/runge-deep/f32",
+            "value": 0.000467134888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00397067702944036; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump/f64",
+            "value": 0.000577915888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00309719029230129; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth/f64",
+            "value": 0.00159699975,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0120080480457814; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d/bump-deep/f64",
+            "value": 0.00165163033333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00185054932138216; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/3d/smooth-deep/f64",
+            "value": 0.00561836133333333,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.0377615413573189; batch=65536 pts/call"
+          },
+          {
+            "name": "eval/2d->3d/vector/f64",
+            "value": 0.000842215888888889,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00702752400958334; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge/f64",
+            "value": 0.000189712222222222,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00321700029796956; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f64",
+            "value": 0.0002944821,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.00269023330563975; batch=65536 pts/call"
+          },
+          {
+            "name": "eval-scalar/1d/runge-deep/f32",
+            "value": 0.0002737325,
+            "unit": "s/batch",
+            "extra": "MdAPE=0.000970352470155969; batch=65536 pts/call"
           }
         ]
       }
