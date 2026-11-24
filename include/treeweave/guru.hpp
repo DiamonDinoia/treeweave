@@ -490,9 +490,9 @@ auto sort_scratch(std::uint32_t nbins, std::size_t tile) -> SortScratch<T, NCH> 
 } // namespace gdetail
 
 /// Unsorted-batch evaluation through the counting sort. Per tile of
-/// `kSortTile` points: `classify(xt, ot, tile, keys, counts)` fills the key
-/// histogram and returns true when it already wrote `ot` (a tile-level fast
-/// path skips the sort). Otherwise one `on_run(key, x_run, run_out, count)`
+/// `kSortTile` points: `classify(xt, tile_out, tile, keys, counts)` fills
+/// the key histogram and returns true when it already wrote `tile_out` (a
+/// tile-level fast path skips the sort). Otherwise one `on_run(key, x_run, run_out, count)`
 /// per sorted run writes the packed tile and `gather` restores input order.
 /// Scratch is thread-local and reused.
 template <class T, std::size_t NCH, class Classify, class Run>
@@ -501,11 +501,13 @@ auto eval_sorted_keyed(const T *xs, std::size_t n, std::uint32_t nbins, Classify
     for (std::size_t off = 0; off < n; off += kSortTile) {
         const std::size_t tile = std::min(kSortTile, n - off);
         const T          *xt   = xs + off;
-        std::array<T *, NCH> ot{};
-        for (std::size_t d = 0; d < NCH; ++d) ot[d] = out[d] + off;
+        std::array<T *, NCH> tile_out{};
+        for (std::size_t d = 0; d < NCH; ++d)
+            tile_out[d] = out[d] + off;
         auto             &s = gdetail::sort_scratch<T, NCH>(nbins, tile);
         std::span keys{s.keys.data(), tile}, rank{s.rank.data(), tile}, counts{s.counts.data(), nbins};
-        if (classify(xt, ot, tile, keys.data(), counts.data())) continue;
+        if (classify(xt, tile_out, tile, keys.data(), counts.data()))
+            continue;
         exclusive_scan(counts);
         scatter(keys, std::span<const T>{xt, tile}, s.x, counts, rank);
         for_each_run(counts, [&](std::uint32_t b, std::size_t begin, std::size_t count) {
@@ -515,7 +517,7 @@ auto eval_sorted_keyed(const T *xs, std::size_t n, std::uint32_t nbins, Classify
         });
         // One rank load per channel and point; `gather` owns the prefetch.
         for (std::size_t d = 0; d < NCH; ++d)
-            gather(rank, std::span{s.y[d].data(), tile}, std::span{ot[d], tile});
+            gather(rank, std::span{s.y[d].data(), tile}, std::span{tile_out[d], tile});
     }
 }
 

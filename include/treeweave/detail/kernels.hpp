@@ -59,7 +59,7 @@ struct Leaf1D {
     // polyfit's FuncEval packs {inv_span, sum_endpoints, identity_map} in the
     // 3 doubles right before the coefficients; one 4-double load at
     // map_window() covers both map fields and coefficient 0.
-    [[nodiscard]] const T *map_window() const noexcept { return coeffs - 3; }
+    [[nodiscard]] auto map_window() const noexcept -> const T * { return coeffs - 3; }
 };
 
 /// POD view of one leaf's ND polynomial: flat `layout_right` coefficients in

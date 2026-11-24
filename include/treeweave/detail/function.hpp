@@ -1754,11 +1754,13 @@ class Function {
                 for (std::size_t c = first; c < first + n_child; ++c)
                     ++parents[c];
             }
-            if (parents[0] != 0)
-                fail("the root node has a parent");
-            for (std::size_t i = 1; i < n_nodes; ++i)
-                if (parents[i] != 1)
+            // GCC 15+ false -Wnull-dereference on a parents[0] read outside the n_nodes loop.
+            for (std::size_t i = 0; i < n_nodes; ++i) {
+                if (i == 0 && parents[i] != 0)
+                    fail("the root node has a parent");
+                if (i != 0 && parents[i] != 1)
                     fail("node " + std::to_string(i) + " has " + std::to_string(parents[i]) + " parents");
+            }
             // Walk from the root with an explicit stack, so the walk cannot
             // loop without a bound. Every node must be reachable.
             std::vector<bool>        seen(n_nodes, false);
