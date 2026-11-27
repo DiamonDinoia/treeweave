@@ -15,9 +15,14 @@
 [![JavaScript](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/js.yml?branch=main&label=JS%2FWASM)](https://github.com/DiamonDinoia/treeweave/actions/workflows/js.yml)
 [![MATLAB](https://img.shields.io/github/actions/workflow/status/DiamonDinoia/treeweave/matlab.yml?branch=main&label=MATLAB)](https://github.com/DiamonDinoia/treeweave/actions/workflows/matlab.yml)
 
-## What it solves
+Treeweave accelerates the evaluation of mathematical functions, i.e equations. 
 
-An expensive function becomes a few nanoseconds per call after a one-line fit, works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS.
+It does so by means of a panelized adaptive, polynomial fit. Which results in fast evaluations, taking only a handful of nanoseconds. 
+
+It is internally optimized and vectorized and offers a simple API. Some languages require changing at most 3 lines. 
+
+It works in C++, C, Python, Julia, MATLAB/Octave, Fortran, or JS. In most cases, it can be installed by means of the language package manager. 
+
 
 Example: a 160-term Riemann-zeta sum on `[2, 10]` runs at about 1 Mevals/s in C++. Fit it to `1e-10` relative error, and treeweave evaluates it at 200 to 300 Mevals/s in batch and 900 to 1,700 Mevals/s on sorted input from C, C++ and Python (CI runner). For the same accuracy, a Chebyshev series needs degree 26 to 27, a spline needs 512 to 32,768 knots and a linear lookup table needs 524,288 knots. The [comparison page](https://diamondinoia.github.io/treeweave/comparison.html) has the rules and the full table.
 
